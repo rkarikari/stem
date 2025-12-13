@@ -4,11 +4,12 @@ PyPDF2
 pdfplumber
 PyMuPDF
 Pillow
-opencv-python
+opencv-python-headless
 pandas
 numpy
 matplotlib
 seaborn
 reportlab
 pytesseract
+
 
