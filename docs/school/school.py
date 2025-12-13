@@ -6196,8 +6196,281 @@ elif st.session_state.current_section == "Database Management":
             except Exception as e:
                 st.error(f"Error reading CSV file: {str(e)}")
 
+    # Backup and Restore Feature
+    st.markdown('<div class="section-header">Backup & Restore</div>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        with st.expander("💾 Backup Database", expanded=False):
+            st.info("Create a complete backup of your entire database")
+            
+            backup_format = st.radio(
+                "Backup Format",
+                ["SQLite Database (.db)", "SQL Script (.sql)"],
+                key="backup_format"
+            )
+            
+            if st.button("📦 Create Backup", key="create_backup_button", type="primary"):
+                try:
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    
+                    if backup_format == "SQLite Database (.db)":
+                        # Create binary database backup
+                        with open(DB_NAME, 'rb') as f:
+                            backup_data = f.read()
+                        
+                        filename = f"school_backup_{timestamp}.db"
+                        mime_type = "application/x-sqlite3"
+                        
+                        st.download_button(
+                            label="📥 Download Database Backup",
+                            data=backup_data,
+                            file_name=filename,
+                            mime=mime_type,
+                            key="download_db_backup"
+                        )
+                        st.success(f"✅ Database backup ready: {filename}")
+                        
+                    else:  # SQL Script
+                        # Create SQL dump
+                        conn = sqlite3.connect(DB_NAME)
+                        sql_dump = io.StringIO()
+                        
+                        # Add header
+                        sql_dump.write(f"-- School Database Backup\n")
+                        sql_dump.write(f"-- Created: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                        sql_dump.write(f"-- Version: {APP_VERSION}\n\n")
+                        
+                        # Dump schema and data
+                        for line in conn.iterdump():
+                            sql_dump.write(f"{line}\n")
+                        
+                        conn.close()
+                        
+                        backup_data = sql_dump.getvalue()
+                        filename = f"school_backup_{timestamp}.sql"
+                        
+                        st.download_button(
+                            label="📥 Download SQL Backup",
+                            data=backup_data,
+                            file_name=filename,
+                            mime="text/plain",
+                            key="download_sql_backup"
+                        )
+                        st.success(f"✅ SQL backup ready: {filename}")
+                        
+                except Exception as e:
+                    st.error(f"Backup failed: {str(e)}")
+            
+            # Show database info
+            st.markdown("---")
+            st.markdown("**Current Database Info:**")
+            try:
+                import os
+                db_size = os.path.getsize(DB_NAME) / 1024  # KB
+                
+                # Count records in all tables
+                conn = sqlite3.connect(DB_NAME)
+                c = conn.cursor()
+                
+                tables = ["students", "staff", "attendance", "test_results", "fees", 
+                         "expenditures", "terms", "courses", "enrollments", "library", 
+                         "behavior", "student_reports", "classes", "class_members", 
+                         "lunch_payments"]
+                
+                total_records = 0
+                for table in tables:
+                    try:
+                        count = c.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+                        total_records += count
+                    except:
+                        pass
+                
+                conn.close()
+                
+                st.metric("Database Size", f"{db_size:.2f} KB")
+                st.metric("Total Records", f"{total_records:,}")
+                
+            except Exception as e:
+                st.warning(f"Could not retrieve database info: {str(e)}")
+    
+    with col2:
+        with st.expander("📂 Restore Database", expanded=False):
+            st.warning("⚠️ Restoring will replace your current database!")
+            
+            restore_file = st.file_uploader(
+                "Upload Backup File",
+                type=['db', 'sql', 'sqlite', 'sqlite3'],
+                key="restore_file_uploader",
+                help="Upload a .db or .sql backup file"
+            )
+            
+            if restore_file is not None:
+                # Show file info
+                file_size = len(restore_file.getvalue()) / 1024  # KB
+                st.info(f"📄 File: {restore_file.name} ({file_size:.2f} KB)")
+                
+                # Restore options
+                restore_mode = st.radio(
+                    "Restore Mode",
+                    ["Replace Entire Database", "Merge with Existing Data"],
+                    key="restore_mode",
+                    help="Replace: Deletes current database | Merge: Adds to existing data"
+                )
+                
+                # Confirmation
+                st.markdown("---")
+                st.markdown("**⚠️ Confirmation Required**")
+                
+                if restore_mode == "Replace Entire Database":
+                    confirm_text = st.text_input(
+                        "Type 'RESTORE DATABASE' to confirm",
+                        key="restore_confirm_input",
+                        placeholder="RESTORE DATABASE"
+                    )
+                    confirm_valid = (confirm_text == "RESTORE DATABASE")
+                else:
+                    confirm_valid = st.checkbox(
+                        "I understand this will add data to existing records",
+                        key="merge_confirm"
+                    )
+                
+                if st.button(
+                    "🔄 Restore Database",
+                    key="restore_button",
+                    type="primary",
+                    disabled=not confirm_valid
+                ):
+                    try:
+                        with st.spinner("Restoring database..."):
+                            if restore_file.name.endswith('.sql'):
+                                # SQL script restore
+                                sql_content = restore_file.getvalue().decode('utf-8')
+                                
+                                if restore_mode == "Replace Entire Database":
+                                    # Close existing connections
+                                    query_db.cache_clear()
+                                    
+                                    # Remove old database
+                                    if os.path.exists(DB_NAME):
+                                        os.remove(DB_NAME)
+                                    
+                                    # Create new database and execute SQL
+                                    conn = sqlite3.connect(DB_NAME)
+                                    c = conn.cursor()
+                                    c.executescript(sql_content)
+                                    conn.commit()
+                                    conn.close()
+                                    
+                                else:  # Merge mode
+                                    conn = sqlite3.connect(DB_NAME)
+                                    c = conn.cursor()
+                                    
+                                    # Filter out DROP and CREATE statements for merge
+                                    merge_sql = []
+                                    for line in sql_content.split('\n'):
+                                        if not any(keyword in line.upper() 
+                                                 for keyword in ['DROP TABLE', 'CREATE TABLE']):
+                                            merge_sql.append(line)
+                                    
+                                    c.executescript('\n'.join(merge_sql))
+                                    conn.commit()
+                                    conn.close()
+                                
+                            else:  # .db file restore
+                                # Clear cache
+                                query_db.cache_clear()
+                                
+                                if restore_mode == "Replace Entire Database":
+                                    # Replace database file
+                                    if os.path.exists(DB_NAME):
+                                        os.remove(DB_NAME)
+                                    
+                                    with open(DB_NAME, 'wb') as f:
+                                        f.write(restore_file.getvalue())
+                                    
+                                else:  # Merge mode
+                                    # Attach backup database and copy data
+                                    backup_path = "temp_backup.db"
+                                    with open(backup_path, 'wb') as f:
+                                        f.write(restore_file.getvalue())
+                                    
+                                    conn = sqlite3.connect(DB_NAME)
+                                    c = conn.cursor()
+                                    c.execute(f"ATTACH DATABASE '{backup_path}' AS backup")
+                                    
+                                    # Get tables from backup
+                                    tables = c.execute(
+                                        "SELECT name FROM backup.sqlite_master WHERE type='table'"
+                                    ).fetchall()
+                                    
+                                    merged_count = 0
+                                    for (table_name,) in tables:
+                                        try:
+                                            # Copy data from backup to main database
+                                            c.execute(f"INSERT OR IGNORE INTO {table_name} SELECT * FROM backup.{table_name}")
+                                            merged_count += c.rowcount
+                                        except sqlite3.Error as e:
+                                            st.warning(f"Could not merge table {table_name}: {str(e)}")
+                                    
+                                    c.execute("DETACH DATABASE backup")
+                                    conn.commit()
+                                    conn.close()
+                                    
+                                    # Remove temporary backup
+                                    os.remove(backup_path)
+                                    
+                                    st.info(f"Merged {merged_count} records")
+                            
+                            st.success("✅ Database restored successfully!")
+                            st.balloons()
+                            
+                            # Clear cache and reinitialize
+                            query_db.cache_clear()
+                            init_db()
+                            
+                            # Wait a moment then rerun
+                            time.sleep(1)
+                            st.rerun()
+                            
+                    except Exception as e:
+                        st.error(f"❌ Restore failed: {str(e)}")
+                        st.exception(e)
+            else:
+                st.info("👆 Upload a backup file to begin restoration")
+    
+    st.markdown("---")
+    
+    # Scheduled Backup Info
+    with st.expander("📅 Backup Best Practices", expanded=False):
+        st.markdown("""
+        ### Backup Recommendations:
+        
+        1. **Regular Backups**: Create backups at least weekly
+        2. **Before Major Changes**: Always backup before:
+           - Importing large datasets
+           - Database structure changes
+           - End of term operations
+        3. **Multiple Locations**: Store backups in:
+           - Local computer
+           - Cloud storage (Google Drive, Dropbox)
+           - External drive
+        4. **Version Control**: Keep multiple backup versions
+        5. **Test Restores**: Periodically test your backups
+        
+        ### File Formats:
+        - **SQLite (.db)**: Complete binary backup, fastest restore
+        - **SQL Script (.sql)**: Text-based, human-readable, portable
+        
+        ### Restore Modes:
+        - **Replace**: Complete database replacement (recommended for full restore)
+        - **Merge**: Add backup data to existing database (use carefully)
+        """)
+    
     # Delete All Data Feature
     st.markdown('<div class="section-header">Data Management</div>', unsafe_allow_html=True)
+    
     with st.expander("⚠️ Delete All Data", expanded=False):
         st.warning("This will permanently delete ALL records from the selected table. This action cannot be undone!")
         
