@@ -1,0 +1,10 @@
+streamlit
+pandas
+sqlite3
+requests
+plotly
+reportlab
+Pillow
+kaleido
+openpyxl
+python-dateutil
