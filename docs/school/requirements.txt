@@ -9,3 +9,4 @@ openpyxl
 python-dateutil
 PyPDF2
 matplotlib
+seaborn
