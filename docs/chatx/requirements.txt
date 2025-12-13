@@ -6,3 +6,5 @@ numpy
 pandas
 seaborn
 Pillow
+plotly
+
