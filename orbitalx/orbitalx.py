@@ -45,7 +45,7 @@ omega_e = np.sqrt(G * M / r_e**3)
 omega_m = np.sqrt(G * M / r_m**3)
 
 # Sidebar setup
-st.title("🚀 Orbital X - GrokX")
+st.title("🚀 Orbital X")
 sidebar_mission_status = st.sidebar.empty()
 sidebar_launch_window = st.sidebar.empty()
 sidebar_trajectory = st.sidebar.empty()
