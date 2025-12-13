@@ -1,8 +1,9 @@
-numpy
-pandas
-pillow
-plotly
-requests
 streamlit
+pandas
+numpy
+plotly
+statsmodels
+requests
 toml
-
+openpyxl
+Pillow
