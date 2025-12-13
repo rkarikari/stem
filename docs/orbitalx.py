@@ -8,7 +8,7 @@ st.set_page_config(
     page_icon="🧟",
     layout="centered",
     menu_items={
-        'Report a Bug': "https://github.com/rkarikari/RadioSport-chat",
+        'Report a Bug': "https://github.com/rkarikari/stem",
         'About': "Copyright © RNK, 2025 RadioSport. All rights reserved."
     }
 )
