@@ -1,0 +1,9 @@
+streamlit
+pyaudio
+numpy
+pydub
+shazamio
+librosa
+scipy
+requests
+
