@@ -2209,7 +2209,7 @@ def main():
 
     else:
         # OpenRouter Configuration
-        st.sidebar.subheader("🌐 OpenRouter Settings")
+        st.sidebar.subheader("🌐 AI Models")
         
         col1, col2 = st.sidebar.columns([3, 1])
         with col1:
