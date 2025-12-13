@@ -1,37 +1,35 @@
-_D1='📋 Download JSON'
-_D0='📊 Download Excel'
-_C_='📄 Download CSV'
-_Cz='➕ Add Financial Transaction'
-_Cy='AI analyzing financial data...'
-_Cx='➕ Add Transaction'
-_Cw='₦ (Nigerian Naira)'
-_Cv='£ (British Pound)'
-_Cu='$ (US Dollar)'
-_Ct='Attendance %'
-_Cs='Student ID'
-_Cr='\n                                INSERT INTO grades (grade_id, student_id, course_id, grade, semester, year)\n                                VALUES (?, ?, ?, ?, ?, ?)\n                            '
-_Cq='\n                            INSERT INTO courses (course_id, name, teacher_id, grade_level, credits, schedule)\n                            VALUES (?, ?, ?, ?, ?, ?)\n                        '
-_Cp='➕ Add New Course'
-_Co='➕ Add Teacher'
-_Cn='Overall Utilization'
-_Cm='➕ Add New Teacher'
-_Cl='Current Grade'
-_Ck='Email or phone'
-_Cj='Student Name*'
-_Ci='💳 Financial Breakdown'
-_Ch='Minimum GPA'
-_Cg='Full Capacity'
-_Cf='Students by Grade Level'
-_Ce='Student Age Distribution'
-_Cd='GPA Distribution'
-_Cc='📅 Attendance'
-_Cb='💰 Financial'
-_Ca='Total Courses'
-_CZ='Active Teachers'
-_CY='🎯 Key Performance Indicators'
-_CX='SELECT COUNT(*) FROM attendance WHERE student_id = ?'
-_CW='📝 Data Input'
-_CV='👨\u200d🏫 Teachers'
+_C_='📋 Download JSON'
+_Cz='📊 Download Excel'
+_Cy='📄 Download CSV'
+_Cx='➕ Add Financial Transaction'
+_Cw='AI analyzing financial data...'
+_Cv='➕ Add Transaction'
+_Cu='₦ (Nigerian Naira)'
+_Ct='£ (British Pound)'
+_Cs='$ (US Dollar)'
+_Cr='Attendance %'
+_Cq='Student ID'
+_Cp='\n                                INSERT INTO grades (grade_id, student_id, course_id, grade, semester, year)\n                                VALUES (?, ?, ?, ?, ?, ?)\n                            '
+_Co='\n                            INSERT INTO courses (course_id, name, teacher_id, grade_level, credits, schedule)\n                            VALUES (?, ?, ?, ?, ?, ?)\n                        '
+_Cn='➕ Add New Course'
+_Cm='➕ Add Teacher'
+_Cl='Overall Utilization'
+_Ck='➕ Add New Teacher'
+_Cj='Current Grade'
+_Ci='Email or phone'
+_Ch='Student Name*'
+_Cg='💳 Financial Breakdown'
+_Cf='Minimum GPA'
+_Ce='Full Capacity'
+_Cd='Students by Grade Level'
+_Cc='Student Age Distribution'
+_Cb='GPA Distribution'
+_Ca='📅 Attendance'
+_CZ='💰 Financial'
+_CY='Total Courses'
+_CX='Active Teachers'
+_CW='🎯 Key Performance Indicators'
+_CV='SELECT COUNT(*) FROM attendance WHERE student_id = ?'
 _CU='None selected'
 _CT='school_ai'
 _CS='school_manager'
@@ -250,9 +248,9 @@ import hashlib,uuid
 from enum import Enum
 import time,io
 from PIL import Image
-import base64,os
+import base64
 APP_VERSION='1.5.0'
-def initialize_ui():st.set_page_config(page_title='RadioSport Scholium',page_icon='🧟',layout='wide',menu_items={'Report a Bug':'https://github.com/rkarikari/stem','About':'Copyright © RNK, 2025 RadioSport. All rights reserved.'})
+def initialize_ui():st.set_page_config(page_title='RadioSport Scholium',page_icon='🧟',layout='wide',menu_items={'Report a Bug':'https://github.com/rkarikari/RadioSport-chat','About':'Copyright © RNK, 2025 RadioSport. All rights reserved.'})
 class AIProvider(Enum):OLLAMA=_g;OPENROUTER=_u
 @dataclass
 class Student:student_id:str;name:str;age:int;grade:str;admission_date:str;gpa:float=_D;attendance_rate:float=1e2;behavior_score:float=1e2;parent_contact:str='';medical_info:str='';photo:Optional[str]=_B;status:str=_n;stream_id:Optional[str]=_B
@@ -305,13 +303,19 @@ class SchoolAI:
 			elif _u in A:return _u
 			return _g
 		except Exception:return _g
-	def _load_openrouter_key(D):
-		'Load OpenRouter API key from secrets.toml';A='api_key'
+	def _load_openrouter_key(F):
+		'Load OpenRouter API key from Streamlit Cloud secrets or local secrets.toml';C='OPENROUTER_API_KEY';B='api_key'
 		try:
-			if hasattr(st,'secrets')and _u in st.secrets:return st.secrets.openrouter.get(A,'')
-			else:
-				with open('.streamlit/secrets.toml','r')as B:C=toml.load(B);return C.get(_u,{}).get(A,'')
-		except Exception:return st.session_state.get('openrouter_key','')
+			if hasattr(st,'secrets'):
+				if _u in st.secrets:
+					A=st.secrets.openrouter.get(B,'')
+					if A:return A
+				if C in st.secrets:
+					A=st.secrets[C]
+					if A:return A
+			with open('.streamlit/secrets.toml','r')as D:E=toml.load(D);return E.get(_u,{}).get(B,'')
+		except FileNotFoundError:return''
+		except Exception:return''
 	def get_openrouter_free_models(D):
 		'Dynamically load OpenRouter free models'
 		try:
@@ -879,85 +883,75 @@ class AIHelperFunctions:
 def calculate_age(birth_date):'Calculate age from birth date.';A=birth_date;B=datetime.now().date();return B.year-A.year-((B.month,B.day)<(A.month,A.day))
 def get_next_grade(current_grade):'Helper function to determine next grade level';A={_R:_S,_S:_T,_T:_V,_V:_W,_W:_X,_X:_b,_b:_c,_c:_d,_d:_AJ};return A.get(current_grade,_AJ)
 def main():
-	V='context_length';U='Refresh model list';T='Local';S='http://localhost:11434/api/tags';K='Cloud';initialize_ui()
+	Q='context_length';P='Refresh model list';O='Cloud';N='Local';initialize_ui()
 	if _CS not in st.session_state:st.session_state.school_manager=SchoolManager()
-	if _v not in st.session_state:
-		D=_F
-		try:F=requests.get(S,timeout=1);D=F.status_code==200
-		except:D=_F
-		st.session_state.ai_provider=AIProvider.OLLAMA if D else AIProvider.OPENROUTER
+	if _v not in st.session_state:st.session_state.ai_provider=AIProvider.OLLAMA
 	st.sidebar.header('🧟 RadioSport Scholium');st.sidebar.text(f" Version {APP_VERSION}")
 	if _CT not in st.session_state:st.session_state.school_ai=SchoolAI()
-	B=st.session_state.school_ai;D=_F
-	try:F=requests.get(S,timeout=1);D=F.status_code==200
-	except:D=_F
-	if D:L=[T,K];M=0 if st.session_state.ai_provider==AIProvider.OLLAMA else 1
-	else:
-		L=[K];M=0
-		if st.session_state.ai_provider==AIProvider.OLLAMA:st.session_state.ai_provider=AIProvider.OPENROUTER
-	W=st.sidebar.radio('AI Provider',L,index=M,key='ai_provider_select');X={T:AIProvider.OLLAMA.value,K:AIProvider.OPENROUTER.value};Y=X[W];st.session_state.ai_provider=AIProvider(Y);B.provider=st.session_state.ai_provider
+	B=st.session_state.school_ai;R=st.sidebar.radio('AI Provider',[N,O],key='ai_provider_select');S={N:AIProvider.OLLAMA.value,O:AIProvider.OPENROUTER.value};T=S[R];st.session_state.ai_provider=AIProvider(T);B.provider=st.session_state.ai_provider
 	if st.session_state.ai_provider==AIProvider.OLLAMA:
 		st.sidebar.subheader('🔧 Ollama Settings')
 		with st.sidebar.expander('Server Configuration',expanded=_F):
-			G=st.text_input('Ollama Server URL',value=st.session_state.get(_q,_B9),placeholder=_B9,help='Change if running Ollama on different host/port')
-			if G!=st.session_state.get(_q,_B9):
-				st.session_state.ollama_url=G;B.ollama_url=G;st.session_state.ollama_models=[]
+			E=st.text_input('Ollama Server URL',value=st.session_state.get(_q,_B9),placeholder=_B9,help='Change if running Ollama on different host/port')
+			if E!=st.session_state.get(_q,_B9):
+				st.session_state.ollama_url=E;B.ollama_url=E;st.session_state.ollama_models=[]
 				if _Y in st.session_state:del st.session_state.ai_model
 			if st.button('🔄 Test Connection',key='sidebar_test_ollama'):
-				N=B.get_ollama_models()
-				if N:st.success(f"✅ Connected! {len(N)} models found")
+				I=B.get_ollama_models()
+				if I:st.success(f"✅ Connected! {len(I)} models found")
 				else:st.error('❌ Connection failed')
-		H,I=st.sidebar.columns([3,1])
-		with H:
+		F,G=st.sidebar.columns([3,1])
+		with F:
 			if not st.session_state.get(_Bg,[]):B.get_ollama_models()
 			C=st.session_state.get(_Bg,[])
 			if C:
 				A=st.session_state.get(_Y)
 				if not A or A not in C:A=C[0];st.session_state.ai_model=A
-				O=st.selectbox('Available Models',C,index=C.index(A),key='sidebar_ollama_model');st.session_state.ai_model=O;B.model=O
+				J=st.selectbox('Available Models',C,index=C.index(A),key='sidebar_ollama_model');st.session_state.ai_model=J;B.model=J
 			else:
 				st.warning('⚠️ Models Unavailable.')
 				if _Y in st.session_state:del st.session_state.ai_model
 				B.model=_B
-		with I:
-			if st.button('🔄',key='sidebar_refresh_ollama',help=U):
+		with G:
+			if st.button('🔄',key='sidebar_refresh_ollama',help=P):
 				st.session_state.ollama_models=[]
 				if _Y in st.session_state:del st.session_state.ai_model
 				B.get_ollama_models();st.rerun()
 	else:
-		st.sidebar.subheader('🌐 AI Models');H,I=st.sidebar.columns([3,1])
-		with H:
+		st.sidebar.subheader('🌐 OpenRouter Settings');F,G=st.sidebar.columns([3,1])
+		with F:
 			if not st.session_state.get(_Bf,[]):B.get_openrouter_free_models()
 			C=st.session_state.get(_Bf,[])
 			if C:
-				P=[f"{A.get(_E,A['id'])}"for A in C];E=[A['id']for A in C];A=st.session_state.get(_Y)
-				if not A or A not in E:
-					A=E[0]if E else _B
+				K=[f"{A.get(_E,A['id'])}"for A in C];D=[A['id']for A in C];A=st.session_state.get(_Y)
+				if not A or A not in D:
+					A=D[0]if D else _B
 					if A:st.session_state.ai_model=A
 				if A:
-					Z=E.index(A);Q=st.selectbox('Free Models',range(len(P)),format_func=lambda x:P[x],index=Z,key='sidebar_openrouter_model',help='Only free models are shown');J=E[Q];st.session_state.ai_model=J;B.model=J;R=C[Q];st.sidebar.caption(f"ID: {J}")
-					if V in R:st.sidebar.caption(f"Context: {R[V]:,} tokens")
+					U=D.index(A);L=st.selectbox('Free Models',range(len(K)),format_func=lambda x:K[x],index=U,key='sidebar_openrouter_model',help='Only free models are shown');H=D[L];st.session_state.ai_model=H;B.model=H;M=C[L];st.sidebar.caption(f"ID: {H}")
+					if Q in M:st.sidebar.caption(f"Context: {M[Q]:,} tokens")
 			else:
 				st.sidebar.warning('⚠️ No free models available')
 				if B.openrouter_key:st.sidebar.info('Check your internet connection or try refreshing.')
 				if _Y in st.session_state:del st.session_state.ai_model
 				B.model=_B
-		with I:
-			if st.button('🔄',key='sidebar_refresh_openrouter',help=U):
+		with G:
+			if st.button('🔄',key='sidebar_refresh_openrouter',help=P):
 				st.session_state.openrouter_models=[]
 				if _Y in st.session_state:del st.session_state.ai_model
 				B.get_openrouter_free_models();st.rerun()
-	A=st.session_state.get(_Y,_CU);st.title('🏫 RadioSport Scholium');a,b,c,d,e,f,g,h,i,j=st.tabs(['📊 Dashboard','👥 Admissions','🎓 Students',_CV,'📚 Academics','💰 Finance','📈 Analytics','🤖 AI Insights','🏫 Streams',_CW])
-	with a:dashboard_page()
-	with b:admissions_page()
-	with c:students_page()
-	with d:teachers_page()
-	with e:academics_page()
-	with f:finance_page()
-	with g:analytics_page()
-	with h:ai_insights_page()
-	with i:streams_page()
-	with j:data_input_page()
+	if A==_CU:st.sidebar.error('⚠️ Please select a model to continue')
+	st.title('🏫 RadioSport Scholium')
+	with tab1:dashboard_page()
+	with tab2:admissions_page()
+	with tab3:students_page()
+	with tab4:teachers_page()
+	with tab5:academics_page()
+	with tab6:finance_page()
+	with tab7:analytics_page()
+	with tab8:ai_insights_page()
+	with tab9:streams_page()
+	with tab10:data_input_page()
 def dashboard_page():
 	Bf='Period';Be='No student data available';Bd='behavior';Bc='Avg Transaction';Bb='Fees Revenue';Ba='Tuition Revenue';BZ='recent_activity_rate';BY='average_transaction_amount';BX='fees_revenue';BW='tuition_revenue';BV='total_revenue';BU='student_teacher_ratio';BT='students_with_low_attendance';BS='students_with_perfect_attendance';BR='average_attendance_rate';BQ='at_risk_percentage';BP='at_risk_students';BO='high_performer_percentage';BN='high_performers';BM='system_health';BL='Optimal';BK='inverse';BJ='orange';BI='Attendance Range';BH='lightgray';BG='darkblue';BF='Transactions';BE='#4CAF50';BD='Revenue Type';BC='viridis';BB='High Performers';AU='Enrollment';AT='Health Score';AS='staffing_metrics';AR='Recent Activity';AQ='lightcoral';AP='spline';AH='attendance_metrics';AG='Student-Teacher Ratio';AF='normal';AE='yellow';AD='lightgreen';AC='Attendance Rate';AB='Category';AA='0%';A1='financial_summary';A0='Capacity Utilization';z='width';y='thickness';x='line';w='threshold';v='steps';u='bar';t='axis';s='gauge+number';j='text';g='academic_performance';H='range';C='color';Q=DatabaseManager();N=st.session_state.get('currency_symbol','₵')
 	try:Bg="\n            SELECT student_id, name, age, grade, gpa, behavior_score, status, stream_id\n            FROM students \n            WHERE status = 'active'\n        ";A=Q.execute_query(Bg);Bh="\n            SELECT teacher_id, name, subject, department, performance_score, salary, status\n            FROM teachers \n            WHERE status = 'active'\n        ";O=Q.execute_query(Bh);Bi=_BF;AI=Q.execute_query(Bi)[0][0];Bj="\n            SELECT s.stream_id, s.grade_level, s.stream_type, s.max_capacity,\n                   COUNT(st.student_id) as current_students\n            FROM streams s\n            LEFT JOIN students st ON s.stream_id = st.stream_id AND st.status = 'active'\n            GROUP BY s.stream_id, s.grade_level, s.stream_type, s.max_capacity\n        ";D=Q.execute_query(Bj);Bk="\n            SELECT \n                SUM(CASE WHEN type = 'tuition' THEN amount ELSE 0 END) as tuition_revenue,\n                SUM(CASE WHEN type = 'fees' THEN amount ELSE 0 END) as fees_revenue,\n                SUM(amount) as total_revenue,\n                COUNT(*) as total_transactions,\n                date,\n                type,\n                amount\n            FROM finance\n        ";M=Q.execute_query(Bk);Bl="\n            SELECT \n                strftime('%Y-%m', date) as month,\n                SUM(amount) as monthly_revenue,\n                COUNT(*) as monthly_transactions\n            FROM finance\n            GROUP BY strftime('%Y-%m', date)\n            ORDER BY month DESC\n            LIMIT 12\n        ";J=Q.execute_query(Bl);Bm="\n            SELECT \n                COUNT(DISTINCT student_id) as students_with_records,\n                AVG(CASE WHEN status = 'present' THEN 100.0 ELSE 0.0 END) as avg_attendance_rate\n            FROM attendance\n            WHERE date >= date('now', '-7 days')\n        ";k=Q.execute_query(Bm);Bn="\n            SELECT \n                date,\n                COUNT(*) as total_records,\n                SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count,\n                ROUND(AVG(CASE WHEN status = 'present' THEN 100.0 ELSE 0.0 END), 1) as attendance_rate\n            FROM attendance\n            WHERE date >= date('now', '-30 days')\n            GROUP BY date\n            ORDER BY date\n        ";AV=Q.execute_query(Bn)
@@ -965,25 +959,25 @@ def dashboard_page():
 	B={}
 	if A:
 		for K in A:
-			W=K[0];Bp=_CX;AW=Q.execute_query(Bp,(W,))[0][0]
+			W=K[0];Bp=_CV;AW=Q.execute_query(Bp,(W,))[0][0]
 			if AW>0:Bq="SELECT COUNT(*) FROM attendance WHERE student_id = ? AND status = 'present'";Br=Q.execute_query(Bq,(W,))[0][0];B[W]=Br/AW*100
 			else:B[W]=1e2
-	G=len(A)if A else 0;l=sum(A[4]for A in A)/len(A)if A else 0;m=sum(B.values())/len(B)if B else 0;a=len(O)if O else 0;A2=len([A for A in A if A[4]>=3.5])if A else 0;A3=len([A for A in A if A[4]<2.5 or B.get(A[0],100)<75])if A and B else 0;b=M[0][2]if M and M[0][2]else 0;A4=M[0][0]if M and M[0][0]else 0;A5=M[0][1]if M and M[0][1]else 0;R=M[0][3]if M and M[0][3]else 0;st.subheader(_CY);E,F,S,n,Bs=st.columns(5)
+	G=len(A)if A else 0;l=sum(A[4]for A in A)/len(A)if A else 0;m=sum(B.values())/len(B)if B else 0;a=len(O)if O else 0;A2=len([A for A in A if A[4]>=3.5])if A else 0;A3=len([A for A in A if A[4]<2.5 or B.get(A[0],100)<75])if A and B else 0;b=M[0][2]if M and M[0][2]else 0;A4=M[0][0]if M and M[0][0]else 0;A5=M[0][1]if M and M[0][1]else 0;R=M[0][3]if M and M[0][3]else 0;st.subheader(_CW);E,F,S,n,Bs=st.columns(5)
 	with E:st.metric(_s,G)
 	with F:st.metric(_AM,f"{l:.2f}")
 	with S:st.metric(_Br,f"{m:.1f}%")
-	with n:st.metric(_CZ,a)
-	with Bs:st.metric(_Ca,AI)
+	with n:st.metric(_CX,a)
+	with Bs:st.metric(_CY,AI)
 	E,F,S,n=st.columns(4)
 	with E:AX=len(D)if D else 0;st.metric('Active Streams',AX)
 	with F:st.metric(BB,A2,delta=f"{A2/G*100:.1f}%"if G>0 else AA)
 	with S:st.metric(_Bs,A3,delta=f"{A3/G*100:.1f}%"if G>0 else AA)
 	with n:st.metric(_BM,f"{N}{b:,.2f}")
-	st.divider();st.subheader('📈 Visual Analytics');Bt,Bu,Bv,Bw,Bx=st.tabs(['📚 Academic','👥 Demographics',_Cb,_Cc,'🏢 Operations'])
+	st.divider();st.subheader('📈 Visual Analytics');Bt,Bu,Bv,Bw,Bx=st.tabs(['📚 Academic','👥 Demographics',_CZ,_Ca,'🏢 Operations'])
 	with Bt:
 		E,F=st.columns(2)
 		with E:
-			if A:By=['4.0+','3.5-3.9','3.0-3.4','2.5-2.9','2.0-2.4','<2.0'];Bz=[len([A for A in A if A[4]>=4.]),len([A for A in A if 3.5<=A[4]<4.]),len([A for A in A if 3.<=A[4]<3.5]),len([A for A in A if 2.5<=A[4]<3.]),len([A for A in A if 2.<=A[4]<2.5]),len([A for A in A if A[4]<2.])];B_=pd.DataFrame({_BN:By,_AN:Bz});AY=px.bar(B_,x=_BN,y=_AN,title=_Cd,color=_AN,color_continuous_scale=BC);AY.update_layout(height=400);st.plotly_chart(AY,use_container_width=_A)
+			if A:By=['4.0+','3.5-3.9','3.0-3.4','2.5-2.9','2.0-2.4','<2.0'];Bz=[len([A for A in A if A[4]>=4.]),len([A for A in A if 3.5<=A[4]<4.]),len([A for A in A if 3.<=A[4]<3.5]),len([A for A in A if 2.5<=A[4]<3.]),len([A for A in A if 2.<=A[4]<2.5]),len([A for A in A if A[4]<2.])];B_=pd.DataFrame({_BN:By,_AN:Bz});AY=px.bar(B_,x=_BN,y=_AN,title=_Cb,color=_AN,color_continuous_scale=BC);AY.update_layout(height=400);st.plotly_chart(AY,use_container_width=_A)
 		with F:
 			if A:C0=len([A for A in A if A[4]>=3.7]);C1=len([A for A in A if 3.<=A[4]<3.7]);C2=len([A for A in A if 2.5<=A[4]<3.]);C3=len([A for A in A if A[4]<2.5]);C4=pd.DataFrame({AB:[_A_,_Ap,'Satisfactory','Needs Improvement'],_e:[C0,C1,C2,C3]});AZ=px.pie(C4,values=_e,names=AB,title='Academic Performance Distribution',color_discrete_sequence=px.colors.qualitative.Set3);AZ.update_layout(height=400);st.plotly_chart(AZ,use_container_width=_A)
 		if A:
@@ -996,9 +990,9 @@ def dashboard_page():
 	with Bu:
 		E,F=st.columns(2)
 		with E:
-			if A:C5=[A[2]for A in A];C6=pd.DataFrame({_AS:C5});Ac=px.histogram(C6,x=_AS,nbins=15,title=_Ce,color_discrete_sequence=['#FF6B6B']);Ac.update_layout(height=400);st.plotly_chart(Ac,use_container_width=_A)
+			if A:C5=[A[2]for A in A];C6=pd.DataFrame({_AS:C5});Ac=px.histogram(C6,x=_AS,nbins=15,title=_Cc,color_discrete_sequence=['#FF6B6B']);Ac.update_layout(height=400);st.plotly_chart(Ac,use_container_width=_A)
 		with F:
-			if A:C7=[A[3]for A in A];Ad=pd.Series(C7).value_counts().sort_index();AJ=pd.DataFrame({_f:Ad.index,_J:Ad.values});Ae=px.bar(AJ,x=_f,y=_J,title=_Cf,color=_J,color_continuous_scale='blues');Ae.update_layout(height=400);st.plotly_chart(Ae,use_container_width=_A)
+			if A:C7=[A[3]for A in A];Ad=pd.Series(C7).value_counts().sort_index();AJ=pd.DataFrame({_f:Ad.index,_J:Ad.values});Ae=px.bar(AJ,x=_f,y=_J,title=_Cd,color=_J,color_continuous_scale='blues');Ae.update_layout(height=400);st.plotly_chart(Ae,use_container_width=_A)
 		if O:
 			Af=[A[3]for A in O if A[3]]
 			if Af:Ag=pd.Series(Af).value_counts();C8=pd.DataFrame({_Q:Ag.index,_AO:Ag.values});Ah=px.pie(C8,values=_AO,names=_Q,title='Teacher Distribution by Department',color_discrete_sequence=px.colors.qualitative.Pastel);Ah.update_layout(height=400);st.plotly_chart(Ah,use_container_width=_A)
@@ -1027,7 +1021,7 @@ def dashboard_page():
 	with Bx:
 		E,F=st.columns(2)
 		with E:
-			if D:A7=pd.DataFrame(D,columns=[_Ad,_A1,'Stream Type',_BO,_Ae]);A7[_B0]=(A7[_Ae]/A7[_BO]*100).round(1);AK=px.bar(A7,x=_Ad,y=_B0,title='Stream Capacity Utilization',color=_B0,color_continuous_scale='RdYlGn_r');AK.add_hline(y=100,line_dash=_AD,line_color=_t,annotation_text=_Cg);AK.update_layout(height=400);st.plotly_chart(AK,use_container_width=_A)
+			if D:A7=pd.DataFrame(D,columns=[_Ad,_A1,'Stream Type',_BO,_Ae]);A7[_B0]=(A7[_Ae]/A7[_BO]*100).round(1);AK=px.bar(A7,x=_Ad,y=_B0,title='Stream Capacity Utilization',color=_B0,color_continuous_scale='RdYlGn_r');AK.add_hline(y=100,line_dash=_AD,line_color=_t,annotation_text=_Ce);AK.update_layout(height=400);st.plotly_chart(AK,use_container_width=_A)
 		with F:
 			if O:
 				Aq=[A[4]for A in O if A[4]is not _B]
@@ -1086,7 +1080,7 @@ def dashboard_page():
 				if d:
 					st.warning(f"⚠️ Found {len(d)} at-risk students")
 					with st.expander('View At-Risk Students'):
-						CO=pd.DataFrame(d);AL=px.scatter(CO,x=_AE,y=_G,size=Bd,hover_name=_E,title='At-Risk Students Analysis',labels={_AE:_B1,_G:_h},color=_H);AL.add_hline(y=2.5,line_dash=_AD,line_color=_t,annotation_text=_Ch);AL.add_vline(x=75,line_dash=_AD,line_color=_t,annotation_text='Minimum Attendance');st.plotly_chart(AL,use_container_width=_A)
+						CO=pd.DataFrame(d);AL=px.scatter(CO,x=_AE,y=_G,size=Bd,hover_name=_E,title='At-Risk Students Analysis',labels={_AE:_B1,_G:_h},color=_H);AL.add_hline(y=2.5,line_dash=_AD,line_color=_t,annotation_text=_Cf);AL.add_vline(x=75,line_dash=_AD,line_color=_t,annotation_text='Minimum Attendance');st.plotly_chart(AL,use_container_width=_A)
 						for K in d[:5]:st.write(f"• **{K[_E]}** (Grade {K[_H]}) - GPA: {K[_G]:.2f}, Attendance: {K[_AE]:.1f}%")
 						if len(d)>5:st.write(f"... and {len(d)-5} more")
 				else:st.success('✅ No at-risk students identified!')
@@ -1094,7 +1088,7 @@ def dashboard_page():
 	with S:
 		if st.button('💰 Financial Summary',use_container_width=_A):
 			st.success('💰 Financial summary generated!')
-			with st.expander(_Ci):
+			with st.expander(_Cg):
 				U,V=st.columns(2)
 				with U:st.metric(Ba,f"{N}{A4:,.2f}");st.metric(_Bu,R)
 				with V:st.metric(Bb,f"{N}{A5:,.2f}");X=b/R if R>0 else 0;st.metric(Bc,f"{N}{X:.2f}")
@@ -1211,12 +1205,12 @@ def admissions_page():
 		if hasattr(A,'ai')and A.ai:A.ai.sync_with_session_state()
 		else:st.error('AI system not initialized.');return
 		with st.form('admission_form'):
-			S=st.text_input(_Cj,placeholder='Enter full name');b,c=st.columns([2,1])
+			S=st.text_input(_Ch,placeholder='Enter full name');b,c=st.columns([2,1])
 			with b:from datetime import datetime,date as F;d=F.today().replace(year=F.today().year-10);B=st.date_input('Date of Birth*',value=d,min_value=F(1990,1,1),max_value=F.today(),help="Student's actual date of birth")
 			with c:
 				if B:M=F.today();C=M.year-B.year-((M.month,M.day)<(B.month,B.day));st.metric(_AS,f"{C} years")
 				else:C=6
-			e=st.number_input('Previous School GPA',min_value=_D,max_value=4.,value=3.);f=st.text_area('Extracurricular Activities',placeholder='List activities');T=st.text_input('Parent Contact*',placeholder=_Ck);g=st.text_area(_Bz,placeholder='Any medical conditions');h=st.form_submit_button('🤖 AI Auto-Evaluate Application');i=st.selectbox('Stream Assignment Method',[_B_,_C0,_C1],help='How students are assigned to class streams',index=2)
+			e=st.number_input('Previous School GPA',min_value=_D,max_value=4.,value=3.);f=st.text_area('Extracurricular Activities',placeholder='List activities');T=st.text_input('Parent Contact*',placeholder=_Ci);g=st.text_area(_Bz,placeholder='Any medical conditions');h=st.form_submit_button('🤖 AI Auto-Evaluate Application');i=st.selectbox('Stream Assignment Method',[_B_,_C0,_C1],help='How students are assigned to class streams',index=2)
 			if h:
 				D=[]
 				if not S:D.append('Student Name is required')
@@ -1268,7 +1262,7 @@ def admissions_page():
 					if V:
 						O={}
 						for C in V:O[C]=O.get(C,0)+1
-						P=pd.DataFrame(list(O.items()),columns=[_AS,_e]);P=P.sort_values(_AS);s=px.bar(P,x=_AS,y=_e,title=_Ce,color=_e,color_continuous_scale='Blues');st.plotly_chart(s,use_container_width=_A)
+						P=pd.DataFrame(list(O.items()),columns=[_AS,_e]);P=P.sort_values(_AS);s=px.bar(P,x=_AS,y=_e,title=_Cc,color=_e,color_continuous_scale='Blues');st.plotly_chart(s,use_container_width=_A)
 					else:st.info('No age data available for visualization.')
 				else:st.info('No student age data found.')
 			except Exception as E:st.warning(f"Could not generate age distribution: {str(E)}")
@@ -1323,7 +1317,7 @@ def students_page():
 					if M not in K:K.append(M)
 				d=[_AH]+K+[_A2]
 			N=st.selectbox('Filter by Stream',d)
-		with T:j=st.slider(_Ch,_D,4.,_D)
+		with T:j=st.slider(_Cf,_D,4.,_D)
 		with y:k=st.text_input('Search by Name')
 		B=C.copy()
 		if U!=_AH:B=B[B[_H]==U]
@@ -1386,7 +1380,7 @@ def students_page():
 				if AD:st.rerun()
 			st.markdown(_AP);st.subheader('📋 Current Student Summary');D=A.to_dict();AG,AH,AI,AJ=st.columns(4)
 			with AG:st.metric('Current GPA',f"{D[_G]:.2f}");st.metric('Current Attendance',f"{D[_K]:.1f}%")
-			with AH:st.metric('Current Behavior Score',f"{D[_U]:.1f}");st.metric(_Cl,D[_H])
+			with AH:st.metric('Current Behavior Score',f"{D[_U]:.1f}");st.metric(_Cj,D[_H])
 			with AI:
 				F=D.get(_O);Q=D.get(_A5)
 				if F and Q:G=f"{F} ({Q})"
@@ -1399,7 +1393,7 @@ def teachers_page():
 	try:
 		B7="\n        SELECT \n            t.teacher_id,\n            t.name,\n            t.subject,\n            t.department,\n            t.performance_score,\n            t.status,\n            t.is_class_teacher,\n            CASE \n                WHEN t.is_class_teacher = 1 THEN \n                    COALESCE(s.grade_level || ' - ' || s.stream_type, 'Not Assigned')\n                ELSE \n                    'Not Class Teacher'\n            END as assigned_class\n        FROM teachers t\n        LEFT JOIN streams s ON t.teacher_id = s.class_teacher_id\n        WHERE t.status = 'active'\n        ORDER BY t.name\n        ";O=C.execute_query(B7)
 		if not O:
-			st.warning('No teacher data found in database. Please add teachers first.');st.subheader(_Cm)
+			st.warning('No teacher data found in database. Please add teachers first.');st.subheader(_Ck)
 			with st.form('add_teacher'):
 				D,E=st.columns(2)
 				with D:I=st.text_input(_AI,placeholder='T001');v=st.text_input(_P,placeholder='Dr. John Smith');X=st.selectbox(_m,[_B3,_Af,r,A8,A9,AA,_B4,AB,AC,AD,AE,AF,AG,AH,AI,AJ,AK,AL])
@@ -1511,7 +1505,7 @@ def teachers_page():
 					with D:Ad=len(Y);st.metric(_C6,Ad)
 					with E:Ae=len([A for A in Y if A[5]!=f]);st.metric('Assigned Streams',Ae)
 					with A4:n=Ad-Ae;st.metric('Unassigned Streams',n)
-					with Bh:Af=sum([A[3]for A in Y if A[3]]);Bi=sum([A[4]or 0 for A in Y]);Bj=Bi/Af*100 if Af>0 else 0;st.metric(_Cn,f"{Bj:.1f}%")
+					with Bh:Af=sum([A[3]for A in Y if A[3]]);Bi=sum([A[4]or 0 for A in Y]);Bj=Bi/Af*100 if Af>0 else 0;st.metric(_Cl,f"{Bj:.1f}%")
 					if st.button('📥 Export Stream Assignments',key='export_streams'):T=Ac.to_csv(index=_F);st.download_button(label='Download Stream Assignments CSV',data=T,file_name=f"stream_assignments_{pd.Timestamp.now().strftime(_A7)}.csv",mime=_Ar,key='download_streams')
 				else:st.info('No streams found in the database')
 			except Exception as F:st.error(f"Error fetching stream assignments: {str(F)}")
@@ -1623,7 +1617,7 @@ def teachers_page():
 							except Exception as F:st.error('Error updating performance. Please try again.')
 				with E:
 					st.write('**Add New Teacher**')
-					if st.button(_Co):st.session_state.show_add_form=_A
+					if st.button(_Cm):st.session_state.show_add_form=_A
 def academics_page():
 	BV='Academic Year';BU='Reason';BT='Eligible for Promotion';BS='No GPA distribution data available';BR='No active students found';BQ='No courses available';BP='No students available';BO='Remark';BN='GPA Points';BM='No Teacher (Optional for Primary)';At='Promoted';As='To Grade';Ar='From Grade';Aq='❌ NOT MET';Ap='✅ MET';Ao='Promotion Rate %';An='background-color: #d1ecf1; color: #0c5460';Am='Grade (%)';Al='Very Good';AV='Retained';AU='Select a student...';AT='background-color: #f8d7da; color: #721c24';AS='background-color: #d4edda; color: #155724';AR='Fail';AQ='F9';AP='E8';AO='D7';AN='C6';AM='C5';AL='C4';AK='B3';AJ='B2';AI='A1';A3='Action';e='Pass';O='Credit';st.header('📚 Academic Management');A=DatabaseManager();U=GPACalculator(A)
 	def Au(student_id,student_name,from_grade,to_grade,action,gpa,attendance_rate,behavior_score,reason,academic_year=_B):
@@ -1634,7 +1628,7 @@ def academics_page():
 	BW,BX,BY,BZ=st.tabs(['📖 Courses','📝 Grades','📅 Schedule','🤖 Promotion'])
 	with BW:
 		st.subheader('Course Catalog')
-		with st.expander(_Cp):
+		with st.expander(_Cn):
 			with st.form('add_course_form'):
 				G,H=st.columns(2)
 				with G:f=st.text_input(_C8);V=st.text_input(_BW);Av=st.selectbox(_A1,[_R,_S,_T,_V,_W,_X,_b,_c,_d])
@@ -1648,7 +1642,7 @@ def academics_page():
 					elif not AW and(not W or W==_BX):st.error('Teacher is required for JHS courses')
 					else:
 						if AW and W==BM:A4=_B
-						Bb=_Cq
+						Bb=_Co
 						try:A.execute_update(Bb,(f,V,A4,Av,credits,Ba));Bc=W if A4 else'No Teacher Assigned';st.success(f"Course '{V}' added successfully! Teacher: {Bc}");st.rerun()
 						except Exception as C:st.error(f"Error adding course: {str(C)}")
 		o="\n            SELECT c.course_id, c.name, COALESCE(t.name, 'No Teacher Assigned') as teacher_name, \n                   c.grade_level, c.credits, c.schedule,\n                   COUNT(g.student_id) as enrolled_count\n            FROM courses c\n            LEFT JOIN teachers t ON c.teacher_id = t.teacher_id\n            LEFT JOIN grades g ON c.course_id = g.course_id\n            GROUP BY c.course_id, c.name, t.name, c.grade_level, c.credits, c.schedule\n            ORDER BY c.name\n        ";X=A.execute_query(o)
@@ -1677,7 +1671,7 @@ def academics_page():
 					if Aa>0:A8,F,A9=Ab(Aa);st.info(f"**GPA Equivalent:** {A8} ({F} - {A9})")
 					if st.form_submit_button('Add Grade'):
 						if p!=BP and A5!=BQ:
-							import uuid;Bi=str(uuid.uuid4());D=P[p];f=g[A5];Bj=_Cr
+							import uuid;Bi=str(uuid.uuid4());D=P[p];f=g[A5];Bj=_Cp
 							try:
 								A.execute_update(Bj,(Bi,D,f,Aa,A6,A7));st.success('Grade added successfully!')
 								try:Ac=U.update_student_gpa(D);st.info(f"Student GPA updated to: {Ac:.2f}")
@@ -1887,7 +1881,7 @@ def academics_page():
 		with G:
 			Y="\n                SELECT s.student_id, s.name, s.grade, s.gpa, s.attendance_rate, s.behavior_score,\n                       CASE \n                           WHEN s.gpa >= ? AND s.attendance_rate >= ? AND s.behavior_score >= ? \n                           THEN 'Eligible' \n                           ELSE 'Review Needed' \n                       END as promotion_status\n                FROM students s\n                WHERE s.status = 'active'\n                ORDER BY s.grade, s.name\n            ";M=A.execute_query(Y,(b,c,d))
 			if M:
-				C8=pd.DataFrame(M,columns=[_Cs,_P,_Cl,_h,_Ct,_BS,_o])
+				C8=pd.DataFrame(M,columns=[_Cq,_P,_Cj,_h,_Cr,_BS,_o])
 				def C9(val):
 					if val=='Eligible':return AS
 					elif val=='Review Needed':return AT
@@ -2010,10 +2004,10 @@ def academics_page():
 				else:st.info('No historical promotion data available yet. Data will be populated after running promotions.')
 			except Exception as C:st.error(f"Error loading historical data: {str(C)}")
 def finance_page():
-	A1='Payment Rate %';A0='Paid Students';z='donations';y='grants';x='Profit';w='Expenses';v='💳 Fee Management';u='📊 Financial Overview';c='Due Date';b='fees';a='tuition';st.header('💰 Financial Management');C=DatabaseManager();A2={_Ba:'₵',_Cu:'$','€ (Euro)':'€',_Cv:'£',_Cw:'₦'}
+	A1='Payment Rate %';A0='Paid Students';z='donations';y='grants';x='Profit';w='Expenses';v='💳 Fee Management';u='📊 Financial Overview';c='Due Date';b='fees';a='tuition';st.header('💰 Financial Management');C=DatabaseManager();A2={_Ba:'₵',_Cs:'$','€ (Euro)':'€',_Ct:'£',_Cu:'₦'}
 	if _CA in st.session_state:J=st.session_state.selected_currency_name;A=A2.get(J,'₵')
 	else:J=_Ba;A='₵'
-	A3,A4,A5=st.tabs([u,_Cx,v])
+	A3,A4,A5=st.tabs([u,_Cv,v])
 	with A3:
 		st.subheader(u);D,E=st.columns(2)
 		with D:
@@ -2044,7 +2038,7 @@ def finance_page():
                     4. Cash flow management recommendations
                     5. Collection efficiency improvements
                     """
-					with st.spinner(_Cy):AE=L.generate_response(AD);st.write(AE)
+					with st.spinner(_Cw):AE=L.generate_response(AD);st.write(AE)
 				except Exception as B:st.error(f"Error generating AI insights: {str(B)}")
 		st.subheader('📈 Financial Analytics')
 		try:
@@ -2057,7 +2051,7 @@ def finance_page():
 			else:st.info('No financial trend data available yet.')
 		except Exception as B:st.error(f"Error loading analytics: {str(B)}")
 	with A4:
-		st.subheader(_Cz);st.info('💡 Use this section to record all financial transactions including tuition payments, fees, expenses, and other income.');D,E=st.columns(2)
+		st.subheader(_Cx);st.info('💡 Use this section to record all financial transactions including tuition payments, fees, expenses, and other income.');D,E=st.columns(2)
 		with D:st.subheader('📝 Transaction Details');M=st.selectbox(_CB,[a,b,y,z,_x,'utilities','supplies','maintenance','other_expenses']);N=st.number_input(f"Amount ({A})",min_value=_D,step=.01,format='%.2f');R=st.text_input(_Bb,placeholder='Enter transaction description...')
 		with E:
 			st.subheader('🎯 Additional Information')
@@ -2154,13 +2148,13 @@ def analytics_page():
 	A=pd.DataFrame(d,columns=[_C,_E,_Z,_H,_G,_U,_I,_O]);P={}
 	for L in A[_C]:
 		try:
-			m=_CX;e=F.execute_query(m,(L,))[0][0]
+			m=_CV;e=F.execute_query(m,(L,))[0][0]
 			if e>0:n="\n                    SELECT COUNT(*) FROM attendance \n                    WHERE student_id = ? AND status = 'present'\n                ";o=F.execute_query(n,(L,))[0][0];P[L]=o/e*100
 			else:P[L]=1e2
 		except Exception:P[L]=_D
 	A[_K]=A[_C].map(P);p,q,r,s,t,u,v=st.tabs(['🎯 Overview KPIs','📊 Student Analytics','🏫 Stream Analysis',h,'👨\u200d🏫 Teacher Analytics','🤖 AI Predictions','📈 Trends & Stats'])
 	with p:
-		st.subheader(_CY);C,D,G,S=st.columns(4)
+		st.subheader(_CW);C,D,G,S=st.columns(4)
 		with C:w=A[_G].mean();st.metric(_AM,f"{w:.2f}")
 		with D:x=A[_K].mean();st.metric(_Br,f"{x:.1f}%")
 		with G:y=len(A[A[_G]>=3.5]);st.metric('High Performers (GPA ≥ 3.5)',y)
@@ -2168,14 +2162,14 @@ def analytics_page():
 		st.divider();st.subheader('📊 System Overview');C,D,G,S=st.columns(4)
 		try:
 			with C:A0=F.execute_query(_CQ)[0][0];st.metric('Active Students',A0)
-			with D:A1=F.execute_query(_CR)[0][0];st.metric(_CZ,A1)
-			with G:A2=F.execute_query(_BF)[0][0];st.metric(_Ca,A2)
+			with D:A1=F.execute_query(_CR)[0][0];st.metric(_CX,A1)
+			with G:A2=F.execute_query(_BF)[0][0];st.metric(_CY,A2)
 			with S:A3=F.execute_query('SELECT COUNT(*) FROM streams')[0][0];st.metric(_C6,A3)
 		except Exception:st.error('Unable to load system metrics.')
 	with q:
 		st.subheader('📊 Student Performance Analysis');C,D=st.columns(2)
-		with C:f=A[_H].value_counts();B=px.bar(x=f.index,y=f.values,title=_Cf,labels={_k:_A1,_l:_AN});B.update_layout(showlegend=_F);st.plotly_chart(B,use_container_width=_A)
-		with D:B=px.histogram(A,x=_G,nbins=20,title=_Cd,labels={_k:_h,_l:_AN});st.plotly_chart(B,use_container_width=_A)
+		with C:f=A[_H].value_counts();B=px.bar(x=f.index,y=f.values,title=_Cd,labels={_k:_A1,_l:_AN});B.update_layout(showlegend=_F);st.plotly_chart(B,use_container_width=_A)
+		with D:B=px.histogram(A,x=_G,nbins=20,title=_Cb,labels={_k:_h,_l:_AN});st.plotly_chart(B,use_container_width=_A)
 		st.divider();st.subheader('🔗 Performance Correlation Analysis');T=[_Z,_G,_K,_U];A4=A[T].corr();B=px.imshow(A4,text_auto=_A,aspect='auto',title='Performance Metrics Correlation Matrix',color_continuous_scale='RdBu_r');st.plotly_chart(B,use_container_width=_A);st.subheader('⚠️ At-Risk Students');M=A[(A[_G]<2.5)|(A[_K]<80)|(A[_U]<70)]
 		if len(M)>0:
 			st.warning(f"**{len(M)} students identified as at-risk:**")
@@ -2195,7 +2189,7 @@ def analytics_page():
 			with C:B=px.bar(I,x=_O,y=_Ax,title='Students per Stream',color=_A8,labels={_k:_Ad,_l:_AN});st.plotly_chart(B,use_container_width=_A)
 			with D:B=px.bar(I,x=_O,y=i,title='Average GPA by Stream',color=_A5,labels={_k:_Ad,_l:_AM});st.plotly_chart(B,use_container_width=_A)
 			st.divider();I[_AR]=I[_Ax]/I[_y]*100;C,D=st.columns(2)
-			with C:B=px.bar(I,x=_O,y=_AR,title='Stream Capacity Utilization (%)',color=_A5,labels={_k:_Ad,_l:'Capacity Utilization (%)'});B.add_hline(y=100,line_dash=_AD,line_color=_t,annotation_text=_Cg);st.plotly_chart(B,use_container_width=_A)
+			with C:B=px.bar(I,x=_O,y=_AR,title='Stream Capacity Utilization (%)',color=_A5,labels={_k:_Ad,_l:'Capacity Utilization (%)'});B.add_hline(y=100,line_dash=_AD,line_color=_t,annotation_text=_Ce);st.plotly_chart(B,use_container_width=_A)
 			with D:st.subheader('Stream Details');J=I[[_O,_A8,_A5,_Ax,_y,j]].copy();J.columns=[_Ad,_f,_AX,_Bx,_BO,_B6];st.dataframe(J,use_container_width=_A,hide_index=_A)
 		else:st.info('No stream data available.')
 	with s:
@@ -2210,7 +2204,7 @@ def analytics_page():
 			with C:st.metric(_BM,f"${g:,.2f}")
 			with D:st.metric(_Bu,W)
 			with G:st.metric('Avg Transaction Value',f"${A7:.2f}")
-			st.subheader(_Ci);J=N.copy();J.columns=[_CB,b,'Transaction Count'];J[b]=J[b].apply(lambda x:f"${x:,.2f}");st.dataframe(J,use_container_width=_A,hide_index=_A)
+			st.subheader(_Cg);J=N.copy();J.columns=[_CB,b,'Transaction Count'];J[b]=J[b].apply(lambda x:f"${x:,.2f}");st.dataframe(J,use_container_width=_A,hide_index=_A)
 		else:st.info('No financial data available.')
 	with t:
 		st.subheader('👨\u200d🏫 Teacher Performance Analytics');A8="\n            SELECT name, subject, department, performance_score, salary\n            FROM teachers\n            WHERE status = 'active'\n        "
@@ -2403,7 +2397,7 @@ def ai_insights_page():
 	if S in st.session_state:
 		st.subheader('📋 Previous Analysis')
 		with st.expander('View Last Generated Analysis'):st.write(st.session_state.last_ai_analysis)
-	st.subheader('💡 AI Recommendations');m,n,o,p=st.tabs(['🎓 Academic','👥 Administrative',_Cb,'🏫 Infrastructure'])
+	st.subheader('💡 AI Recommendations');m,n,o,p=st.tabs(['🎓 Academic','👥 Administrative',_CZ,'🏫 Infrastructure'])
 	with m:
 		st.write('### Academic Recommendations')
 		if st.button('🤖 Analyze Academic Performance'):
@@ -2473,7 +2467,7 @@ def ai_insights_page():
             4. Investment priorities
             5. Financial risk management
             """
-			with st.spinner(_Cy):
+			with st.spinner(_Cw):
 				try:
 					N=A.generate_response(v)
 					if D in N:st.error(f"{N}")
@@ -2567,13 +2561,13 @@ def ai_insights_page():
 		st.rerun()
 	if st.button('🗑️ Clear Chat History'):st.session_state.chat_history=[];st.rerun()
 def data_input_page():
-	'Page for manual data input for students, teachers, courses, grades, attendance, and finance';Bj='❌ No data was restored. Please check the backup file format.';Bi='**Restored tables:**';Bh='Excel Workbook';Bg='JSON Export';Bf='SQLite Database (.db)';Be='SELECT * FROM teachers';Bd='Failed';Bc='Completed';Bb='Refund';Ba='Donation';BZ='formatted_amount';BY='Status*';BX='Excused';BW='Absent';BV='Present';BU='Select a student';BT='Student*';BS='teacher_name';BR='Grade Level*';BA='Replace existing data';B9='Student Name';B8='original_grades_df';B7='course_name';B6='Select course to delete...';Ad='Selected Tables';Ac='NaT';Ab='transactions_to_delete';Aa='confirm_delete';AO='Complete Database';AN='finance';AM='grades';AL='courses';AK='teachers';AJ='delete';AI='is_class_teacher';AH='coerce';AA='Financial Transactions';A9='Grades';A8='Courses';A7='dynamic';r='schedule';i='description';h='attendance_id';g='credits';W='student_name';S='amount';R='transaction_id';Q='grade_id';I='hire_date';H='course_id';G='teacher_id';st.header(_CW);B=st.session_state.school_manager;Bk,Bl,Bm,Bn,Bo,Bp,Bq=st.tabs(['👨\u200d🎓 Students',_CV,'📚 Courses','📝 Grades',_Cc,'💰 Financial Transactions','📁 Bulk Operations'])
+	'Page for manual data input for students, teachers, courses, grades, attendance, and finance';Bj='❌ No data was restored. Please check the backup file format.';Bi='**Restored tables:**';Bh='Excel Workbook';Bg='JSON Export';Bf='SQLite Database (.db)';Be='SELECT * FROM teachers';Bd='Failed';Bc='Completed';Bb='Refund';Ba='Donation';BZ='formatted_amount';BY='Status*';BX='Excused';BW='Absent';BV='Present';BU='Select a student';BT='Student*';BS='teacher_name';BR='Grade Level*';BA='Replace existing data';B9='Student Name';B8='original_grades_df';B7='course_name';B6='Select course to delete...';Ad='Selected Tables';Ac='NaT';Ab='transactions_to_delete';Aa='confirm_delete';AO='Complete Database';AN='finance';AM='grades';AL='courses';AK='teachers';AJ='delete';AI='is_class_teacher';AH='coerce';AA='Financial Transactions';A9='Grades';A8='Courses';A7='dynamic';r='schedule';i='description';h='attendance_id';g='credits';W='student_name';S='amount';R='transaction_id';Q='grade_id';I='hire_date';H='course_id';G='teacher_id';st.header('📝 Data Input');B=st.session_state.school_manager;Bk,Bl,Bm,Bn,Bo,Bp,Bq=st.tabs(['👨\u200d🎓 Students','👨\u200d🏫 Teachers','📚 Courses','📝 Grades',_Ca,'💰 Financial Transactions','📁 Bulk Operations'])
 	with Bk:
 		st.subheader('Students Management');K=B.get_all_students()
 		if K:
 			st.write('**Existing Students:**');AP=pd.DataFrame(K)
 			if _r in AP.columns:AP[_r]=pd.to_datetime(AP[_r],errors=AH).dt.date
-			N={_C:st.column_config.TextColumn(_Cs,disabled=_A),_E:st.column_config.TextColumn(_P,required=_A),_Z:st.column_config.NumberColumn(_AS,min_value=3,max_value=25),_H:st.column_config.SelectboxColumn(_f,options=[_a,_R,_S,_T,_V,_W,_X,_b,_c,_d]),_G:st.column_config.NumberColumn(_h,min_value=_D,max_value=4.),_K:st.column_config.NumberColumn(_Ct,min_value=_D,max_value=1e2),_U:st.column_config.NumberColumn(_BS,min_value=_D,max_value=1e2),_AB:st.column_config.TextColumn(_C2),_A9:st.column_config.TextColumn('Medical Info'),_r:st.column_config.DateColumn(_C3),_I:st.column_config.SelectboxColumn(_o,options=[_n,_BT])};Br=st.data_editor(AP,column_config=N,num_rows=A7,use_container_width=_A,key='students_editor')
+			N={_C:st.column_config.TextColumn(_Cq,disabled=_A),_E:st.column_config.TextColumn(_P,required=_A),_Z:st.column_config.NumberColumn(_AS,min_value=3,max_value=25),_H:st.column_config.SelectboxColumn(_f,options=[_a,_R,_S,_T,_V,_W,_X,_b,_c,_d]),_G:st.column_config.NumberColumn(_h,min_value=_D,max_value=4.),_K:st.column_config.NumberColumn(_Cr,min_value=_D,max_value=1e2),_U:st.column_config.NumberColumn(_BS,min_value=_D,max_value=1e2),_AB:st.column_config.TextColumn(_C2),_A9:st.column_config.TextColumn('Medical Info'),_r:st.column_config.DateColumn(_C3),_I:st.column_config.SelectboxColumn(_o,options=[_n,_BT])};Br=st.data_editor(AP,column_config=N,num_rows=A7,use_container_width=_A,key='students_editor')
 			if st.button('💾 Save Student Changes',key='save_students'):
 				try:
 					for(s,A)in Br.iterrows():Bs=A[_r].strftime(_M)if pd.notna(A[_r])else _B;D='\n                            UPDATE students SET name=?, age=?, grade=?, gpa=?, attendance_rate=?, \n                            behavior_score=?, parent_contact=?, medical_info=?, admission_date=?, status=?\n                            WHERE student_id=?\n                        ';E=A[_E],A[_Z],A[_H],A[_G],A[_K],A[_U],A[_AB],A[_A9],Bs,A[_I],A[_C];B.db.execute_update(D,E)
@@ -2582,7 +2576,7 @@ def data_input_page():
 		else:st.info('No students found. Use the form below to add new students.')
 		with st.expander('➕ Add New Student',expanded=_F):
 			with st.form('new_student_form'):
-				L=st.text_input(_Cj,placeholder='Enter student name');Bt=st.number_input('Age*',min_value=3,max_value=25,value=6);Bu=st.selectbox(BR,[_a,_R,_S,_T,_V,_W,_X,_b,_c,_d]);Bv=st.number_input(_h,min_value=_D,max_value=4.,value=_D);Bw=st.number_input(_B1,min_value=_D,max_value=1e2,value=1e2);Bx=st.number_input(_BS,min_value=_D,max_value=1e2,value=1e2);By=st.text_input(_C2,placeholder=_Ck);Bz=st.text_area(_Bz,placeholder='Any medical conditions or notes');t=st.date_input(_C3,value=datetime.now());U=st.form_submit_button('➕ Add Student')
+				L=st.text_input(_Ch,placeholder='Enter student name');Bt=st.number_input('Age*',min_value=3,max_value=25,value=6);Bu=st.selectbox(BR,[_a,_R,_S,_T,_V,_W,_X,_b,_c,_d]);Bv=st.number_input(_h,min_value=_D,max_value=4.,value=_D);Bw=st.number_input(_B1,min_value=_D,max_value=1e2,value=1e2);Bx=st.number_input(_BS,min_value=_D,max_value=1e2,value=1e2);By=st.text_input(_C2,placeholder=_Ci);Bz=st.text_area(_Bz,placeholder='Any medical conditions or notes');t=st.date_input(_C3,value=datetime.now());U=st.form_submit_button('➕ Add Student')
 				if U and L:
 					X=str(uuid.uuid4())[:8];B_=Student(student_id=X,name=L,age=Bt,grade=Bu,admission_date=t.strftime(_M),gpa=Bv,attendance_rate=Bw,behavior_score=Bx,parent_contact=By,medical_info=Bz)
 					try:B._save_student(B_);st.success(f"✅ Student {L} added successfully! ID: {X}");st.rerun()
@@ -2612,9 +2606,9 @@ def data_input_page():
 						except Exception as C:st.error(f"❌ Error deleting teacher records: {str(C)}")
 					else:st.warning('⚠️ No records selected for deletion. Remove rows from the table above to delete them.')
 		else:st.info('No teachers found. Use the form below to add new teachers.')
-		with st.expander(_Cm,expanded=_F):
+		with st.expander(_Ck,expanded=_F):
 			with st.form('new_teacher_form'):
-				e=st.text_input('Teacher Name*',placeholder='Enter teacher name');BC=st.text_input('Subject*',placeholder='e.g., Mathematics');BD=st.text_input('Department*',placeholder='e.g., STEM');C3=st.number_input(_C4,min_value=_D,value=_D);C4=st.number_input(_AV,min_value=_D,max_value=1e2,value=1e2);v=st.date_input(_C5,value=datetime.now());C5=st.checkbox(_C7,value=_F);U=st.form_submit_button(_Co)
+				e=st.text_input('Teacher Name*',placeholder='Enter teacher name');BC=st.text_input('Subject*',placeholder='e.g., Mathematics');BD=st.text_input('Department*',placeholder='e.g., STEM');C3=st.number_input(_C4,min_value=_D,value=_D);C4=st.number_input(_AV,min_value=_D,max_value=1e2,value=1e2);v=st.date_input(_C5,value=datetime.now());C5=st.checkbox(_C7,value=_F);U=st.form_submit_button(_Cm)
 				if U and e and BC and BD:
 					Z=str(uuid.uuid4())[:8];D='\n                        INSERT INTO teachers (teacher_id, name, subject, department, hire_date, \n                                            performance_score, salary, status, is_class_teacher)\n                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)\n                    ';Ae=1 if C5 else 0;E=Z,e,BC,BD,v.strftime(_M),C4,C3,_n,Ae
 					try:B.db.execute_update(D,E);st.success(f"✅ Teacher {e} added successfully! ID: {Z}");st.rerun()
@@ -2645,7 +2639,7 @@ def data_input_page():
 					elif Ag and AT==B6:st.warning('⚠️ Please select a course to delete.')
 					elif Ag and not BF:st.warning('⚠️ Please check the confirmation box to delete the course.')
 		else:st.info('No courses found. Use the form below to add new courses.')
-		with st.expander(_Cp,expanded=_F):
+		with st.expander(_Cn,expanded=_F):
 			Y=B.db.execute_query(_Ag);AS=[_BX]+[A[1]for A in Y];CA={A[1]:A[0]for A in Y}
 			with st.form('new_course_form'):
 				w=st.text_input('Course Name*',placeholder='e.g., Algebra I');e=st.selectbox('Teacher*',AS,help='Select a teacher for this course');CB=st.selectbox(BR,[_a,_R,_S,_T,_V,_W,_X,_b,_c,_d]);credits=st.number_input('Credits*',min_value=1,max_value=10,value=3);CC=st.text_input(_B7,placeholder='e.g., Mon/Wed 9:00-10:00');U=st.form_submit_button('➕ Add Course')
@@ -2653,7 +2647,7 @@ def data_input_page():
 					if not w:st.error('❌ Please enter a course name.')
 					elif e==_BX:st.error('❌ Please select a teacher.')
 					else:
-						A2=str(uuid.uuid4())[:8];Z=CA[e];A3=Course(course_id=A2,name=w,teacher_id=Z,grade_level=CB,credits=credits,schedule=CC);D=_Cq;E=A3.course_id,A3.name,A3.teacher_id,A3.grade_level,A3.credits,A3.schedule
+						A2=str(uuid.uuid4())[:8];Z=CA[e];A3=Course(course_id=A2,name=w,teacher_id=Z,grade_level=CB,credits=credits,schedule=CC);D=_Co;E=A3.course_id,A3.name,A3.teacher_id,A3.grade_level,A3.credits,A3.schedule
 						try:B.db.execute_update(D,E);st.success(f"✅ Course '{w}' assigned to '{e}' added successfully! ID: {A2}");st.rerun()
 						except Exception as C:st.error(f"❌ Error adding course: {str(C)}")
 	with Bn:
@@ -2668,7 +2662,7 @@ def data_input_page():
 					for AB in CF:u='DELETE FROM grades WHERE grade_id = ?';B.db.execute_update(u,(AB,))
 					for(s,A)in BJ.iterrows():
 						if A[Q]in BK:D='\n                                UPDATE grades SET student_id=?, course_id=?, grade=?, semester=?, year=?\n                                WHERE grade_id=?\n                            ';E=A[_C],A[H],A[_H],A[_A6],A[_A0],A[Q];B.db.execute_update(D,E)
-						else:CG=_Cr;E=A[Q],A[_C],A[H],A[_H],A[_A6],A[_A0];B.db.execute_update(CG,E)
+						else:CG=_Cp;E=A[Q],A[_C],A[H],A[_H],A[_A6],A[_A0];B.db.execute_update(CG,E)
 					if B8 in st.session_state:del st.session_state.original_grades_df
 					st.success('✅ Grade records updated successfully!');st.rerun()
 				except Exception as C:st.error(f"❌ Error updating grades: {str(C)}")
@@ -2704,7 +2698,7 @@ def data_input_page():
 					except Exception as C:st.error(f"❌ Error adding attendance: {str(C)}")
 	with Bp:
 		st.subheader('Financial Transactions Management');O,T=st.columns([1,3])
-		with O:Ak={_Ba:'₵',_Cu:'$','€ (Euro)':'€',_Cv:'£',_Cw:'₦'};BM=st.selectbox('Currency',list(Ak.keys()),index=0 if _CA not in st.session_state else list(Ak.keys()).index(st.session_state.get(_CA,_Ba)),help='Select currency for display and new transactions',key='currency_selector');a=Ak[BM];st.session_state.selected_currency_name=BM;st.session_state.currency_symbol=a
+		with O:Ak={_Ba:'₵',_Cs:'$','€ (Euro)':'€',_Ct:'£',_Cu:'₦'};BM=st.selectbox('Currency',list(Ak.keys()),index=0 if _CA not in st.session_state else list(Ak.keys()).index(st.session_state.get(_CA,_Ba)),help='Select currency for display and new transactions',key='currency_selector');a=Ak[BM];st.session_state.selected_currency_name=BM;st.session_state.currency_symbol=a
 		CN='\n            SELECT f.transaction_id, f.student_id, s.name as student_name, \n                   f.amount, f.type, f.description, f.date, f.status\n            FROM finance f\n            LEFT JOIN students s ON f.student_id = s.student_id\n            ORDER BY f.date DESC\n        ';AW=B.db.execute_query(CN)
 		if AW:
 			st.write('**Existing Financial Transactions:**');b=pd.DataFrame(AW,columns=[R,_C,W,S,_w,i,_L,_I]);b[AJ]=_F;b[BZ]=b[S].apply(lambda x:f"{a}{x:,.2f}"if pd.notnull(x)else f"{a}0.00")
@@ -2753,14 +2747,14 @@ def data_input_page():
 						if Ab in st.session_state:del st.session_state.transactions_to_delete
 						st.rerun()
 		else:st.info('No financial transactions found. Use the form below to add new transactions.')
-		with st.expander(_Cz,expanded=_F):
+		with st.expander(_Cx,expanded=_F):
 			K=B.get_all_students();J={A[_E]:A[_C]for A in K}
 			with st.form('new_transaction_form'):
 				O,T=st.columns(2)
 				with O:L=st.selectbox(_AG,list(J.keys()),help='Select a student (optional)');AE=st.number_input(f"Amount* ({a})",min_value=_D,value=_D,format='%.2f');CS=st.selectbox('Type*',[_Bt,'Fee',Ba,Bb,'Other'])
 				with T:An=st.text_input('Description*',placeholder='e.g., Tuition payment for Fall 2025');x=st.date_input('Date*',value=datetime.now());CT=st.selectbox(BY,[_Ao,Bc,Bd])
 				if AE>0:st.info(f"💰 Amount Preview: {a}{AE:,.2f}")
-				U=st.form_submit_button(_Cx)
+				U=st.form_submit_button(_Cv)
 				if U and AE and An:
 					AD=str(uuid.uuid4())[:8];X=J[L]if L else _B;CU=f"{An} ({a})";D='\n                        INSERT INTO finance (transaction_id, student_id, amount, type, description, date, status)\n                        VALUES (?, ?, ?, ?, ?, ?, ?)\n                    ';E=AD,X,AE,CS,CU,x.strftime(_M),CT
 					try:B.db.execute_update(D,E);st.success(f"✅ Transaction added: {a}{AE:,.2f} - {An}!");st.rerun()
@@ -2790,9 +2784,9 @@ def data_input_page():
 							AF=o.getvalue();st.download_button(label='📊 Download Complete Database (Excel)',data=AF,file_name=f"school_complete_data_{datetime.now().strftime(_A7)}.xlsx",mime=_Be);CZ={_AZ:Ao,AK:[dict(zip([G,_E,_AY,_A4,I,_p,_x,_I],A))for A in Ap],AL:[dict(zip([H,_E,G,_A8,g,r],A))for A in Aq],AM:[dict(zip([Q,_C,H,_H,_A6,_A0],A))for A in Ar],_AE:[dict(zip([h,_C,_L,_I],A))for A in As],AN:[dict(zip([R,_C,S,_w,i,_L,_I],A))for A in At]};Au=json.dumps(CZ,indent=2,default=str);st.download_button(label='📋 Download Complete Database (JSON)',data=Au,file_name=f"school_complete_data_{datetime.now().strftime(_A7)}.json",mime=_AQ);return
 						if P:
 							F=pd.DataFrame(P);O,T,BE=st.columns(3)
-							with O:Ca=F.to_csv(index=_F);st.download_button(label=_C_,data=Ca,file_name=f"{n}_{datetime.now().strftime(_A7)}.csv",mime=_Ar)
-							with T:o=io.BytesIO();F.to_excel(o,index=_F,engine=_Bd);AF=o.getvalue();st.download_button(label=_D0,data=AF,file_name=f"{n}_{datetime.now().strftime(_A7)}.xlsx",mime=_Be)
-							with BE:Au=F.to_json(orient='records',indent=2);st.download_button(label=_D1,data=Au,file_name=f"{n}_{datetime.now().strftime(_A7)}.json",mime=_AQ)
+							with O:Ca=F.to_csv(index=_F);st.download_button(label=_Cy,data=Ca,file_name=f"{n}_{datetime.now().strftime(_A7)}.csv",mime=_Ar)
+							with T:o=io.BytesIO();F.to_excel(o,index=_F,engine=_Bd);AF=o.getvalue();st.download_button(label=_Cz,data=AF,file_name=f"{n}_{datetime.now().strftime(_A7)}.xlsx",mime=_Be)
+							with BE:Au=F.to_json(orient='records',indent=2);st.download_button(label=_C_,data=Au,file_name=f"{n}_{datetime.now().strftime(_A7)}.json",mime=_AQ)
 							st.success(f"✅ {m} data prepared for download ({len(P)} records)")
 						else:st.warning(f"⚠️ No {m.lower()} data found to export")
 					except Exception as C:st.error(f"❌ Error preparing export data: {str(C)}")
@@ -3219,7 +3213,7 @@ def streams_page():
 			with E:st.metric(_s,AL)
 			with F:st.metric(v,A3)
 			with c:st.metric(_C6,B3)
-			with A1:st.metric(_Cn,f"{B4:.1f}%")
+			with A1:st.metric(_Cl,f"{B4:.1f}%")
 		except Exception as B:st.error(f"Error loading capacity overview: {B}")
 		st.divider();st.subheader('⚖️ Capacity Enforcement');E,F=st.columns(2)
 		with E:
@@ -3272,9 +3266,9 @@ def export_data():
 	'Export school data to various formats';D=st.session_state.school_manager;B=D.get_all_students()
 	if B:
 		A=pd.DataFrame(B);E,F,G=st.columns(3)
-		with E:H=A.to_csv(index=_F);st.download_button(label=_C_,data=H,file_name='students_data.csv',mime=_Ar)
-		with F:C=io.BytesIO();A.to_excel(C,index=_F,engine=_Bd);I=C.getvalue();st.download_button(label=_D0,data=I,file_name='students_data.xlsx',mime=_Be)
-		with G:J=A.to_json(orient='records',indent=2);st.download_button(label=_D1,data=J,file_name='students_data.json',mime=_AQ)
+		with E:H=A.to_csv(index=_F);st.download_button(label=_Cy,data=H,file_name='students_data.csv',mime=_Ar)
+		with F:C=io.BytesIO();A.to_excel(C,index=_F,engine=_Bd);I=C.getvalue();st.download_button(label=_Cz,data=I,file_name='students_data.xlsx',mime=_Be)
+		with G:J=A.to_json(orient='records',indent=2);st.download_button(label=_C_,data=J,file_name='students_data.json',mime=_AQ)
 def backup_restore():
 	'Backup and restore functionality';st.subheader('💾 Backup & Restore');F,G=st.columns(2)
 	with F:
