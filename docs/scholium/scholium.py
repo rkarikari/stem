@@ -2100,12 +2100,28 @@ def main():
     if 'school_manager' not in st.session_state:
         st.session_state.school_manager = SchoolManager()
     
+    # Auto-detect environment and set appropriate default provider
     if 'ai_provider' not in st.session_state:
-        st.session_state.ai_provider = AIProvider.OLLAMA
+        # Check if running on Streamlit Cloud by trying Ollama connection
+        try:
+            test_response = requests.get("http://localhost:11434/api/tags", timeout=2)
+            # If successful, we're in local environment
+            st.session_state.ai_provider = AIProvider.OLLAMA
+            st.session_state.environment = "local"
+        except:
+            # If failed, we're likely on Streamlit Cloud
+            st.session_state.ai_provider = AIProvider.OPENROUTER
+            st.session_state.environment = "cloud"
         
     # Sidebar for AI Configuration
     st.sidebar.header("🧟 RadioSport Scholium")
     st.sidebar.text(f' Version {APP_VERSION}')
+
+    # Show environment indicator
+    if st.session_state.get('environment') == 'cloud':
+        st.sidebar.caption("☁️ Cloud ")
+    else:
+        st.sidebar.caption("💻 Local ")
 
     # Initialize SchoolAI instance
     if 'school_ai' not in st.session_state:
@@ -2113,12 +2129,21 @@ def main():
 
     school_ai = st.session_state.school_ai
 
-    # Provider selection
-    provider_display = st.sidebar.radio(
-        "AI Provider",
-        ["Local", "Cloud"],
-        key="ai_provider_select"
-    )
+    # Provider selection - show only available options
+    if st.session_state.get('environment') == 'cloud':
+        # On Streamlit Cloud, only show Cloud option
+        provider_display = st.sidebar.radio(
+            "AI Provider",
+            ["Cloud"],
+            key="ai_provider_select"
+        )
+    else:
+        # In local environment, show both options
+        provider_display = st.sidebar.radio(
+            "AI Provider",
+            ["Local", "Cloud"],
+            key="ai_provider_select"
+        )
     
     # Map display names to actual provider values
     provider_mapping = {
@@ -2130,12 +2155,14 @@ def main():
     school_ai.provider = st.session_state.ai_provider
 
     if st.session_state.ai_provider == AIProvider.OLLAMA:
-        # Ollama Configuration
-        st.sidebar.subheader("🔧 Ollama Settings")
-        
-        # Server URL configuration
-        with st.sidebar.expander("Server Configuration", expanded=False):
-            new_ollama_url = st.text_input(
+        # Only show Ollama configuration in local environment
+        if st.session_state.get('environment') != 'cloud':
+            # Ollama Configuration
+            st.sidebar.subheader("🔧 Ollama Settings")
+            
+            # Server URL configuration
+            with st.sidebar.expander("Server Configuration", expanded=False):
+                new_ollama_url = st.text_input(
                 "Ollama Server URL", 
                 value=st.session_state.get('ollama_url', 'http://localhost:11434'),
                 placeholder="http://localhost:11434",
@@ -2150,12 +2177,12 @@ def main():
                     del st.session_state.ai_model
             
             # Connection test
-            if st.button("🔄 Test Connection", key="sidebar_test_ollama"):
-                models = school_ai.get_ollama_models()
-                if models:
-                    st.success(f"✅ Connected! {len(models)} models found")
-                else:
-                    st.error("❌ Connection failed")
+#            if st.button("🔄 Test Connection", key="sidebar_test_ollama"):
+#                models = school_ai.get_ollama_models()
+#                if models:
+#                    st.success(f"✅ Connected! {len(models)} models found")
+#                else:
+#                    st.error("❌ Connection failed")
         
         # Model selection
         col1, col2 = st.sidebar.columns([3, 1])
@@ -2179,7 +2206,11 @@ def main():
                 st.session_state.ai_model = selected_model
                 school_ai.model = selected_model
             else:
-                st.warning("⚠️ Models Unavailable.")
+                # Only show warning in local environment
+                if st.session_state.get('environment') != 'cloud':
+                    st.warning("⚠️ Models Unavailable.")
+                else:
+                    st.info("💡 Ollama not available. Using Cloud AI provider.")
                 
                 if 'ai_model' in st.session_state:
                     del st.session_state.ai_model
@@ -2254,8 +2285,14 @@ def main():
     # Get current model state (defined after both Ollama and OpenRouter blocks)
     current_model = st.session_state.get('ai_model', 'None selected')
     
+    # Only show error if model not selected AND we're in proper environment
     if current_model == 'None selected':
-        st.sidebar.error("⚠️ Please select a model to continue")
+        if st.session_state.get('environment') == 'cloud':
+            # On cloud, just show info message
+            st.sidebar.info("ℹ️ Select a model above to enable AI features")
+        else:
+            # On local, show error
+            st.sidebar.error("⚠️ Please select a model to continue")
     
     # Main Interface
     st.title("🏫 RadioSport Scholium")
