@@ -2251,7 +2251,8 @@ def main():
                 st.rerun()
 
     # Current Configuration Summary
-
+    # Get current model state (defined after both Ollama and OpenRouter blocks)
+    current_model = st.session_state.get('ai_model', 'None selected')
     
     if current_model == 'None selected':
         st.sidebar.error("⚠️ Please select a model to continue")
