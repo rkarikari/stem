@@ -201,7 +201,8 @@ def initialize_ui():
         "ai_enabled": True,
         "pdf_buffer": None,
         "override_attempts": 0,
-        "last_override_attempt": None
+        "last_override_attempt": None,
+        "auto_switched_to_cloud": False
     }
     
     # Load saved data if available
@@ -312,10 +313,14 @@ def get_ollama_models_cached():
         return [model for model in models if model and not any(model.lower().startswith(prefix) for prefix in embedding_prefixes)]
         
     except requests.ConnectionError:
-        st.error(f"Ollama server unavailable at {st.session_state.ollama_host}")
+        # Only show error if running locally
+        if not is_hosted_online():
+            st.error(f"Ollama server unavailable at {st.session_state.ollama_host}")
         return []
     except Exception as e:
-        st.error(f"Error fetching Ollama models: {str(e)}")
+        # Only show error if running locally
+        if not is_hosted_online():
+            st.error(f"Error fetching Ollama models: {str(e)}")
         return []
 
 @st.cache_data(ttl=3600)
@@ -1298,8 +1303,20 @@ def main():
                 default_idx = ollama_models.index(DEFAULT_MODEL) if DEFAULT_MODEL in ollama_models else 0
                 selected_model = st.selectbox("Local Model:", ollama_models, index=default_idx)
             else:
-                st.warning("No local models available")
+                # Only show warning if running locally
+                if not is_hosted_online():
+                    st.warning("No local models available")
+                else:
+                    st.info("💡 Local models unavailable. Please switch to Cloud provider above.")
                 selected_model = None
+                
+        # Auto-switch to Cloud if hosted online and Local has no models
+        if api_provider == "Local" and is_hosted_online() and not ollama_models:
+            if "auto_switched_to_cloud" not in st.session_state:
+                st.session_state.api_provider = "Cloud"
+                st.session_state.auto_switched_to_cloud = True
+                st.rerun()        
+                
         else:
             api_key = get_api_key("openrouter")
             if api_key:
