@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 8: Advanced Coding - RadioSport Handbook</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            background: #f5f5f5;
+        }
+        .container { max-width: 1200px; margin: 0 auto; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .nav { background: #1e3c72; color: white; padding: 15px 30px; display: flex; justify-content: space-between; }
+        .nav a { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 40px; text-align: center; }
+        .header h1 { font-size: 42px; margin-bottom: 10px; }
+        .chapter-num { font-size: 18px; opacity: 0.9; }
+        .content { padding: 40px; }
+        h2 { color: #1e3c72; font-size: 32px; margin: 40px 0 20px 0; padding-bottom: 10px; border-bottom: 3px solid #667eea; }
+        h3 { color: #2a5298; font-size: 24px; margin: 30px 0 15px 0; }
+        h4 { color: #34495e; font-size: 20px; margin: 20px 0 10px 0; }
+        p { margin-bottom: 15px; text-align: justify; }
+        .info-box, .success-box, .highlight-box, .diagram-box { padding: 25px; margin: 25px 0; border-radius: 5px; border-left: 5px solid; }
+        .info-box { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left-color: #2196f3; }
+        .success-box { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; }
+        .highlight-box { background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); border-left-color: #9c27b0; }
+        .diagram-box { background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left-color: #ff9800; }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        ul, ol { margin: 20px 0 20px 40px; }
+        li { margin-bottom: 10px; }
+        .code-block { background: #2c3e50; color: #ecf0f1; padding: 20px; border-radius: 8px; font-family: 'Courier New', monospace; margin: 20px 0; overflow-x: auto; font-size: 14px; }
+        .keyword { color: #e74c3c; font-weight: bold; }
+        .string { color: #2ecc71; }
+        .comment { color: #95a5a6; font-style: italic; }
+        .function { color: #3498db; font-weight: bold; }
+        .number { color: #f39c12; }
+        .footer { background: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+        .diagram-container { margin: 30px 0; text-align: center; }
+        .diagram-title { font-weight: bold; font-size: 16px; margin-bottom: 15px; color: #1e3c72; }
+        svg { max-width: 100%; height: auto; }
+        .architecture-diagram { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="radiosport_ch7.html">← Chapter 7</a>
+            <span>Chapter 8 of 14</span>
+            <a href="radiosport_ch9.html">Chapter 9 →</a>
+        </div>
+        
+        <div class="header">
+            <div class="chapter-num">CHAPTER 8</div>
+            <h1>💻 Advanced Coding: C++ & Python</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong>Master software development for RadioSport applications including radio control, satellite tracking, drone automation, and signal processing. Learn both Python (rapid prototyping) and C++ (real-time performance) for comprehensive system development.</strong></p>
+
+            <div class="diagram-box">
+                <h4>📊 Programming Language Selection Guide</h4>
+                <div class="diagram-container">
+                    <div class="architecture-diagram">
+                        <svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Python Side -->
+                            <rect x="20" y="20" width="350" height="260" fill="#306998" rx="10"/>
+                            <text x="195" y="50" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🐍 PYTHON</text>
+                            <text x="195" y="75" text-anchor="middle" fill="#FFD43B" font-size="14">Rapid Development</text>
+                            
+                            <rect x="40" y="95" width="310" height="40" fill="#FFD43B" rx="5"/>
+                            <text x="195" y="120" text-anchor="middle" fill="#306998" font-size="14" font-weight="bold">✓ Radio Control (CAT)</text>
+                            
+                            <rect x="40" y="145" width="310" height="40" fill="#FFD43B" rx="5"/>
+                            <text x="195" y="170" text-anchor="middle" fill="#306998" font-size="14" font-weight="bold">✓ Satellite Tracking</text>
+                            
+                            <rect x="40" y="195" width="310" height="40" fill="#FFD43B" rx="5"/>
+                            <text x="195" y="220" text-anchor="middle" fill="#306998" font-size="14" font-weight="bold">✓ Prototyping</text>
+                            
+                            <text x="195" y="255" text-anchor="middle" fill="white" font-size="12">Easy to learn • Rich libraries</text>
+                            
+                            <!-- C++ Side -->
+                            <rect x="430" y="20" width="350" height="260" fill="#00599C" rx="10"/>
+                            <text x="605" y="50" text-anchor="middle" fill="white" font-size="24" font-weight="bold">⚡ C++</text>
+                            <text x="605" y="75" text-anchor="middle" fill="#659AD2" font-size="14">High Performance</text>
+                            
+                            <rect x="450" y="95" width="310" height="40" fill="#659AD2" rx="5"/>
+                            <text x="605" y="120" text-anchor="middle" fill="#00599C" font-size="14" font-weight="bold">✓ DSP / FFT</text>
+                            
+                            <rect x="450" y="145" width="310" height="40" fill="#659AD2" rx="5"/>
+                            <text x="605" y="170" text-anchor="middle" fill="#00599C" font-size="14" font-weight="bold">✓ Real-time Systems</text>
+                            
+                            <rect x="450" y="195" width="310" height="40" fill="#659AD2" rx="5"/>
+                            <text x="605" y="220" text-anchor="middle" fill="#00599C" font-size="14" font-weight="bold">✓ SDR Processing</text>
+                            
+                            <text x="605" y="255" text-anchor="middle" fill="white" font-size="12">Fast execution • Hardware control</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <h2>Python for RadioSport</h2>
+
+            <h3>Radio Control via CAT Interface</h3>
+            
+            <div class="diagram-box">
+                <h4>📡 CAT Communication Architecture</h4>
+                <div class="diagram-container">
+                    <div class="architecture-diagram">
+                        <svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Computer -->
+                            <rect x="50" y="150" width="180" height="100" fill="#3498db" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                            <text x="140" y="180" text-anchor="middle" fill="white" font-size="16" font-weight="bold">Computer</text>
+                            <text x="140" y="205" text-anchor="middle" fill="white" font-size="12">Python Script</text>
+                            <text x="140" y="225" text-anchor="middle" fill="#ecf0f1" font-size="11">PySerial Library</text>
+                            
+                            <!-- USB Cable -->
+                            <line x1="230" y1="200" x2="320" y2="200" stroke="#2c3e50" stroke-width="3"/>
+                            <text x="275" y="190" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="bold">USB/Serial</text>
+                            <polygon points="320,200 310,195 310,205" fill="#2c3e50"/>
+                            
+                            <!-- CAT Interface (Optional) -->
+                            <rect x="320" y="170" width="120" height="60" fill="#95a5a6" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                            <text x="380" y="195" text-anchor="middle" fill="white" font-size="14" font-weight="bold">CAT Interface</text>
+                            <text x="380" y="215" text-anchor="middle" fill="white" font-size="10">(If needed)</text>
+                            
+                            <!-- Radio Cable -->
+                            <line x1="440" y1="200" x2="530" y2="200" stroke="#2c3e50" stroke-width="3"/>
+                            <text x="485" y="190" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="bold">Serial/CI-V</text>
+                            <polygon points="530,200 520,195 520,205" fill="#2c3e50"/>
+                            
+                            <!-- Radio -->
+                            <rect x="530" y="150" width="180" height="100" fill="#27ae60" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                            <text x="620" y="180" text-anchor="middle" fill="white" font-size="16" font-weight="bold">Transceiver</text>
+                            <text x="620" y="205" text-anchor="middle" fill="white" font-size="12">CAT Port</text>
+                            <text x="620" y="225" text-anchor="middle" fill="#ecf0f1" font-size="11">Icom/Yaesu/Kenwood</text>
+                            
+                            <!-- Data Flow Examples -->
+                            <rect x="100" y="280" width="600" height="90" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
+                            <text x="400" y="305" text-anchor="middle" fill="#2c3e50" font-size="14" font-weight="bold">Example Commands</text>
+                            
+                            <text x="120" y="330" fill="#16a085" font-size="12" font-family="monospace">→ Set Freq: FE FE 94 E0 05 [BCD] FD</text>
+                            <text x="120" y="350" fill="#8e44ad" font-size="12" font-family="monospace">← ACK: FE FE E0 94 FB FD</text>
+                        </svg>
+                    </div>
+                    <p style="margin-top: 15px; font-size: 14px; color: #555;">
+                        <strong>Key Components:</strong> The computer runs Python with PySerial, connecting via USB to either a direct radio port or through a CAT interface adapter. Commands use manufacturer-specific protocols (Icom CI-V, Yaesu CAT, etc.).
+                    </p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4>🔌 Serial Communication Protocol</h4>
+                <div class="diagram-container">
+                    <div class="architecture-diagram">
+                        <svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Title -->
+                            <text x="450" y="25" text-anchor="middle" fill="#2c3e50" font-size="16" font-weight="bold">Serial Data Frame Structure</text>
+                            
+                            <!-- Start Bit -->
+                            <rect x="50" y="60" width="80" height="80" fill="#e74c3c" stroke="#2c3e50" stroke-width="2"/>
+                            <text x="90" y="95" text-anchor="middle" fill="white" font-size="14" font-weight="bold">START</text>
+                            <text x="90" y="115" text-anchor="middle" fill="white" font-size="12">BIT</text>
+                            <text x="90" y="130" text-anchor="middle" fill="white" font-size="16" font-weight="bold">0</text>
+                            
+                            <!-- Data Bits -->
+                            <rect x="150" y="60" width="480" height="80" fill="#3498db" stroke="#2c3e50" stroke-width="2"/>
+                            <text x="390" y="95" text-anchor="middle" fill="white" font-size="14" font-weight="bold">DATA BITS (8 bits)</text>
+                            <text x="390" y="115" text-anchor="middle" fill="white" font-size="11">D0 D1 D2 D3 D4 D5 D6 D7</text>
+                            <text x="390" y="130" text-anchor="middle" fill="white" font-size="11">(LSB first)</text>
+                            
+                            <!-- Stop Bit -->
+                            <rect x="650" y="60" width="80" height="80" fill="#27ae60" stroke="#2c3e50" stroke-width="2"/>
+                            <text x="690" y="95" text-anchor="middle" fill="white" font-size="14" font-weight="bold">STOP</text>
+                            <text x="690" y="115" text-anchor="middle" fill="white" font-size="12">BIT</text>
+                            <text x="690" y="130" text-anchor="middle" fill="white" font-size="16" font-weight="bold">1</text>
+                            
+                            <!-- Parameters -->
+                            <rect x="50" y="170" width="680" height="60" fill="#f8f9fa" stroke="#34495e" stroke-width="2" rx="5"/>
+                            <text x="60" y="195" fill="#2c3e50" font-size="13"><tspan font-weight="bold">Baud Rate:</tspan> 9600, 19200, 38400, 57600, 115200 bps</text>
+                            <text x="60" y="215" fill="#2c3e50" font-size="13"><tspan font-weight="bold">Common Config:</tspan> 8-N-1 (8 data bits, No parity, 1 stop bit)</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success-box">
+                <h4>Control Transceiver from Python</h4>
+                <p>Use PySerial to send CAT commands to radio</p>
+                
+                <div class="code-block">
+<span class="keyword">import</span> serial
+<span class="keyword">import</span> time
+
+<span class="keyword">class</span> <span class="function">RadioController</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, port, baudrate=<span class="number">19200</span>):
+        <span class="string">"""Initialize connection to radio"""</span>
+        self.ser = serial.<span class="function">Serial</span>(
+            port=port,
+            baudrate=baudrate,
+            bytesize=serial.EIGHTBITS,
+            parity=serial.PARITY_NONE,
+            stopbits=serial.STOPBITS_ONE,
+            timeout=<span class="number">1</span>
+        )
+        time.<span class="function">sleep</span>(<span class="number">0.1</span>)  <span class="comment"># Allow connection to stabilize</span>
+    
+    <span class="keyword">def</span> <span class="function">set_frequency</span>(self, freq_hz):
+        <span class="string">"""Set VFO frequency (Icom CI-V format)"""</span>
+        <span class="comment"># Convert frequency to BCD format</span>
+        freq_str = <span class="string">f"{freq_hz:010d}"</span>
+        bcd_bytes = []
+        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">0</span>, <span class="number">10</span>, <span class="number">2</span>):
+            bcd_bytes.<span class="function">append</span>(<span class="function">int</span>(freq_str[i+<span class="number">1</span>] + freq_str[i], <span class="number">16</span>))
+        
+        <span class="comment"># Icom CI-V command: FE FE [radio_addr] [pc_addr] 05 [freq_bcd] FD</span>
+        cmd = [<span class="number">0xFE</span>, <span class="number">0xFE</span>, <span class="number">0x94</span>, <span class="number">0xE0</span>, <span class="number">0x05</span>] + bcd_bytes + [<span class="number">0xFD</span>]
+        
+        self.ser.<span class="function">write</span>(<span class="function">bytes</span>(cmd))
+        time.<span class="function">sleep</span>(<span class="number">0.05</span>)
+        
+        <span class="comment"># Read response</span>
+        response = self.ser.<span class="function">read</span>(<span class="number">100</span>)
+        <span class="keyword">return</span> <span class="number">0xFB</span> <span class="keyword">in</span> response  <span class="comment"># FB = ACK</span>
+    
+    <span class="keyword">def</span> <span class="function">get_frequency</span>(self):
+        <span class="string">"""Read current VFO frequency"""</span>
+        <span class="comment"># Send read frequency command</span>
+        cmd = [<span class="number">0xFE</span>, <span class="number">0xFE</span>, <span class="number">0x94</span>, <span class="number">0xE0</span>, <span class="number">0x03</span>, <span class="number">0xFD</span>]
+        self.ser.<span class="function">write</span>(<span class="function">bytes</span>(cmd))
+        time.<span class="function">sleep</span>(<span class="number">0.05</span>)
+        
+        response = self.ser.<span class="function">read</span>(<span class="number">100</span>)
+        <span class="keyword">if</span> <span class="function">len</span>(response) >= <span class="number">11</span>:
+            <span class="comment"># Parse BCD frequency from response</span>
+            freq_bcd = response[<span class="number">5</span>:<span class="number">10</span>]
+            freq_str = <span class="string">""</span>
+            <span class="keyword">for</span> byte <span class="keyword">in</span> freq_bcd:
+                freq_str = <span class="string">f"{byte:02X}"</span> + freq_str
+            <span class="keyword">return</span> <span class="function">int</span>(freq_str)
+        <span class="keyword">return</span> <span class="keyword">None</span>
+    
+    <span class="keyword">def</span> <span class="function">set_mode</span>(self, mode):
+        <span class="string">"""Set operating mode"""</span>
+        modes = {<span class="string">'LSB'</span>: <span class="number">0x00</span>, <span class="string">'USB'</span>: <span class="number">0x01</span>, <span class="string">'AM'</span>: <span class="number">0x02</span>, 
+                 <span class="string">'CW'</span>: <span class="number">0x03</span>, <span class="string">'FM'</span>: <span class="number">0x05</span>}
+        
+        <span class="keyword">if</span> mode <span class="keyword">not in</span> modes:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        
+        cmd = [<span class="number">0xFE</span>, <span class="number">0xFE</span>, <span class="number">0x94</span>, <span class="number">0xE0</span>, <span class="number">0x06</span>, modes[mode], <span class="number">0xFD</span>]
+        self.ser.<span class="function">write</span>(<span class="function">bytes</span>(cmd))
+        time.<span class="function">sleep</span>(<span class="number">0.05</span>)
+        
+        response = self.ser.<span class="function">read</span>(<span class="number">100</span>)
+        <span class="keyword">return</span> <span class="number">0xFB</span> <span class="keyword">in</span> response
+    
+    <span class="keyword">def</span> <span class="function">close</span>(self):
+        <span class="string">"""Close serial connection"""</span>
+        self.ser.<span class="function">close</span>()
+
+<span class="comment"># Example usage</span>
+radio = <span class="function">RadioController</span>(<span class="string">'/dev/ttyUSB0'</span>)
+
+<span class="comment"># Set frequency to 146.520 MHz (2m calling frequency)</span>
+<span class="keyword">if</span> radio.<span class="function">set_frequency</span>(<span class="number">146520000</span>):
+    <span class="keyword">print</span>(<span class="string">"Frequency set successfully"</span>)
+
+<span class="comment"># Set mode to FM</span>
+radio.<span class="function">set_mode</span>(<span class="string">'FM'</span>)
+
+<span class="comment"># Read back frequency</span>
+current_freq = radio.<span class="function">get_frequency</span>()
+<span class="keyword">print</span>(<span class="string">f"Current frequency: {current_freq/1e6:.4f} MHz"</span>)
+
+radio.<span class="function">close</span>()
+                </div>
+            </div>
+
+            <h3>Satellite Tracking with SGP4</h3>
+            
+            <div class="diagram-box">
+                <h4>🛰️ Satellite Tracking System Architecture</h4>
+                <div class="diagram-container">
+                    <div class="architecture-diagram">
+                        <svg viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+                            <!-- TLE Data Source -->
+                            <rect x="50" y="50" width="200" height="80" fill="#9b59b6" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                            <text x="150" y="80" text-anchor="middle" fill="white" font-size="14" font-weight="bold">TLE Data Source</text>
+                            <text x="150" y="100" text-anchor="middle" fill="white" font-size="11">CelesTrak / Space-Track</text>
+                            <text x="150" y="115" text-anchor="middle" fill="#ecf0f1" font-size="10">Updated Daily</text>
+                            
+                            <!-- Arrow to SGP4 -->
+                            <line x1="250" y1="90" x2="320" y2="90" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowhead)"/>
+                            <text x="285" y="80" text-anchor="middle" fill="#e74c3c" font-size="11">Download</text>
+                            
+                            <!-- SGP4 Engine -->
+                            <rect x="320" y="50" width="260" height="180" fill="#3498db" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                            <text x="450" y="80" text-anchor="middle" fill="white" font-size="16" font-weight="bold">SGP4 Propagator</text>
+                            <text x="450" y="100" text-anchor="middle" fill="white" font-size="12">Orbital Mechanics Engine</text>
+                            
+                            <rect x="340" y="115" width="220" height="35" fill="#2980b9" rx="3"/>
+                            <text x="450" y="137" text-anchor="middle" fill="white" font-size="11">Input: TLE + Time + Observer Pos</text>
+                            
+                            <rect x="340" y="160" width="220" height="55" fill="#2980b9" rx="3"/>
+                            <text x="450" y="180" text-anchor="middle" fill="white" font-size="11">Calculate:</text>
+                            <text x="450" y="195" text-anchor="middle" fill="white" font-size="10">Azimuth, Elevation, Distance</text>
+                            <text x="450" y="207" text-anchor="middle" fill="white" font-size="10">Doppler Shift, Pass Times</text>
+                            
+                            <!-- Arrow to Output -->
+                            <line x1="580" y1="140" x2="650" y2="140" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowhead)"/>
+                            
+                            <!-- Outputs -->
+                            <rect x="650" y="50" width="200" height="80" fill="#27ae60" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                            <text x="750" y="75" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Antenna Control</text>
+                            <text x="750" y="92" text-anchor="middle" fill="white" font-size="11">Az/El Positioning</text>
+                            <text x="750" y="107" text-anchor="middle" fill="#ecf0f1" font-size="10">Rotor Commands</text>
+                            
+                            <rect x="650" y="150" width="200" height="80" fill="#e67e22" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                            <text x="750" y="175" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Radio Control</text>
+                            <text x="750" y="192" text-anchor="middle" fill="white" font-size="11">Doppler Correction</text>
+                            <text x="750" y="207" text-anchor="middle" fill="#ecf0f1" font-size="10">Freq Adjustment</text>
+                            
+                            <!-- Observer Location -->
+                            <ellipse cx="150" cy="320" rx="80" ry="60" fill="#16a085" stroke="#2c3e50" stroke-width="2"/>
+                            <text x="150" y="315" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Observer</text>
+                            <text x="150" y="332" text-anchor="middle" fill="white" font-size="10">Lat, Lon, Alt</text>
+                            
+                            <line x1="200" y1="290" x2="380" y2="220" stroke="#2c3e50" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+                            <text x="290" y="250" text-anchor="middle" fill="#95a5a6" font-size="10">Ground Position</text>
+                            
+                            <!-- Satellite -->
+                            <circle cx="750" cy="340" r="40" fill="#34495e" stroke="#f39c12" stroke-width="3"/>
+                            <text x="750" y="347" text-anchor="middle" fill="white" font-size="16">🛰️</text>
+                            
+                            <!-- Pass Prediction -->
+                            <rect x="350" y="300" width="240" height="120" fill="#8e44ad" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                            <text x="470" y="325" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Pass Prediction</text>
+                            <text x="470" y="345" text-anchor="middle" fill="white" font-size="11">• AOS (Acquisition of Signal)</text>
+                            <text x="470" y="365" text-anchor="middle" fill="white" font-size="11">• TCA (Time of Closest Approach)</text>
+                            <text x="470" y="385" text-anchor="middle" fill="white" font-size="11">• LOS (Loss of Signal)</text>
+                            <text x="470" y="405" text-anchor="middle" fill="#ecf0f1" font-size="10">Next 24-168 hours</text>
+                            
+                            <!-- Arrow marker definition -->
+                            <defs>
+                                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                    <polygon points="0 0, 10 3, 0 6" fill="#2c3e50"/>
+                                </marker>
+                            </defs>
+                            
+                            <!-- Visual connection line -->
+                            <path d="M 470 420 Q 610 450 710 370" stroke="#f39c12" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+                            <text x="590" y="460" text-anchor="middle" fill="#e67e22" font-size="10" font-style="italic">Tracking Path</text>
+                        </svg>
+                    </div>
+                    <p style="margin-top: 15px; font-size: 14px; color: #555;">
+                        <strong>System Flow:</strong> TLE (Two-Line Element) data provides orbital parameters, SGP4 algorithm calculates real-time position relative to ground station, outputs drive antenna rotors and apply Doppler correction to radio frequency.
+                    </p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4>📐 Coordinate Systems in Satellite Tracking</h4>
+                <div class="diagram-container">
+                    <div class="architecture-diagram">
+                        <svg viewBox="0 0 900 350" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Earth -->
+                            <circle cx="300" cy="175" r="80" fill="#2980b9" stroke="#2c3e50" stroke-width="2"/>
+                            <text x="300" y="182" text-anchor="middle" fill="white" font-size="16" font-weight="bold">🌍</text>
+                            
+                            <!-- Observer on surface -->
+                            <circle cx="340" cy="110" r="8" fill="#e74c3c"/>
+                            <text x="370" y="100" fill="#e74c3c" font-size="13" font-weight="bold">Observer</text>
+                            <text x="370" y="115" fill="#555" font-size="10">(Your QTH)</text>
+                            
+                            <!-- Horizon line -->
+                            <line x1="260" y1="110" x2="450" y2="110" stroke="#95a5a6" stroke-width="2" stroke-dasharray="5,3"/>
+                            <text x="460" y="115" fill="#95a5a6" font-size="11">Horizon</text>
+                            
+                            <!-- Satellite -->
+                            <circle cx="500" cy="50" r="15" fill="#34495e" stroke="#f39c12" stroke-width="2"/>
+                            <text x="500" y="57" text-anchor="middle" fill="white" font-size="12">🛰️</text>
+                            
+                            <!-- Azimuth Arc -->
+                            <path d="M 340 110 Q 340 50 420 50" stroke="#9b59b6" stroke-width="2" fill="none"/>
+                            <text x="360" y="70" fill="#9b59b6" font-size="12" font-weight="bold">Az</text>
+                            <text x="355" y="85" fill="#9b59b6" font-size="10">(0-360°)</text>
+                            
+                            <!-- Elevation Arc -->
+                            <path d="M 340 110 L 500 50" stroke="#27ae60" stroke-width="2"/>
+                            <text x="400" y="70" fill="#27ae60" font-size="12" font-weight="bold">El</text>
+                            <text x="395" y="85" fill="#27ae60" font-size="10">(0-90°)</text>
+                            
+                            <!-- Distance -->
+                            <line x1="340" y1="110" x2="500" y2="50" stroke="#e67e22" stroke-width="1" stroke-dasharray="3,2"/>
+                            <text x="430" y="90" fill="#e67e22" font-size="10">Range (km)</text>
+                            
+                            <!-- Coordinate Table -->
+                            <rect x="570" y="30" width="300" height="290" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
+                            <text x="720" y="60" text-anchor="middle" fill="#2c3e50" font-size="15" font-weight="bold">Coordinate Values</text>
+                            
+                            <text x="590" y="95" fill="#2c3e50" font-size="13" font-weight="bold">Azimuth (Az)</text>
+                            <text x="590" y="115" fill="#555" font-size="11">• 0° = North</text>
+                            <text x="590" y="132" fill="#555" font-size="11">• 90° = East</text>
+                            <text x="590" y="149" fill="#555" font-size="11">• 180° = South</text>
+                            <text x="590" y="166" fill="#555" font-size="11">• 270° = West</text>
+                            
+                            <line x1="590" y1="180" x2="850" y2="180" stroke="#bdc3c7" stroke-width="1"/>
+                            
+                            <text x="590" y="205" fill="#2c3e50" font-size="13" font-weight="bold">Elevation (El)</text>
+                            <text x="590" y="225" fill="#555" font-size="11">• 0° = Horizon</text>
+                            <text x="590" y="242" fill="#555" font-size="11">• 45° = Halfway up</text>
+                            <text x="590" y="259" fill="#555" font-size="11">• 90° = Zenith (overhead)</text>
+                            <text x="590" y="276" fill="#555" font-size="11">• &lt;10° = Usually blocked</text>
+                            
+                            <line x1="590" y1="290" x2="850" y2="290" stroke="#bdc3c7" stroke-width="1"/>
+                            
+                            <text x="590" y="310" fill="#e67e22" font-size="11"><tspan font-weight="bold">Range:</tspan> Distance to satellite</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Real-Time Satellite Position Calculation</h4>
+                
+                <div class="code-block">
+<span class="keyword">from</span> skyfield.api <span class="keyword">import</span> load, wgs84, EarthSatellite
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime, timezone
+
+<span class="keyword">class</span> <span class="function">SatelliteTracker</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, tle_line1, tle_line2, observer_lat, observer_lon, observer_alt):
+        <span class="string">"""Initialize satellite tracker"""</span>
+        self.ts = load.<span class="function">timescale</span>()
+        self.satellite = <span class="function">EarthSatellite</span>(tle_line1, tle_line2, <span class="string">'Satellite'</span>, self.ts)
+        self.observer = wgs84.<span class="function">latlon</span>(observer_lat, observer_lon, observer_alt)
+    
+    <span class="keyword">def</span> <span class="function">get_position</span>(self, dt=<span class="keyword">None</span>):
+        <span class="string">"""Get satellite position at given time"""</span>
+        <span class="keyword">if</span> dt <span class="keyword">is None</span>:
+            dt = datetime.<span class="function">now</span>(timezone.utc)
+        
+        t = self.ts.<span class="function">from_datetime</span>(dt)
+        difference = self.satellite - self.observer
+        topocentric = difference.<span class="function">at</span>(t)
+        
+        alt, az, distance = topocentric.<span class="function">altaz</span>()
+        
+        <span class="keyword">return</span> {
+            <span class="string">'altitude'</span>: alt.degrees,
+            <span class="string">'azimuth'</span>: az.degrees,
+            <span class="string">'distance_km'</span>: distance.km,
+            <span class="string">'timestamp'</span>: dt
+        }
+    
+    <span class="keyword">def</span> <span class="function">predict_pass</span>(self, start_time, duration_hours=<span class="number">24</span>, min_elevation=<span class="number">10</span>):
+        <span class="string">"""Predict upcoming passes"""</span>
+        t0 = self.ts.<span class="function">from_datetime</span>(start_time)
+        t1 = self.ts.<span class="function">from_datetime</span>(
+            start_time + timedelta(hours=duration_hours)
+        )
+        
+        <span class="comment"># Find passes above horizon</span>
+        t, events = self.satellite.<span class="function">find_events</span>(
+            self.observer, t0, t1, altitude_degrees=min_elevation
+        )
+        
+        passes = []
+        <span class="keyword">for</span> ti, event <span class="keyword">in</span> <span class="function">zip</span>(t, events):
+            <span class="keyword">if</span> event == <span class="number">0</span>:  <span class="comment"># AOS</span>
+                aos_time = ti.<span class="function">utc_datetime</span>()
+            <span class="keyword">elif</span> event == <span class="number">1</span>:  <span class="comment"># Maximum elevation</span>
+                tca_time = ti.<span class="function">utc_datetime</span>()
+                position = self.<span class="function">get_position</span>(tca_time)
+                max_el = position[<span class="string">'altitude'</span>]
+            <span class="keyword">elif</span> event == <span class="number">2</span>:  <span class="comment"># LOS</span>
+                los_time = ti.<span class="function">utc_datetime</span>()
+                duration = (los_time - aos_time).total_seconds()
+                
+                passes.<span class="function">append</span>({
+                    <span class="string">'aos'</span>: aos_time,
+                    <span class="string">'tca'</span>: tca_time,
+                    <span class="string">'los'</span>: los_time,
+                    <span class="string">'max_elevation'</span>: max_el,
+                    <span class="string">'duration_minutes'</span>: duration / <span class="number">60</span>
+                })
+        
+        <span class="keyword">return</span> passes
+
+<span class="comment"># Example: Track AO-91</span>
+tle1 = <span class="string">"1 43017U 17073E   25345.78916667  .00000342  00000-0  43210-4 0  9998"</span>
+tle2 = <span class="string">"2 43017  97.7408 273.6829 0008372  58.9347 301.2947 14.81641075326482"</span>
+
+tracker = <span class="function">SatelliteTracker</span>(
+    tle1, tle2,
+    observer_lat=<span class="number">5.603</span>,    <span class="comment"># Accra, Ghana</span>
+    observer_lon=-<span class="number">0.187</span>,
+    observer_alt=<span class="number">61</span>
+)
+
+<span class="comment"># Get current position</span>
+pos = tracker.<span class="function">get_position</span>()
+<span class="keyword">print</span>(<span class="string">f"Azimuth: {pos['azimuth']:.1f}°"</span>)
+<span class="keyword">print</span>(<span class="string">f"Elevation: {pos['altitude']:.1f}°"</span>)
+<span class="keyword">print</span>(<span class="string">f"Distance: {pos['distance_km']:.1f} km"</span>)
+
+<span class="comment"># Predict next 7 days of passes</span>
+passes = tracker.<span class="function">predict_pass</span>(datetime.<span class="function">now</span>(timezone.utc), duration_hours=<span class="number">168</span>)
+<span class="keyword">print</span>(<span class="string">f"\nFound {len(passes)} passes:"</span>)
+<span class="keyword">for</span> i, p <span class="keyword">in</span> <span class="function">enumerate</span>(passes[:<span class="number">5</span>], <span class="number">1</span>):
+    <span class="keyword">print</span>(<span class="string">f"{i}. AOS: {p['aos']} | Max El: {p['max_elevation']:.0f}° | Duration: {p['duration_minutes']:.1f} min"</span>)
+                </div>
+            </div>
+
+            <h2>C++ for Real-Time Performance</h2>
+
+            <div class="diagram-box">
+                <h4>⚡ C++ Performance Advantages</h4>
+                <div class="diagram-container">
+                    <div class="architecture-diagram">
+                        <svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Performance Comparison -->
+                            <text x="450" y="30" text-anchor="middle" fill="#2c3e50" font-size="18" font-weight="bold">Processing Speed Comparison</text>
+                            
+                            <!-- Python Bar -->
+                            <rect x="100" y="80" width="400" height="60" fill="#306998" rx="5"/>
+                            <text x="120" y="115" fill="white" font-size="14" font-weight="bold">Python</text>
+                            <text x="520" y="115" fill="#2c3e50" font-size="13">~1000 ms (baseline)</text>
+                            
+                            <!-- C++ Bar -->
+                            <rect x="100" y="160" width="80" height="60" fill="#00599C" rx="5"/>
+                            <text x="120" y="195" fill="white" font-size="14" font-weight="bold">C++</text>
+                            <text x="200" y="195" fill="#2c3e50" font-size="13" font-weight="bold">~50 ms (20x faster!)</text>
+                            
+                            <!-- Application Areas -->
+                            <rect x="50" y="260" width="800" height="120" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
+                            <text x="450" y="290" text-anchor="middle" fill="#2c3e50" font-size="15" font-weight="bold">When to Use C++</text>
+                            
+                            <text x="80" y="320" fill="#e74c3c" font-size="13">✓ <tspan fill="#2c3e50">Real-time signal processing (SDR)</tspan></text>
+                            <text x="80" y="340" fill="#e74c3c" font-size="13">✓ <tspan fill="#2c3e50">FFT operations on large datasets</tspan></text>
+                            <text x="80" y="360" fill="#e74c3c" font-size="13">✓ <tspan fill="#2c3e50">Hardware interfacing (GPIO, USB)</tspan></text>
+                            
+                            <text x="480" y="320" fill="#e74c3c" font-size="13">✓ <tspan fill="#2c3e50">Embedded systems (Arduino, ESP32)</tspan></text>
+                            <text x="480" y="340" fill="#e74c3c" font-size="13">✓ <tspan fill="#2c3e50">Low-latency control loops</tspan></text>
+                            <text x="480" y="360" fill="#e74c3c" font-size="13">✓ <tspan fill="#2c3e50">Memory-constrained environments</tspan></text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <h3>High-Performance Signal Processing</h3>
+            
+            <div class="diagram-box">
+                <h4>📊 FFT (Fast Fourier Transform) Process</h4>
+                <div class="diagram-container">
+                    <div class="architecture-diagram">
+                        <svg viewBox="0 0 900 450" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Time Domain Signal -->
+                            <rect x="50" y="50" width="250" height="150" fill="#f8f9fa" stroke="#34495e" stroke-width="2" rx="5"/>
+                            <text x="175" y="75" text-anchor="middle" fill="#2c3e50" font-size="14" font-weight="bold">Time Domain</text>
+                            
+                            <!-- Sine wave -->
+                            <path d="M 70 125 Q 100 95, 130 125 T 190 125 T 250 125" stroke="#3498db" stroke-width="3" fill="none"/>
+                            <text x="175" y="165" text-anchor="middle" fill="#555" font-size="11">Signal amplitude vs time</text>
+                            <text x="175" y="185" text-anchor="middle" fill="#95a5a6" font-size="10">f(t) = A·sin(2πft + φ)</text>
+                            
+                            <!-- Arrow -->
+                            <path d="M 300 125 L 370 125" stroke="#e74c3c" stroke-width="3" marker-end="url(#arrow2)"/>
+                            <rect x="310" y="95" width="50" height="25" fill="#e74c3c" rx="3"/>
+                            <text x="335" y="112" text-anchor="middle" fill="white" font-size="12" font-weight="bold">FFT</text>
+                            
+                            <!-- Frequency Domain -->
+                            <rect x="370" y="50" width="250" height="150" fill="#f8f9fa" stroke="#34495e" stroke-width="2" rx="5"/>
+                            <text x="495" y="75" text-anchor="middle" fill="#2c3e50" font-size="14" font-weight="bold">Frequency Domain</text>
+                            
+                            <!-- Spectrum peaks -->
+                            <rect x="450" y="150" width="15" height="40" fill="#27ae60"/>
+                            <rect x="520" y="130" width="15" height="60" fill="#27ae60"/>
+                            <line x1="390" y1="190" x2="600" y2="190" stroke="#95a5a6" stroke-width="1"/>
+                            <text x="495" y="165" text-anchor="middle" fill="#555" font-size="11">Power vs frequency</text>
+                            <text x="495" y="185" text-anchor="middle" fill="#95a5a6" font-size="10">Shows which frequencies present</text>
+                            
+                            <!-- Algorithm Steps -->
+                            <rect x="50" y="240" width="570" height="180" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
+                            <text x="335" y="270" text-anchor="middle" fill="#2c3e50" font-size="15" font-weight="bold">Cooley-Tukey FFT Algorithm</text>
+                            
+                            <text x="70" y="300" fill="#2c3e50" font-size="13" font-weight="bold">Step 1: Bit Reversal</text>
+                            <text x="70" y="318" fill="#555" font-size="11">Reorder samples [0,1,2,3,4,5,6,7] → [0,4,2,6,1,5,3,7]</text>
+                            
+                            <text x="70" y="345" fill="#2c3e50" font-size="13" font-weight="bold">Step 2: Butterfly Operations</text>
+                            <text x="70" y="363" fill="#555" font-size="11">Combine pairs with twiddle factors W = e^(-2πik/N)</text>
+                            
+                            <text x="70" y="390" fill="#2c3e50" font-size="13" font-weight="bold">Step 3: Recursive Merge</text>
+                            <text x="70" y="408" fill="#555" font-size="11">log₂(N) stages, each processing N/2 pairs</text>
+                            
+                            <!-- Complexity -->
+                            <rect x="650" y="50" width="220" height="370" fill="#2c3e50" stroke="#34495e" stroke-width="2" rx="5"/>
+                            <text x="760" y="85" text-anchor="middle" fill="white" font-size="15" font-weight="bold">Complexity</text>
+                            
+                            <rect x="670" y="105" width="180" height="70" fill="#e74c3c" rx="5"/>
+                            <text x="760" y="130" text-anchor="middle" fill="white" font-size="13" font-weight="bold">DFT (Naive)</text>
+                            <text x="760" y="150" text-anchor="middle" fill="white" font-size="12">O(N²)</text>
+                            <text x="760" y="165" text-anchor="middle" fill="#ecf0f1" font-size="10">N=1024: ~1M ops</text>
+                            
+                            <text x="760" y="200" text-anchor="middle" fill="white" font-size="20">↓</text>
+                            
+                            <rect x="670" y="215" width="180" height="70" fill="#27ae60" rx="5"/>
+                            <text x="760" y="240" text-anchor="middle" fill="white" font-size="13" font-weight="bold">FFT (Fast)</text>
+                            <text x="760" y="260" text-anchor="middle" fill="white" font-size="12">O(N log N)</text>
+                            <text x="760" y="275" text-anchor="middle" fill="#ecf0f1" font-size="10">N=1024: ~10K ops</text>
+                            
+                            <rect x="670" y="305" width="180" height="100" fill="#34495e" rx="5"/>
+                            <text x="760" y="330" text-anchor="middle" fill="#f39c12" font-size="14" font-weight="bold">~100x Faster!</text>
+                            <text x="760" y="355" text-anchor="middle" fill="white" font-size="11">Critical for real-time</text>
+                            <text x="760" y="373" text-anchor="middle" fill="white" font-size="11">DSP applications:</text>
+                            <text x="760" y="391" text-anchor="middle" fill="#ecf0f1" font-size="10">SDR, spectrum analysis</text>
+                            
+                            <defs>
+                                <marker id="arrow2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                    <polygon points="0 0, 10 3, 0 6" fill="#e74c3c"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4>FFT Implementation in C++</h4>
+                <p>Real-time spectrum analysis for SDR applications</p>
+                
+                <div class="code-block">
+<span class="keyword">#include</span> <span class="string">&lt;complex&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;vector&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;cmath&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
+
+<span class="keyword">class</span> <span class="function">FFTProcessor</span> {
+<span class="keyword">private</span>:
+    <span class="keyword">std::vector</span>&lt;<span class="keyword">std::complex</span>&lt;<span class="keyword">double</span>&gt;&gt; twiddle_factors;
+    <span class="keyword">size_t</span> fft_size;
+    
+    <span class="keyword">void</span> <span class="function">compute_twiddle_factors</span>() {
+        twiddle_factors.<span class="function">resize</span>(fft_size / <span class="number">2</span>);
+        <span class="keyword">for</span> (<span class="keyword">size_t</span> k = <span class="number">0</span>; k &lt; fft_size / <span class="number">2</span>; ++k) {
+            <span class="keyword">double</span> angle = -<span class="number">2.0</span> * M_PI * k / fft_size;
+            twiddle_factors[k] = <span class="keyword">std::complex</span>&lt;<span class="keyword">double</span>&gt;(
+                <span class="function">std::cos</span>(angle), 
+                <span class="function">std::sin</span>(angle)
+            );
+        }
+    }
+
+<span class="keyword">public</span>:
+    <span class="function">FFTProcessor</span>(<span class="keyword">size_t</span> size) : fft_size(size) {
+        <span class="function">compute_twiddle_factors</span>();
+    }
+    
+    <span class="keyword">void</span> <span class="function">fft</span>(<span class="keyword">std::vector</span>&lt;<span class="keyword">std::complex</span>&lt;<span class="keyword">double</span>&gt;&gt;&amp; data) {
+        <span class="comment">// Cooley-Tukey FFT algorithm</span>
+        <span class="keyword">size_t</span> n = data.<span class="function">size</span>();
+        
+        <span class="comment">// Bit-reversal permutation</span>
+        <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>, j = <span class="number">0</span>; i &lt; n; ++i) {
+            <span class="keyword">if</span> (j &gt; i) {
+                <span class="keyword">std::swap</span>(data[i], data[j]);
+            }
+            <span class="keyword">size_t</span> m = n / <span class="number">2</span>;
+            <span class="keyword">while</span> (m &gt;= <span class="number">1</span> &amp;&amp; j &gt;= m) {
+                j -= m;
+                m /= <span class="number">2</span>;
+            }
+            j += m;
+        }
+        
+        <span class="comment">// Danielson-Lanczos section</span>
+        <span class="keyword">for</span> (<span class="keyword">size_t</span> step = <span class="number">2</span>; step &lt;= n; step *= <span class="number">2</span>) {
+            <span class="keyword">size_t</span> half_step = step / <span class="number">2</span>;
+            <span class="keyword">size_t</span> twiddle_step = n / step;
+            
+            <span class="keyword">for</span> (<span class="keyword">size_t</span> k = <span class="number">0</span>; k &lt; n; k += step) {
+                <span class="keyword">for</span> (<span class="keyword">size_t</span> j = <span class="number">0</span>; j &lt; half_step; ++j) {
+                    <span class="keyword">auto</span> t = twiddle_factors[j * twiddle_step] * data[k + j + half_step];
+                    <span class="keyword">auto</span> u = data[k + j];
+                    data[k + j] = u + t;
+                    data[k + j + half_step] = u - t;
+                }
+            }
+        }
+    }
+    
+    <span class="keyword">std::vector</span>&lt;<span class="keyword">double</span>&gt; <span class="function">compute_power_spectrum</span>(
+        <span class="keyword">const</span> <span class="keyword">std::vector</span>&lt;<span class="keyword">double</span>&gt;&amp; samples
+    ) {
+        <span class="comment">// Convert real samples to complex</span>
+        <span class="keyword">std::vector</span>&lt;<span class="keyword">std::complex</span>&lt;<span class="keyword">double</span>&gt;&gt; complex_data(fft_size);
+        <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; samples.<span class="function">size</span>() &amp;&amp; i &lt; fft_size; ++i) {
+            complex_data[i] = <span class="keyword">std::complex</span>&lt;<span class="keyword">double</span>&gt;(samples[i], <span class="number">0.0</span>);
+        }
+        
+        <span class="comment">// Perform FFT</span>
+        <span class="function">fft</span>(complex_data);
+        
+        <span class="comment">// Compute power spectrum</span>
+        <span class="keyword">std::vector</span>&lt;<span class="keyword">double</span>&gt; power_spectrum(fft_size);
+        <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; fft_size; ++i) {
+            power_spectrum[i] = <span class="function">std::norm</span>(complex_data[i]);
+        }
+        
+        <span class="keyword">return</span> power_spectrum;
+    }
+};
+
+<span class="comment">// Usage example</span>
+<span class="keyword">int</span> <span class="function">main</span>() {
+    <span class="keyword">const</span> <span class="keyword">size_t</span> FFT_SIZE = <span class="number">1024</span>;
+    <span class="function">FFTProcessor</span> fft(FFT_SIZE);
+    
+    <span class="comment">// Generate test signal: 1 kHz sine wave</span>
+    <span class="keyword">std::vector</span>&lt;<span class="keyword">double</span>&gt; samples(FFT_SIZE);
+    <span class="keyword">double</span> sample_rate = <span class="number">8000.0</span>;  <span class="comment">// 8 kHz</span>
+    <span class="keyword">double</span> frequency = <span class="number">1000.0</span>;     <span class="comment">// 1 kHz</span>
+    
+    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; FFT_SIZE; ++i) {
+        <span class="keyword">double</span> t = i / sample_rate;
+        samples[i] = <span class="function">std::sin</span>(<span class="number">2.0</span> * M_PI * frequency * t);
+    }
+    
+    <span class="comment">// Compute spectrum</span>
+    <span class="keyword">auto</span> spectrum = fft.<span class="function">compute_power_spectrum</span>(samples);
+    
+    <span class="comment">// Find peak frequency</span>
+    <span class="keyword">auto</span> max_iter = <span class="keyword">std::max_element</span>(
+        spectrum.<span class="function">begin</span>(), 
+        spectrum.<span class="function">begin</span>() + FFT_SIZE/<span class="number">2</span>
+    );
+    <span class="keyword">size_t</span> peak_bin = <span class="function">std::distance</span>(spectrum.<span class="function">begin</span>(), max_iter);
+    <span class="keyword">double</span> peak_freq = peak_bin * sample_rate / FFT_SIZE;
+    
+    <span class="keyword">std::cout</span> &lt;&lt; <span class="string">"Detected peak at "</span> &lt;&lt; peak_freq &lt;&lt; <span class="string">" Hz\n"</span>;
+    
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+                </div>
+            </div>
+
+            <div class="diagram-box">
+                <h4>🔄 Memory Management: Python vs C++</h4>
+                <div class="diagram-container">
+                    <div class="architecture-diagram">
+                        <svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Python Memory Management -->
+                            <rect x="50" y="50" width="380" height="300" fill="#f8f9fa" stroke="#306998" stroke-width="3" rx="5"/>
+                            <text x="240" y="85" text-anchor="middle" fill="#306998" font-size="16" font-weight="bold">🐍 PYTHON - Automatic</text>
+                            
+                            <rect x="80" y="110" width="320" height="60" fill="#FFD43B" stroke="#306998" stroke-width="2" rx="5"/>
+                            <text x="240" y="135" text-anchor="middle" fill="#2c3e50" font-size="13">data = [1, 2, 3, 4, 5]</text>
+                            <text x="240" y="155" text-anchor="middle" fill="#555" font-size="11">Automatic allocation</text>
+                            
+                            <path d="M 240 170 L 240 195" stroke="#27ae60" stroke-width="2" marker-end="url(#arrow3)"/>
+                            
+                            <rect x="80" y="195" width="320" height="60" fill="#ecf0f1" stroke="#95a5a6" stroke-width="2" rx="5" stroke-dasharray="5,5"/>
+                            <text x="240" y="220" text-anchor="middle" fill="#555" font-size="13"># data goes out of scope</text>
+                            <text x="240" y="240" text-anchor="middle" fill="#27ae60" font-size="11">Garbage collector frees memory</text>
+                            
+                            <text x="240" y="280" text-anchor="middle" fill="#2c3e50" font-size="13" font-weight="bold">Pros:</text>
+                            <text x="240" y="300" text-anchor="middle" fill="#555" font-size="11">✓ Easy to use • No memory leaks</text>
+                            
+                            <text x="240" y="325" text-anchor="middle" fill="#e74c3c" font-size="13" font-weight="bold">Cons:</text>
+                            <text x="240" y="345" text-anchor="middle" fill="#555" font-size="11">✗ Unpredictable timing • Higher overhead</text>
+                            
+                            <!-- C++ Memory Management -->
+                            <rect x="470" y="50" width="380" height="300" fill="#f8f9fa" stroke="#00599C" stroke-width="3" rx="5"/>
+                            <text x="660" y="85" text-anchor="middle" fill="#00599C" font-size="16" font-weight="bold">⚡ C++ - Manual Control</text>
+                            
+                            <rect x="500" y="110" width="320" height="60" fill="#659AD2" stroke="#00599C" stroke-width="2" rx="5"/>
+                            <text x="660" y="135" text-anchor="middle" fill="white" font-size="12">std::vector&lt;int&gt; data{1,2,3,4,5};</text>
+                            <text x="660" y="155" text-anchor="middle" fill="#ecf0f1" font-size="11">RAII - allocation on creation</text>
+                            
+                            <path d="M 660 170 L 660 195" stroke="#27ae60" stroke-width="2" marker-end="url(#arrow3)"/>
+                            
+                            <rect x="500" y="195" width="320" height="60" fill="#27ae60" stroke="#00599C" stroke-width="2" rx="5"/>
+                            <text x="660" y="220" text-anchor="middle" fill="white" font-size="12">} // scope ends</text>
+                            <text x="660" y="240" text-anchor="middle" fill="white" font-size="11">Destructor called - immediate cleanup</text>
+                            
+                            <text x="660" y="280" text-anchor="middle" fill="#2c3e50" font-size="13" font-weight="bold">Pros:</text>
+                            <text x="660" y="300" text-anchor="middle" fill="#555" font-size="11">✓ Deterministic • Low overhead • Fast</text>
+                            
+                            <text x="660" y="325" text-anchor="middle" fill="#e74c3c" font-size="13" font-weight="bold">Cons:</text>
+                            <text x="660" y="345" text-anchor="middle" fill="#555" font-size="11">✗ More complex • Potential for errors</text>
+                            
+                            <defs>
+                                <marker id="arrow3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                    <polygon points="0 0, 10 3, 0 6" fill="#27ae60"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <h4>🎯 Practical Application: SDR Signal Processing Pipeline</h4>
+                <div class="diagram-container">
+                    <div class="architecture-diagram">
+                        <svg viewBox="0 0 900 350" xmlns="http://www.w3.org/2000/svg">
+                            <!-- RTL-SDR Input -->
+                            <rect x="50" y="100" width="120" height="80" fill="#e74c3c" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                            <text x="110" y="130" text-anchor="middle" fill="white" font-size="14" font-weight="bold">RTL-SDR</text>
+                            <text x="110" y="150" text-anchor="middle" fill="white" font-size="11">USB Dongle</text>
+                            <text x="110" y="165" text-anchor="middle" fill="#ecf0f1" font-size="10">2.4 Msps</text>
+                            
+                            <path d="M 170 140 L 220 140" stroke="#2c3e50" stroke-width="3" marker-end="url(#arrow4)"/>
+                            <text x="195" y="130" text-anchor="middle" fill="#555" font-size="10">IQ data</text>
+                            
+                            <!-- C++ Processing -->
+                            <rect x="220" y="100" width="280" height="80" fill="#00599C" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                            <text x="360" y="125" text-anchor="middle" fill="white" font-size="14" font-weight="bold">C++ DSP Core</text>
+                            <text x="360" y="145" text-anchor="middle" fill="#ecf0f1" font-size="11">FFT • Filtering • Demodulation</text>
+                            <text x="360" y="165" text-anchor="middle" fill="#659AD2" font-size="10">Real-time processing &lt;10ms latency</text>
+                            
+                            <path d="M 500 140 L 550 140" stroke="#2c3e50" stroke-width="3" marker-end="url(#arrow4)"/>
+                            <text x="525" y="130" text-anchor="middle" fill="#555" font-size="10">Audio</text>
+                            
+                            <!-- Audio Output -->
+                            <rect x="550" y="100" width="120" height="80" fill="#27ae60" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                            <text x="610" y="130" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Speaker</text>
+                            <text x="610" y="150" text-anchor="middle" fill="white" font-size="11">Audio Out</text>
+                            <text x="610" y="165" text-anchor="middle" fill="#ecf0f1" font-size="10">48 kHz</text>
+                            
+                            <!-- Python Control Layer -->
+                            <rect x="220" y="220" width="280" height="80" fill="#306998" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                            <text x="360" y="245" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Python Control Layer</text>
+                            <text x="360" y="265" text-anchor="middle" fill="#FFD43B" font-size="11">GUI • Tuning • Logging • Analysis</text>
+                            <text x="360" y="285" text-anchor="middle" fill="#ecf0f1" font-size="10">Non-realtime operations</text>
+                            
+                            <path d="M 360 220 L 360 180" stroke="#9b59b6" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrow5)"/>
+                            <text x="310" y="205" fill="#9b59b6" font-size="10">Control</text>
+                            
+                            <defs>
+                                <marker id="arrow4" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                    <polygon points="0 0, 10 3, 0 6" fill="#2c3e50"/>
+                                </marker>
+                                <marker id="arrow5" markerWidth="10" markerHeight="10" refX="5" refY="3" orient="auto">
+                                    <polygon points="0 0, 10 3, 0 6" fill="#9b59b6"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    <p style="margin-top: 15px; font-size: 14px; color: #555;">
+                        <strong>Best Practice:</strong> Use C++ for the real-time signal processing core (FFT, filtering, demodulation) and Python for user interface, configuration, and non-time-critical operations. This hybrid approach combines performance with ease of development.
+                    </p>
+                </div>
+            </div>
+
+            <h2>Chapter Summary</h2>
+            
+            <div class="success-box">
+                <h4>Key Programming Skills:</h4>
+                <ul>
+                    <li>✅ Python: Radio control, satellite tracking, rapid prototyping</li>
+                    <li>✅ C++: Real-time signal processing, performance-critical code</li>
+                    <li>✅ Serial communication (CAT interfaces)</li>
+                    <li>✅ Mathematical libraries (NumPy, SciPy)</li>
+                    <li>✅ Real-time systems and threading</li>
+                    <li>✅ Data visualization and analysis</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <h4>🎓 Learning Path Recommendations</h4>
+                <table>
+                    <tr>
+                        <th>Skill Level</th>
+                        <th>Start With</th>
+                        <th>Focus Areas</th>
+                        <th>Projects</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Beginner</strong></td>
+                        <td>Python</td>
+                        <td>Serial comms, basic scripts</td>
+                        <td>Frequency logger, Simple CAT control</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Intermediate</strong></td>
+                        <td>Python + Libraries</td>
+                        <td>Satellite tracking, Data analysis</td>
+                        <td>Pass predictor, APRS decoder</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Advanced</strong></td>
+                        <td>C++ for DSP</td>
+                        <td>Real-time processing, FFT</td>
+                        <td>SDR receiver, Custom modem</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Expert</strong></td>
+                        <td>Hybrid Systems</td>
+                        <td>Full stack development</td>
+                        <td>Complete station automation</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="info-box">
+                <h4>Next: Chapter 9 - Signal Processing & DSP</h4>
+                <p>Deep dive into digital signal processing including FFT analysis, filtering, modulation/demodulation, and Software Defined Radio (SDR) techniques.</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>RadioSport STEM Education Program</strong></p>
+            <p>Chapter 8: Advanced Coding (C++ & Python)</p>
+            <p>Version 3.0 • 2025 Edition</p>
+        </div>
+    </div>
+</body>
+</html>
+                            

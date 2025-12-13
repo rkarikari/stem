@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 12: Field Operations & Deployments - RadioSport Handbook</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #2c3e50; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .nav { background: #1e3c72; color: white; padding: 15px 30px; display: flex; justify-content: space-between; }
+        .nav a { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 40px; text-align: center; }
+        .header h1 { font-size: 42px; margin-bottom: 10px; }
+        .chapter-num { font-size: 18px; opacity: 0.9; }
+        .content { padding: 40px; }
+        h2 { color: #1e3c72; font-size: 32px; margin: 40px 0 20px 0; padding-bottom: 10px; border-bottom: 3px solid #667eea; }
+        h3 { color: #2a5298; font-size: 24px; margin: 30px 0 15px 0; }
+        h4 { color: #34495e; font-size: 20px; margin: 20px 0 10px 0; }
+        p { margin-bottom: 15px; text-align: justify; }
+        .info-box, .success-box, .deployment-box { padding: 25px; margin: 25px 0; border-radius: 5px; border-left: 5px solid; }
+        .info-box { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left-color: #2196f3; }
+        .success-box { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; }
+        .deployment-box { background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%); border-left-color: #00bcd4; }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        ul, ol { margin: 20px 0 20px 40px; }
+        li { margin-bottom: 10px; }
+        .footer { background: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+        .diagram-container { background: white; border: 2px solid #667eea; border-radius: 10px; padding: 30px; margin: 30px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .diagram-title { text-align: center; color: #1e3c72; font-size: 20px; font-weight: bold; margin-bottom: 25px; padding-bottom: 10px; border-bottom: 2px solid #667eea; }
+        svg { width: 100%; height: auto; display: block; }
+        .svg-text { font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+        .svg-title { font-size: 16px; font-weight: bold; }
+        .svg-small { font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="radiosport_ch11.html">← Chapter 11</a>
+            <span>Chapter 12 of 14</span>
+            <a href="radiosport_ch13.html">Chapter 13 →</a>
+        </div>
+        
+        <div class="header">
+            <div class="chapter-num">CHAPTER 12</div>
+            <h1>🏕️ Field Operations & Deployments</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong>Field operations combine all RadioSport technologies—radio, satellites, drones, solar power, and AI—into complete multi-day deployments. Learn professional site surveys, equipment logistics, emergency communications, and competitive field operations.</strong></p>
+
+            <h2>Types of Field Operations</h2>
+            <table>
+                <tr><th>Operation Type</th><th>Duration</th><th>Complexity</th><th>Primary Goal</th></tr>
+                <tr><td><strong>Day Trip</strong></td><td>4-8 hours</td><td>Basic</td><td>Practice setup/teardown, make contacts, test equipment</td></tr>
+                <tr><td><strong>Field Day</strong></td><td>24 hours</td><td>Intermediate</td><td>Maximize contacts, test emergency readiness</td></tr>
+                <tr><td><strong>Multi-Day Expedition</strong></td><td>2-4 days</td><td>Advanced</td><td>Extended operations, remote locations, sustainability</td></tr>
+                <tr><td><strong>Emergency Deployment</strong></td><td>Variable</td><td>Critical</td><td>Provide communications during disaster/outage</td></tr>
+            </table>
+
+            <h2>Field Site Layout Diagram</h2>
+            <div class="diagram-container">
+                <div class="diagram-title">Optimal Field Station Layout (Top View - 20m × 20m area)</div>
+                <svg viewBox="0 0 800 600">
+                    <defs>
+                        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0, 10 3, 0 6" fill="#34495e"/></marker>
+                        <pattern id="grass" patternUnits="userSpaceOnUse" width="20" height="20"><rect width="20" height="20" fill="#e8f5e9"/><path d="M0,20 L5,15 L10,20 M10,20 L15,15 L20,20" stroke="#66bb6a" stroke-width="1" fill="none"/></pattern>
+                    </defs>
+                    <rect width="800" height="600" fill="url(#grass)"/>
+                    <g transform="translate(750,50)"><polygon points="0,-25 5,0 0,5 -5,0" fill="#d32f2f"/><text x="0" y="20" text-anchor="middle" class="svg-text" font-weight="bold">N</text></g>
+                    <rect x="100" y="450" width="180" height="100" fill="#ffd54f" stroke="#f57c00" stroke-width="2" rx="5"/><text x="190" y="495" text-anchor="middle" class="svg-text" font-weight="bold">Solar Panels</text><text x="190" y="512" text-anchor="middle" class="svg-small">(Southern exposure)</text><text x="190" y="527" text-anchor="middle" class="svg-small">2× 100W panels</text>
+                    <rect x="350" y="200" width="250" height="180" fill="#fff" stroke="#2196f3" stroke-width="3" rx="10"/><text x="475" y="225" text-anchor="middle" class="svg-title">Operating Tent (3m × 3m)</text>
+                    <rect x="380" y="260" width="80" height="50" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="3"/><text x="420" y="288" text-anchor="middle" class="svg-small">Radio Station</text>
+                    <rect x="480" y="260" width="100" height="50" fill="#ffeaa7" stroke="#000" stroke-width="1" rx="2"/><text x="530" y="288" text-anchor="middle" class="svg-small">Work Table</text>
+                    <rect x="390" y="325" width="70" height="40" fill="#ffecb3" stroke="#f57c00" stroke-width="2" rx="3"/><text x="425" y="350" text-anchor="middle" class="svg-small">Battery 100Ah</text>
+                    <g transform="translate(650,250)"><line x1="0" y1="0" x2="0" y2="-150" stroke="#333" stroke-width="4"/><circle cx="0" cy="-150" r="8" fill="#e91e63"/><line x1="-30" y1="-140" x2="30" y2="-140" stroke="#e91e63" stroke-width="3"/><text x="40" y="-130" class="svg-small">VHF/UHF Antenna</text><text x="0" y="25" text-anchor="middle" class="svg-small">6m mast</text><line x1="0" y1="-80" x2="-50" y2="0" stroke="#999" stroke-width="1" stroke-dasharray="3,3"/><line x1="0" y1="-80" x2="50" y2="0" stroke="#999" stroke-width="1" stroke-dasharray="3,3"/><line x1="0" y1="-80" x2="0" y2="30" stroke="#999" stroke-width="1" stroke-dasharray="3,3"/><circle cx="-50" cy="0" r="4" fill="#666"/><circle cx="50" cy="0" r="4" fill="#666"/><circle cx="0" cy="30" r="4" fill="#666"/></g>
+                    <rect x="80" y="100" width="20" height="150" fill="#8d6e63"/><circle cx="90" cy="80" r="40" fill="#66bb6a"/><text x="90" y="270" text-anchor="middle" class="svg-small">Tree</text>
+                    <rect x="700" y="100" width="20" height="150" fill="#8d6e63"/><circle cx="710" cy="80" r="40" fill="#66bb6a"/><text x="710" y="270" text-anchor="middle" class="svg-small">Tree</text>
+                    <line x1="90" y1="100" x2="710" y2="100" stroke="#ff6f00" stroke-width="3"/><circle cx="90" cy="100" r="5" fill="#ff6f00"/><circle cx="710" cy="100" r="5" fill="#ff6f00"/><text x="400" y="90" text-anchor="middle" class="svg-text" font-weight="bold">HF Wire Dipole (40m/20m)</text><line x1="400" y1="100" x2="420" y2="200" stroke="#000" stroke-width="2"/><text x="410" y="150" text-anchor="middle" class="svg-small" transform="rotate(-60 410 150)">Coax</text>
+                    <g transform="translate(150,300)"><circle cx="0" cy="0" r="50" fill="#fff" stroke="#ff9800" stroke-width="3"/><circle cx="0" cy="0" r="35" fill="none" stroke="#ff9800" stroke-width="2"/><line x1="-35" y1="0" x2="35" y2="0" stroke="#ff9800" stroke-width="2"/><line x1="0" y1="-35" x2="0" y2="35" stroke="#ff9800" stroke-width="2"/><text x="0" y="70" text-anchor="middle" class="svg-small">Drone Landing Pad</text></g>
+                    <rect x="50" y="50" width="120" height="80" fill="#ffebee" stroke="#d32f2f" stroke-width="2" rx="5"/><text x="110" y="75" text-anchor="middle" class="svg-text" font-weight="bold">Safety Zone</text><text x="110" y="92" text-anchor="middle" class="svg-small">First Aid Kit</text><text x="110" y="105" text-anchor="middle" class="svg-small">Fire Extinguisher</text><text x="110" y="118" text-anchor="middle" class="svg-small">Tools</text>
+                    <rect x="620" y="450" width="140" height="90" fill="#eceff1" stroke="#455a64" stroke-width="2" rx="5" stroke-dasharray="5,5"/><text x="690" y="490" text-anchor="middle" class="svg-text">Vehicle Parking</text><text x="690" y="515" text-anchor="middle" class="svg-small">Equipment Transport</text>
+                    <ellipse cx="475" cy="290" rx="180" ry="130" fill="none" stroke="#4caf50" stroke-width="2" stroke-dasharray="10,5"/><text x="475" y="180" text-anchor="middle" class="svg-small" fill="#4caf50">10m × 10m minimum clearance</text>
+                </svg>
+            </div>
+
+            <h2>Solar Power System Diagram</h2>
+            <div class="diagram-container">
+                <div class="diagram-title">Portable Field Station Power System - Complete Wiring</div>
+                <svg viewBox="0 0 800 600">
+                    <defs>
+                        <marker id="red-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0, 10 3, 0 6" fill="#d32f2f"/></marker>
+                        <linearGradient id="solar" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#ffd54f"/><stop offset="100%" stop-color="#ff6f00"/></linearGradient>
+                    </defs>
+                    <circle cx="100" cy="60" r="30" fill="#ffeb3b"/><line x1="100" y1="20" x2="100" y2="0" stroke="#ffeb3b" stroke-width="3"/><line x1="135" y1="35" x2="150" y2="25" stroke="#ffeb3b" stroke-width="3"/><line x1="140" y1="60" x2="160" y2="60" stroke="#ffeb3b" stroke-width="3"/><line x1="135" y1="85" x2="150" y2="95" stroke="#ffeb3b" stroke-width="3"/><line x1="65" y1="35" x2="50" y2="25" stroke="#ffeb3b" stroke-width="3"/><line x1="60" y1="60" x2="40" y2="60" stroke="#ffeb3b" stroke-width="3"/><line x1="65" y1="85" x2="50" y2="95" stroke="#ffeb3b" stroke-width="3"/>
+                    <g transform="translate(50,150)"><rect width="200" height="120" fill="url(#solar)" stroke="#f57c00" stroke-width="3" rx="5"/><line x1="0" y1="30" x2="200" y2="30" stroke="#ff6f00"/><line x1="0" y1="60" x2="200" y2="60" stroke="#ff6f00"/><line x1="0" y1="90" x2="200" y2="90" stroke="#ff6f00"/><line x1="50" y1="0" x2="50" y2="120" stroke="#ff6f00"/><line x1="100" y1="0" x2="100" y2="120" stroke="#ff6f00"/><line x1="150" y1="0" x2="150" y2="120" stroke="#ff6f00"/><text x="100" y="-10" text-anchor="middle" class="svg-text" font-weight="bold">Solar Panels</text><text x="100" y="145" text-anchor="middle" class="svg-small">2 × 100W | 18-22V Output</text></g>
+                    <path d="M 250 210 L 340 210" stroke="#d32f2f" stroke-width="3" marker-end="url(#red-arrow)"/><text x="295" y="200" text-anchor="middle" class="svg-small" fill="#d32f2f" font-weight="bold">18-22V</text>
+                    <g transform="translate(340,160)"><rect width="150" height="100" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/><text x="75" y="30" text-anchor="middle" class="svg-text" font-weight="bold">Charge Controller</text><text x="75" y="50" text-anchor="middle" class="svg-small">MPPT 30A</text><text x="75" y="67" text-anchor="middle" class="svg-small">LiFePO4 Mode</text><circle cx="40" cy="85" r="4" fill="#4caf50"/><circle cx="60" cy="85" r="4" fill="#4caf50"/><circle cx="80" cy="85" r="4" fill="#ffc107"/><text x="115" y="90" class="svg-small">Status LEDs</text></g>
+                    <path d="M 415 260 L 415 320" stroke="#d32f2f" stroke-width="3" marker-end="url(#red-arrow)"/><text x="435" y="290" class="svg-small" fill="#d32f2f" font-weight="bold">12.8V</text>
+                    <g transform="translate(335,320)"><rect width="160" height="90" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/><rect x="65" y="-10" width="30" height="10" fill="#ff9800" stroke="#f57c00" stroke-width="2"/><text x="80" y="30" text-anchor="middle" class="svg-text" font-weight="bold">LiFePO4 Battery</text><text x="80" y="50" text-anchor="middle" class="svg-small">100Ah | 12.8V | 1280Wh</text><rect x="20" y="65" width="120" height="15" fill="#fff" stroke="#f57c00" stroke-width="1" rx="2"/><rect x="22" y="67" width="96" height="11" fill="#4caf50" rx="1"/><text x="80" y="92" text-anchor="middle" class="svg-small">80% Charge</text></g>
+                    <g transform="translate(515,350)"><rect width="40" height="25" fill="#fff" stroke="#000" stroke-width="2" rx="3"/><text x="20" y="16" text-anchor="middle" class="svg-small" font-weight="bold">30A</text><text x="20" y="40" text-anchor="middle" class="svg-small">Fuse</text></g>
+                    <path d="M 495 362 L 515 362" stroke="#d32f2f" stroke-width="3" marker-end="url(#red-arrow)"/><path d="M 555 362 L 580 362" stroke="#d32f2f" stroke-width="3" marker-end="url(#red-arrow)"/>
+                    <g transform="translate(580,310)"><rect width="150" height="130" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/><text x="75" y="25" text-anchor="middle" class="svg-text" font-weight="bold">Power Distribution</text><text x="75" y="42" text-anchor="middle" class="svg-small">Powerpole Panel</text><g transform="translate(20,55)"><rect width="25" height="15" fill="#d32f2f" stroke="#000"/><rect y="15" width="25" height="15" fill="#000" stroke="#000"/><text x="35" y="18" class="svg-small">Radio 1</text></g><g transform="translate(20,85)"><rect width="25" height="15" fill="#d32f2f" stroke="#000"/><rect y="15" width="25" height="15" fill="#000" stroke="#000"/><text x="35" y="18" class="svg-small">Radio 2</text></g><g transform="translate(95,55)"><rect width="25" height="15" fill="#d32f2f" stroke="#000"/><rect y="15" width="25" height="15" fill="#000" stroke="#000"/><text x="-45" y="18" class="svg-small">Laptop</text></g><g transform="translate(95,85)"><rect width="25" height="15" fill="#d32f2f" stroke="#000"/><rect y="15" width="25" height="15" fill="#000" stroke="#000"/><text x="-35" y="18" class="svg-small">LED</text></g></g>
+                    <path d="M 655 440 L 655 470" stroke="#34495e" stroke-width="2" marker-end="url(#red-arrow)"/><text x="600" y="510" class="svg-text">Connected Equipment:</text><text x="600" y="530" class="svg-small">• VHF/UHF Radio (50W = 10A @ 12V)</text><text x="600" y="545" class="svg-small">• HF QRP Radio (10W = 2A @ 12V)</text><text x="600" y="560" class="svg-small">• Laptop (30W = 2.5A @ 12V)</text><text x="600" y="575" class="svg-small">• LED Lights (15W = 1.3A @ 12V)</text>
+                    <rect x="10" y="320" width="200" height="230" fill="#f1f8e9" stroke="#689f38" stroke-width="2" rx="5" stroke-dasharray="5,5"/><text x="110" y="345" text-anchor="middle" class="svg-text" font-weight="bold">Power Budget</text><text x="110" y="370" text-anchor="middle" class="svg-small">Solar Input: 200W max</text><text x="110" y="390" text-anchor="middle" class="svg-small">Peak sun hours: 5h/day</text><text x="110" y="410" text-anchor="middle" class="svg-small">Daily generation: 1000Wh</text><text x="110" y="440" text-anchor="middle" class="svg-small">Load: 105W continuous</text><text x="110" y="460" text-anchor="middle" class="svg-small">Daily consumption: 2520Wh</text><text x="110" y="490" text-anchor="middle" class="svg-small" font-weight="bold" fill="#d32f2f">Runtime on battery:</text><text x="110" y="510" text-anchor="middle" class="svg-small" font-weight="bold" fill="#d32f2f">~12 hours @ full load</text><text x="110" y="535" text-anchor="middle" class="svg-small" fill="#689f38">✓ Suitable for 8-hour</text><text x="110" y="550" text-anchor="middle" class="svg-small" fill="#689f38">day operation</text>
+                </svg>
+            </div>
+
+            <h2>Antenna Installation Diagram</h2>
+            <div class="diagram-container">
+                <div class="diagram-title">VHF/UHF Mast Installation with Guy Wire System</div>
+                <svg viewBox="0 0 800 500">
+                    <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#34495e"/></marker></defs>
+                    <line x1="400" y1="450" x2="400" y2="100" stroke="#333" stroke-width="6"/><circle cx="400" cy="450" r="8" fill="#333"/><rect x="385" y="460" width="30" height="30" fill="#666" stroke="#333" stroke-width="2"/><text x="400" y="505" text-anchor="middle" class="svg-small">Tripod Base</text>
+                    <g transform="translate(400,100)"><circle r="10" fill="#e91e63"/><line x1="-60" y1="0" x2="60" y2="0" stroke="#e91e63" stroke-width="4"/><line x1="-40" y1="-15" x2="40" y2="-15" stroke="#e91e63" stroke-width="3"/><line x1="0" y1="-30" x2="0" y2="-50" stroke="#e91e63" stroke-width="2"/><circle cy="-50" r="5" fill="#e91e63"/><text x="80" y="0" class="svg-text" font-weight="bold">2m/70cm Dual-Band</text><text x="80" y="16" class="svg-text" font-weight="bold">Vertical Antenna</text></g>
+                    <g><line x1="400" y1="250" x2="200" y2="450" stroke="#666" stroke-width="2" stroke-dasharray="5,5"/><line x1="400" y1="250" x2="600" y2="450" stroke="#666" stroke-width="2" stroke-dasharray="5,5"/><line x1="400" y1="250" x2="400" y2="480" stroke="#666" stroke-width="2" stroke-dasharray="5,5"/><circle cx="200" cy="450" r="12" fill="#8d6e63" stroke="#333" stroke-width="2"/><text x="200" y="475" text-anchor="middle" class="svg-small">Stake 1</text><text x="200" y="488" text-anchor="middle" class="svg-small">(120°)</text><circle cx="600" cy="450" r="12" fill="#8d6e63" stroke="#333" stroke-width="2"/><text x="600" y="475" text-anchor="middle" class="svg-small">Stake 2</text><text x="600" y="488" text-anchor="middle" class="svg-small">(240°)</text><circle cx="400" cy="480" r="12" fill="#8d6e63" stroke="#333" stroke-width="2"/><text x="480" y="485" class="svg-small">Stake 3 (0°)</text></g>
+                    <path d="M 420 350 Q 480 350 500 380" stroke="#000" stroke-width="2"/><text x="510" y="385" class="svg-text">Guy wires: nylon rope</text><text x="510" y="402" class="svg-small">3mm diameter minimum</text><text x="510" y="417" class="svg-small">Tension evenly at 120° spacing</text>
+                    <line x1="400" y1="450" x2="430" y2="390" stroke="#1976d2" stroke-width="3"/><circle cx="430" cy="390" r="6" fill="#1976d2"/><path d="M 440 390 Q 480 360 510 340" stroke="#000" stroke-width="2"/><text x="520" y="345" class="svg-text">Coax cable (RG-8X)</text><text x="520" y="362" class="svg-small">50Ω impedance</text><text x="520" y="377" class="svg-small">Form drip loop at base</text>
+                    <rect x="50" y="50" width="280" height="180" fill="#fffde7" stroke="#f57c00" stroke-width="2" rx="5"/><text x="190" y="75" text-anchor="middle" class="svg-text" font-weight="bold">Installation Specifications</text><line x1="60" y1="85" x2="320" y2="85" stroke="#f57c00" stroke-width="1"/><text x="60" y="105" class="svg-small"><tspan font-weight="bold">Mast Height:</tspan> 6 meters (telescoping)</text><text x="60" y="125" class="svg-small"><tspan font-weight="bold">Guy Wire Length:</tspan> ~4.5m each (3 total)</text><text x="60" y="145" class="svg-small"><tspan font-weight="bold">Guy Attachment:</tspan> 4m height on mast</text><text x="60" y="165" class="svg-small"><tspan font-weight="bold">Ground Radius:</tspan> 3m from base to stakes</text><text x="60" y="185" class="svg-small"><tspan font-weight="bold">SWR Target:</tspan> < 2:1 on 2m and 70cm</text><text x="60" y="205" class="svg-small"><tspan font-weight="bold">Setup Time:</tspan> 30 minutes (experienced team)</text><text x="60" y="220" class="svg-small"><tspan font-weight="bold">Min. Clearance:</tspan> 5m from structures/trees</text>
+                    <g transform="translate(50,270)"><rect width="280" height="140" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="5"/><text x="140" y="25" text-anchor="middle" class="svg-text" font-weight="bold">Safety Checklist</text><line x1="10" y1="35" x2="270" y2="35" stroke="#4caf50" stroke-width="1"/><text x="20" y="55" class="svg-small">✓ Check for overhead power lines (min 15m)</text><text x="20" y="72" class="svg-small">✓ Verify guy wire tension is equal</text><text x="20" y="89" class="svg-small">✓ Secure all hardware with lock washers</text><text x="20" y="106" class="svg-small">✓ Test stability before raising antenna</text><text x="20" y="123" class="svg-small">✓ Have spotter during mast raising</text></g>
+                </svg>
+            </div>
+
+            <h2>Pre-Deployment Planning</h2>
+
+            <h3>Phase 1: Site Survey</h3>
+            <div class="deployment-box">
+                <h4>🔍 Site Evaluation Criteria</h4>
+                
+                <p><strong>RF Environment:</strong></p>
+                <ul>
+                    <li>360° horizon clearance assessment</li>
+                    <li>Noise floor measurement on all bands</li>
+                    <li>Line-of-sight verification for VHF/UHF</li>
+                    <li>Identify power line interference sources</li>
+                </ul>
+                
+                <p><strong>Logistics:</strong></p>
+                <ul>
+                    <li>Vehicle access for equipment transport</li>
+                    <li>Level ground for setup (10m × 10m minimum)</li>
+                    <li>Anchor points for guy wires</li>
+                    <li>Drainage patterns (avoid flooding)</li>
+                </ul>
+                
+                <p><strong>Solar Resources:</strong></p>
+                <ul>
+                    <li>Unobstructed southern exposure (N. hemisphere)</li>
+                    <li>Peak sun hours for location</li>
+                    <li>Shade patterns throughout day</li>
+                </ul>
+                
+                <p><strong>Safety & Facilities:</strong></p>
+                <ul>
+                    <li>Emergency vehicle access</li>
+                    <li>Restroom facilities within 200m</li>
+                    <li>Cell phone coverage for emergencies</li>
+                    <li>Distance to hospital (<30 min preferred)</li>
+                </ul>
+            </div>
+
+            <h3>Phase 2: Equipment Preparation</h3>
+            <div class="info-box">
+                <h4>📦 Complete Field Station Manifest</h4>
+                
+                <p><strong>Radio Systems:</strong></p>
+                <ul>
+                    <li>VHF/UHF Mobile Transceivers (2-3 units)</li>
+                    <li>HF QRP Transceiver</li>
+                    <li>Handheld VHF/UHF (3-4 units for team coordination)</li>
+                    <li>RTL-SDR Receivers for monitoring</li>
+                </ul>
+                
+                <p><strong>Antennas:</strong></p>
+                <ul>
+                    <li>2m/70cm dual-band vertical + 6m mast</li>
+                    <li>HF wire dipole (40m/20m) with support</li>
+                    <li>Satellite handheld Yagi</li>
+                    <li>Coax cables, adapters, SWR meter</li>
+                </ul>
+                
+                <p><strong>Power System:</strong></p>
+                <ul>
+                    <li>Solar panels: 2× 100W portable</li>
+                    <li>Battery: 100Ah LiFePO4</li>
+                    <li>MPPT charge controller: 30A</li>
+                    <li>Power distribution panel</li>
+                </ul>
+                
+                <p><strong>Drone Operations:</strong></p>
+                <ul>
+                    <li>Primary drone (DJI Phantom 4/Mavic Pro)</li>
+                    <li>Backup drone</li>
+                    <li>LiPo batteries: 4-6 per drone</li>
+                    <li>Chargers, landing pad, spare props</li>
+                </ul>
+                
+                <p><strong>Infrastructure:</strong></p>
+                <ul>
+                    <li>Pop-up canopy tent (3m × 3m)</li>
+                    <li>Folding tables (2-3)</li>
+                    <li>Chairs (4-6)</li>
+                    <li>LED lighting for night ops</li>
+                </ul>
+                
+                <p><strong>Safety Equipment:</strong></p>
+                <ul>
+                    <li>First aid kit</li>
+                    <li>Fire extinguisher (ABC type)</li>
+                    <li>Sunscreen, insect repellent</li>
+                    <li>Emergency weather radio</li>
+                </ul>
+            </div>
+
+            <h2>Setup Timeline Visualization</h2>
+            
+            <div class="diagram-container">
+                <div class="diagram-title">Standard 8-Hour Day Operation Timeline</div>
+                <svg viewBox="0 0 800 400">
+                    <defs>
+                        <linearGradient id="time1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#bbdefb"/><stop offset="100%" stop-color="#90caf9"/></linearGradient>
+                        <linearGradient id="time2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#c8e6c9"/><stop offset="100%" stop-color="#a5d6a7"/></linearGradient>
+                        <linearGradient id="time3" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#fff9c4"/><stop offset="100%" stop-color="#fff59d"/></linearGradient>
+                        <linearGradient id="time4" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#4caf50"/><stop offset="100%" stop-color="#66bb6a"/></linearGradient>
+                        <linearGradient id="time5" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#ffccbc"/><stop offset="100%" stop-color="#ffab91"/></linearGradient>
+                    </defs>
+                    
+                    <!-- Timeline axis -->
+                    <line x1="50" y1="350" x2="750" y2="350" stroke="#333" stroke-width="2"/>
+                    
+                    <!-- Time markers -->
+                    <text x="50" y="370" text-anchor="middle" class="svg-small" font-weight="bold">08:00</text>
+                    <text x="200" y="370" text-anchor="middle" class="svg-small" font-weight="bold">10:00</text>
+                    <text x="400" y="370" text-anchor="middle" class="svg-small" font-weight="bold">12:00</text>
+                    <text x="600" y="370" text-anchor="middle" class="svg-small" font-weight="bold">15:00</text>
+                    <text x="750" y="370" text-anchor="middle" class="svg-small" font-weight="bold">17:15</text>
+                    
+                    <!-- Setup Phase -->
+                    <rect x="50" y="50" width="30" height="60" fill="url(#time1)" stroke="#1976d2" stroke-width="2" rx="3"/>
+                    <text x="65" y="125" text-anchor="middle" class="svg-small">Site</text>
+                    <text x="65" y="140" text-anchor="middle" class="svg-small">Check</text>
+                    <text x="65" y="155" text-anchor="middle" class="svg-small">15min</text>
+                    
+                    <rect x="85" y="50" width="50" height="60" fill="url(#time1)" stroke="#1976d2" stroke-width="2" rx="3"/>
+                    <text x="110" y="125" text-anchor="middle" class="svg-small">Unload</text>
+                    <text x="110" y="140" text-anchor="middle" class="svg-small">30min</text>
+                    
+                    <rect x="140" y="50" width="50" height="60" fill="url(#time1)" stroke="#1976d2" stroke-width="2" rx="3"/>
+                    <text x="165" y="125" text-anchor="middle" class="svg-small">Tent</text>
+                    <text x="165" y="140" text-anchor="middle" class="svg-small">Setup</text>
+                    <text x="165" y="155" text-anchor="middle" class="svg-small">30min</text>
+                    
+                    <rect x="195" y="50" width="75" height="60" fill="url(#time2)" stroke="#388e3c" stroke-width="2" rx="3"/>
+                    <text x="232" y="120" text-anchor="middle" class="svg-small">Power</text>
+                    <text x="232" y="135" text-anchor="middle" class="svg-small">System</text>
+                    <text x="232" y="150" text-anchor="middle" class="svg-small">45min</text>
+                    
+                    <rect x="275" y="50" width="75" height="60" fill="url(#time3)" stroke="#f57c00" stroke-width="2" rx="3"/>
+                    <text x="312" y="120" text-anchor="middle" class="svg-small">Antenna</text>
+                    <text x="312" y="135" text-anchor="middle" class="svg-small">Install</text>
+                    <text x="312" y="150" text-anchor="middle" class="svg-small">45min</text>
+                    
+                    <rect x="355" y="50" width="50" height="60" fill="url(#time3)" stroke="#f57c00" stroke-width="2" rx="3"/>
+                    <text x="380" y="120" text-anchor="middle" class="svg-small">Testing</text>
+                    <text x="380" y="135" text-anchor="middle" class="svg-small">&</text>
+                    <text x="380" y="150" text-anchor="middle" class="svg-small">Calibrate</text>
+                    <text x="380" y="165" text-anchor="middle" class="svg-small">30min</text>
+                    
+                    <!-- Operations Phase -->
+                    <rect x="410" y="30" width="240" height="100" fill="url(#time4)" stroke="#2e7d32" stroke-width="3" rx="5"/>
+                    <text x="530" y="70" text-anchor="middle" class="svg-title" fill="#fff" font-weight="bold">OPERATIONS</text>
+                    <text x="530" y="95" text-anchor="middle" class="svg-text" fill="#fff" font-weight="bold">4.5 Hours</text>
+                    <text x="530" y="115" text-anchor="middle" class="svg-small" fill="#fff">Active Contacts & Communications</text>
+                    
+                    <!-- Teardown Phase -->
+                    <rect x="655" y="50" width="65" height="60" fill="url(#time5)" stroke="#d32f2f" stroke-width="2" rx="3"/>
+                    <text x="687" y="120" text-anchor="middle" class="svg-small">Teardown</text>
+                    <text x="687" y="135" text-anchor="middle" class="svg-small">60min</text>
+                    
+                    <rect x="725" y="50" width="50" height="60" fill="url(#time5)" stroke="#d32f2f" stroke-width="2" rx="3"/>
+                    <text x="750" y="120" text-anchor="middle" class="svg-small">Load &</text>
+                    <text x="750" y="135" text-anchor="middle" class="svg-small">Inspect</text>
+                    <text x="750" y="150" text-anchor="middle" class="svg-small">30min</text>
+                    
+                    <!-- Phase Labels -->
+                    <text x="165" y="30" text-anchor="middle" class="svg-text" font-weight="bold" fill="#1976d2">SETUP PHASE</text>
+                    <text x="687" y="30" text-anchor="middle" class="svg-text" font-weight="bold" fill="#d32f2f">TEARDOWN</text>
+                    
+                    <!-- Total time -->
+                    <rect x="250" y="200" width="300" height="80" fill="#f5f5f5" stroke="#667eea" stroke-width="2" rx="5"/>
+                    <text x="400" y="230" text-anchor="middle" class="svg-text" font-weight="bold">Total Operation: 9 hours 15 minutes</text>
+                    <text x="400" y="250" text-anchor="middle" class="svg-small">Setup: 3 hours | Operations: 4.5 hours | Teardown: 1.5 hours</text>
+                    <text x="400" y="270" text-anchor="middle" class="svg-small" fill="#4caf50">✓ Allows for flexible schedule adjustments</text>
+                </svg>
+            </div>
+
+            <h2>Field Setup Procedures</h2>
+
+            <h3>Solar Power System Setup</h3>
+            <div class="deployment-box">
+                <h4>☀️ 45-Minute Solar Deployment</h4>
+                
+                <p><strong>Step 1: Panel Positioning (10 min)</strong></p>
+                <ol>
+                    <li>Identify optimal location (southern exposure)</li>
+                    <li>Set angle to latitude ± 15° (seasonal adjustment)</li>
+                    <li>Orient true south using compass</li>
+                    <li>Secure panels (stakes, weights, guy wires)</li>
+                </ol>
+                
+                <p><strong>Step 2: Battery Setup (10 min)</strong></p>
+                <ol>
+                    <li>Place in shaded, ventilated enclosure</li>
+                    <li>Verify voltage with multimeter (12.8-13.2V)</li>
+                    <li>Connect monitoring display</li>
+                </ol>
+                
+                <p><strong>Step 3: Controller Installation (10 min)</strong></p>
+                <ol>
+                    <li>Mount in shaded location</li>
+                    <li>Connect battery FIRST (red +, black -)</li>
+                    <li>Install 30A fuse on positive lead</li>
+                    <li>Configure for LiFePO4 chemistry</li>
+                </ol>
+                
+                <p><strong>Step 4: Panel Connection (10 min)</strong></p>
+                <ol>
+                    <li>Connect panels to controller (MC4 connectors)</li>
+                    <li>Verify charging current appears</li>
+                    <li>Check green charging LED</li>
+                </ol>
+                
+                <p><strong>Step 5: Load Distribution (5 min)</strong></p>
+                <ol>
+                    <li>Connect Powerpole distribution panel</li>
+                    <li>Verify 12.8V output</li>
+                    <li>Test with small load before full ops</li>
+                </ol>
+            </div>
+
+            <h3>VHF/UHF Station Setup</h3>
+            <div class="deployment-box">
+                <h4>📻 Radio Station Assembly (60 minutes)</h4>
+                
+                <p><strong>Antenna Installation (30 min):</strong></p>
+                <ol>
+                    <li>Erect 6m telescoping mast with tripod base</li>
+                    <li>Attach dual-band vertical to mast top</li>
+                    <li>Install 3 guy wires at 120° spacing</li>
+                    <li>Route coax with drip loop at base</li>
+                    <li>Test SWR on 2m and 70cm bands</li>
+                </ol>
+                
+                <p><strong>Radio Configuration (20 min):</strong></p>
+                <ol>
+                    <li>Mount transceiver securely on table</li>
+                    <li>Connect 12V power with inline fuse</li>
+                    <li>Attach coax and ground system</li>
+                    <li>Program repeater frequencies</li>
+                    <li>Test TX/RX on simplex frequency</li>
+                </ol>
+                
+                <p><strong>Final Checks (10 min):</strong></p>
+                <ul>
+                    <li>✅ SWR < 2:1 on all bands</li>
+                    <li>✅ Power output normal (50W)</li>
+                    <li>✅ Receiver squelch properly adjusted</li>
+                    <li>✅ All connections tight and secure</li>
+                </ul>
+            </div>
+
+            <h2>Operational Best Practices</h2>
+
+            <h3>Team Roles</h3>
+            <div class="success-box">
+                <h4>Assign Clear Responsibilities:</h4>
+                <ul>
+                    <li><strong>Operations Manager:</strong> Coordinates activities, maintains schedule</li>
+                    <li><strong>Radio Operators (2-3):</strong> Rotate shifts, maintain logs</li>
+                    <li><strong>Safety Officer:</strong> Monitors weather, equipment, personnel</li>
+                    <li><strong>Drone Pilot:</strong> Flight operations, battery management</li>
+                    <li><strong>Power Manager:</strong> Solar system, battery monitoring</li>
+                    <li><strong>Logger:</strong> Contact documentation, data recording</li>
+                </ul>
+            </div>
+
+            <h3>Emergency Procedures</h3>
+            <div class="info-box">
+                <h4>⚠️ Critical Situations:</h4>
+                <p><strong>Weather Emergency (Lightning):</strong></p>
+                <ul>
+                    <li>Cease all operations immediately</li>
+                    <li>Lower antennas if time permits</li>
+                    <li>Take shelter in vehicle or building</li>
+                    <li>Wait 30 minutes after last thunder before resuming</li>
+                </ul>
+                
+                <p><strong>Equipment Failure:</strong></p>
+                <ul>
+                    <li>Switch to backup systems</li>
+                    <li>Document failure for post-op analysis</li>
+                    <li>Do not attempt field repairs on complex equipment</li>
+                </ul>
+                
+                <p><strong>Medical Emergency:</strong></p>
+                <ul>
+                    <li>Designate first aid responder</li>
+                    <li>Call emergency services immediately</li>
+                    <li>Provide GPS coordinates to dispatchers</li>
+                    <li>Keep patient warm and comfortable</li>
+                </ul>
+            </div>
+
+            <h2>Chapter Summary</h2>
+            
+            <div class="success-box">
+                <h4>Key Skills Developed:</h4>
+                <ul>
+                    <li>✅ Site survey and selection</li>
+                    <li>✅ Equipment logistics and transport</li>
+                    <li>✅ Systematic setup procedures</li>
+                    <li>✅ Team coordination and roles</li>
+                    <li>✅ Safety protocols and emergency response</li>
+                    <li>✅ Multi-technology integration in field</li>
+                    <li>✅ Sustainable operations with solar power</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <h4>Next: Chapter 13 - Safety Protocols & Regulations</h4>
+                <p>Comprehensive safety training for RF exposure, electrical systems, drone operations, and regulatory compliance.</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>RadioSport STEM Education Program</strong></p>
+            <p>Chapter 12: Field Operations & Deployments</p>
+            <p>Version 3.0 • 2025 Edition</p>
+        </div>
+    </div>
+</body>
+</html>

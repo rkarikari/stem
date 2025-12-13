@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 13: Safety & Regulations - RadioSport Handbook</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #2c3e50; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .nav { background: #1e3c72; color: white; padding: 15px 30px; display: flex; justify-content: space-between; }
+        .nav a { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 40px; text-align: center; }
+        .header h1 { font-size: 42px; margin-bottom: 10px; }
+        .chapter-num { font-size: 18px; opacity: 0.9; }
+        .content { padding: 40px; }
+        h2 { color: #1e3c72; font-size: 32px; margin: 40px 0 20px 0; padding-bottom: 10px; border-bottom: 3px solid #667eea; }
+        h3 { color: #2a5298; font-size: 24px; margin: 30px 0 15px 0; }
+        h4 { color: #34495e; font-size: 20px; margin: 20px 0 10px 0; }
+        p { margin-bottom: 15px; text-align: justify; }
+        .warning-box, .danger-box, .info-box, .success-box { padding: 25px; margin: 25px 0; border-radius: 5px; border-left: 5px solid; }
+        .warning-box { background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left-color: #ff9800; }
+        .danger-box { background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-left-color: #f44336; }
+        .info-box { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left-color: #2196f3; }
+        .success-box { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        ul, ol { margin: 20px 0 20px 40px; }
+        li { margin-bottom: 10px; }
+        .footer { background: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="radiosport_ch12.html">← Chapter 12</a>
+            <span>Chapter 13 of 14</span>
+            <a href="radiosport_ch14.html">Chapter 14 →</a>
+        </div>
+        
+        <div class="header">
+            <div class="chapter-num">CHAPTER 13</div>
+            <h1>⚠️ Safety Protocols & Regulations</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong>Safety is paramount in RadioSport. This chapter covers RF exposure, electrical hazards, antenna safety, drone operations, field safety, and regulatory compliance. Zero tolerance policy for unsafe behavior.</strong></p>
+
+            <h2>RF Safety and Exposure Limits</h2>
+
+            <div class="danger-box">
+                <h3>⚠️ RF Radiation Hazards</h3>
+                <p>Radio frequency energy can cause tissue heating and other biological effects at high power densities. Amateur radio operators must ensure safe RF exposure levels.</p>
+
+                <h4>FCC/ICNIRP Exposure Limits (Controlled Environment):</h4>
+                <table>
+                    <tr>
+                        <th>Frequency Range</th>
+                        <th>Power Density (mW/cm²)</th>
+                        <th>Electric Field (V/m)</th>
+                    </tr>
+                    <tr>
+                        <td>HF (3-30 MHz)</td>
+                        <td>1.0</td>
+                        <td>614 / f(MHz)</td>
+                    </tr>
+                    <tr>
+                        <td>VHF (30-300 MHz)</td>
+                        <td>1.0</td>
+                        <td>61.4</td>
+                    </tr>
+                    <tr>
+                        <td>UHF (300-3000 MHz)</td>
+                        <td>f(MHz) / 300</td>
+                        <td>61.4</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>Safe Distance Calculations</h3>
+            <div class="warning-box">
+                <h4>Minimum Safe Distance Formula:</h4>
+                <p><strong>Near-Field (< λ/2π from antenna):</strong></p>
+                <p>Use worst-case assumption or detailed modeling</p>
+
+                <p><strong>Far-Field (> λ/2π from antenna):</strong></p>
+                <p>Power Density = (P × G) / (4π × d²)</p>
+
+                <h4>Example: 50W VHF at 146 MHz</h4>
+                <ul>
+                    <li>Power: 50W</li>
+                    <li>Antenna gain: 3 dBd (2× power gain)</li>
+                    <li>Effective radiated power: 100W</li>
+                    <li>Safe distance (1 mW/cm²): d = √(100 / 4π × 0.001) = 2.8 meters</li>
+                </ul>
+
+                <p><strong>Rule of Thumb:</strong> Stay at least 3 meters from transmitting VHF/UHF antenna at 50W</p>
+            </div>
+
+            <h3>RF Safety Practices</h3>
+            <ul>
+                <li>✅ Never stand in front of directional antenna while transmitting</li>
+                <li>✅ Keep transmitting antennas away from living spaces</li>
+                <li>✅ Use minimum power necessary for communications</li>
+                <li>✅ Install RF warning signs at base of antenna masts</li>
+                <li>✅ Educate family/neighbors about safe distances</li>
+                <li>✅ Limit continuous high-power transmissions (duty cycle)</li>
+                <li>✅ Ground all equipment properly to prevent RF burns</li>
+            </ul>
+
+            <h2>Electrical Safety</h2>
+
+            <div class="danger-box">
+                <h3>🔌 Critical Electrical Hazards</h3>
+                
+                <h4>DC Power Hazards:</h4>
+                <ul>
+                    <li><strong>Short Circuit Risk:</strong> 12V battery can deliver 500+ amps instantaneously</li>
+                    <li><strong>Arc Flash:</strong> DC arcs are sustained (unlike AC), can melt copper wire</li>
+                    <li><strong>Fire Risk:</strong> Undersized wiring causes resistive heating and fire</li>
+                    <li><strong>Jewelry Hazard:</strong> Metal rings/bracelets can complete circuit across terminals</li>
+                </ul>
+
+                <h4>Mandatory Safety Rules:</h4>
+                <ol>
+                    <li><strong>Fusing:</strong> Install appropriate fuse within 18" of battery positive terminal</li>
+                    <li><strong>No Jewelry:</strong> Remove ALL rings, watches, bracelets, necklaces before working with power</li>
+                    <li><strong>Insulated Tools:</strong> Use insulated screwdrivers and wrenches</li>
+                    <li><strong>One Hand Rule:</strong> Work with one hand when possible to prevent current path across heart</li>
+                    <li><strong>Polarity Check:</strong> ALWAYS verify positive/negative before connecting (use multimeter)</li>
+                    <li><strong>Disconnect First:</strong> Disconnect negative terminal first when removing battery</li>
+                </ol>
+            </div>
+
+            <h3>Wire Sizing for Safety</h3>
+            <table>
+                <tr>
+                    <th>Current (Amps)</th>
+                    <th>AWG Wire Size</th>
+                    <th>Fuse Rating</th>
+                    <th>Application</th>
+                </tr>
+                <tr>
+                    <td>0-5A</td>
+                    <td>18 AWG</td>
+                    <td>5A</td>
+                    <td>Low-power accessories</td>
+                </tr>
+                <tr>
+                    <td>5-10A</td>
+                    <td>16 AWG</td>
+                    <td>10A</td>
+                    <td>QRP radios, lights</td>
+                </tr>
+                <tr>
+                    <td>10-20A</td>
+                    <td>14 AWG</td>
+                    <td>20A</td>
+                    <td>Charge controllers</td>
+                </tr>
+                <tr>
+                    <td>20-30A</td>
+                    <td>10 AWG</td>
+                    <td>30A</td>
+                    <td>VHF/UHF mobile radios</td>
+                </tr>
+                <tr>
+                    <td>30-50A</td>
+                    <td>8 AWG</td>
+                    <td>50A</td>
+                    <td>HF transceivers, main feeds</td>
+                </tr>
+                <tr>
+                    <td>50-100A</td>
+                    <td>4 AWG</td>
+                    <td>100A</td>
+                    <td>Large battery banks</td>
+                </tr>
+            </table>
+
+            <h3>Battery Safety</h3>
+            <div class="warning-box">
+                <h4>LiFePO4 Safety:</h4>
+                <ul>
+                    <li>✅ Use batteries with built-in BMS (Battery Management System)</li>
+                    <li>✅ Never charge below 0°C (32°F) - causes lithium plating</li>
+                    <li>✅ Store at 50-60% SOC for long-term</li>
+                    <li>✅ Monitor cell voltages (should be within 0.05V of each other)</li>
+                    <li>⛔ Do not puncture, crush, or disassemble</li>
+                </ul>
+
+                <h4>LiPo Battery Safety (Drones):</h4>
+                <ul>
+                    <li>✅ Store in LiPo safety bag or metal ammo can</li>
+                    <li>✅ Never charge unattended</li>
+                    <li>✅ Check for puffing/swelling (sign of failure)</li>
+                    <li>✅ Storage charge: 3.8V per cell</li>
+                    <li>⛔ NEVER discharge below 3.0V per cell</li>
+                    <li>⛔ If fire occurs: DO NOT USE WATER - use sand, dry powder extinguisher, or LiPo bag</li>
+                </ul>
+            </div>
+
+            <h2>Antenna Installation Safety</h2>
+
+            <div class="danger-box">
+                <h3>⚡ Tower and Antenna Hazards</h3>
+                
+                <h4>Falls from Height:</h4>
+                <ul>
+                    <li><strong>Risk:</strong> Serious injury or death from falling</li>
+                    <li><strong>Prevention:</strong> Use proper fall arrest equipment when climbing >2m</li>
+                    <li><strong>Rule:</strong> Never climb alone; always have spotter</li>
+                </ul>
+
+                <h4>Falling Objects:</h4>
+                <ul>
+                    <li><strong>Risk:</strong> Tools, hardware, antennas falling on people below</li>
+                    <li><strong>Prevention:</strong> Establish work zone, hard hats required, tool lanyards</li>
+                </ul>
+
+                <h4>Electrical Contact:</h4>
+                <ul>
+                    <li><strong>Risk:</strong> Antenna touching power lines = FATAL</li>
+                    <li><strong>Prevention:</strong> Maintain 10-foot clearance from ALL power lines</li>
+                    <li><strong>Rule:</strong> If antenna falls toward power line, ABANDON IT and call utility</li>
+                </ul>
+            </div>
+
+            <h3>Safe Antenna Raising Procedure</h3>
+            <div class="success-box">
+                <h4>✓ Step-by-Step Safety Protocol:</h4>
+                <ol>
+                    <li><strong>Pre-Raise Inspection:</strong>
+                        <ul>
+                            <li>Check all bolts and connections tight</li>
+                            <li>Inspect mast for cracks or damage</li>
+                            <li>Verify guy wire anchors secure</li>
+                            <li>Confirm no overhead power lines within fall radius</li>
+                        </ul>
+                    </li>
+                    <li><strong>Team Briefing:</strong>
+                        <ul>
+                            <li>Assign roles: 3+ people for mast >3m</li>
+                            <li>Establish clear hand signals (verbal hard to hear)</li>
+                            <li>Identify "abort" signal (stop immediately)</li>
+                            <li>Clear work area of all non-essential personnel</li>
+                        </ul>
+                    </li>
+                    <li><strong>Raising:</strong>
+                        <ul>
+                            <li>Lift slowly and steadily</li>
+                            <li>Person on guy wires maintains tension</li>
+                            <li>Stop if anything unexpected happens</li>
+                            <li>Once vertical, secure immediately</li>
+                        </ul>
+                    </li>
+                    <li><strong>Final Checks:</strong>
+                        <ul>
+                            <li>Mast plumb (use level or plumb bob)</li>
+                            <li>Guy wires equal tension</li>
+                            <li>No wobble when lightly pushed</li>
+                            <li>Coax properly secured to mast</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+
+            <h2>Drone Safety Protocols</h2>
+
+            <div class="warning-box">
+                <h3>🚁 UAS Operating Rules</h3>
+                
+                <h4>Pre-Flight Safety Checklist:</h4>
+                <ul>
+                    <li>✅ Airspace check (no restricted zones, airports)</li>
+                    <li>✅ Weather assessment (wind < 10 m/s, no rain, good visibility)</li>
+                    <li>✅ Battery voltage check (>3.7V per cell for LiPo)</li>
+                    <li>✅ Props inspection (no cracks, secure attachment)</li>
+                    <li>✅ GPS lock confirmed (8+ satellites)</li>
+                    <li>✅ Return-to-home altitude set</li>
+                    <li>✅ Spotter assigned (watch for aircraft)</li>
+                    <li>✅ First aid kit accessible</li>
+                </ul>
+
+                <h4>In-Flight Rules:</h4>
+                <ul>
+                    <li>⛔ Maximum altitude: 120m (400 feet) AGL</li>
+                    <li>⛔ Visual line of sight (VLOS) mandatory</li>
+                    <li>⛔ Do not fly over people</li>
+                    <li>⛔ Yield right-of-way to manned aircraft immediately</li>
+                    <li>⛔ Reserve 30% battery for return-to-home</li>
+                    <li>✅ Maintain control at all times</li>
+                    <li>✅ Land immediately if control issues</li>
+                </ul>
+
+                <h4>Emergency Procedures:</h4>
+                <ul>
+                    <li><strong>Lost Signal:</strong> Drone should RTH automatically (verify beforehand)</li>
+                    <li><strong>Low Battery:</strong> Land immediately in safe area, don't push limits</li>
+                    <li><strong>Flyaway:</strong> If unresponsive, activate RTH or emergency motor stop as last resort</li>
+                    <li><strong>Crash:</strong> Secure scene, check for injuries, disconnect battery, document for analysis</li>
+                </ul>
+            </div>
+
+            <h2>Field Operation Safety</h2>
+
+            <h3>Weather Hazards</h3>
+            <div class="danger-box">
+                <h4>Lightning Safety:</h4>
+                <ul>
+                    <li><strong>Rule:</strong> If you can hear thunder, lightning is close enough to strike</li>
+                    <li><strong>Action:</strong> Cease operations, lower antennas, take shelter in vehicle or building</li>
+                    <li><strong>30-30 Rule:</strong> Wait 30 minutes after last thunder before resuming</li>
+                    <li><strong>Never:</strong> Seek shelter under isolated trees (lightning attractors)</li>
+                </ul>
+
+                <h4>Heat Safety:</h4>
+                <ul>
+                    <li>Drink water regularly (before feeling thirsty)</li>
+                    <li>Shade canopy for operators</li>
+                    <li>Take breaks every 2 hours</li>
+                    <li>Watch for heat exhaustion signs (dizziness, nausea, confusion)</li>
+                </ul>
+            </div>
+
+            <h3>First Aid Essentials</h3>
+            <table>
+                <tr>
+                    <th>Injury Type</th>
+                    <th>Common Causes</th>
+                    <th>First Aid Response</th>
+                </tr>
+                <tr>
+                    <td><strong>Minor Cuts</strong></td>
+                    <td>Wire ends, sharp metal</td>
+                    <td>Clean with water, apply bandage, monitor for infection</td>
+                </tr>
+                <tr>
+                    <td><strong>Burns</strong></td>
+                    <td>Soldering iron, hot resistors</td>
+                    <td>Cool water 10+ minutes, sterile dressing, seek medical if severe</td>
+                </tr>
+                <tr>
+                    <td><strong>Electrical Shock</strong></td>
+                    <td>Improper wiring, wet conditions</td>
+                    <td>Disconnect power, check breathing/pulse, call emergency services, CPR if needed</td>
+                </tr>
+                <tr>
+                    <td><strong>Eye Injury</strong></td>
+                    <td>Flying debris, chemical splash</td>
+                    <td>Flush with clean water 15+ min, cover eye, seek immediate medical attention</td>
+                </tr>
+                <tr>
+                    <td><strong>Sprain/Strain</strong></td>
+                    <td>Lifting heavy equipment, falls</td>
+                    <td>RICE: Rest, Ice, Compression, Elevation. Immobilize if severe.</td>
+                </tr>
+            </table>
+
+            <h2>Regulatory Compliance</h2>
+
+            <h3>Amateur Radio Licensing</h3>
+            <div class="info-box">
+                <h4>License Requirements:</h4>
+                <p>Students must obtain appropriate amateur radio license before transmitting.</p>
+
+                <table>
+                    <tr>
+                        <th>License Class</th>
+                        <th>Exam</th>
+                        <th>Privileges</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Technician</strong></td>
+                        <td>35 questions</td>
+                        <td>Full VHF/UHF, limited HF</td>
+                    </tr>
+                    <tr>
+                        <td><strong>General</strong></td>
+                        <td>35 questions</td>
+                        <td>Most HF bands, all VHF/UHF</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Amateur Extra</strong></td>
+                        <td>50 questions</td>
+                        <td>All amateur privileges</td>
+                    </tr>
+                </table>
+
+                <p><strong>Note:</strong> Under supervision, unlicensed students can operate under control of licensed RadioSport instructor.</p>
+            </div>
+
+            <h3>Operating Regulations</h3>
+            <ul>
+                <li>✅ Identify station every 10 minutes and at end of contact</li>
+                <li>✅ Use only authorized frequencies for license class</li>
+                <li>✅ Respect power limits (typically 1500W PEP for HF, 50W typical for VHF/UHF)</li>
+                <li>✅ No music, broadcasting, or encrypted messages</li>
+                <li>✅ Emergency communications have priority</li>
+                <li>⛔ No profanity or obscenity</li>
+                <li>⛔ No business or commercial use</li>
+                <li>⛔ No third-party traffic to prohibited countries</li>
+            </ul>
+
+            <h2>Chapter Summary</h2>
+            <ul>
+                <li>✅ RF safety: maintain safe distances, use minimum power</li>
+                <li>✅ Electrical: proper fusing, wire sizing, no jewelry</li>
+                <li>✅ Batteries: appropriate chemistry for application, safe storage</li>
+                <li>✅ Antennas: team lifting, power line clearance, fall protection</li>
+                <li>✅ Drones: VLOS, altitude limits, battery reserves</li>
+                <li>✅ Field ops: weather awareness, first aid, emergency procedures</li>
+                <li>✅ Regulations: proper licensing, frequency privileges, station ID</li>
+            </ul>
+
+            <div class="danger-box">
+                <h3>⚠️ Safety Culture</h3>
+                <p><strong>Zero tolerance for unsafe behavior. Safety is everyone's responsibility. When in doubt, STOP and ask for guidance.</strong></p>
+            </div>
+
+            <div class="info-box">
+                <h4>Next: Chapter 14 - Awards, Budget & Sustainability</h4>
+                <p>Program economics, equipment awards, and building long-term RadioSport clubs.</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>RadioSport STEM Education Program</strong></p>
+            <p>Chapter 13: Safety Protocols & Regulations</p>
+            <p>Version 3.0 • 2025 Edition</p>
+        </div>
+    </div>
+</body>
+</html>

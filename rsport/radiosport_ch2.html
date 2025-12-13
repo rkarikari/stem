@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 2: Program Structure - RadioSport Handbook</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #2c3e50; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .nav { background: #1e3c72; color: white; padding: 15px 30px; display: flex; justify-content: space-between; }
+        .nav a { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 40px; text-align: center; }
+        .header h1 { font-size: 42px; margin-bottom: 10px; }
+        .chapter-num { font-size: 18px; opacity: 0.9; }
+        .content { padding: 40px; }
+        h2 { color: #1e3c72; font-size: 32px; margin: 40px 0 20px 0; padding-bottom: 10px; border-bottom: 3px solid #667eea; }
+        h3 { color: #2a5298; font-size: 24px; margin: 30px 0 15px 0; }
+        h4 { color: #34495e; font-size: 20px; margin: 20px 0 10px 0; }
+        p { margin-bottom: 15px; text-align: justify; }
+        .info-box, .highlight-box, .schedule-box { padding: 25px; margin: 25px 0; border-radius: 5px; border-left: 5px solid; }
+        .info-box { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left-color: #2196f3; }
+        .highlight-box { background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); border-left-color: #9c27b0; }
+        .schedule-box { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        ul, ol { margin: 20px 0 20px 40px; }
+        li { margin-bottom: 10px; }
+        .footer { background: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="radiosport_ch1.html">← Chapter 1</a>
+            <span>Chapter 2 of 14</span>
+            <a href="radiosport_ch3.html">Chapter 3 →</a>
+        </div>
+        
+        <div class="header">
+            <div class="chapter-num">CHAPTER 2</div>
+            <h1>📚 Program Structure & Integration</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong>RadioSport's curriculum integrates five knowledge streams—AI, Radio, Satellites, Drones, and Coding—into a comprehensive 9-month program. Students progress through foundation, integration, specialization, and mastery phases.</strong></p>
+
+            <h2>Five Knowledge Streams</h2>
+
+            <h3>Stream 1: Offline AI & Computational Thinking</h3>
+            <div class="info-box">
+                <h4>Core Topics:</h4>
+                <ul>
+                    <li><strong>Classical AI:</strong> Search algorithms (A*, Dijkstra), heuristics, constraint satisfaction</li>
+                    <li><strong>Machine Learning:</strong> K-means, decision trees, naïve Bayes, random forests, SVMs</li>
+                    <li><strong>Neural Networks:</strong> Perceptrons, backpropagation, activation functions, offline training</li>
+                    <li><strong>AI for Radio:</strong> Propagation prediction, interference classification, signal optimization</li>
+                    <li><strong>Satellite Intelligence:</strong> Orbital prediction (SGP4/SDP4), Doppler correction, pass scheduling</li>
+                    <li><strong>Drone Autonomy:</strong> Path planning, obstacle avoidance, computer vision, mission optimization</li>
+                </ul>
+            </div>
+
+            <h3>Stream 2: Radio & RF Theory</h3>
+            <div class="info-box">
+                <h4>Core Topics:</h4>
+                <ul>
+                    <li><strong>RF Fundamentals:</strong> Frequency, wavelength, power (dBm/dBW), impedance, SWR</li>
+                    <li><strong>Transmission Lines:</strong> Coax characteristics, velocity factor, loss, connectors</li>
+                    <li><strong>Antenna Theory:</strong> Radiation patterns, gain, polarization, feedpoint impedance</li>
+                    <li><strong>Antenna Types:</strong> Dipoles, verticals, Yagis, helical, log-periodic, satellite antennas</li>
+                    <li><strong>Propagation:</strong> Line-of-sight, ionospheric layers, tropospheric ducting, sporadic-E</li>
+                    <li><strong>Link Budget:</strong> TX power + gain - loss + RX gain = received signal</li>
+                    <li><strong>Digital Modes:</strong> AFSK1200, APRS, D-STAR, DMR, PSK31, FT8, SSTV</li>
+                    <li><strong>SDR Technology:</strong> I/Q sampling, demodulation, spectrum analysis</li>
+                </ul>
+            </div>
+
+            <h3>Stream 3: Amateur Radio Satellite Communications</h3>
+            <div class="info-box">
+                <h4>Core Topics:</h4>
+                <ul>
+                    <li><strong>Orbital Mechanics:</strong> Kepler's laws, TLE format, orbital period calculations</li>
+                    <li><strong>Active Satellites:</strong> AO-91, AO-92, SO-50, ISS operations</li>
+                    <li><strong>Tracking Software:</strong> Gpredict, pass prediction, real-time Az/El</li>
+                    <li><strong>Doppler Compensation:</strong> Frequency shift calculations, automated tuning</li>
+                    <li><strong>Ground Stations:</strong> Crossed-Yagi design, rotator control, preamplifiers</li>
+                    <li><strong>Operating Procedures:</strong> FM vs SSB modes, uplink/downlink coordination</li>
+                </ul>
+            </div>
+
+            <h3>Stream 4: Drone Operations & Integration</h3>
+            <div class="info-box">
+                <h4>Core Topics:</h4>
+                <ul>
+                    <li><strong>Aviation Fundamentals:</strong> Four forces, airfoil theory, multirotor dynamics</li>
+                    <li><strong>DJI Platforms:</strong> Phantom 4, Mavic Pro systems and specifications</li>
+                    <li><strong>Flight Planning:</strong> Mission software, waypoint navigation, area coverage</li>
+                    <li><strong>Radio Integration:</strong> MAVLink, telemetry transmission, payload mounting</li>
+                    <li><strong>Battery Management:</strong> LiPo characteristics, C-rating, charge/discharge cycles</li>
+                    <li><strong>Regulations:</strong> Airspace classes, altitude limits, VLOS requirements</li>
+                </ul>
+            </div>
+
+            <h3>Stream 5: Coding & Software Engineering</h3>
+            <div class="info-box">
+                <h4>Core Topics:</h4>
+                <ul>
+                    <li><strong>Python:</strong> NumPy, SciPy, Matplotlib, PySerial, asyncio</li>
+                    <li><strong>C++:</strong> Real-time systems, memory management, templates, STL</li>
+                    <li><strong>RF Applications:</strong> Propagation simulators, antenna calculators, SDR control</li>
+                    <li><strong>Satellite Software:</strong> TLE parsing, SGP4 propagation, Doppler engines</li>
+                    <li><strong>Drone Programming:</strong> DroneKit-Python, MAVLink, autonomous missions</li>
+                    <li><strong>Signal Processing:</strong> FFT implementation, filter design, demodulation</li>
+                </ul>
+            </div>
+
+            <h2>Weekly Schedule Template</h2>
+
+            <div class="schedule-box">
+                <table>
+                    <tr>
+                        <th>Time</th>
+                        <th>Activity</th>
+                        <th>Focus</th>
+                    </tr>
+                    <tr>
+                        <td><strong>0:00-0:30</strong></td>
+                        <td>Theory Lecture</td>
+                        <td>RF concepts, orbital mechanics, AI algorithms, aerodynamics</td>
+                    </tr>
+                    <tr>
+                        <td><strong>0:30-1:00</strong></td>
+                        <td>Coding Workshop</td>
+                        <td>Python/C++ development, algorithm implementation</td>
+                    </tr>
+                    <tr>
+                        <td><strong>1:00-1:15</strong></td>
+                        <td>Break</td>
+                        <td>Equipment check, informal discussion</td>
+                    </tr>
+                    <tr>
+                        <td><strong>1:15-2:15</strong></td>
+                        <td>Hands-On Lab</td>
+                        <td>Antenna building, circuits, drone maintenance, satellite tracking</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2:15-2:45</strong></td>
+                        <td>Live Operations</td>
+                        <td>Radio contacts, satellite passes, supervised drone flights</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2:45-3:00</strong></td>
+                        <td>Debrief</td>
+                        <td>Logging, data analysis, safety review, preview next session</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h2>Monthly Field Day Schedule</h2>
+
+            <table>
+                <tr>
+                    <th>Time</th>
+                    <th>Activity</th>
+                    <th>Technologies</th>
+                </tr>
+                <tr>
+                    <td>08:00-09:00</td>
+                    <td>Site Setup & Safety Briefing</td>
+                    <td>Antennas, solar, equipment staging</td>
+                </tr>
+                <tr>
+                    <td>09:00-09:30</td>
+                    <td>System Testing</td>
+                    <td>Radio check, drone pre-flight, satellite sync</td>
+                </tr>
+                <tr>
+                    <td>09:30-11:00</td>
+                    <td>VHF/UHF Operations</td>
+                    <td>Radio contacts, repeaters, APRS</td>
+                </tr>
+                <tr>
+                    <td>11:00-12:00</td>
+                    <td>Drone Mission #1</td>
+                    <td>Site survey, photography, elevated antenna test</td>
+                </tr>
+                <tr>
+                    <td>12:00-13:00</td>
+                    <td>Lunch & Maintenance</td>
+                    <td>Battery monitoring, data download</td>
+                </tr>
+                <tr>
+                    <td>13:00-14:00</td>
+                    <td>Satellite Pass Operations</td>
+                    <td>Tracking, communications, data collection</td>
+                </tr>
+                <tr>
+                    <td>14:00-15:00</td>
+                    <td>HF / Drone Mission #2</td>
+                    <td>Long-distance contacts, relay test</td>
+                </tr>
+                <tr>
+                    <td>15:00-15:30</td>
+                    <td>Integrated Challenge</td>
+                    <td>Multi-technology mission</td>
+                </tr>
+                <tr>
+                    <td>15:30-16:00</td>
+                    <td>Analysis & Awards</td>
+                    <td>Performance review, recognition</td>
+                </tr>
+                <tr>
+                    <td>16:00-17:00</td>
+                    <td>Teardown & Cleanup</td>
+                    <td>Equipment inspection, site restoration</td>
+                </tr>
+            </table>
+
+            <h2>Specialization Tracks (Months 6-9)</h2>
+
+            <table>
+                <tr>
+                    <th>Track</th>
+                    <th>Focus Areas</th>
+                    <th>Capstone Example</th>
+                </tr>
+                <tr>
+                    <td><strong>RF Engineering</strong></td>
+                    <td>Antenna design, propagation, impedance matching</td>
+                    <td>Optimized dual-band Yagi with measured performance</td>
+                </tr>
+                <tr>
+                    <td><strong>Satellite Operations</strong></td>
+                    <td>Orbital mechanics, tracking, ground stations</td>
+                    <td>Automated satellite ground station with auto-tracking</td>
+                </tr>
+                <tr>
+                    <td><strong>Drone Systems</strong></td>
+                    <td>Flight dynamics, mission planning, payloads</td>
+                    <td>Custom drone with radio relay and solar charging</td>
+                </tr>
+                <tr>
+                    <td><strong>AI Signal Intelligence</strong></td>
+                    <td>ML, signal classification, prediction models</td>
+                    <td>AI propagation predictor or interference detector</td>
+                </tr>
+                <tr>
+                    <td><strong>Software Development</strong></td>
+                    <td>DSP algorithms, SDR apps, GUI development</td>
+                    <td>Full-featured SDR application or drone ground station</td>
+                </tr>
+                <tr>
+                    <td><strong>Power Systems</strong></td>
+                    <td>Solar engineering, batteries, energy management</td>
+                    <td>Complete off-grid system with drone charging</td>
+                </tr>
+            </table>
+
+            <h2>Participant Requirements</h2>
+
+            <div class="highlight-box">
+                <h4>Mandatory Requirements:</h4>
+                <ul>
+                    <li><strong>Attendance:</strong> Minimum 80% (29/36 weekly, 7/9 field days)</li>
+                    <li><strong>Donation:</strong> $15/month minimum (sliding scale available)</li>
+                    <li><strong>Documentation:</strong> Weekly logs, code submissions (GitHub), contact logging</li>
+                    <li><strong>Teamwork:</strong> Pairs or small groups (3-4) for complex projects</li>
+                    <li><strong>Safety:</strong> Zero tolerance for unsafe behavior</li>
+                    <li><strong>Equipment Care:</strong> Proper handling, storage, immediate damage reporting</li>
+                    <li><strong>Age:</strong> 13-19 years (11-12 with parent co-participation)</li>
+                </ul>
+            </div>
+
+            <h2>Progression Milestones</h2>
+
+            <div class="info-box">
+                <h4>Month 1: Foundation</h4>
+                <p>RF basics, First VHF contact, Python intro, Drone ground school</p>
+
+                <h4>Month 2: Skills Building</h4>
+                <p>Antenna construction, Basic SDR operation, First supervised drone flight</p>
+
+                <h4>Month 3: Integration Start</h4>
+                <p>Solar system assembly, Satellite pass observations, Drone photography</p>
+
+                <h4>Month 4: Expanding Capabilities</h4>
+                <p>HF operations, AI algorithms introduction, Advanced drone maneuvers</p>
+
+                <h4>Month 5: Specialization Begins</h4>
+                <p>Choose track, First satellite contact attempt, Solo drone flights</p>
+
+                <h4>Month 6-7: Advanced Projects</h4>
+                <p>Track-specific work, Multi-technology integration, Autonomous missions</p>
+
+                <h4>Month 8: Refinement</h4>
+                <p>Capstone testing, Field deployment leadership, Mentor junior students</p>
+
+                <h4>Month 9: Completion</h4>
+                <p>Capstone presentation, Final exam, Certification, Championship</p>
+            </div>
+
+            <h2>Assessment Methods</h2>
+
+            <table>
+                <tr>
+                    <th>Assessment Type</th>
+                    <th>Frequency</th>
+                    <th>Weight</th>
+                </tr>
+                <tr>
+                    <td>Weekly Lab Work</td>
+                    <td>36 sessions</td>
+                    <td>30%</td>
+                </tr>
+                <tr>
+                    <td>Project Completion</td>
+                    <td>12 projects</td>
+                    <td>25%</td>
+                </tr>
+                <tr>
+                    <td>Field Day Participation</td>
+                    <td>9 events</td>
+                    <td>15%</td>
+                </tr>
+                <tr>
+                    <td>Capstone Project</td>
+                    <td>Final</td>
+                    <td>20%</td>
+                </tr>
+                <tr>
+                    <td>Safety & Teamwork</td>
+                    <td>Ongoing</td>
+                    <td>10%</td>
+                </tr>
+            </table>
+
+            <h2>Chapter Summary</h2>
+            <ul>
+                <li>✅ Five integrated knowledge streams</li>
+                <li>✅ 3-hour weekly sessions + 8-hour monthly field days</li>
+                <li>✅ Progression through 4 phases over 9 months</li>
+                <li>✅ Specialization tracks in months 6-9</li>
+                <li>✅ 80% attendance requirement</li>
+                <li>✅ Comprehensive assessment across multiple dimensions</li>
+            </ul>
+
+            <div class="info-box">
+                <h4>Next: Chapter 3 - Solar & Battery Power Systems</h4>
+                <p>Design and build renewable energy systems for off-grid field operations.</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>RadioSport STEM Education Program</strong></p>
+            <p>Chapter 2: Program Structure & Integration</p>
+            <p>Version 3.0 • 2025 Edition</p>
+        </div>
+    </div>
+</body>
+</html>

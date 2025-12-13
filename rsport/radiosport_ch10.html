@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 10: Antenna Design - RadioSport Handbook</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #2c3e50; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .nav { background: #1e3c72; color: white; padding: 15px 30px; display: flex; justify-content: space-between; }
+        .nav a { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 40px; text-align: center; }
+        .header h1 { font-size: 42px; margin-bottom: 10px; }
+        .chapter-num { font-size: 18px; opacity: 0.9; }
+        .content { padding: 40px; }
+        h2 { color: #1e3c72; font-size: 32px; margin: 40px 0 20px 0; padding-bottom: 10px; border-bottom: 3px solid #667eea; }
+        h3 { color: #2a5298; font-size: 24px; margin: 30px 0 15px 0; }
+        h4 { color: #34495e; font-size: 20px; margin: 20px 0 10px 0; }
+        p { margin-bottom: 15px; text-align: justify; }
+        .info-box, .success-box, .highlight-box, .warning-box { padding: 25px; margin: 25px 0; border-radius: 5px; border-left: 5px solid; }
+        .info-box { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left-color: #2196f3; }
+        .success-box { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; }
+        .highlight-box { background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); border-left-color: #9c27b0; }
+        .warning-box { background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left-color: #ff9800; }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        ul, ol { margin: 20px 0 20px 40px; }
+        li { margin-bottom: 10px; }
+        .code-block { background: #2c3e50; color: #ecf0f1; padding: 20px; border-radius: 8px; font-family: 'Courier New', monospace; margin: 20px 0; overflow-x: auto; font-size: 14px; }
+        .keyword { color: #e74c3c; }
+        .string { color: #2ecc71; }
+        .comment { color: #95a5a6; font-style: italic; }
+        .number { color: #f39c12; }
+        .formula { background: white; padding: 15px; border-radius: 5px; text-align: center; font-size: 18px; margin: 15px 0; font-family: 'Times New Roman', serif; }
+        .footer { background: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+        .diagram-container { background: white; padding: 30px; margin: 30px 0; border-radius: 10px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); text-align: center; }
+        .diagram-title { font-size: 18px; font-weight: bold; color: #1e3c72; margin-bottom: 20px; }
+        svg { max-width: 100%; height: auto; }
+        .diagram-caption { margin-top: 15px; font-style: italic; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="radiosport_ch9.html">← Chapter 9</a>
+            <span>Chapter 10 of 14</span>
+            <a href="radiosport_ch11.html">Chapter 11 →</a>
+        </div>
+        
+        <div class="header">
+            <div class="chapter-num">CHAPTER 10</div>
+            <h1>📡 Antenna Design & Construction</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong>Antennas convert electrical signals to electromagnetic waves and vice versa. Master the theory, design calculations, and hands-on construction of practical antennas for RadioSport operations.</strong></p>
+
+            <h2>Fundamental Antenna Theory</h2>
+
+            <h3>Key Antenna Parameters</h3>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Definition</th>
+                    <th>Typical Values</th>
+                </tr>
+                <tr>
+                    <td><strong>Gain</strong></td>
+                    <td>Power concentration vs isotropic radiator</td>
+                    <td>0 dBi (dipole) to 20+ dBi (arrays)</td>
+                </tr>
+                <tr>
+                    <td><strong>Bandwidth</strong></td>
+                    <td>Frequency range with SWR < 2:1</td>
+                    <td>2-10% of center frequency</td>
+                </tr>
+                <tr>
+                    <td><strong>Impedance</strong></td>
+                    <td>Feed point resistance + reactance</td>
+                    <td>50Ω or 75Ω (standard)</td>
+                </tr>
+                <tr>
+                    <td><strong>Polarization</strong></td>
+                    <td>Electric field orientation</td>
+                    <td>Horizontal, Vertical, Circular</td>
+                </tr>
+                <tr>
+                    <td><strong>Beamwidth</strong></td>
+                    <td>Angular width at -3dB points</td>
+                    <td>360° (omni) to 30° (directional)</td>
+                </tr>
+            </table>
+
+            <h3>Wavelength Calculations</h3>
+            <div class="formula">
+                λ (meters) = 300 / f (MHz)
+            </div>
+            <p><strong>Examples:</strong></p>
+            <ul>
+                <li>2m band (146 MHz): λ = 300/146 = 2.05 meters</li>
+                <li>70cm band (435 MHz): λ = 300/435 = 0.69 meters</li>
+                <li>20m band (14.2 MHz): λ = 300/14.2 = 21.1 meters</li>
+            </ul>
+
+            <h2>Dipole Antennas</h2>
+
+            <div class="info-box">
+                <h4>Half-Wave Dipole</h4>
+                <p>Most fundamental antenna design. Two quarter-wave elements fed in center.</p>
+                <div class="formula">
+                    Length (meters) = 143 / f (MHz)
+                </div>
+                <ul>
+                    <li><strong>Impedance:</strong> ~73Ω at resonance</li>
+                    <li><strong>Gain:</strong> 2.15 dBi</li>
+                    <li><strong>Pattern:</strong> Figure-8 (broadside maximum)</li>
+                    <li><strong>Polarization:</strong> Determined by orientation</li>
+                </ul>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Half-Wave Dipole Antenna Structure</div>
+                <svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Ground reference -->
+                    <line x1="50" y1="250" x2="750" y2="250" stroke="#aaa" stroke-width="2" stroke-dasharray="5,5"/>
+                    <text x="760" y="255" fill="#666" font-size="14">Ground</text>
+                    
+                    <!-- Left element -->
+                    <line x1="150" y1="150" x2="380" y2="150" stroke="#e74c3c" stroke-width="6"/>
+                    <text x="220" y="130" fill="#e74c3c" font-size="16" font-weight="bold">λ/4</text>
+                    
+                    <!-- Right element -->
+                    <line x1="420" y1="150" x2="650" y2="150" stroke="#e74c3c" stroke-width="6"/>
+                    <text x="490" y="130" fill="#e74c3c" font-size="16" font-weight="bold">λ/4</text>
+                    
+                    <!-- Center insulator -->
+                    <rect x="385" y="135" width="30" height="30" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+                    <text x="340" y="200" fill="#3498db" font-size="14" font-weight="bold">Center Insulator</text>
+                    
+                    <!-- Feedpoint -->
+                    <circle cx="400" cy="150" r="8" fill="#f39c12"/>
+                    <text x="410" y="155" fill="#f39c12" font-size="14" font-weight="bold">Feedpoint (73Ω)</text>
+                    
+                    <!-- Coax cable -->
+                    <line x1="400" y1="165" x2="400" y2="230" stroke="#2c3e50" stroke-width="4"/>
+                    <text x="410" y="200" fill="#2c3e50" font-size="14">Coax (50Ω)</text>
+                    
+                    <!-- Dimension arrows -->
+                    <line x1="150" y1="180" x2="650" y2="180" stroke="#9b59b6" stroke-width="2" marker-end="url(#arrowhead)" marker-start="url(#arrowhead)"/>
+                    <text x="370" y="205" fill="#9b59b6" font-size="16" font-weight="bold">Total Length = λ/2</text>
+                    
+                    <!-- Arrow marker definition -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#9b59b6"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <div class="diagram-caption">Physical structure showing two quarter-wave elements with center feed</div>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Dipole Radiation Pattern (Figure-8)</div>
+                <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Coordinate system -->
+                    <line x1="400" y1="50" x2="400" y2="350" stroke="#ccc" stroke-width="1"/>
+                    <line x1="100" y1="200" x2="700" y2="200" stroke="#ccc" stroke-width="1"/>
+                    
+                    <!-- Dipole (vertical orientation for this view) -->
+                    <line x1="400" y1="150" x2="400" y2="250" stroke="#e74c3c" stroke-width="8"/>
+                    <text x="415" y="205" fill="#e74c3c" font-size="14" font-weight="bold">Dipole</text>
+                    
+                    <!-- Figure-8 pattern (horizontal plane) -->
+                    <ellipse cx="400" cy="200" rx="250" ry="100" fill="none" stroke="#2ecc71" stroke-width="3"/>
+                    
+                    <!-- Maximum radiation arrows -->
+                    <line x1="400" y1="200" x2="150" y2="200" stroke="#f39c12" stroke-width="3" marker-end="url(#arrow2)"/>
+                    <line x1="400" y1="200" x2="650" y2="200" stroke="#f39c12" stroke-width="3" marker-end="url(#arrow2)"/>
+                    
+                    <!-- Labels -->
+                    <text x="100" y="190" fill="#2ecc71" font-size="16" font-weight="bold">Maximum</text>
+                    <text x="620" y="190" fill="#2ecc71" font-size="16" font-weight="bold">Maximum</text>
+                    <text x="380" y="80" fill="#666" font-size="14">Null (off ends)</text>
+                    <text x="380" y="370" fill="#666" font-size="14">Null (off ends)</text>
+                    
+                    <!-- Gain indicator -->
+                    <text x="300" y="30" fill="#9b59b6" font-size="16" font-weight="bold">Gain: 2.15 dBi</text>
+                    <text x="280" y="50" fill="#9b59b6" font-size="14">Beamwidth: ~78° (-3dB points)</text>
+                    
+                    <defs>
+                        <marker id="arrow2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#f39c12"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <div class="diagram-caption">Horizontal plane radiation pattern showing maximum gain broadside to the antenna</div>
+            </div>
+
+            <h3>Building a 2m Dipole</h3>
+            <div class="success-box">
+                <h4>Materials Needed:</h4>
+                <ul>
+                    <li>4mm copper wire (2× 50cm lengths)</li>
+                    <li>SO-239 coax connector</li>
+                    <li>PVC or plastic center insulator</li>
+                    <li>50Ω coax cable (RG-58 or RG-8X)</li>
+                </ul>
+                
+                <h4>Construction Steps:</h4>
+                <ol>
+                    <li><strong>Calculate length:</strong> 143/146 = 0.979m total → 49cm each side</li>
+                    <li><strong>Cut wire:</strong> Add 5cm extra for tuning</li>
+                    <li><strong>Solder:</strong> Attach one wire to center pin, other to shield</li>
+                    <li><strong>Mount:</strong> Install center insulator, orient horizontally</li>
+                    <li><strong>Test SWR:</strong> Check 144-148 MHz range</li>
+                    <li><strong>Tune:</strong> Trim small amounts to minimize SWR</li>
+                </ol>
+                
+                <p><strong>Expected Performance:</strong></p>
+                <ul>
+                    <li>SWR < 1.5:1 across 2m band</li>
+                    <li>Omni-directional in horizontal plane</li>
+                    <li>Ideal height: λ/2 above ground (1m minimum)</li>
+                </ul>
+            </div>
+
+            <h2>Vertical Antennas</h2>
+
+            <h3>Quarter-Wave Vertical</h3>
+            <div class="highlight-box">
+                <h4>Formula:</h4>
+                <div class="formula">
+                    Length (meters) = 71.5 / f (MHz)
+                </div>
+                
+                <p><strong>Characteristics:</strong></p>
+                <ul>
+                    <li><strong>Length:</strong> λ/4 radiator + ground plane</li>
+                    <li><strong>Impedance:</strong> ~36Ω (requires matching)</li>
+                    <li><strong>Gain:</strong> 3-5 dBi over dipole (low angle radiation)</li>
+                    <li><strong>Ground Plane:</strong> 4 radials at λ/4 length, 45° downward</li>
+                </ul>
+                
+                <p><strong>2m Example (146 MHz):</strong></p>
+                <ul>
+                    <li>Radiator: 71.5/146 = 0.49m (49cm)</li>
+                    <li>Radials: 4× 49cm wires</li>
+                    <li>Total height: ~50cm above mounting point</li>
+                </ul>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Quarter-Wave Vertical with Ground Plane</div>
+                <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Vertical radiator -->
+                    <line x1="400" y1="250" x2="400" y2="100" stroke="#e74c3c" stroke-width="8"/>
+                    <text x="410" y="170" fill="#e74c3c" font-size="16" font-weight="bold">λ/4 Radiator</text>
+                    
+                    <!-- Ground plane radials -->
+                    <line x1="400" y1="250" x2="300" y2="300" stroke="#3498db" stroke-width="6"/>
+                    <line x1="400" y1="250" x2="500" y2="300" stroke="#3498db" stroke-width="6"/>
+                    <line x1="400" y1="250" x2="350" y2="280" stroke="#3498db" stroke-width="6"/>
+                    <line x1="400" y1="250" x2="450" y2="280" stroke="#3498db" stroke-width="6"/>
+                    
+                    <!-- Feed point -->
+                    <circle cx="400" cy="250" r="10" fill="#f39c12"/>
+                    <text x="415" y="255" fill="#f39c12" font-size="14" font-weight="bold">Feedpoint (36Ω)</text>
+                    
+                    <!-- Coax connection -->
+                    <line x1="400" y1="260" x2="400" y2="350" stroke="#2c3e50" stroke-width="4"/>
+                    <rect x="385" y="350" width="30" height="40" fill="#95a5a6" stroke="#7f8c8d" stroke-width="2"/>
+                    <text x="350" y="410" fill="#2c3e50" font-size="14">Coax & Matching</text>
+                    
+                    <!-- Radial labels -->
+                    <text x="240" y="315" fill="#3498db" font-size="14" font-weight="bold">4× λ/4 Radials</text>
+                    <text x="230" y="335" fill="#3498db" font-size="12">(45° downward)</text>
+                    
+                    <!-- Radiation pattern (omni) -->
+                    <ellipse cx="400" cy="175" rx="180" ry="70" fill="none" stroke="#2ecc71" stroke-width="2" stroke-dasharray="5,5"/>
+                    <text x="500" y="180" fill="#2ecc71" font-size="14">Low-angle radiation</text>
+                    
+                    <!-- Height dimension -->
+                    <line x1="450" y1="100" x2="450" y2="250" stroke="#9b59b6" stroke-width="2" marker-end="url(#arrow3)" marker-start="url(#arrow3)"/>
+                    <text x="460" y="180" fill="#9b59b6" font-size="14" font-weight="bold">λ/4</text>
+                    
+                    <defs>
+                        <marker id="arrow3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#9b59b6"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <div class="diagram-caption">Quarter-wave vertical with four radial ground plane elements at 45° angle</div>
+            </div>
+
+            <h3>5/8-Wave Vertical</h3>
+            <p>Improved gain over λ/4 vertical due to better radiation pattern.</p>
+            <div class="formula">
+                Length (meters) = 179 / f (MHz)
+            </div>
+            <ul>
+                <li><strong>Gain:</strong> ~3 dBd (5.15 dBi)</li>
+                <li><strong>Matching:</strong> Requires loading coil at base</li>
+                <li><strong>Common Use:</strong> Mobile and base station VHF/UHF</li>
+            </ul>
+
+            <h2>Directional Antennas</h2>
+
+            <h3>3-Element Yagi Design</h3>
+            <table>
+                <tr>
+                    <th>Element</th>
+                    <th>Length (146 MHz)</th>
+                    <th>Spacing from Driven</th>
+                </tr>
+                <tr>
+                    <td><strong>Reflector</strong></td>
+                    <td>104cm (0.52λ)</td>
+                    <td>0cm (behind)</td>
+                </tr>
+                <tr>
+                    <td><strong>Driven Element</strong></td>
+                    <td>99cm (0.495λ)</td>
+                    <td>Reference point</td>
+                </tr>
+                <tr>
+                    <td><strong>Director</strong></td>
+                    <td>91cm (0.455λ)</td>
+                    <td>32cm (0.16λ)</td>
+                </tr>
+            </table>
+
+            <div class="diagram-container">
+                <div class="diagram-title">3-Element Yagi Antenna Configuration</div>
+                <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Boom -->
+                    <line x1="100" y1="200" x2="700" y2="200" stroke="#7f8c8d" stroke-width="8"/>
+                    <text x="350" y="240" fill="#7f8c8d" font-size="14" font-weight="bold">Boom</text>
+                    
+                    <!-- Reflector (longest) -->
+                    <line x1="200" y1="120" x2="200" y2="280" stroke="#e74c3c" stroke-width="6"/>
+                    <text x="150" y="110" fill="#e74c3c" font-size="14" font-weight="bold">Reflector</text>
+                    <text x="155" y="300" fill="#e74c3c" font-size="12">104cm (0.52λ)</text>
+                    
+                    <!-- Driven Element -->
+                    <line x1="400" y1="130" x2="400" y2="270" stroke="#3498db" stroke-width="6"/>
+                    <circle cx="400" cy="200" r="12" fill="#f39c12"/>
+                    <text x="340" y="120" fill="#3498db" font-size="14" font-weight="bold">Driven Element</text>
+                    <text x="360" y="295" fill="#3498db" font-size="12">99cm (0.495λ)</text>
+                    
+                    <!-- Director (shortest) -->
+                    <line x1="550" y1="140" x2="550" y2="260" stroke="#2ecc71" stroke-width="6"/>
+                    <text x="510" y="130" fill="#2ecc71" font-size="14" font-weight="bold">Director</text>
+                    <text x="515" y="280" fill="#2ecc71" font-size="12">91cm (0.455λ)</text>
+                    
+                    <!-- Spacing dimensions -->
+                    <line x1="200" y1="340" x2="400" y2="340" stroke="#9b59b6" stroke-width="2" marker-end="url(#arrow4)" marker-start="url(#arrow4)"/>
+                    <text x="280" y="360" fill="#9b59b6" font-size="12">~32cm</text>
+                    
+                    <line x1="400" y1="340" x2="550" y2="340" stroke="#9b59b6" stroke-width="2" marker-end="url(#arrow4)" marker-start="url(#arrow4)"/>
+                    <text x="460" y="360" fill="#9b59b6" font-size="12">32cm</text>
+                    
+                    <!-- Direction of maximum gain -->
+                    <line x1="600" y1="200" x2="680" y2="200" stroke="#f39c12" stroke-width="4" marker-end="url(#arrow4)"/>
+                    <text x="615" y="180" fill="#f39c12" font-size="16" font-weight="bold">Direction</text>
+                    <text x="615" y="195" fill="#f39c12" font-size="14">of Max Gain</text>
+                    
+                    <defs>
+                        <marker id="arrow4" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#9b59b6"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <div class="diagram-caption">Top view showing reflector, driven element, and director with proper spacing</div>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Yagi Radiation Pattern (Directional)</div>
+                <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Coordinate system -->
+                    <line x1="200" y1="50" x2="200" y2="350" stroke="#ccc" stroke-width="1"/>
+                    <line x1="50" y1="200" x2="750" y2="200" stroke="#ccc" stroke-width="1"/>
+                    
+                    <!-- Yagi antenna (simplified) -->
+                    <rect x="180" y="190" width="40" height="20" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+                    
+                    <!-- Main lobe (forward) -->
+                    <path d="M 220 200 Q 400 120, 650 200 Q 400 280, 220 200" fill="rgba(46, 204, 113, 0.3)" stroke="#2ecc71" stroke-width="3"/>
+                    
+                    <!-- Back lobe (rear) - much smaller -->
+                    <path d="M 180 200 Q 120 185, 80 200 Q 120 215, 180 200" fill="rgba(231, 76, 60, 0.3)" stroke="#e74c3c" stroke-width="2"/>
+                    
+                    <!-- Labels -->
+                    <text x="450" y="200" fill="#2ecc71" font-size="16" font-weight="bold">Main Lobe</text>
+                    <text x="430" y="220" fill="#2ecc71" font-size="14">7-8 dBi Gain</text>
+                    <text x="420" y="240" fill="#2ecc71" font-size="14">~65° Beamwidth</text>
+                    
+                    <text x="50" y="195" fill="#e74c3c" font-size="12">Back Lobe</text>
+                    <text x="50" y="210" fill="#e74c3c" font-size="11">-15 to -20 dB</text>
+                    
+                    <!-- Beamwidth indicator -->
+                    <line x1="220" y1="200" x2="550" y2="130" stroke="#9b59b6" stroke-width="2" stroke-dasharray="3,3"/>
+                    <line x1="220" y1="200" x2="550" y2="270" stroke="#9b59b6" stroke-width="2" stroke-dasharray="3,3"/>
+                    <text x="380" y="120" fill="#9b59b6" font-size="14">-3dB points</text>
+                    
+                    <!-- Front-to-back ratio -->
+                    <text x="50" y="50" fill="#1e3c72" font-size="16" font-weight="bold">Front-to-Back Ratio: 15-20 dB</text>
+                </svg>
+                <div class="diagram-caption">Horizontal plane pattern showing highly directional main lobe and suppressed back lobe</div>
+            </div>
+
+            <div class="info-box">
+                <h4>Expected Performance:</h4>
+                <ul>
+                    <li><strong>Forward Gain:</strong> 7-8 dBi</li>
+                    <li><strong>Front-to-Back Ratio:</strong> 15-20 dB</li>
+                    <li><strong>Beamwidth:</strong> ~65° horizontal</li>
+                    <li><strong>Impedance:</strong> 25-30Ω (requires matching)</li>
+                </ul>
+            </div>
+
+            <h3>Yagi Construction</h3>
+            <div class="success-box">
+                <h4>Materials:</h4>
+                <ul>
+                    <li>Aluminum tubing: 10mm diameter</li>
+                    <li>PVC boom: 25mm × 1m</li>
+                    <li>Element clamps or through-boom mounting</li>
+                    <li>Gamma match or 4:1 balun for impedance matching</li>
+                </ul>
+                
+                <h4>Assembly:</h4>
+                <ol>
+                    <li>Mark element positions on boom accurately</li>
+                    <li>Mount elements perpendicular to boom</li>
+                    <li>Install driven element with feed mechanism</li>
+                    <li>Connect coax through balun to driven element</li>
+                    <li>Weather-proof all connections</li>
+                </ol>
+            </div>
+
+            <h2>SWR and Impedance Matching</h2>
+
+            <h3>Understanding SWR</h3>
+            <div class="warning-box">
+                <h4>Standing Wave Ratio (SWR)</h4>
+                <p>Measures impedance mismatch between antenna and feedline.</p>
+                <div class="formula">
+                    SWR = (1 + |Γ|) / (1 - |Γ|)
+                </div>
+                <p>where Γ = reflection coefficient = (Z<sub>ant</sub> - Z<sub>0</sub>) / (Z<sub>ant</sub> + Z<sub>0</sub>)</p>
+                
+                <table>
+                    <tr>
+                        <th>SWR</th>
+                        <th>Power Loss</th>
+                        <th>Assessment</th>
+                    </tr>
+                    <tr>
+                        <td>1.0:1</td>
+                        <td>0%</td>
+                        <td>Perfect (impossible in practice)</td>
+                    </tr>
+                    <tr>
+                        <td>1.5:1</td>
+                        <td>4%</td>
+                        <td>Excellent</td>
+                    </tr>
+                    <tr>
+                        <td>2.0:1</td>
+                        <td>11%</td>
+                        <td>Acceptable</td>
+                    </tr>
+                    <tr>
+                        <td>3.0:1</td>
+                        <td>25%</td>
+                        <td>Poor, needs correction</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">SWR vs Frequency Response Curve</div>
+                <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Axes -->
+                    <line x1="100" y1="350" x2="750" y2="350" stroke="#2c3e50" stroke-width="2"/>
+                    <line x1="100" y1="50" x2="100" y2="350" stroke="#2c3e50" stroke-width="2"/>
+                    
+                    <!-- Axis labels -->
+                    <text x="400" y="385" fill="#2c3e50" font-size="16" font-weight="bold" text-anchor="middle">Frequency (MHz)</text>
+                    <text x="30" y="200" fill="#2c3e50" font-size="16" font-weight="bold" transform="rotate(-90 30 200)">SWR</text>
+                    
+                    <!-- Frequency markers -->
+                    <text x="150" y="370" fill="#666" font-size="14">144</text>
+                    <text x="280" y="370" fill="#666" font-size="14">145</text>
+                    <text x="410" y="370" fill="#666" font-size="14">146</text>
+                    <text x="540" y="370" fill="#666" font-size="14">147</text>
+                    <text x="670" y="370" fill="#666" font-size="14">148</text>
+                    
+                    <!-- SWR markers -->
+                    <text x="70" y="355" fill="#666" font-size="14">1.0</text>
+                    <text x="70" y="285" fill="#666" font-size="14">1.5</text>
+                    <text x="70" y="215" fill="#666" font-size="14">2.0</text>
+                    <text x="70" y="145" fill="#666" font-size="14">2.5</text>
+                    <text x="70" y="75" fill="#666" font-size="14">3.0</text>
+                    
+                    <!-- Grid lines -->
+                    <line x1="100" y1="280" x2="750" y2="280" stroke="#ddd" stroke-width="1" stroke-dasharray="5,5"/>
+                    <line x1="100" y1="210" x2="750" y2="210" stroke="#ddd" stroke-width="1" stroke-dasharray="5,5"/>
+                    
+                    <!-- 2:1 SWR acceptable line -->
+                    <line x1="100" y1="210" x2="750" y2="210" stroke="#e74c3c" stroke-width="2" stroke-dasharray="10,5"/>
+                    <text x="680" y="205" fill="#e74c3c" font-size="14" font-weight="bold">2:1 Limit</text>
+                    
+                    <!-- SWR curve (well-tuned antenna) -->
+                    <path d="M 150 150 Q 280 100, 410 90 Q 540 100, 670 160" 
+                          fill="none" stroke="#2ecc71" stroke-width="4"/>
+                    
+                    <!-- Data points -->
+                    <circle cx="150" cy="150" r="6" fill="#3498db"/>
+                    <circle cx="280" cy="105" r="6" fill="#3498db"/>
+                    <circle cx="410" cy="90" r="6" fill="#3498db"/>
+                    <circle cx="540" cy="110" r="6" fill="#3498db"/>
+                    <circle cx="670" cy="160" r="6" fill="#3498db"/>
+                    
+                    <!-- Resonant frequency indicator -->
+                    <line x1="410" y1="90" x2="410" y2="350" stroke="#9b59b6" stroke-width="2" stroke-dasharray="5,5"/>
+                    <text x="420" y="80" fill="#9b59b6" font-size="14" font-weight="bold">Resonant Frequency</text>
+                    <text x="420" y="95" fill="#9b59b6" font-size="12">(Minimum SWR = 1.2:1)</text>
+                    
+                    <!-- Bandwidth indicator -->
+                    <line x1="210" y1="30" x2="610" y2="30" stroke="#f39c12" stroke-width="3" marker-end="url(#arrow5)" marker-start="url(#arrow5)"/>
+                    <text x="350" y="25" fill="#f39c12" font-size="14" font-weight="bold" text-anchor="middle">Bandwidth (SWR < 2:1)</text>
+                    
+                    <defs>
+                        <marker id="arrow5" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#f39c12"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <div class="diagram-caption">Typical SWR curve showing resonance at 146 MHz with acceptable bandwidth</div>
+            </div>
+
+            <h3>Impedance Matching Techniques</h3>
+            
+            <div class="diagram-container">
+                <div class="diagram-title">Common Impedance Matching Methods</div>
+                <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 1:1 Balun -->
+                    <g transform="translate(100, 50)">
+                        <rect x="0" y="0" width="120" height="80" fill="#e3f2fd" stroke="#2196f3" stroke-width="2"/>
+                        <text x="60" y="30" fill="#2196f3" font-size="14" font-weight="bold" text-anchor="middle">1:1 Balun</text>
+                        <text x="60" y="50" fill="#666" font-size="12" text-anchor="middle">(Choke)</text>
+                        <line x1="-30" y1="40" x2="0" y2="40" stroke="#2c3e50" stroke-width="3"/>
+                        <text x="-35" y="35" fill="#2c3e50" font-size="11">50Ω</text>
+                        <line x1="120" y1="40" x2="150" y2="40" stroke="#2c3e50" stroke-width="3"/>
+                        <text x="155" y="35" fill="#2c3e50" font-size="11">50Ω</text>
+                        <text x="60" y="70" fill="#2c3e50" font-size="10" text-anchor="middle">Balanced output</text>
+                    </g>
+                    
+                    <!-- 4:1 Balun -->
+                    <g transform="translate(350, 50)">
+                        <rect x="0" y="0" width="120" height="80" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2"/>
+                        <text x="60" y="30" fill="#9c27b0" font-size="14" font-weight="bold" text-anchor="middle">4:1 Balun</text>
+                        <text x="60" y="50" fill="#666" font-size="12" text-anchor="middle">(Transformer)</text>
+                        <line x1="-30" y1="40" x2="0" y2="40" stroke="#2c3e50" stroke-width="3"/>
+                        <text x="-35" y="35" fill="#2c3e50" font-size="11">50Ω</text>
+                        <line x1="120" y1="40" x2="150" y2="40" stroke="#2c3e50" stroke-width="3"/>
+                        <text x="155" y="35" fill="#2c3e50" font-size="11">200Ω</text>
+                        <text x="60" y="70" fill="#2c3e50" font-size="10" text-anchor="middle">For folded dipole</text>
+                    </g>
+                    
+                    <!-- Gamma Match -->
+                    <g transform="translate(600, 50)">
+                        <line x1="30" y1="0" x2="30" y2="80" stroke="#e74c3c" stroke-width="4"/>
+                        <line x1="60" y1="0" x2="60" y2="80" stroke="#e74c3c" stroke-width="4"/>
+                        <line x1="45" y1="20" x2="60" y2="20" stroke="#3498db" stroke-width="3"/>
+                        <circle cx="45" cy="20" r="8" fill="#f39c12"/>
+                        <rect x="35" y="15" width="15" height="10" fill="white" stroke="#2c3e50" stroke-width="1"/>
+                        <text x="45" y="100" fill="#2c3e50" font-size="12" font-weight="bold" text-anchor="middle">Gamma Match</text>
+                        <text x="45" y="115" fill="#666" font-size="10" text-anchor="middle">Variable capacitor</text>
+                    </g>
+                    
+                    <!-- Antenna Tuner -->
+                    <g transform="translate(100, 250)">
+                        <rect x="0" y="0" width="180" height="100" fill="#e8f5e9" stroke="#4caf50" stroke-width="2"/>
+                        <text x="90" y="25" fill="#4caf50" font-size="14" font-weight="bold" text-anchor="middle">Antenna Tuner</text>
+                        
+                        <!-- LC Network symbols -->
+                        <circle cx="45" cy="50" r="15" fill="none" stroke="#2c3e50" stroke-width="2"/>
+                        <text x="45" y="55" fill="#2c3e50" font-size="12" text-anchor="middle">L</text>
+                        
+                        <line x1="85" y1="40" x2="85" y2="60" stroke="#2c3e50" stroke-width="2"/>
+                        <line x1="95" y1="40" x2="95" y2="60" stroke="#2c3e50" stroke-width="2"/>
+                        <text x="90" y="75" fill="#2c3e50" font-size="12" text-anchor="middle">C</text>
+                        
+                        <circle cx="135" cy="50" r="15" fill="none" stroke="#2c3e50" stroke-width="2"/>
+                        <text x="135" y="55" fill="#2c3e50" font-size="12" text-anchor="middle">L</text>
+                        
+                        <line x1="-30" y1="50" x2="0" y2="50" stroke="#2c3e50" stroke-width="3"/>
+                        <text x="-35" y="45" fill="#2c3e50" font-size="11">Radio</text>
+                        <line x1="180" y1="50" x2="210" y2="50" stroke="#2c3e50" stroke-width="3"/>
+                        <text x="215" y="45" fill="#2c3e50" font-size="11">Antenna</text>
+                    </g>
+                    
+                    <!-- Notes -->
+                    <text x="400" y="420" fill="#1e3c72" font-size="14" font-weight="bold" text-anchor="middle">Matching Technique Selection Guide</text>
+                    <text x="400" y="445" fill="#666" font-size="12" text-anchor="middle">• 1:1 Balun: Dipoles and balanced antennas (50Ω)</text>
+                    <text x="400" y="465" fill="#666" font-size="12" text-anchor="middle">• 4:1 Balun: Folded dipoles and 200Ω antennas</text>
+                    <text x="400" y="485" fill="#666" font-size="12" text-anchor="middle">• Gamma Match: Yagi driven elements (adjustable)</text>
+                </svg>
+                <div class="diagram-caption">Common impedance matching methods for different antenna configurations</div>
+            </div>
+
+            <h3>Matching Techniques</h3>
+            <ul>
+                <li><strong>Balun:</strong> 1:1 (choke), 4:1, 9:1 transformers</li>
+                <li><strong>Gamma Match:</strong> Variable tap on driven element</li>
+                <li><strong>Beta Match:</strong> Folded dipole configuration</li>
+                <li><strong>Antenna Tuner:</strong> LC network at shack end</li>
+            </ul>
+
+            <h2>Antenna Testing</h2>
+
+            <h3>SWR Measurement Procedure</h3>
+            <ol>
+                <li>Connect SWR meter between radio and antenna</li>
+                <li>Set radio to 1W output</li>
+                <li>Sweep frequency across band in 100 kHz steps</li>
+                <li>Record SWR at each frequency</li>
+                <li>Plot SWR curve</li>
+                <li>Identify resonant frequency (minimum SWR)</li>
+                <li>Adjust antenna length if resonance is off-center</li>
+            </ol>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Antenna Testing Setup</div>
+                <svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Radio -->
+                    <rect x="50" y="120" width="100" height="60" fill="#34495e" stroke="#2c3e50" stroke-width="2" rx="5"/>
+                    <circle cx="100" cy="150" r="15" fill="#3498db" opacity="0.5"/>
+                    <text x="100" y="210" fill="#2c3e50" font-size="14" font-weight="bold" text-anchor="middle">Radio</text>
+                    <text x="100" y="225" fill="#666" font-size="11" text-anchor="middle">(1W output)</text>
+                    
+                    <!-- SWR Meter -->
+                    <rect x="250" y="110" width="120" height="80" fill="#ecf0f1" stroke="#95a5a6" stroke-width="2" rx="5"/>
+                    <circle cx="310" cy="150" r="30" fill="none" stroke="#e74c3c" stroke-width="3"/>
+                    <line x1="310" y1="150" x2="330" y2="135" stroke="#e74c3c" stroke-width="3"/>
+                    <text x="310" y="210" fill="#2c3e50" font-size="14" font-weight="bold" text-anchor="middle">SWR Meter</text>
+                    
+                    <!-- Antenna -->
+                    <line x1="550" y1="150" x2="650" y2="70" stroke="#e74c3c" stroke-width="4"/>
+                    <line x1="550" y1="150" x2="650" y2="230" stroke="#e74c3c" stroke-width="4"/>
+                    <text x="650" y="250" fill="#2c3e50" font-size="14" font-weight="bold" text-anchor="middle">Antenna</text>
+                    <text x="650" y="265" fill="#666" font-size="11" text-anchor="middle">(Under Test)</text>
+                    
+                    <!-- Coax connections -->
+                    <line x1="150" y1="150" x2="250" y2="150" stroke="#2c3e50" stroke-width="4"/>
+                    <text x="200" y="145" fill="#2c3e50" font-size="11" text-anchor="middle">Coax</text>
+                    
+                    <line x1="370" y1="150" x2="550" y2="150" stroke="#2c3e50" stroke-width="4"/>
+                    <text x="460" y="145" fill="#2c3e50" font-size="11" text-anchor="middle">Coax</text>
+                    
+                    <!-- Measurement indicator -->
+                    <text x="400" y="40" fill="#9b59b6" font-size="16" font-weight="bold" text-anchor="middle">Forward Power →</text>
+                    <text x="400" y="60" fill="#9b59b6" font-size="16" font-weight="bold" text-anchor="middle">← Reflected Power</text>
+                    <text x="400" y="80" fill="#e74c3c" font-size="14" text-anchor="middle">SWR = √(Pfwd/Pref)</text>
+                </svg>
+                <div class="diagram-caption">Basic setup for measuring antenna SWR and tuning</div>
+            </div>
+
+            <h3>Antenna Analyzer Method</h3>
+            <div class="code-block">
+<span class="comment"># Python script for antenna analyzer data</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+
+<span class="comment"># Example measurement data</span>
+frequencies = np.<span class="function">array</span>([<span class="number">144</span>, <span class="number">145</span>, <span class="number">146</span>, <span class="number">147</span>, <span class="number">148</span>])  <span class="comment"># MHz</span>
+swr = np.<span class="function">array</span>([<span class="number">2.1</span>, <span class="number">1.5</span>, <span class="number">1.2</span>, <span class="number">1.4</span>, <span class="number">1.8</span>])
+
+plt.<span class="function">figure</span>(figsize=(<span class="number">10</span>, <span class="number">6</span>))
+plt.<span class="function">plot</span>(frequencies, swr, marker=<span class="string">'o'</span>, linewidth=<span class="number">2</span>)
+plt.<span class="function">axhline</span>(y=<span class="number">2.0</span>, color=<span class="string">'r'</span>, linestyle=<span class="string">'--'</span>, label=<span class="string">'2:1 Limit'</span>)
+plt.<span class="function">xlabel</span>(<span class="string">'Frequency (MHz)'</span>)
+plt.<span class="function">ylabel</span>(<span class="string">'SWR'</span>)
+plt.<span class="function">title</span>(<span class="string">'Antenna SWR vs Frequency'</span>)
+plt.<span class="function">grid</span>(<span class="keyword">True</span>)
+plt.<span class="function">legend</span>()
+plt.<span class="function">show</span>()
+            </div>
+
+            <h2>Practical Projects</h2>
+
+            <h3>Project 1: J-Pole for 2m</h3>
+            <div class="success-box">
+                <p>Vertical omnidirectional antenna made from copper pipe or wire.</p>
+                <ul>
+                    <li><strong>Advantages:</strong> No ground plane required, easy to build</li>
+                    <li><strong>Gain:</strong> ~3 dBd (unity gain vs dipole)</li>
+                    <li><strong>Length:</strong> ~1.5m total</li>
+                </ul>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">J-Pole Antenna Design (2m Band)</div>
+                <svg viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Main radiator (3/4 wave) -->
+                    <line x1="200" y1="450" x2="200" y2="50" stroke="#e74c3c" stroke-width="6"/>
+                    <text x="220" y="250" fill="#e74c3c" font-size="14" font-weight="bold">3/4λ Radiator</text>
+                    <text x="220" y="270" fill="#e74c3c" font-size="12">(~154cm @ 146MHz)</text>
+                    
+                    <!-- Matching stub (1/4 wave) -->
+                    <line x1="150" y1="450" x2="150" y2="350" stroke="#3498db" stroke-width="6"/>
+                    <text x="80" y="400" fill="#3498db" font-size="14" font-weight="bold">1/4λ Stub</text>
+                    <text x="75" y="415" fill="#3498db" font-size="12">(~51cm)</text>
+                    
+                    <!-- Connection between stub and radiator -->
+                    <line x1="150" y1="450" x2="200" y2="450" stroke="#2c3e50" stroke-width="6"/>
+                    
+                    <!-- Feed point -->
+                    <circle cx="150" cy="390" r="8" fill="#f39c12"/>
+                    <text x="100" y="395" fill="#f39c12" font-size="12" font-weight="bold">Feedpoint</text>
+                    <line x1="150" y1="398" x2="120" y2="450" stroke="#2c3e50" stroke-width="3"/>
+                    <text x="80" y="465" fill="#2c3e50" font-size="11">Coax (50Ω)</text>
+                    
+                    <!-- Dimensions -->
+                    <line x1="240" y1="50" x2="240" y2="450" stroke="#9b59b6" stroke-width="2" marker-end="url(#arrow6)" marker-start="url(#arrow6)"/>
+                    <text x="250" y="250" fill="#9b59b6" font-size="12" font-weight="bold">Total: ~1.5m</text>
+                    
+                    <!-- Spacing notation -->
+                    <text x="200" y="30" fill="#1e3c72" font-size="14" font-weight="bold" text-anchor="middle">Copper Pipe: 12-15mm</text>
+                    <text x="200" y="500" fill="#666" font-size="12" text-anchor="middle">Spacing: 25-50mm</text>
+                    
+                    <defs>
+                        <marker id="arrow6" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#9b59b6"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <div class="diagram-caption">J-Pole configuration showing radiator, matching stub, and feedpoint location</div>
+            </div>
+
+            <h3>Project 2: Log-Periodic Dipole Array</h3>
+            <p>Wideband directional antenna for HF or VHF.</p>
+            <ul>
+                <li>Multiple dipoles of decreasing size</li>
+                <li>Active region shifts with frequency</li>
+                <li>Bandwidth: 2:1 or greater</li>
+            </ul>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Antenna Height Effects on Performance</div>
+                <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Ground -->
+                    <line x1="50" y1="350" x2="750" y2="350" stroke="#8b4513" stroke-width="4"/>
+                    <rect x="50" y="350" width="700" height="20" fill="#d2b48c"/>
+                    <text x="400" y="390" fill="#8b4513" font-size="14" font-weight="bold" text-anchor="middle">Ground Level</text>
+                    
+                    <!-- Too low antenna -->
+                    <g transform="translate(150, 0)">
+                        <line x1="0" y1="310" x2="0" y2="350" stroke="#7f8c8d" stroke-width="3"/>
+                        <line x1="-30" y1="310" x2="30" y2="310" stroke="#e74c3c" stroke-width="4"/>
+                        <text x="0" y="290" fill="#e74c3c" font-size="12" font-weight="bold" text-anchor="middle">λ/8 High</text>
+                        <text x="0" y="305" fill="#666" font-size="10" text-anchor="middle">POOR</text>
+                        <path d="M 0 310 Q -50 280, -50 250 Q -50 220, 0 190" fill="none" stroke="#e74c3c" stroke-width="2" stroke-dasharray="3,3"/>
+                    </g>
+                    
+                    <!-- Optimal antenna -->
+                    <g transform="translate(400, 0)">
+                        <line x1="0" y1="200" x2="0" y2="350" stroke="#7f8c8d" stroke-width="3"/>
+                        <line x1="-30" y1="200" x2="30" y2="200" stroke="#2ecc71" stroke-width="4"/>
+                        <text x="0" y="180" fill="#2ecc71" font-size="12" font-weight="bold" text-anchor="middle">λ/2 High</text>
+                        <text x="0" y="195" fill="#2ecc71" font-size="10" text-anchor="middle">OPTIMAL</text>
+                        <ellipse cx="0" cy="200" rx="80" ry="40" fill="none" stroke="#2ecc71" stroke-width="2"/>
+                        <text x="0" y="165" fill="#2ecc71" font-size="11">Good pattern</text>
+                    </g>
+                    
+                    <!-- High antenna -->
+                    <g transform="translate(650, 0)">
+                        <line x1="0" y1="100" x2="0" y2="350" stroke="#7f8c8d" stroke-width="3"/>
+                        <line x1="-30" y1="100" x2="30" y2="100" stroke="#3498db" stroke-width="4"/>
+                        <text x="0" y="80" fill="#3498db" font-size="12" font-weight="bold" text-anchor="middle">λ High</text>
+                        <text x="0" y="95" fill="#3498db" font-size="10" text-anchor="middle">BETTER</text>
+                        <ellipse cx="0" cy="100" rx="100" ry="50" fill="none" stroke="#3498db" stroke-width="2"/>
+                        <text x="0" y="60" fill="#3498db" font-size="11">Best DX</text>
+                    </g>
+                    
+                    <!-- Key -->
+                    <text x="400" y="30" fill="#1e3c72" font-size="16" font-weight="bold" text-anchor="middle">Antenna Height vs Performance</text>
+                    <text x="400" y="50" fill="#666" font-size="12" text-anchor="middle">Higher = Better radiation efficiency and lower angle</text>
+                </svg>
+                <div class="diagram-caption">Effect of antenna height on radiation pattern and performance</div>
+            </div>
+
+            <h2>Chapter Summary</h2>
+            <ul>
+                <li>✅ Dipole: λ/2 length, 73Ω impedance, 2.15 dBi gain</li>
+                <li>✅ Vertical: λ/4 + ground plane, low-angle radiation</li>
+                <li>✅ Yagi: Directional, 7-15 dBi gain, narrow beamwidth</li>
+                <li>✅ SWR < 2:1 acceptable, < 1.5:1 excellent</li>
+                <li>✅ Height and clear surroundings critical for performance</li>
+                <li>✅ Proper impedance matching maximizes power transfer</li>
+                <li>✅ Radiation patterns determine coverage and directivity</li>
+            </ul>
+
+            <div class="info-box">
+                <h4>Next: Chapter 11 - Integrated Projects</h4>
+                <p>Combine antennas, radio, power, and coding into complete working systems

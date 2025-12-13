@@ -1,0 +1,2797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 5: Amateur Radio Satellite Communications - RadioSport Handbook</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .nav {
+            background: #1e3c72;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .nav a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+        
+        .header .chapter-num {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        h2 {
+            color: #1e3c72;
+            font-size: 32px;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        h3 {
+            color: #2a5298;
+            font-size: 24px;
+            margin: 30px 0 15px 0;
+        }
+        
+        h4 {
+            color: #34495e;
+            font-size: 20px;
+            margin: 20px 0 10px 0;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 5px solid #2196f3;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 5px;
+        }
+        
+        .warning-box {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border-left: 5px solid #ff9800;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 5px;
+        }
+        
+        .success-box {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-left: 5px solid #4caf50;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 5px;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border-left: 5px solid #9c27b0;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        tr:hover {
+            background: #f5f5f5;
+        }
+        
+        ul, ol {
+            margin: 20px 0 20px 40px;
+        }
+        
+        li {
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .keyword { color: #e74c3c; font-weight: bold; }
+        .string { color: #2ecc71; }
+        .comment { color: #95a5a6; font-style: italic; }
+        .function { color: #3498db; font-weight: bold; }
+        .number { color: #f39c12; }
+        
+        .diagram {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .svg-diagram {
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        
+        @media print {
+            .nav { display: none; }
+            body { background: white; }
+            .container { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="radiosport_index.html">← Back to Index</a>
+            <span>Chapter 5 of 14</span>
+            <a href="radiosport_ch6.html">Next Chapter →</a>
+        </div>
+        
+        <div class="header">
+            <div class="chapter-num">CHAPTER 5</div>
+            <h1>🛰️ Amateur Radio Satellite Communications</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong>Amateur radio satellites (OSCAR - Orbiting Satellite Carrying Amateur Radio) provide exciting opportunities for long-distance communication, experimentation with space technology, and practical application of orbital mechanics. This chapter covers everything from basic orbital theory to making your first satellite contact.</strong></p>
+
+            <h2>Orbital Mechanics Fundamentals</h2>
+
+            <h3>Kepler's Laws of Planetary Motion</h3>
+            <div class="highlight-box">
+                <h4>Law 1: Law of Ellipses</h4>
+                <p>All satellites orbit in elliptical paths with Earth at one focus. Most amateur satellites use near-circular orbits (low eccentricity &lt; 0.01) for consistent coverage.</p>
+                
+                <h4>Law 2: Law of Equal Areas</h4>
+                <p>A line connecting the satellite to Earth sweeps out equal areas in equal times. This means satellites move faster at perigee (closest point to Earth) and slower at apogee (farthest point). For circular orbits, speed is constant.</p>
+                
+                <h4>Law 3: Law of Periods</h4>
+                <p>The square of the orbital period is proportional to the cube of the semi-major axis:</p>
+                <p style="font-family: 'Courier New'; font-size: 18px; text-align: center; background: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    T² ∝ a³
+                </p>
+                <p><strong>Practical formula for calculating orbital period:</strong></p>
+                <p style="font-family: 'Courier New'; font-size: 16px; text-align: center; background: white; padding: 15px; border-radius: 5px;">
+                    T (minutes) = 2π × √(a³ / μ)
+                </p>
+                <p>where:</p>
+                <ul>
+                    <li><strong>T</strong> = orbital period in minutes</li>
+                    <li><strong>a</strong> = semi-major axis (Earth radius + altitude) in kilometers</li>
+                    <li><strong>μ</strong> = 398,600.4 km³/s² (Earth's standard gravitational parameter)</li>
+                    <li><strong>π</strong> = 3.14159...</li>
+                </ul>
+                
+                <h4>Example Calculation: AO-91 Orbital Period</h4>
+                <p>AO-91 orbits at approximately 800 km altitude above Earth's surface.</p>
+                <ul>
+                    <li>Earth radius (R) = 6,371 km</li>
+                    <li>Altitude (h) = 800 km</li>
+                    <li>Semi-major axis (a) = R + h = 6,371 + 800 = 7,171 km</li>
+                </ul>
+                <p style="font-family: 'Courier New'; background: white; padding: 15px; border-radius: 5px;">
+                    T = 2π × √(7,171³ / 398,600.4)<br>
+                    T = 6.283 × √(368,400,000,000 / 398,600.4)<br>
+                    T = 6.283 × √(924,100)<br>
+                    T = 6.283 × 961.3<br>
+                    T = 6,040 seconds<br>
+                    T = 100.7 minutes ≈ 1 hour 41 minutes
+                </p>
+                <p>This matches AO-91's actual orbital period of approximately 101 minutes.</p>
+            </div>
+
+            <h3>Two-Line Element Sets (TLE)</h3>
+            <p>TLEs are standardized data formats that precisely describe a satellite's orbit. They are updated regularly (daily to weekly) as orbits decay due to atmospheric drag and solar radiation pressure.</p>
+
+            <div class="code-block">
+<span class="comment"># Example TLE for AO-91 (Fox-1B / RadFxSat-2)</span>
+AO-<span class="number">91</span>
+<span class="number">1 43017</span>U <span class="number">17073</span>E   <span class="number">25345.78916667</span>  .<span class="number">00000342</span>  <span class="number">00000</span>-<span class="number">0</span>  <span class="number">43210</span>-<span class="number">4</span> <span class="number">0</span>  <span class="number">9998</span>
+<span class="number">2 43017</span>  <span class="number">97.7408</span> <span class="number">273.6829</span> <span class="number">0008372</span>  <span class="number">58.9347</span> <span class="number">301.2947</span> <span class="number">14.81641075326482</span>
+
+<span class="comment"># LINE 1 BREAKDOWN:</span>
+<span class="comment"># Column 01-01: Line number (1)</span>
+<span class="comment"># Column 03-07: NORAD catalog number (43017)</span>
+<span class="comment"># Column 08-08: Classification (U = Unclassified)</span>
+<span class="comment"># Column 10-17: International designator (2017-073E)</span>
+<span class="comment">#               Launch year: 2017</span>
+<span class="comment">#               Launch number of year: 073 (73rd launch)</span>
+<span class="comment">#               Piece of launch: E (fifth object from this launch)</span>
+<span class="comment"># Column 19-32: Epoch (day of year with fractional day)</span>
+<span class="comment">#               25345.78916667 = 345th day of 2025 at 18:56:24 UTC</span>
+<span class="comment"># Column 34-43: First derivative of mean motion (orbit decay)</span>
+<span class="comment">#               0.00000342 rev/day² (very slow decay)</span>
+<span class="comment"># Column 45-52: Second derivative of mean motion (usually zero)</span>
+<span class="comment"># Column 54-61: Drag term / radiation pressure coefficient</span>
+<span class="comment">#               43210-4 = 0.000043210 (low drag due to high orbit)</span>
+<span class="comment"># Column 63-63: Ephemeris type (0 = default)</span>
+<span class="comment"># Column 65-68: Element set number (9998)</span>
+<span class="comment"># Column 69-69: Checksum</span>
+
+<span class="comment"># LINE 2 BREAKDOWN:</span>
+<span class="comment"># Column 01-01: Line number (2)</span>
+<span class="comment"># Column 03-07: NORAD catalog number (43017, same as line 1)</span>
+<span class="comment"># Column 09-16: Inclination (degrees)</span>
+<span class="comment">#               97.7408° = near-polar retrograde orbit</span>
+<span class="comment">#               (passes over both poles, orbits opposite Earth's rotation)</span>
+<span class="comment"># Column 18-25: Right Ascension of Ascending Node (RAAN, degrees)</span>
+<span class="comment">#               273.6829° = where orbit crosses equator going north</span>
+<span class="comment"># Column 27-33: Eccentricity (implied decimal point before number)</span>
+<span class="comment">#               0008372 = 0.0008372 (nearly circular orbit)</span>
+<span class="comment"># Column 35-42: Argument of Perigee (degrees)</span>
+<span class="comment">#               58.9347° = angle from ascending node to perigee</span>
+<span class="comment"># Column 44-51: Mean Anomaly (degrees)</span>
+<span class="comment">#               301.2947° = satellite's position in orbit at epoch</span>
+<span class="comment"># Column 53-63: Mean Motion (revolutions per day)</span>
+<span class="comment">#               14.81641075 = satellite completes ~14.8 orbits daily</span>
+<span class="comment">#               Period = 1440 min / 14.81641075 = 97.2 minutes</span>
+<span class="comment"># Column 64-68: Revolution number at epoch (32648)</span>
+<span class="comment"># Column 69-69: Checksum</span>
+            </div>
+
+            <h3>Understanding Orbital Parameters</h3>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Meaning</th>
+                    <th>Impact on Operations</th>
+                </tr>
+                <tr>
+                    <td><strong>Inclination</strong></td>
+                    <td>Angle between orbital plane and equator (0-180°)</td>
+                    <td>
+                        • 0°: Equatorial orbit (no high latitude coverage)<br>
+                        • 90°: Polar orbit (global coverage)<br>
+                        • 97.7° (AO-91): Sun-synchronous retrograde orbit<br>
+                        • High inclination = better global coverage
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Eccentricity</strong></td>
+                    <td>Shape of orbit (0 = circular, >0 = elliptical)</td>
+                    <td>
+                        • 0.000 to 0.010: Nearly circular (most amateur sats)<br>
+                        • 0.010 to 0.100: Slightly elliptical<br>
+                        • Low eccentricity = consistent coverage and power
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Mean Motion</strong></td>
+                    <td>Orbits completed per day</td>
+                    <td>
+                        • 14-16 orbits/day: Typical LEO (700-1000 km altitude)<br>
+                        • Higher mean motion = lower orbit = faster passes<br>
+                        • Directly determines pass frequency
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>RAAN</strong></td>
+                    <td>Longitude where orbit crosses equator northbound</td>
+                    <td>
+                        • Changes daily due to Earth's rotation<br>
+                        • Determines which longitudes get passes<br>
+                        • Updated TLEs needed for accurate predictions
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Mean Anomaly</strong></td>
+                    <td>Satellite's position in orbit at epoch time</td>
+                    <td>
+                        • 0°: At perigee<br>
+                        • 180°: At apogee<br>
+                        • Used to calculate current position
+                    </td>
+                </tr>
+            </table>
+
+            <h3>Calculating Pass Predictions from TLE</h3>
+            <p>Satellite tracking software uses the SGP4 (Simplified General Perturbations-4) propagator model to convert TLE data into real-time satellite positions. Here's the process:</p>
+
+            <div class="info-box">
+                <h4>Pass Prediction Algorithm Flow:</h4>
+                <ol>
+                    <li><strong>Load TLE:</strong> Parse the two lines into orbital elements</li>
+                    <li><strong>Set Observer Location:</strong> Define ground station coordinates (latitude, longitude, altitude)</li>
+                    <li><strong>Propagate Orbit:</strong> Use SGP4 to calculate satellite position at current time
+                        <ul>
+                            <li>Output: Satellite position (x, y, z) in Earth-Centered Inertial (ECI) coordinates</li>
+                            <li>Output: Satellite velocity vector</li>
+                        </ul>
+                    </li>
+                    <li><strong>Convert to Topocentric Coordinates:</strong> Calculate position relative to observer
+                        <ul>
+                            <li>Azimuth (0-360°): Compass bearing from observer to satellite</li>
+                            <li>Elevation (-90° to +90°): Angle above horizon</li>
+                            <li>Range (km): Direct distance to satellite</li>
+                        </ul>
+                    </li>
+                    <li><strong>Determine Pass Times:</strong>
+                        <ul>
+                            <li>AOS (Acquisition of Signal): When elevation rises above minimum (typically 5-10°)</li>
+                            <li>TCA (Time of Closest Approach): When elevation reaches maximum</li>
+                            <li>LOS (Loss of Signal): When elevation drops below minimum</li>
+                        </ul>
+                    </li>
+                    <li><strong>Calculate Doppler Shift:</strong> Use velocity vector to determine frequency changes</li>
+                    <li><strong>Repeat for Next Orbits:</strong> Generate predictions for upcoming passes</li>
+                </ol>
+            </div>
+
+            <h2>Active Amateur Radio Satellites (2025)</h2>
+
+            <p>The following satellites are confirmed operational as of 2025. Always check current status at <a href="https://amsat.org/status/" target="_blank">amsat.org/status</a> before planning operations.</p>
+
+            <h3>FM Voice Satellites (Easiest for Beginners)</h3>
+            <table>
+                <tr>
+                    <th>Satellite</th>
+                    <th>NORAD ID</th>
+                    <th>Uplink (TX)</th>
+                    <th>Downlink (RX)</th>
+                    <th>CTCSS</th>
+                    <th>Status & Notes</th>
+                </tr>
+                <tr>
+                    <td><strong>AO-91</strong><br>(Fox-1B / RadFxSat-2)</td>
+                    <td>43017</td>
+                    <td>435.250 MHz</td>
+                    <td>145.960 MHz</td>
+                    <td>67.0 Hz</td>
+                    <td>
+                        <strong>Status:</strong> Operational with timer<br>
+                        • Timer: 26 minutes ON, 34 minutes OFF<br>
+                        • Max power: 5W uplink recommended<br>
+                        • Very popular, often crowded<br>
+                        • Excellent signal strength<br>
+                        • Best for beginners (when timer is ON)
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>AO-92</strong><br>(Fox-1D)</td>
+                    <td>43137</td>
+                    <td>435.350 MHz</td>
+                    <td>145.880 MHz</td>
+                    <td>67.0 Hz</td>
+                    <td>
+                        <strong>Status:</strong> Operational, always ON<br>
+                        • No timer restrictions<br>
+                        • Max power: 5W uplink<br>
+                        • Strong, reliable signal<br>
+                        • Less crowded than AO-91<br>
+                        • Excellent for extended QSOs
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>SO-50</strong><br>(SaudiSat-1C)</td>
+                    <td>27607</td>
+                    <td>145.850 MHz</td>
+                    <td>436.795 MHz</td>
+                    <td>74.4 Hz<br>(timer arm)</td>
+                    <td>
+                        <strong>Status:</strong> Operational since 2002<br>
+                        • Requires activation: Send 74.4 Hz tone for 2 sec<br>
+                        • 10-minute timer per activation<br>
+                        • Uplink CTCSS: 67.0 Hz for voice<br>
+                        • Lower power than AO-91/92<br>
+                        • More challenging to receive
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>PO-101</strong><br>(Diwata-2)</td>
+                    <td>43678</td>
+                    <td>437.500 MHz</td>
+                    <td>145.900 MHz</td>
+                    <td>None</td>
+                    <td>
+                        <strong>Status:</strong> Intermittent operation<br>
+                        • Not always active<br>
+                        • Check AMSAT status before pass<br>
+                        • Good coverage over Asia/Pacific<br>
+                        • Philippines satellite
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>AO-85</strong><br>(Fox-1A)</td>
+                    <td>40967</td>
+                    <td>437.172 MHz</td>
+                    <td>145.980 MHz</td>
+                    <td>67.0 Hz</td>
+                    <td>
+                        <strong>Status:</strong> Limited operation<br>
+                        • Battery issues (aging)<br>
+                        • Only active in continuous sunlight<br>
+                        • Check telemetry before attempting<br>
+                        • May not be available during eclipse seasons
+                    </td>
+                </tr>
+            </table>
+
+            <h3>Linear Transponder Satellites (SSB/CW)</h3>
+            <p>Linear transponders allow multiple simultaneous QSOs by translating an entire band of frequencies. They require SSB (Single Sideband) or CW (Morse code) capability, not FM.</p>
+
+            <table>
+                <tr>
+                    <th>Satellite</th>
+                    <th>Mode</th>
+                    <th>Uplink Band</th>
+                    <th>Downlink Band</th>
+                    <th>Notes</th>
+                </tr>
+                <tr>
+                    <td><strong>FO-29</strong><br>(JAS-2)</td>
+                    <td>V/U</td>
+                    <td>145.900 - 146.000 MHz<br>(USB recommended)</td>
+                    <td>435.800 - 435.900 MHz<br>(LSB, inverted)</td>
+                    <td>
+                        • Passband: 100 kHz<br>
+                        • Inversion: USB becomes LSB<br>
+                        • Solar panels degraded (weak signal)<br>
+                        • Best during high solar illumination<br>
+                        • Requires good antennas
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>XW-2A</strong><br>(CAS-3A)</td>
+                    <td>V/U</td>
+                    <td>145.660 - 145.710 MHz<br>(USB)</td>
+                    <td>435.030 - 435.090 MHz<br>(LSB, inverted)</td>
+                    <td>
+                        • Passband: 50 kHz (narrower)<br>
+                        • Chinese amateur satellite<br>
+                        • Good signal strength<br>
+                        • Popular for DX contacts<br>
+                        • Intermittent operation
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>XW-2C</strong><br>(CAS-3C)</td>
+                    <td>V/U</td>
+                    <td>145.795 - 145.845 MHz<br>(USB)</td>
+                    <td>435.155 - 435.205 MHz<br>(LSB)</td>
+                    <td>
+                        • Similar to XW-2A<br>
+                        • Slightly different frequencies<br>
+                        • Check schedule (not always active)
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>XW-2D</strong><br>(CAS-3D)</td>
+                    <td>V/U</td>
+                    <td>145.855 - 145.905 MHz<br>(USB)</td>
+                    <td>435.215 - 435.265 MHz<br>(LSB)</td>
+                    <td>
+                        • Part of XW-2 constellation<br>
+                        • Operates on schedule<br>
+                        • Consult CAMSAT for activation times
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>QO-100</strong><br>(Es'hail-2)</td>
+                    <td>L/S</td>
+                    <td>2400.050 - 2400.300 MHz<br>(L-band, SSB/CW)</td>
+                    <td>10489.550 - 10489.800 MHz<br>(S-band, inverted)</td>
+                    <td>
+                        • <strong>GEOSTATIONARY!</strong> (35,786 km altitude)<br>
+                        • Always visible from Europe/Africa/Middle East/India<br>
+                        • 24/7 operation (no passes to track)<br>
+                        • Requires dish antenna (60-90 cm recommended)<br>
+                        • LNB for receive, PA for transmit<br>
+                        • DX machine (entire hemisphere coverage)<br>
+                        • NOT visible from North/South America or East Asia
+                    </td>
+                </tr>
+            </table>
+
+            <h3>International Space Station (ISS)</h3>
+            <table>
+                <tr>
+                    <th>Mode</th>
+                    <th>Frequency</th>
+                    <th>Details</th>
+                </tr>
+                <tr>
+                    <td><strong>Voice Contacts</strong><br>(NA1SS)</td>
+                    <td>
+                        <strong>Downlink:</strong> 145.800 MHz<br>
+                        <strong>Uplink:</strong> 145.990 MHz (Region 2/3)<br>
+                        144.490 MHz (Region 1)
+                    </td>
+                    <td>
+                        • Very rare (astronaut must be free)<br>
+                        • Extremely crowded (hundreds calling)<br>
+                        • Success rate very low<br>
+                        • FM mode, no CTCSS required<br>
+                        • Best during ARISS school events (scheduled)<br>
+                        • Listen only unless astronaut is actively calling CQ
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>APRS Digipeater</strong><br>(RS0ISS)</td>
+                    <td>
+                        145.825 MHz<br>(Worldwide)
+                    </td>
+                    <td>
+                        • Much more reliable than voice<br>
+                        • Path: ARISS or RS0ISS<br>
+                        • 5-25W recommended<br>
+                        • Footprint: 2000+ km diameter<br>
+                        • Your packets appear on APRS.fi<br>
+                        • Great for tracking ISS passes<br>
+                        • 99% success rate with proper setup
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>SSTV Events</strong></td>
+                    <td>
+                        145.800 MHz<br>(Same as voice downlink)
+                    </td>
+                    <td>
+                        • Slow Scan TV image transmissions<br>
+                        • 2-3 day events, 3-6 times per year<br>
+                        • Mode: Usually PD120 or PD180<br>
+                        • 2 minutes per image<br>
+                        • Software: MMSSTV (Windows), Robot36 (Mac/Linux)<br>
+                        • ARISS awards for received images<br>
+                        • No transmit needed (receive only)
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Packet Radio</strong><br>(Obsolete)</td>
+                    <td>
+                        437.550 MHz
+                    </td>
+                    <td>
+                        • Rarely used for packet anymore<br>
+                        • APRS on 145.825 is preferred<br>
+                        • Historical reference only
+                    </td>
+                </tr>
+            </table>
+
+            <h2>Doppler Effect in Satellite Communications</h2>
+
+            <h3>Understanding Doppler Shift</h3>
+            <p>The Doppler effect causes frequency shifts due to the relative motion between satellite and observer. As a satellite approaches (closing velocity), the received frequency increases. As it recedes (opening velocity), frequency decreases. This effect can shift signals by ±3.5 kHz on VHF and ±10 kHz on UHF.</p>
+
+            <div class="diagram">
+                <svg class="svg-diagram" viewBox="0 0 800 400">
+                    <!-- Title -->
+                    <text x="400" y="25" text-anchor="middle" font-size="20" font-weight="bold" fill="#1e3c72">Doppler Shift During Satellite Pass</text>
+                    
+                    <!-- Horizon line -->
+                    <line x1="50" y1="300" x2="750" y2="300" stroke="#8B4513" stroke-width="3"/>
+                    <text x="400" y="330" text-anchor="middle" font-size="14" fill="#555">Earth's Surface (Observer Location)</text>
+                    
+                    <!-- Satellite path (arc) -->
+                    <path d="M 100 300 Q 400 80 700 300" stroke="#667eea" stroke-width="4" fill="none" stroke-dasharray="10,5"/>
+                    
+                    <!-- AOS Position -->
+                    <circle cx="100" cy="300" r="15" fill="#e74c3c"/>
+                    <text x="100" y="270" text-anchor="middle" font-size="16" font-weight="bold" fill="#e74c3c">AOS</text>
+                    <text x="100" y="355" text-anchor="middle" font-size="14" fill="#e74c3c">Rising</text>
+                    <text x="100" y="375" text-anchor="middle" font-size="13" font-weight="bold" fill="#e74c3c">+3.5 kHz</text>
+                    
+                    <!-- TCA Position (Overhead) -->
+                    <circle cx="400" cy="80" r="15" fill="#2ecc71"/>
+                    <text x="400" y="55" text-anchor="middle" font-size="16" font-weight="bold" fill="#2ecc71">TCA</text>
+                    <text x="400" y="110" text-anchor="middle" font-size="14" fill="#2ecc71">Overhead</text>
+                    <text x="400" y="130" text-anchor="middle" font-size="13" font-weight="bold" fill="#2ecc71">0 Hz</text>
+                    
+                    <!-- LOS Position -->
+                    <circle cx="700" cy="300" r="15" fill="#3498db"/>
+                    <text x="700" y="270" text-anchor="middle" font-size="16" font-weight="bold" fill="#3498db">LOS</text>
+                    <text x="700" y="355" text-anchor="middle" font-size="14" fill="#3498db">Setting</text>
+                    <text x="700" y="375" text-anchor="middle" font-size="13" font-weight="bold" fill="#3498db">-3.5 kHz</text>
+                    
+                    <!-- Velocity arrows -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#667eea"/>
+                        </marker>
+                    </defs>
+                    
+                    <!-- Approaching velocity vector -->
+                    <line x1="100" y1="300" x2="180" y2="240" stroke="#667eea" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    <text x="140" y="265" font-size="12" fill="#667eea" font-weight="bold">Approaching</text>
+                    
+                    <!-- Receding velocity vector -->
+                    <line x1="700" y1="300" x2="740" y2="340" stroke="#667eea" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    <text x="715" y="360" font-size="12" fill="#667eea" font-weight="bold">Receding</text>
+                    
+                    <!-- Observer -->
+                    <circle cx="400" cy="300" r="8" fill="#f39c12"/>
+                    <text x="400" y="340" text-anchor="middle" font-size="14" font-weight="bold" fill="#f39c12">Observer</text>
+                </svg>
+            </div>
+
+            <div class="info-box">
+                <h4>Doppler Frequency Calculation</h4>
+                <p style="font-family: 'Courier New'; font-size: 18px; text-align: center; background: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    f<sub>received</sub> = f<sub>transmitted</sub> × (1 + v<sub>radial</sub> / c)
+                </p>
+                <p><strong>Where:</strong></p>
+                <ul>
+                    <li><strong>f<sub>received</sub></strong> = frequency you observe at ground station</li>
+                    <li><strong>f<sub>transmitted</sub></strong> = satellite's actual transmission frequency</li>
+                    <li><strong>v<sub>radial</sub></strong> = component of satellite velocity toward/away from observer (m/s)
+                        <ul>
+                            <li>Positive when approaching (satellite moving toward you)</li>
+                            <li>Negative when receding (satellite moving away)</li>
+                            <li>Zero at TCA (satellite directly overhead, perpendicular motion)</li>
+                        </ul>
+                    </li>
+                    <li><strong>c</strong> = speed of light = 3 × 10<sup>8</sup> m/s</li>
+                </ul>
+                
+                <h4>Typical LEO Satellite Doppler Shifts:</h4>
+                <table style="margin-top: 15px;">
+                    <tr>
+                        <th>Pass Phase</th>
+                        <th>2m VHF (145 MHz)</th>
+                        <th>70cm UHF (435 MHz)</th>
+                        <th>Radial Velocity</th>
+                    </tr>
+                    <tr>
+                        <td><strong>AOS (Rising)</strong></td>
+                        <td style="background: #ffe0e0;">+3.5 kHz</td>
+                        <td style="background: #ffe0e0;">+10.5 kHz</td>
+                        <td>+7,200 m/s (approaching)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>30° Elevation</strong></td>
+                        <td style="background: #fff0e0;">+3.0 kHz</td>
+                        <td style="background: #fff0e0;">+9.0 kHz</td>
+                        <td>+6,200 m/s</td>
+                    </tr>
+                    <tr>
+                        <td><strong>60° Elevation</strong></td>
+                        <td style="background: #ffffcc;">+1.5 kHz</td>
+                        <td style="background: #ffffcc;">+4.5 kHz</td>
+                        <td>+3,100 m/s</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TCA (Overhead)</strong></td>
+                        <td style="background: #ccffcc;">0 Hz</td>
+                        <td style="background: #ccffcc;">0 Hz</td>
+                        <td>0 m/s (perpendicular)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>60° Elevation</strong></td>
+                        <td style="background: #e0f0ff;">-1.5 kHz</td>
+                        <td style="background: #e0f0ff;">-4.5 kHz</td>
+                        <td>-3,100 m/s</td>
+                    </tr>
+                    <tr>
+                        <td><strong>30° Elevation</strong></td>
+                        <td style="background: #d0e0ff;">-3.0 kHz</td>
+                        <td style="background: #d0e0ff;">-9.0 kHz</td>
+                        <td>-6,200 m/s</td>
+                    </tr>
+                    <tr>
+                        <td><strong>LOS (Setting)</strong></td>
+                        <td style="background: #c0d0ff;">-3.5 kHz</td>
+                        <td style="background: #c0d0ff;">-10.5 kHz</td>
+                        <td>-7,200 m/s (receding)</td>
+                    </tr>
+                </table>
+                
+                <h4>Key Observations:</h4>
+                <ul>
+                    <li><strong>Total Doppler Swing:</strong> 7 kHz on VHF, 21 kHz on UHF (AOS to LOS)</li>
+                    <li><strong>Rate of Change:</strong> Fastest near horizon, slowest at TCA</li>
+                    <li><strong>Frequency Dependency:</strong> UHF shift is 3× larger than VHF shift (frequency ratio)</li>
+                    <li><strong>Symmetric:</strong> Positive shift magnitude at AOS equals negative magnitude at LOS</li>
+                </ul>
+            </div>
+
+            <h3>Doppler Compensation Strategies</h3>
+
+            <h4>1. Manual Tuning (FM Satellites)</h4>
+            <div class="success-box">
+                <p><strong>Procedure for Manual Doppler Correction:</strong></p>
+                <ol>
+                    <li><strong>Pre-Pass Setup:</strong>
+                        <ul>
+                            <li>Program radio with nominal downlink frequency</li>
+                            <li>Have Gpredict or tracking software open with Doppler display</li>
+                            <li>Note expected Doppler range for this pass</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>At AOS (Satellite Rising):</strong>
+                        <ul>
+                            <li>Set receiver frequency HIGH: Nominal + 3.5 kHz</li>
+                            <li>Example: AO-91 downlink = 145.960 MHz + 3.5 kHz = <strong>145.9635 MHz</strong></li>
+                            <li>Listen for satellite beacon or other stations</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>During Pass (Tracking):</strong>
+                        <ul>
+                            <li>Continuously adjust frequency DOWNWARD as satellite passes overhead</li>
+                            <li>Typical adjustment: 0.5-1.0 kHz every 30-60 seconds</li>
+                            <li>Keep signal centered in receiver passband (listen for clear audio)</li>
+                            <li>At TCA (overhead): frequency = nominal (145.960 MHz exactly)</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>At LOS (Satellite Setting):</strong>
+                        <ul>
+                            <li>Final frequency LOW: Nominal - 3.5 kHz</li>
+                            <li>Example: 145.960 MHz - 3.5 kHz = <strong>145.9565 MHz</strong></li>
+                            <li>Total adjustment from AOS to LOS: 7 kHz</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <p><strong>Uplink Doppler (Less Critical on FM):</strong></p>
+                <ul>
+                    <li>Doppler shift is <strong>inverted</strong> on uplink vs downlink</li>
+                    <li>At AOS: Transmit LOW (435.250 - 10 kHz = 435.240 MHz)</li>
+                    <li>At LOS: Transmit HIGH (435.250 + 10 kHz = 435.260 MHz)</li>
+                    <li>FM mode is more forgiving - ±5 kHz deviation masks small Doppler errors</li>
+                    <li>Most operators don't adjust uplink Doppler on FM satellites</li>
+                </ul>
+            </div>
+
+            <h4>2. Computer-Aided Doppler Correction</h4>
+            <div class="success-box">
+                <p>Software like Gpredict, SatPC32, or Ham Radio Deluxe can automatically adjust radio frequencies via CAT (Computer Aided Transceiver) interface.</p>
+                
+                <p><strong>Setup Requirements:</strong></p>
+                <ul>
+                    <li><strong>Radio:</strong> Must support CAT control (most modern transceivers do)
+                        <ul>
+                            <li>Icom: CI-V interface</li>
+                            <li>Yaesu: CAT/Serial interface</li>
+                            <li>Kenwood: PC interface</li>
+                        </ul>
+                    </li>
+                    <li><strong>Connection:</strong> USB-to-serial cable or built-in USB</li>
+                    <li><strong>Software:</strong> Gpredict (free, Linux/Windows/Mac) or SatPC32 (Windows, $$)</li>
+                    <li><strong>Configuration:</strong> 
+                        <ul>
+                            <li>Set radio model in software</li>
+                            <li>Configure COM port and baud rate</li>
+                            <li>Enable Doppler correction</li>
+                            <li>Set update rate (1-2 seconds typical)</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <p><strong>Operation:</strong></p>
+                <ol>
+                    <li>Software calculates real-time satellite position and velocity</li>
+                    <li>Computes instantaneous Doppler shift for TX and RX frequencies</li>
+                    <li>Sends frequency adjustment commands to radio via CAT</li>
+                    <li>Radio automatically tracks changing frequency throughout pass</li>
+                    <li>Operator focuses on making contacts, not tuning</li>
+                </ol>
+                
+                <p><strong>Advantages:</strong></p>
+                <ul>
+                    <li>Precise Doppler correction (±10 Hz accuracy)</li>
+                    <li>Hands-free operation - no manual tuning needed</li>
+                    <li>Essential for SSB/CW linear transponder work</li>
+                    <li>Reduces operator workload during busy passes</li>
+                </ul>
+            </div>
+
+            <h3>Python Example: Doppler Shift Calculator</h3>
+            <div class="code-block">
+<span class="keyword">import</span> math
+
+<span class="keyword">def</span> <span class="function">calculate_doppler_shift</span>(freq_mhz, velocity_ms, elevation_deg):
+    <span class="string">"""
+    Calculate Doppler shift for satellite pass
+    
+    Parameters:
+    - freq_mhz: Transmitted frequency in MHz (float)
+    - velocity_ms: Satellite orbital velocity in m/s (typically ~7500 for LEO)
+    - elevation_deg: Elevation angle from observer to satellite (0-90°)
+                     0° = horizon, 90° = directly overhead
+    
+    Returns:
+    - doppler_shift_khz: Frequency shift in kHz (float)
+    """</span>
+    
+    <span class="comment"># Speed of light</span>
+    c = <span class="number">3e8</span>  <span class="comment"># meters per second</span>
+    
+    <span class="comment"># Convert elevation angle to radians</span>
+    elevation_rad = math.<span class="function">radians</span>(elevation_deg)
+    
+    <span class="comment"># Calculate radial velocity component (velocity toward/away from observer)</span>
+    <span class="comment"># At horizon (0°): maximum radial velocity (approaching/receding)</span>
+    <span class="comment"># At zenith (90°): zero radial velocity (perpendicular motion)</span>
+    <span class="comment"># We need angle from perpendicular, so use (90° - elevation)</span>
+    angle_from_perpendicular = math.<span class="function">radians</span>(<span class="number">90</span> - elevation_deg)
+    v_radial = velocity_ms * math.<span class="function">cos</span>(angle_from_perpendicular)
+    
+    <span class="comment"># Doppler shift formula: Δf = (v/c) × f₀</span>
+    doppler_shift_mhz = (v_radial / c) * freq_mhz
+    doppler_shift_khz = doppler_shift_mhz * <span class="number">1000</span>  <span class="comment"># Convert to kHz</span>
+    
+    <span class="keyword">return</span> doppler_shift_khz
+
+<span class="comment"># Example: AO-91 downlink Doppler profile</span>
+<span class="keyword">print</span>(<span class="string">"=== AO-91 Doppler Shift Profile ==="</span>)
+<span class="keyword">print</span>(<span class="string">f"{'Phase':<20} {'Elevation':<12} {'Doppler':<12} {'Tune To'}"</span>)
+<span class="keyword">print</span>(<span class="string">"-"</span> * <span class="number">70</span>)
+
+downlink_freq = <span class="number">145.960</span>  <span class="comment"># AO-91 downlink in MHz</span>
+sat_velocity = <span class="number">7500</span>      <span class="comment"># Typical LEO velocity in m/s</span>
+
+<span class="comment"># Define pass phases with elevation angles</span>
+<span class="comment"># Positive elevation = satellite above horizon (rising to overhead)</span>
+<span class="comment"># Negative elevation values represent satellite on descending side</span>
+phases = [
+    (<span class="string">"AOS (Rising)"</span>, <span class="number">0</span>),
+    (<span class="string">"15° elevation"</span>, <span class="number">15</span>),
+    (<span class="string">"30° elevation"</span>, <span class="number">30</span>),
+    (<span class="string">"45° elevation"</span>, <span class="number">45</span>),
+    (<span class="string">"60° elevation"</span>, <span class="number">60</span>),
+    (<span class="string">"TCA (Overhead)"</span>, <span class="number">90</span>),
+    (<span class="string">"60° elevation"</span>, <span class="number">60</span>),
+    (<span class="string">"45° elevation"</span>, <span class="number">45</span>),
+    (<span class="string">"30° elevation"</span>, <span class="number">30</span>),
+    (<span class="string">"15° elevation"</span>, <span class="number">15</span>),
+    (<span class="string">"LOS (Setting)"</span>, <span class="number">0</span>)
+]
+
+<span class="keyword">for</span> i, (phase, elevation) <span class="keyword">in</span> <span class="function">enumerate</span>(phases):
+    <span class="comment"># For descending side (after TCA), make Doppler negative</span>
+    <span class="keyword">if</span> i > <span class="number">5</span>:  <span class="comment"># After TCA</span>
+        shift = -<span class="function">calculate_doppler_shift</span>(downlink_freq, sat_velocity, elevation)
+    <span class="keyword">else</span>:  <span class="comment"># Ascending side</span>
+        shift = <span class="function">calculate_doppler_shift</span>(downlink_freq, sat_velocity, elevation)
+    
+    actual_freq = downlink_freq + (shift / <span class="number">1000</span>)  <span class="comment"># Add shift to get receive frequency</span>
+    
+    <span class="keyword">print</span>(<span class="string">f"{phase:<20} {elevation:>3}°        {shift:+7.2f} kHz   {actual_freq:.4f} MHz"</span>)
+
+<span class="keyword">print</span>(<span class="string">"\n=== Uplink Doppler (Inverted) ==="</span>)
+<span class="keyword">print</span>(<span class="string">"Note: Uplink Doppler is opposite sign of downlink"</span>)
+uplink_freq = <span class="number">435.250</span>
+<span class="keyword">print</span>(<span class="string">f"At AOS: Transmit {uplink_freq - 10/1000:.4f} MHz (10 kHz LOW)"</span>)
+<span class="keyword">print</span>(<span class="string">f"At TCA: Transmit {uplink_freq:.4f} MHz (nominal)"</span>)
+<span class="keyword">print</span>(<span class="string">f"At LOS: Transmit {uplink_freq + 10/1000:.4f} MHz (10 kHz HIGH)"</span>)
+
+<span class="comment"># Sample Output:</span>
+<span class="comment"># === AO-91 Doppler Shift Profile ===</span>
+<span class="comment"># Phase                Elevation    Doppler      Tune To</span>
+<span class="comment"># ----------------------------------------------------------------------</span>
+<span class="comment"># AOS (Rising)           0°         +3.65 kHz   145.9637 MHz</span>
+<span class="comment"># 15° elevation         15°         +3.52 kHz   145.9635 MHz</span>
+<span class="comment"># 30° elevation         30°         +3.16 kHz   145.9632 MHz</span>
+<span class="comment"># 45° elevation         45°         +2.58 kHz   145.9626 MHz</span>
+<span class="comment"># 60° elevation         60°         +1.82 kHz   145.9618 MHz</span>
+<span class="comment"># TCA (Overhead)        90°         +0.00 kHz   145.9600 MHz</span>
+<span class="comment"># 60° elevation         60°         -1.82 kHz   145.9582 MHz</span>
+<span class="comment"># 45° elevation         45°         -2.58 kHz   145.9574 MHz</span>
+<span class="comment"># 30° elevation         30°         -3.16 kHz   145.9568 MHz</span>
+<span class="comment"># 15° elevation         15°         -3.52 kHz   145.9565 MHz</span>
+<span class="comment"># LOS (Setting)          0°         -3.65 kHz   145.9563 MHz</span>
+            </div>
+
+            <h2>Satellite Tracking Software</h2>
+
+            <h3>Gpredict - Free Open-Source Tracking</h3>
+            <p>Gpredict is the most popular free satellite tracking software, available for Linux, Windows, and macOS. It provides pass predictions, real-time tracking, radio control, and rotator interfaces.</p>
+
+            <div class="success-box">
+                <h4>Setting Up Gpredict</h4>
+                
+                <p><strong>Step 1: Installation</strong></p>
+                <ul>
+                    <li><strong>Linux:</strong> <code>sudo apt-get install gpredict</code></li>
+                    <li><strong>Windows:</strong> Download installer from http://gpredict.oz9aec.net</li>
+                    <li><strong>macOS:</strong> Use Homebrew: <code>brew install gpredict</code></li>
+                </ul>
+                
+                <p><strong>Step 2: Update TLE Data (Critical!)</strong></p>
+                <ol>
+                    <li>Menu: <strong>Edit → Update TLEs from Network</strong></li>
+                    <li>Select "All" or specific satellites (AO-91, AO-92, SO-50, ISS)</li>
+                    <li>Click "Update" and wait for download</li>
+                    <li><strong>Repeat weekly for accurate predictions</strong> (TLEs decay)</li>
+                </ol>
+                
+                <p><strong>Step 3: Configure Ground Station Location</strong></p>
+                <ol>
+                    <li>Menu: <strong>Edit → Preferences → Ground Stations</strong></li>
+                    <li>Click "Add New" button</li>
+                    <li>Enter station details:
+                        <ul>
+                            <li><strong>Name:</strong> Your station callsign or location name</li>
+                            <li><strong>Latitude:</strong> In decimal degrees (e.g., 5.603 for Accra)</li>
+                            <li><strong>Longitude:</strong> In decimal degrees (e.g., -0.187 for Accra)</li>
+                            <li><strong>Altitude:</strong> Meters above sea level (e.g., 61 m for Accra)</li>
+                        </ul>
+                    </li>
+                    <li>Click "OK" to save</li>
+                </ol>
+                
+                <p><strong>Step 4: Create Satellite Module</strong></p>
+                <ol>
+                    <li>Menu: <strong>File → New Module</strong></li>
+                    <li>Enter module name (e.g., "FM Satellites" or "My Satellites")</li>
+                    <li>In satellite list, select satellites to track:
+                        <ul>
+                            <li>AO-91 (43017)</li>
+                            <li>AO-92 (43137)</li>
+                            <li>SO-50 (27607)</li>
+                            <li>ISS (25544)</li>
+                            <li>Add any other satellites of interest</li>
+                        </ul>
+                    </li>
+                    <li>Click "OK" - module opens with satellite tracks</li>
+                </ol>
+                
+                <p><strong>Step 5: Configure Pass Prediction</strong></p>
+                <ol>
+                    <li>In module window, right-click satellite → <strong>Predict Passes</strong></li>
+                    <li>Set parameters:
+                        <ul>
+                            <li><strong>Start time:</strong> Now or specific date/time</li>
+                            <li><strong>Duration:</strong> 7 days typical (1 week of passes)</li>
+                            <li><strong>Minimum elevation:</strong> 10° recommended (5° for low horizon)</li>
+                            <li><strong>Ground station:</strong> Select your QTH from dropdown</li>
+                        </ul>
+                    </li>
+                    <li>Click "Predict" - see list of upcoming passes</li>
+                    <li>Passes show:
+                        <ul>
+                            <li>AOS (Acquisition of Signal) time and azimuth</li>
+                            <li>TCA (Time of Closest Approach) and max elevation</li>
+                            <li>LOS (Loss of Signal) time and azimuth</li>
+                            <li>Pass duration</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <p><strong>Step 6: Radio Control (Optional)</strong></p>
+                <ol>
+                    <li>Menu: <strong>Edit → Preferences → Interfaces → Radios</strong></li>
+                    <li>Add radio configuration:
+                        <ul>
+                            <li>Select radio model</li>
+                            <li>Configure COM port and baud rate</li>
+                            <li>Enable Doppler correction</li>
+                            <li>Set update rate (1-2 seconds)</li>
+                        </ul>
+                    </li>
+                    <li>In module, click "Radio Control" button</li>
+                    <li>Select satellite and engage tracking</li>
+                    <li>Software automatically tunes radio throughout pass</li>
+                </ol>
+            </div>
+
+            <h3>Pass Prediction Example Output</h3>
+            <div class="code-block">
+<span class="comment"># Gpredict Pass Prediction for AO-91</span>
+<span class="comment"># Location: Accra, Ghana (5.603°N, 0.187°W, 61m elevation)</span>
+<span class="comment"># Date: December 15, 2025</span>
+<span class="comment"># Minimum Elevation: 10°</span>
+
+Pass  AOS Time    Max El  TCA Time    LOS Time    Duration  AOS Az  Max Az  LOS Az
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  <span class="number">1</span>   <span class="string">06:15:32</span>    <span class="number">45°</span>    <span class="string">06:19:45</span>    <span class="string">06:24:18</span>    <span class="string">08:46</span>     <span class="number">195°</span>    <span class="number">265°</span>    <span class="number">055°</span>  ⭐ Good
+  <span class="number">2</span>   <span class="string">07:52:44</span>    <span class="number">79°</span>    <span class="string">07:57:28</span>    <span class="string">08:02:56</span>    <span class="string">10:12</span>     <span class="number">235°</span>    <span class="number">180°</span>    <span class="number">018°</span>  ⭐⭐ Excellent!
+  <span class="number">3</span>   <span class="string">09:30:21</span>    <span class="number">22°</span>    <span class="string">09:34:03</span>    <span class="string">09:38:05</span>    <span class="string">07:44</span>     <span class="number">275°</span>    <span class="number">005°</span>    <span class="number">345°</span>  ⚠️  Marginal
+  <span class="number">4</span>   <span class="string">17:45:18</span>    <span class="number">52°</span>    <span class="string">17:49:56</span>    <span class="string">17:54:32</span>    <span class="string">09:14</span>     <span class="number">325°</span>    <span class="number">040°</span>    <span class="number">175°</span>  ⭐ Good
+
+<span class="comment"># BEST PASS: #2 at 07:52 UTC</span>
+<span class="comment"># - Nearly overhead (79° maximum elevation)</span>
+<span class="comment"># - Long duration (10 min 12 sec)</span>
+<span class="comment"># - Excellent signal strength expected</span>
+<span class="comment"># - Multiple contact opportunities</span>
+
+<span class="comment"># Pass Quality Guidelines:</span>
+<span class="comment"># ⭐⭐ Excellent: >60° max elevation, >9 min duration</span>
+<span class="comment"># ⭐ Good: 40-60° max elevation, 7-10 min duration</span>
+<span class="comment"># ⚠️  Marginal: 10-40° max elevation, may have weak signal or obstructions</span>
+            </div>
+
+            <h2>Ground Station Equipment</h2>
+
+            <h3>Beginner Setup: Handheld Station (FM Satellites)</h3>
+            <div class="success-box">
+                <p><strong>Minimum Equipment for First Satellite Contact:</strong></p>
+                
+                <table>
+                    <tr>
+                        <th>Component</th>
+                        <th>Specifications</th>
+                        <th>Budget Options</th>
+                        <th>Better Options</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Transceiver</strong></td>
+                        <td>
+                            • Dual-band VHF/UHF<br>
+                            • 5W minimum TX power<br>
+                            • Adjustable squelch<br>
+                            • Fine-tune capability (1 kHz steps)
+                        </td>
+                        <td>
+                            <strong>Baofeng UV-5R</strong><br>
+                            $25-30<br>
+                            • Basic but functional<br>
+                            • Weak receiver sensitivity<br>
+                            • Works for bright satellites
+                        </td>
+                        <td>
+                            <strong>Yaesu FT-60R</strong> ($160)<br>
+                            <strong>Yaesu FT-70D</strong> ($180)<br>
+                            <strong>Kenwood TH-D74A</strong> ($600)<br>
+                            • Better receivers<br>
+                            • Built-in APRS (TH-D74A)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Antenna</strong></td>
+                        <td>
+                            • Dual-band 2m/70cm<br>
+                            • Directional (Yagi preferred)<br>
+                            • Circular or linear polarization<br>
+                            • Lightweight for handheld use
+                        </td>
+                        <td>
+                            <strong>Arrow Antenna II</strong><br>
+                            $130-160<br>
+                            • 3-element 2m, 7-element 70cm<br>
+                            • Collapsible<br>
+                            • Proven design<br>
+                            • Very popular for beginners
+                        </td>
+                        <td>
+                            <strong>Elk Log Periodic</strong> ($200)<br>
+                            <strong>M2 Eggbeater</strong> ($300)<br>
+                            • Higher gain<br>
+                            • Eggbeater = circular pol<br>
+                            • Less Faraday fading
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tracking</strong></td>
+                        <td>
+                            • Real-time satellite position<br>
+                            • Pass prediction<br>
+                            • Audio alerts<br>
+                            • Compass display
+                        </td>
+                        <td>
+                            <strong>ISS Detector (app)</strong><br>
+                            Free / $2 premium<br>
+                            <strong>Look4Sat (Android)</strong><br>
+                            Free, open-source
+                        </td>
+                        <td>
+                            <strong>Gpredict (PC)</strong><br>
+                            Free<br>
+                            <strong>SatSat (iOS)</strong> ($4)<br>
+                            • More features<br>
+                            • Better displays
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Accessories</strong></td>
+                        <td>
+                            • Spare batteries<br>
+                            • Audio recorder<br>
+                            • Logbook<br>
+                            • Headset (optional)
+                        </td>
+                        <td colspan="2">
+                            • Extra battery pack: $20-40<br>
+                            • Voice recorder or smartphone<br>
+                            • Paper log or logging app<br>
+                            • Headset for noisy environments
+                        </td>
+                    </tr>
+                </table>
+                
+                <p><strong>Total Budget Setup Cost:</strong> $150-200 (Baofeng + Arrow antenna + app)</p>
+                <p><strong>Total Better Setup Cost:</strong> $350-400 (Yaesu FT-60R + Arrow antenna)</p>
+            </div>
+
+            <h3>Advanced Setup: Fixed Station with Tracking</h3>
+            <div class="info-box">
+                <p><strong>Professional Ground Station Components:</strong></p>
+                
+                <table>
+                    <tr>
+                        <th>Component</th>
+                        <th>Model Examples</th>
+                        <th>Specifications</th>
+                        <th>Cost</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Transceiver</strong></td>
+                        <td>
+                            • Icom IC-9700<br>
+                            • Yaesu FT-991A<br>
+                            • Kenwood TS-2000
+                        </td>
+                        <td>
+                            • Dual VHF/UHF VFO<br>
+                            • Full duplex operation<br>
+                            • CAT control interface<br>
+                            • SSB/CW/FM modes<br>
+                            • 100W output power<br>
+                            • Built-in TCXO/GPS reference
+                        </td>
+                        <td>
+                            $1,500 - $3,000
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>VHF Antenna</strong></td>
+                        <td>
+                            • M2 2MCP22<br>
+                            • Cushcraft A270-10S<br>
+                            • Arrow 146-3
+                        </td>
+                        <td>
+                            • Circular polarization (RHCP)<br>
+                            • 10-15 dBi gain<br>
+                            • 2 meter band<br>
+                            • Weatherproof construction<br>
+                            • N-connector feedpoint
+                        </td>
+                        <td>
+                            $250 - $400
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>UHF Antenna</strong></td>
+                        <td>
+                            • M2 436CP42UG<br>
+                            • Cushcraft A449-11S<br>
+                            • WiMo TA-1
+                        </td>
+                        <td>
+                            • Circular polarization (RHCP)<br>
+                            • 15-18 dBi gain<br>
+                            • 70 cm band<br>
+                            • Cross-Yagi or helical design<br>
+                            • N-connector
+                        </td>
+                        <td>
+                            $300 - $500
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Rotator System</strong></td>
+                        <td>
+                            • Yaesu G-5500<br>
+                            • SPID RAS/HR<br>
+                            • Alfa SPID Big-RAS
+                        </td>
+                        <td>
+                            • Az/El control (360° azimuth, 0-180° elevation)<br>
+                            • 20-50 kg load capacity<br>
+                            • Weatherproof design<br>
+                            • Position feedback<br>
+                            • Computer interface<br>
+                            • Accurate positioning (±1-2°)
+                        </td>
+                        <td>
+                            $700 - $2,000
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Preamplifiers</strong></td>
+                        <td>
+                            • SSB LNA-200<br>
+                            • Advanced Receiver Research<br>
+                            • Mirage B-320-G
+                        </td>
+                        <td>
+                            • VHF/UHF low-noise amplifier<br>
+                            • 0.3-0.5 dB noise figure<br>
+                            • 15-25 dB gain<br>
+                            • Mast-mounted (before coax loss)<br>
+                            • Bias-T power feed
+                        </td>
+                        <td>
+                            $150 - $300 each<br>
+                            (need 2: VHF + UHF)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Control Computer</strong></td>
+                        <td>
+                            • Windows PC<br>
+                            • Linux PC<br>
+                            • Raspberry Pi 4
+                        </td>
+                        <td>
+                            • Gpredict or SatPC32 software<br>
+                            • CAT interface to radio<br>
+                            • Rotator control interface<br>
+                            • Dual monitors recommended<br>
+                            • GPS time sync (optional)
+                        </td>
+                        <td>
+                            $50 - $1,000<br>
+                            (depends on platform)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Coaxial Cable</strong></td>
+                        <td>
+                            • LMR-400<br>
+                            • Times Microwave LMR-400<br>
+                            • Andrew Heliax
+                        </td>
+                        <td>
+                            • Low-loss 50Ω coax<br>
+                            • VHF loss: ~1 dB/100ft<br>
+                            • UHF loss: ~1.5 dB/100ft<br>
+                            • Keep runs short (under 50 ft if possible)<br>
+                            • N-connectors (not PL-259)
+                        </td>
+                        <td>
+                            $1-2 per foot<br>
+                            + $10-20 per connector
+                        </td>
+                    </tr>
+                </table>
+                
+                <p><strong>Total Advanced Station Cost:</strong> $4,000 - $8,000</p>
+                <p><strong>Capabilities:</strong></p>
+                <ul>
+                    <li>Fully automated tracking (hands-free operation)</li>
+                    <li>Automatic Doppler correction</li>
+                    <li>Full duplex (hear yourself through satellite)</li>
+                    <li>SSB/CW linear transponder operation</li>
+                    <li>Weak signal work (LEO, MEO satellites)</li>
+                    <li>Multiple simultaneous QSOs on transponders</li>
+                    <li>DX hunting capabilities</li>
+                    <li>24/7 unattended operation potential</li>
+                </ul>
+            </div>
+
+            <h2>Making Your First FM Satellite Contact</h2>
+
+            <div class="highlight-box">
+                <h3>Pre-Pass Preparation Checklist</h3>
+                
+                <h4>24 Hours Before:</h4>
+                <ul>
+                    <li>✅ Update TLEs in tracking software</li>
+                    <li>✅ Select pass with >30° max elevation and >8 min duration</li>
+                    <li>✅ Check satellite status (AMSAT.org/status) - confirm satellite is operational</li>
+                    <li>✅ Verify weather forecast (clear skies preferred for first attempt)</li>
+                    <li>✅ Charge all batteries (radio, phone/tablet for tracking)</li>
+                </ul>
+                
+                <h4>1 Hour Before Pass:</h4>
+                <ul>
+                    <li>✅ Program radio memories:
+                        <ul>
+                            <li><strong>Memory A (RX):</strong> Downlink frequency (e.g., 145.960 MHz for AO-91)</li>
+                            <li><strong>Memory B (TX):</strong> Uplink frequency + CTCSS tone (435.250 MHz, 67.0 Hz)</li>
+                        </ul>
+                    </li>
+                    <li>✅ Test radio:
+                        <ul>
+                            <li>Verify TX power (5W recommended)</li>
+                            <li>Check squelch setting (slightly open to hear weak signals)</li>
+                            <li>Confirm CTCSS tone is enabled on uplink</li>
+                        </ul>
+                    </li>
+                    <li>✅ Prepare script:
+                        <ul>
+                            <li>"CQ satellite CQ satellite, this is [your callsign], [grid square], listening"</li>
+                            <li>Example: "CQ satellite CQ satellite, this is N0CALL, JJ05, listening"</li>
+                        </ul>
+                    </li>
+                    <li>✅ Set up logging:
+                        <ul>
+                            <li>Paper and pencil ready</li>
+                            <li>Log format: Time, Callsign, Grid, Signal Report, Notes</li>
+                        </ul>
+                    </li>
+                    <li>✅ Scout location:
+                        <ul>
+                            <li>Find clear area with unobstructed view of sky</li>
+                            <li>Note AOS azimuth direction (where satellite will rise)</li>
+                            <li>Identify landmarks for directional reference</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <h4>5 Minutes Before AOS:</h4>
+                <ul>
+                    <li>✅ Start tracking app</li>
+                    <li>✅ Orient antenna toward AOS azimuth (where satellite will appear)</li>
+                    <li>✅ Set receiver frequency HIGH (+3 kHz above nominal for Doppler)</li>
+                    <li>✅ Squelch slightly open</li>
+                    <li>✅ Volume at comfortable level</li>
+                    <li>✅ Take deep breath - relax and enjoy!</li>
+                </ul>
+            </div>
+
+            <div class="success-box">
+                <h3>During the Pass: Step-by-Step Procedure</h3>
+                
+                <h4>Phase 1: Acquisition (AOS → +2 minutes)</h4>
+                <ol>
+                    <li><strong>Listen First (Critical!):</strong>
+                        <ul>
+                            <li>Tune receiver to downlink + 3 kHz (e.g., 145.9635 MHz for AO-91)</li>
+                            <li>Point antenna low at horizon in AOS direction</li>
+                            <li>Listen for satellite beacon or other stations</li>
+                            <li>Typical beacon: "W8CUS W8CUS... AO-91 telemetry" (repeated)</li>
+                            <li>If you hear nothing at AOS time, slowly sweep ±5 kHz</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Signal Acquired:</strong>
+                        <ul>
+                            <li>Once you hear satellite, note signal strength</li>
+                            <li>Begin tracking: adjust antenna to follow satellite path</li>
+                            <li>Start frequency tuning downward (Doppler compensation)</li>
+                            <li>DO NOT TRANSMIT YET - listen for activity</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <h4>Phase 2: Calling & Making Contact (TCA -3 min → TCA +3 min)</h4>
+                <ol start="3">
+                    <li><strong>Wait for Break in Traffic:</strong>
+                        <ul>
+                            <li>Satellite is SHARED resource - hundreds may be listening</li>
+                            <li>Wait for 2-3 second gap with no transmissions</li>
+                            <li>Best time to call: 30-45° elevation (signal strong, not too crowded)</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Make Your Call (Keep It BRIEF!):</strong>
+                        <ul>
+                            <li><strong>Initial call (2-3 seconds max):</strong> "[Callsign], [Grid]"</li>
+                            <li>Example: "N0CALL, JJ05"</li>
+                            <li>DO NOT say: "This is...", "calling CQ...", "standing by..." - NO TIME!</li>
+                            <li>Just: Callsign + Grid. That's it.</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Listen for Response:</strong>
+                        <ul>
+                            <li>Someone might respond with your callsign</li>
+                            <li>Example response: "N0CALL, W1ABC, FN31"</li>
+                            <li>Log their callsign and grid immediately</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Complete the Exchange (Minimal!):</strong>
+                        <ul>
+                            <li>Acknowledge: "W1ABC, N0CALL, 59, thanks, 73"</li>
+                            <li>Translation: "I heard you (5x9 signal report), thank you, goodbye"</li>
+                            <li>Total exchange: Under 5 seconds</li>
+                            <li><strong>DO NOT RAGCHEW!</strong> Others need access too.</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <h4>Phase 3: Tracking & Additional Contacts</h4>
+                <ol start="7">
+                    <li><strong>Continue Tracking:</strong>
+                        <ul>
+                            <li>Continuously point antenna at satellite (follow tracking app)</li>
+                            <li>Adjust receiver frequency downward (tune through Doppler)</li>
+                            <li>Maximum elevation = best signal = most activity</li>
+                            <li>Can make multiple contacts during same pass</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Try Again if Time Allows:</strong>
+                        <ul>
+                            <li>After completing one contact, wait 10-15 seconds</li>
+                            <li>If clear, call again: "N0CALL, JJ05"</li>
+                            <li>Work as many stations as possible before LOS</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <h4>Phase 4: Loss of Signal (LOS)</h4>
+                <ol start="9">
+                    <li><strong>Signal Fading:</strong>
+                        <ul>
+                            <li>As satellite approaches horizon, signal weakens</li>
+                            <li>Receiver frequency will be ~3 kHz LOW of nominal</li>
+                            <li>Point antenna low toward LOS azimuth</li>
+                            <li>Signal will fade into noise</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Post-Pass Activities:</strong>
+                        <ul>
+                            <li>Immediately log all contacts with timestamps</li>
+                            <li>Upload to satellite logging sites (ARRL LoTW, QRZ.com)</li>
+                            <li>Send QSL cards via satellite bureau (optional)</li>
+                            <li>Review performance - what worked well? What to improve?</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="warning-box">
+                <h3>⚠️ Common Mistakes to Avoid</h3>
+                <ul>
+                    <li>❌ <strong>Talking Too Much:</strong> "CQ CQ this is November Zero Charlie Alpha Lima Lima, calling CQ satellite..." - WRONG! Just say callsign + grid.</li>
+                    <li>❌ <strong>Using Phonetics:</strong> Unless absolutely necessary due to interference. They waste precious time.</li>
+                    <li>❌ <strong>Transmitting Over Others:</strong> Wait for clear frequency. Collisions destroy everyone's contacts.</li>
+                    <li>❌ <strong>Transmitting Over Beacon:</strong> If you hear telemetry beacon, frequency is busy - WAIT.</li>
+                    <li>❌ <strong>Forgetting CTCSS Tone:</strong> Your signal won't access satellite without correct tone programmed.</li>
+                    <li>❌ <strong>Not Tracking Frequency:</strong> Doppler will move signal out of receiver passband - keep tuning!</li>
+                    <li>❌ <strong>Wrong Polarization:</strong> Linear antenna 90° off = 20+ dB signal loss. Rotate antenna if signal weak.</li>
+                    <li>❌ <strong>Excessive Power:</strong> Don't run 50W into FM satellite - causes problems for everyone. 5-10W is plenty.</li>
+                    <li>❌ <strong>Not Listening First:</strong> Always acquire signal and assess activity before transmitting.</li>
+                    <li>❌ <strong>Calling CQ During Timer-Off Period:</strong> Check if AO-91 timer is ON before attempting (26 min on / 34 min off cycle).</li>
+                </ul>
+            </div>
+
+            <h2>Linear Transponder Operation (SSB/CW)</h2>
+
+            <p>Linear transponders are more advanced than FM satellites. They translate an entire band of frequencies (typically 20-100 kHz wide) from uplink to downlink, allowing multiple simultaneous QSOs.</p>
+
+            <div class="info-box">
+                <h3>Key Differences from FM Satellites</h3>
+                <table>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>FM Satellites</th>
+                        <th>Linear Transponders</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Modulation</strong></td>
+                        <td>FM (Frequency Modulation)</td>
+                        <td>SSB (Single Sideband) or CW (Morse code)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Number of QSOs</strong></td>
+                        <td>One at a time (repeater)</td>
+                        <td>Multiple simultaneous (like HF band)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Passband</strong></td>
+                        <td>Single frequency</td>
+                        <td>20-100 kHz band (many frequencies)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Inversion</strong></td>
+                        <td>None</td>
+                        <td>USB uplink becomes LSB downlink (or vice versa)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Full Duplex</strong></td>
+                        <td>Optional (helpful)</td>
+                        <td>ESSENTIAL - must monitor own downlink signal</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Power Control</strong></td>
+                        <td>5-10W typical</td>
+                        <td>1-5W MAX - more power = harm to all users (ALC issues)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Doppler</strong></td>
+                        <td>Important (3-10 kHz)</td>
+                        <td>CRITICAL - must pre-compensate uplink and track downlink</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Operating Style</strong></td>
+                        <td>Fast, brief exchanges</td>
+                        <td>Normal SSB QSO pace (but still brief for others)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Equipment</strong></td>
+                        <td>Handheld can work</td>
+                        <td>Base station with dual VFO and better antennas required</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Difficulty</strong></td>
+                        <td>Beginner-friendly</td>
+                        <td>Intermediate to Advanced</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="highlight-box">
+                <h3>Linear Transponder Operating Procedure</h3>
+                
+                <h4>Step 1: Pre-Pass Setup</h4>
+                <ul>
+                    <li><strong>Radio Configuration:</strong>
+                        <ul>
+                            <li>VFO-A (Receive): Downlink frequency, LSB mode (for V/U transponders)</li>
+                            <li>VFO-B (Transmit): Uplink frequency, USB mode</li>
+                            <li>Enable full duplex / split operation</li>
+                            <li>Reduce TX power to minimum (1-2W to start)</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Frequency Planning:</strong>
+                        <ul>
+                            <li>Example for FO-29 (V/U transponder):</li>
+                            <li>Uplink passband: 145.900 - 146.000 MHz (100 kHz wide)</li>
+                            <li>Downlink passband: 435.800 - 435.900 MHz (inverted)</li>
+                            <li>Relationship: 145.900 up → 435.900 down</li>
+                            <li>Relationship: 146.000 up → 435.800 down</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Doppler Pre-Compensation:</strong>
+                        <ul>
+                            <li>At AOS: Set uplink LOW (-10 kHz), downlink HIGH (+10 kHz)</li>
+                            <li>At TCA: Uplink and downlink at nominal frequencies</li>
+                            <li>At LOS: Set uplink HIGH (+10 kHz), downlink LOW (-10 kHz)</li>
+                            <li>Use software to automate this (essential for success)</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <h4>Step 2: Listen First</h4>
+                <ol>
+                    <li>At AOS, tune across entire downlink passband (435.800-435.900 MHz)</li>
+                    <li>Listen for beacon (usually at bottom or top of passband)</li>
+                    <li>Identify active QSOs and clear frequencies</li>
+                    <li>Note signal strengths and which parts of band are busy</li>
+                </ol>
+                
+                <h4>Step 3: Find Yourself</h4>
+                <ol>
+                    <li>Select clear frequency on uplink (e.g., 145.950 MHz USB)</li>
+                    <li>Calculate corresponding downlink:
+                        <ul>
+                            <li>145.950 is middle of 145.900-146.000 range</li>
+                            <li>Middle of downlink: 435.850 MHz</li>
+                            <li>Tune downlink to 435.850 MHz LSB</li>
+                        </ul>
+                    </li>
+                    <li>Key up briefly (1 second) and say "Test"</li>
+                    <li>Listen on downlink - you should hear yourself!</li>
+                    <li>Adjust uplink Doppler until your signal appears at expected downlink frequency</li>
+                    <li>If too high or too low, adjust uplink frequency and try again</li>
+                </ol>
+                
+                <h4>Step 4: Make Contact</h4>
+                <ul>
+                    <li><strong>Option A - Call CQ:</strong>
+                        <ul>
+                            <li>"CQ satellite, CQ satellite, November Zero Charlie Alpha Lima Lima, grid square Juliet Juliet Zero Five, calling CQ"</li>
+                            <li>Listen on downlink for responses</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Option B - Answer CQ:</strong>
+                        <ul>
+                            <li>When you hear someone calling CQ, tune your uplink to match their downlink</li>
+                            <li>Wait for them to finish calling</li>
+                            <li>Reply: "Whiskey One Alpha Bravo Charlie, this is November Zero Charlie Alpha Lima Lima"</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <h4>Step 5: Complete QSO</h4>
+                <ul>
+                    <li>Exchange signal reports: "You're 5-7 (slightly weak but readable)"</li>
+                    <li>Exchange locations: "I'm in grid square Juliet Juliet Zero Five, Accra, Ghana"</li>
+                    <li>Brief comments: "Thanks for the contact, 73"</li>
+                    <li>Keep QSO under 2-3 minutes to allow others access</li>
+                    <li>Continuously monitor own downlink - adjust TX power if too strong or weak</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <h3>⚠️ Critical: Power Control on Linear Transponders</h3>
+                <p><strong>TOO MUCH POWER DAMAGES THE ENTIRE TRANSPONDER FOR ALL USERS!</strong></p>
+                
+                <p><strong>The Problem:</strong> Linear transponders have Automatic Level Control (ALC) to prevent any one strong signal from capturing all available power. If you transmit with excessive power:</p>
+                <ul>
+                    <li>✗ Transponder ALC reduces gain for EVERYONE</li>
+                    <li>✗ All other stations become weaker</li>
+                    <li>✗ Your signal may sound distorted</li>
+                    <li>✗ You become universally hated by satellite community</li>
+                    <li>✗ In extreme cases, transponder may shut down entirely</li>
+                </ul>
+                
+                <p><strong>The Solution: MINIMUM POWER!</strong></p>
+                <ul>
+                    <li>✓ Start with 1-2 watts</li>
+                    <li>✓ Increase only if you cannot hear yourself on downlink</li>
+                    <li>✓ Never exceed 5 watts on uplink</li>
+                    <li>✓ If your downlink signal is stronger than others, REDUCE power immediately</li>
+                    <li>✓ Monitor your own signal continuously - this is why full duplex is essential</li>
+                </ul>
+                
+                <p><strong>Rule of Thumb:</strong> If you can hear yourself clearly on the downlink, your power is sufficient. More power does NOT help - better antennas do!</p>
+            </div>
+
+            <h2>ISS Operations</h2>
+
+            <h3>Voice Contacts with Astronauts</h3>
+            <p>Talking directly to astronauts aboard the International Space Station is the "holy grail" of amateur satellite operations, but also one of the most challenging due to extreme competition.</p>
+
+            <div class="warning-box">
+                <h4>⚠️ Reality Check: Voice Contacts Are VERY Rare</h4>
+                <ul>
+                    <li><strong>Astronaut Availability:</strong> Extremely limited. Crew members have full science schedules with minimal free time. Amateur radio operations happen only during rare breaks, typically on weekends.</li>
+                    
+                    <li><strong>Competition Level:</strong> When an astronaut does come on the air, HUNDREDS of stations worldwide are calling simultaneously. Success rate for individual stations is typically under 1%.</li>
+                    
+                    <li><strong>Time Constraints:</strong> ISS passes last only 8-12 minutes. Even if astronaut is on the air for full pass, they might complete only 10-15 contacts.</li>
+                    
+                    <li><strong>Current Status:</strong> As of 2025, voice operations happen sporadically. Check ARISS (Amateur Radio on ISS) website for scheduled events.</li>
+                </ul>
+                
+                <h4>Operating Information:</h4>
+                <table style="margin-top: 15px;">
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Details</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Callsign</strong></td>
+                        <td>NA1SS (North America), typically used</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Downlink (RX)</strong></td>
+                        <td>145.800 MHz FM (worldwide)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Uplink (TX)</strong></td>
+                        <td>
+                            Region 2 & 3: 145.990 MHz FM<br>
+                            Region 1 (Europe/Africa): 144.490 MHz FM
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mode</strong></td>
+                        <td>FM, no CTCSS tone required</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Equipment</strong></td>
+                        <td>
+                            Minimum: 25W, directional antenna<br>
+                            Recommended: 50-100W, high-gain Yagi with tracking
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Etiquette</strong></td>
+                        <td>
+                            • Listen first - is astronaut actually on the air?<br>
+                            • Call only once with callsign and location<br>
+                            • If no response after 2-3 attempts, STOP calling<br>
+                            • Keep exchange brief if you do make contact<br>
+                            • DO NOT ask for QSL card - they don't have time
+                        </td>
+                    </tr>
+                </table>
+                
+                <p><strong>Better Strategy:</strong> ARISS School Contacts are scheduled in advance. Schools can apply for contact opportunities. Check <a href="https://www.ariss.org" target="_blank">ariss.org</a> for schedule. You can listen to these contacts - they're public!</p>
+            </div>
+
+            <h3>ISS APRS Digipeater (Much More Reliable!)</h3>
+            <p>The ISS APRS digipeater is operational nearly 24/7 and provides a much higher success rate than voice contacts.</p>
+
+            <div class="success-box">
+                <h4>How to Use ISS for APRS</h4>
+                
+                <p><strong>What is APRS?</strong> Automatic Packet Reporting System - transmits GPS position, telemetry, and messages as digital packets on 144.390 MHz (North America) or 145.825 MHz (ISS operations).</p>
+                
+                <p><strong>Hardware Options:</strong></p>
+                <ul>
+                    <li><strong>Option 1: Dedicated APRS Radio</strong>
+                        <ul>
+                            <li>Kenwood TH-D74A or TM-D710G (built-in TNC and GPS)</li>
+                            <li>Simply configure path as "ARISS" or "RS0ISS"</li>
+                            <li>Radio handles everything automatically</li>
+                            <li>Most reliable option</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Option 2: External TNC</strong>
+                        <ul>
+                            <li>Any VHF radio + TNC (Terminal Node Controller)</li>
+                            <li>Examples: Kantronics KPC-3, TinyTrak, Byonics TinyTrak4</li>
+                            <li>Connect GPS to TNC, TNC to radio audio</li>
+                            <li>Configure TNC with APRS settings</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Option 3: Smartphone + Sound Card</strong>
+                        <ul>
+                            <li>APRSdroid (Android) or PocketPacket (iOS)</li>
+                            <li>Audio cable from phone to radio</li>
+                            <li>Phone GPS provides position</li>
+                            <li>Software generates audio tones (SoftTNC)</li>
+                            <li>Budget-friendly option</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <p><strong>Configuration:</strong></p>
+                <ul>
+                    <li><strong>Frequency:</strong> 145.825 MHz FM (ISS worldwide frequency)</li>
+                    <li><strong>Path:</strong> ARISS or RS0ISS (try both - one usually works better)</li>
+                    <li><strong>Power:</strong> 5-25W (more helps but not essential)</li>
+                    <li><strong>Beacon Rate:</strong> Every 30-60 seconds during ISS pass</li>
+                    <li><strong>Symbol:</strong> Car, person, or house (whatever represents your station)</li>
+                    <li><strong>Comment:</strong> Optional short text (e.g., "RadioSport via ISS!")</li>
+                </ul>
+                
+                <p><strong>Operation Procedure:</strong></p>
+                <ol>
+                    <li>Track ISS pass using ISS Detector or Gpredict</li>
+                    <li>2 minutes before AOS, start transmitting APRS beacons every 30 sec</li>
+                    <li>Point antenna at ISS (handheld arrow antenna works)</li>
+                    <li>Continue beaconing throughout pass</li>
+                    <li>After pass, check APRS.fi to see if your packets were digipeated</li>
+                    <li>Success indicator: Your position appears on map with "via RS0ISS" in path</li>
+                </ol>
+                
+                <p><strong>Example APRS Packet Format:</strong></p>
+                <div class="code-block">
+<span class="comment"># Raw APRS packet transmitted to ISS</span>
+N0CALL>APRS,<span class="string">ARISS</span>:=<span class="number">0547.32</span>N/<span class="number">00019.15</span>W-RadioSport Mobile Station
+
+<span class="comment"># Breakdown:</span>
+<span class="comment"># N0CALL = Your callsign</span>
+<span class="comment"># APRS = Destination (standard for APRS)</span>
+<span class="comment"># ARISS = Path (digipeater via ISS)</span>
+<span class="comment"># = = Position report with timestamp</span>
+<span class="comment"># 0547.32N/00019.15W = GPS coordinates (Accra area)</span>
+<span class="comment"># - = Symbol (car/mobile)</span>
+<span class="comment"># "RadioSport Mobile Station" = Comment field (optional)</span>
+
+<span class="comment"># After ISS digipeats your packet, ground IGates receive it and forward to internet</span>
+<span class="comment"># Your position then appears on https://aprs.fi with path showing "via RS0ISS"</span>
+                </div>
+                
+                <p><strong>Coverage Area:</strong></p>
+                <ul>
+                    <li>ISS altitude: ~420 km</li>
+                    <li>Radio horizon from ISS: ~2,300 km radius</li>
+                    <li>Total footprint: ~16 million km² (about size of Russia!)</li>
+                    <li>Much larger than terrestrial APRS digipeaters (typically 50-100 km radius)</li>
+                    <li>Your packets can be received by IGates 1000+ km away</li>
+                </ul>
+                
+                <p><strong>Success Rate:</strong> 80-95% with proper setup and clear pass. Much more reliable than voice contacts!</p>
+            </div>
+
+            <h3>ISS SSTV Events</h3>
+            <p>Several times per year (typically 3-6 events annually), the ISS transmits Slow Scan Television (SSTV) images continuously for 2-3 days.</p>
+
+            <div class="info-box">
+                <h4>What is SSTV?</h4>
+                <p>Slow Scan Television transmits still images as audio tones over voice frequencies. Unlike fast-scan TV (like regular television), SSTV sends one image over 72 seconds to 4 minutes, making it suitable for HF and VHF communication.</p>
+                
+                <h4>ISS SSTV Event Specifics:</h4>
+                <ul>
+                    <li><strong>Frequency:</strong> 145.800 MHz FM (same as voice downlink)</li>
+                    <li><strong>Mode:</strong> Usually PD120 or PD180 (2-3 minutes per image)</li>
+                    <li><strong>Duration:</strong> Continuous transmission for 48-72 hours</li>
+                    <li><strong>Images:</strong> Space-themed pictures, often commemorating events or anniversaries</li>
+                    <li><strong>Schedule:</strong> Announced on ARISS website 1-2 weeks in advance</li>
+                    <li><strong>Receive-Only:</strong> No transmit needed - just listen and decode!</li>
+                </ul>
+                
+                <h4>Equipment Needed:</h4>
+                <ul>
+                    <li><strong>Radio:</strong> Any VHF receiver (even scanner)</li>
+                    <li><strong>Antenna:</strong> Simple 2m dipole or handheld works</li>
+                    <li><strong>Computer:</strong> Laptop or PC with sound card</li>
+                    <li><strong>Audio Cable:</strong> Radio speaker/headphone output to computer line-in/microphone</li>
+                    <li><strong>Software:</strong>
+                        <ul>
+                            <li><strong>Windows:</strong> MMSSTV (most popular, free)</li>
+                            <li><strong>Mac:</strong> Multiscan 3B (free)</li>
+                            <li><strong>Linux:</strong> QSSTV (free)</li>
+                            <li><strong>Android:</strong> Robot36 (free)</li>
+                            <li><strong>iOS:</strong> SSTV Slow Scan TV (paid app)</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <h4>Reception Procedure:</h4>
+                <ol>
+                    <li><strong>Tune Radio:</strong> 145.800 MHz FM, squelch open</li>
+                    <li><strong>Track ISS:</strong> Use ISS Detector or similar app</li>
+                    <li><strong>Start Software:</strong> Set to Auto mode (detects SSTV mode automatically)</li>
+                    <li><strong>At AOS:</strong> Point antenna at ISS</li>
+                    <li><strong>Listen:</strong> You'll hear characteristic SSTV tones (warbling sounds)</li>
+                    <li><strong>Decode:</strong> Software displays image line-by-line as it's received</li>
+                    <li><strong>Save Image:</strong> Software saves completed images with timestamp</li>
+                    <li><strong>Repeat:</strong> Each pass may yield 1-3 images depending on duration</li>
+                </ol>
+                
+                <h4>Tips for Best Results:</h4>
+                <ul>
+                    <li>✓ High passes (>30° elevation) yield better quality images</li>
+                    <li>✓ Point antenna continuously at ISS throughout pass</li>
+                    <li>✓ Adjust audio levels - too loud causes distortion, too quiet misses data</li>
+                    <li>✓ Watch for fading - partial images are common, try multiple passes</li>
+                    <li>✓ SSTV modes switch automatically in software - don't change manually</li>
+                    <li>✓ Save all images even if incomplete - partial decodes are still achievements!</li>
+                </ul>
+                
+                <h4>ARISS SSTV Award Program:</h4>
+                <p>ARISS issues certificates for received ISS SSTV images:</p>
+                <ul>
+                    <li>Receive and decode images during official SSTV event</li>
+                    <li>Save images with timestamp visible</li>
+                    <li>Submit images to ARISS (details on ariss.org during event)</li>
+                    <li>Certificate mailed after event concludes</li>
+                    <li>Multiple participation levels (1 image, 5 images, 10+ images)</li>
+                </ul>
+            </div>
+
+            <h2>Satellite Communication via Drone Relay</h2>
+
+            <div class="drone-integration-box" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left: 5px solid #2196f3; padding: 25px; margin: 25px 0; border-radius: 5px;">
+                <h3>🚁 Advanced Concept: Drone-Assisted Satellite Reception</h3>
+                
+                <p><strong>Problem Statement:</strong> Ground station has terrain blockage (mountains, buildings, trees) preventing low-elevation satellite passes. This reduces number of workable passes and eliminates some satellites entirely.</p>
+                
+                <p><strong>Solution:</strong> Lightweight drone carries receiver to altitude above terrain obstacles, relays signal to ground station, extending effective horizon and enabling passes that would otherwise be impossible.</p>
+                
+                <h4>System Architecture:</h4>
+                
+                <p><strong>Airborne Segment:</strong></p>
+                <ul>
+                    <li><strong>Drone Platform:</strong> DJI Mavic Pro or Phantom 4
+                        <ul>
+                            <li>Phantom 4: 1375g empty, 125g payload capacity, 25 min flight time</li>
+                            <li>Mavic Pro: 743g empty, 257g payload capacity, 22 min flight time with load</li>
+                            <li>Both have GPS + GLONASS for precise positioning</li>
+                            <li>Obstacle avoidance sensors for safety</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Receiver Payload (~105g total):</strong>
+                        <ul>
+                            <li>RTL-SDR dongle (50g) - receives VHF/UHF satellite signals</li>
+                            <li>GPS module (10g) - precise position and time sync</li>
+                            <li>Raspberry Pi Zero W (15g) - processes signals and runs tracking software</li>
+                            <li>Amplified 2m/70cm antenna (30g) - small rubber duck or circular polarized patch</li>
+                            <li>MicroSD card for data logging</li>
+                            <li>Battery (if separate from drone) or powered from drone via regulator</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Mounting:</strong>
+                        <ul>
+                            <li>3D-printed cradle attached to drone landing gear or gimbal mount</li>
+                            <li>Antenna oriented vertically or with circular polarization</li>
+                            <li>Weight distribution critical - must maintain drone balance</li>
+                            <li>Secure attachment to prevent loss during flight</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <p><strong>Ground Segment:</strong></p>
+                <ul>
+                    <li><strong>Drone Control:</strong> Standard DJI remote controller (2.4 GHz or 5.8 GHz)</li>
+                    <li><strong>Telemetry Downlink:</strong> Separate 433 MHz or 915 MHz link for receiver data
+                        <ul>
+                            <li>Raspberry Pi Zero transmits decoded audio or raw IQ samples</li>
+                            <li>Ground station receives via USB radio dongle</li>
+                            <li>Bandwidth: 50-200 kbps sufficient for audio</li>
+                        </ul>
+                    </li>
+                    <li><strong>Tracking Computer:</strong> Laptop running Gpredict for satellite predictions</li>
+                    <li><strong>Recording:</strong> Audio recording software to capture contacts</li>
+                </ul>
+                
+                <h4>Operating Procedure:</h4>
+                <ol>
+                    <li><strong>Pre-Flight Planning (15 min before satellite AOS):</strong>
+                        <ul>
+                            <li>Check satellite pass prediction (elevation, azimuth, duration)</li>
+                            <li>Verify weather conditions (wind &lt;10 m/s, no precipitation)</li>
+                            <li>Calculate optimal drone altitude (100-150m typically)</li>
+                            <li>Plan flight path: climb before AOS, hover during pass, descend after LOS</li>
+                            <li>Pre-flight drone inspection: battery charge, propellers, payload secure</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Launch & Positioning (5 min before AOS):</strong>
+                        <ul>
+                            <li>Launch drone from clear area</li>
+                            <li>Climb to planned altitude (100m typical)</li>
+                            <li>Position drone in direction of satellite AOS (if directional antenna)</li>
+                            <li>Enable position hold mode (GPS hover)</li>
+                            <li>Start satellite receiver and data logging</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>During Pass (8-12 minutes):</strong>
+                        <ul>
+                            <li>Drone maintains altitude and position (autonomous hover)</li>
+                            <li>Onboard receiver tracks satellite:
+                                <ul>
+                                    <li>Option A: Manual Doppler tracking (pre-programmed frequency schedule)</li>
+                                    <li>Option B: Autonomous tracking using onboard Gpredict + TLE data</li>
+                                </ul>
+                            </li>
+                            <li>Receiver captures satellite signals (downlink only)</li>
+                            <li>Data relayed to ground in real-time via telemetry link</li>
+                            <li>Ground operator monitors reception quality and logs contacts</li>
+                            <li>All data also recorded onboard for post-flight analysis</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Post-Pass & Recovery:</strong>
+                        <ul>
+                            <li>After satellite LOS, command drone to descend</li>
+                            <li>Return to launch point (RTH)</li>
+                            <li>Land safely</li>
+                            <li>Download recorded data from microSD card</li>
+                            <li>Analyze signal strength vs. altitude, position, and time</li>
+                            <li>Compare received contacts vs. ground-based reception</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <h4>Benefits of Drone-Based Satellite Reception:</h4>
+                <ul>
+                    <li><strong>Extend Horizon:</strong> Radio horizon from 100m altitude = 41 km vs. 5 km from ground
+                        <ul>
+                            <li>Can receive satellites at 5° elevation that ground station cannot</li>
+                            <li>Adds 2-4 minutes to each pass duration</li>
+                            <li>Makes more passes accessible overall</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Terrain Clearance:</strong> Eliminates ground-level obstacles
+                        <ul>
+                            <li>Buildings no longer block signals</li>
+                            <li>Trees and foliage not an issue</li>
+                            <li>Mountains and hills cleared</li>
+                            <li>Urban canyon effect eliminated</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Mobile Operations:</strong> Deploy from vehicles or remote locations
+                        <ul>
+                            <li>Quick setup (5-10 minutes)</li>
+                            <li>No need to find "perfect" site with clear horizon</li>
+                            <li>Can operate from school parking lot, urban park, etc.</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Research Platform:</strong> Unique data collection opportunities
+                        <ul>
+                            <li>Measure signal strength vs. altitude profile</li>
+                            <li>Study Fresnel zone clearance requirements empirically</li>
+                            <li>Test antenna patterns in unobstructed environment</li>
+                            <li>Validate propagation models</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Educational Value:</strong> Integrates multiple STEM disciplines
+                        <ul>
+                            <li>Satellite communications + Drone operations</li>
+                            <li>RF engineering + Aviation</li>
+                            <li>Software development + Systems integration</li>
+                            <li>Problem-solving + Innovation</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <h4>Challenges & Limitations:</h4>
+                <ul>
+                    <li><strong>Flight Time:</strong> 15-20 minutes maximum with payload (vs. 8-12 min satellite pass)
+                        <ul>
+                            <li>Must account for climb/descend time</li>
+                            <li>Battery reserve needed (minimum 30% for RTH)</li>
+                            <li>Can only capture one pass per flight typically</li>
+                            <li>Solution: Hot-swap batteries for consecutive passes</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>RF Interference:</strong> Drone motors and ESCs generate electrical noise
+                        <ul>
+                            <li>Can interfere with weak satellite signals</li>
+                            <li>Solution: Shielding, ferrite beads on power lines, filtering</li>
+                            <li>Solution: Separate receiver power supply from drone battery</li>
+                            <li>Test interference levels before deployment</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Antenna Pointing:</strong> Maintaining optimal antenna orientation
+                        <ul>
+                            <li>Drone attitude changes affect antenna pattern</li>
+                            <li>Omnidirectional or circular polarized antennas preferred</li>
+                            <li>Gimbal-mounted directional antenna possible but adds weight/complexity</li>
+                            <li>Trade-off: simple omni antenna vs. high-gain tracking antenna</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Data Relay Bandwidth:</strong> Real-time telemetry link capacity
+                        <ul>
+                            <li>Audio stream: 32-64 kbps sufficient (compressed)</li>
+                            <li>Raw IQ samples: 2-10 Mbps (challenging for long-range telemetry)</li>
+                            <li>Solution: Onboard recording + real-time audio relay hybrid</li>
+                            <li>Compressed data sent during flight, full fidelity downloaded after</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Regulatory Compliance:</strong> Multiple jurisdictions involved
+                        <ul>
+                            <li>Drone operation: Requires Part 107 (US) or equivalent certification</li>
+                            <li>Airspace: Must operate in Class G airspace or obtain authorization</li>
+                            <li>RF transmission from drone: Amateur radio rules apply to telemetry</li>
+                            <li>Line-of-sight requirement: Must maintain visual contact with drone</li>
+                            <li>Altitude limits: Typically 400 ft AGL (122m) maximum without waiver</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Weather Dependency:</strong> More restrictive than ground operations
+                        <ul>
+                            <li>Wind: &lt;10 m/s (22 mph) for safe operation</li>
+                            <li>Rain: No flight (damages electronics, affects drone stability)</li>
+                            <li>Temperature: Check drone operating range (-10°C to +40°C typical)</li>
+                            <li>Visibility: Must maintain VLOS (500m minimum)</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <h4>Cost Breakdown:</h4>
+                <table>
+                    <tr>
+                        <th>Component</th>
+                        <th>Cost</th>
+                    </tr>
+                    <tr>
+                        <td>DJI Mavic Pro (used) or Phantom 4</td>
+                        <td>$400-800</td>
+                    </tr>
+                    <tr>
+                        <td>RTL-SDR receiver + antenna</td>
+                        <td>$40</td>
+                    </tr>
+                    <tr>
+                        <td>Raspberry Pi Zero W + accessories</td>
+                        <td>$20</td>
+                    </tr>
+                    <tr>
+                        <td>GPS module</td>
+                        <td>$15</td>
+                    </tr>
+                    <tr>
+                        <td>433 MHz telemetry radio (pair)</td>
+                        <td>$50</td>
+                    </tr>
+                    <tr>
+                        <td>3D-printed mounting hardware</td>
+                        <td>$10</td>
+                    </tr>
+                    <tr>
+                        <td>Miscellaneous (cables, power regulators, etc.)</td>
+                        <td>$30</td>
+                    </tr>
+                    <tr style="background: #d4edda; font-weight: bold;">
+                        <td>TOTAL</td>
+                        <td>$565-965</td>
+                    </tr>
+                </table>
+                
+                <p><strong>Project Suitability:</strong> Advanced students (Months 7-9), capstone project, requires integration of multiple technologies</p>
+            </div>
+
+            <h2>Practical Satellite Projects</h2>
+
+            <h3>Project 1: Satellite Pass Predictor Application</h3>
+            <div class="success-box">
+                <h4>Objective:</h4>
+                <p>Build a Python application that predicts satellite passes for your location, displays pass details graphically, and generates alerts for upcoming good passes.</p>
+                
+                <h4>Skills Learned:</h4>
+                <ul>
+                    <li>TLE parsing and validation</li>
+                    <li>Orbital mechanics calculations (SGP4 propagator)</li>
+                    <li>Coordinate system transformations (ECI to topocentric)</li>
+                    <li>Time zone handling and UTC conversion</li>
+                    <li>GUI programming (Tkinter or PyQt5)</li>
+                    <li>Data visualization (Matplotlib for sky plots)</li>
+                    <li>Event scheduling and alerts</li>
+                </ul>
+                
+                <h4>Features to Implement:</h4>
+                <ol>
+                    <li><strong>TLE Management:</strong>
+                        <ul>
+                            <li>Download TLEs from Celestrak or Space-Track API</li>
+                            <li>Parse two-line element format</li>
+                            <li>Store TLEs in local database (SQLite)</li>
+                            <li>Auto-update weekly</li>
+                            <li>Validate TLE checksums</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Observer Location:</strong>
+                        <ul>
+                            <li>Enter latitude, longitude, altitude</li>
+                            <li>Automatic timezone detection</li>
+                            <li>Save multiple ground stations</li>
+                            <li>Import from GPS coordinates</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Pass Prediction Engine:</strong>
+                        <ul>
+                            <li>Use SGP4 library (pyorbital or skyfield)</li>
+                            <li>Calculate satellite position at 10-second intervals</li>
+                            <li>Determine AOS/TCA/LOS times and positions</li>
+                            <li>Filter by minimum elevation (user-selectable: 5-30°)</li>
+                            <li>Generate predictions for next 7-30 days</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Display Features:</strong>
+                        <ul>
+                            <li>Table view: Pass list with key parameters</li>
+                            <li>Calendar view: Monthly pass schedule</li>
+                            <li>Sky plot: Polar diagram showing satellite track</li>
+                            <li>Ground track map: Satellite footprint on world map</li>
+                            <li>Real-time tracking: Current satellite position</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Doppler Calculation:</strong>
+                        <ul>
+                            <li>Compute Doppler shift throughout pass</li>
+                            <li>Display frequency vs. time graph</li>
+                            <li>Generate Doppler correction table (printable)</li>
+                            <li>Export to radio control software format</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Alert System:</strong>
+                        <ul>
+                            <li>15-minute warning before AOS (configurable)</li>
+                            <li>Desktop notification or email</li>
+                            <li>Audio alert (optional)</li>
+                            <li>Filter alerts by satellite, minimum elevation, or time of day</li>
+                            <li>Integration with system calendar (iCal export)</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Export Functions:</strong>
+                        <ul>
+                            <li>CSV export for spreadsheet analysis</li>
+                            <li>PDF report generation (printable pass schedule)</li>
+                            <li>JSON for integration with other tools</li>
+                            <li>iCal calendar format for smartphone import</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <h4>Sample Python Code Structure:</h4>
+                <div class="code-block">
+<span class="keyword">import</span> ephem  <span class="comment"># PyEphem for satellite calculations</span>
+<span class="keyword">import</span> datetime
+<span class="keyword">from</span> dateutil <span class="keyword">import</span> tz
+
+<span class="keyword">class</span> <span class="function">SatelliteTracker</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, observer_lat, observer_lon, observer_alt):
+        <span class="string">"""Initialize satellite tracker with observer location"""</span>
+        self.observer = ephem.Observer()
+        self.observer.lat = <span class="function">str</span>(observer_lat)
+        self.observer.lon = <span class="function">str</span>(observer_lon)
+        self.observer.elevation = observer_alt  <span class="comment"># meters</span>
+        self.satellites = {}
+    
+    <span class="keyword">def</span> <span class="function">load_tle</span>(self, name, line1, line2):
+        <span class="string">"""Load TLE for a satellite"""</span>
+        self.satellites[name] = ephem.<span class="function">readtle</span>(name, line1, line2)
+    
+    <span class="keyword">def</span> <span class="function">predict_pass</span>(self, sat_name, start_time, min_elevation=<span class="number">10</span>):
+        <span class="string">"""Predict next pass above minimum elevation"""</span>
+        satellite = self.satellites[sat_name]
+        self.observer.date = start_time
+        
+        <span class="keyword">try</span>:
+            <span class="comment"># Find next rise above horizon</span>
+            info = self.observer.<span class="function">next_pass</span>(satellite)
+            rise_time, rise_az, max_time, max_alt, set_time, set_az = info
+            
+            <span class="comment"># Check if pass meets minimum elevation criteria</span>
+            max_elevation_deg = <span class="function">float</span>(max_alt) * <span class="number">180</span> / ephem.pi
+            
+            <span class="keyword">if</span> max_elevation_deg >= min_elevation:
+                <span class="keyword">return</span> {
+                    <span class="string">'satellite'</span>: sat_name,
+                    <span class="string">'aos_time'</span>: rise_time.<span class="function">datetime</span>(),
+                    <span class="string">'aos_azimuth'</span>: <span class="function">float</span>(rise_az) * <span class="number">180</span> / ephem.pi,
+                    <span class="string">'tca_time'</span>: max_time.<span class="function">datetime</span>(),
+                    <span class="string">'max_elevation'</span>: max_elevation_deg,
+                    <span class="string">'los_time'</span>: set_time.<span class="function">datetime</span>(),
+                    <span class="string">'los_azimuth'</span>: <span class="function">float</span>(set_az) * <span class="number">180</span> / ephem.pi,
+                    <span class="string">'duration'</span>: (set_time - rise_time) * <span class="number">86400</span>  <span class="comment"># seconds</span>
+                }
+            <span class="keyword">else</span>:
+                <span class="keyword">return</span> <span class="keyword">None</span>  <span class="comment"># Pass too low</span>
+        
+        <span class="keyword">except</span> <span class="function">ValueError</span>:
+            <span class="keyword">return</span> <span class="keyword">None</span>  <span class="comment"># No pass found</span>
+    
+    <span class="keyword">def</span> <span class="function">predict_passes</span>(self, sat_name, days=<span class="number">7</span>, min_elevation=<span class="number">10</span>):
+        <span class="string">"""Predict all passes for next N days"""</span>
+        passes = []
+        start_time = datetime.datetime.<span class="function">utcnow</span>()
+        end_time = start_time + datetime.timedelta(days=days)
+        
+        current_time = start_time
+        <span class="keyword">while</span> current_time < end_time:
+            pass_info = self.<span class="function">predict_pass</span>(sat_name, current_time, min_elevation)
+            <span class="keyword">if</span> pass_info:
+                passes.<span class="function">append</span>(pass_info)
+                <span class="comment"># Start searching after this pass ends</span>
+                current_time = pass_info[<span class="string">'los_time'</span>] + datetime.timedelta(minutes=<span class="number">5</span>)
+            <span class="keyword">else</span>:
+                <span class="comment"># No pass found, advance by 1 hour and try again</span>
+                current_time += datetime.timedelta(hours=<span class="number">1</span>)
+        
+        <span class="keyword">return</span> passes
+
+<span class="comment"># Example usage</span>
+tracker = <span class="function">SatelliteTracker</span>(
+    observer_lat=<span class="number">5.603</span>,    <span class="comment"># Accra, Ghana</span>
+    observer_lon=-<span class="number">0.187</span>,
+    observer_alt=<span class="number">61</span>
+)
+
+<span class="comment"># Load AO-91 TLE</span>
+tracker.<span class="function">load_tle</span>(
+    <span class="string">"AO-91"</span>,
+    <span class="string">"1 43017U 17073E   25345.78916667  .00000342  00000-0  43210-4 0  9998"</span>,
+    <span class="string">"2 43017  97.7408 273.6829 0008372  58.9347 301.2947 14.81641075326482"</span>
+)
+
+<span class="comment"># Predict next 7 days of passes</span>
+passes = tracker.<span class="function">predict_passes</span>(<span class="string">"AO-91"</span>, days=<span class="number">7</span>, min_elevation=<span class="number">10</span>)
+
+<span class="comment"># Display results</span>
+<span class="keyword">print</span>(<span class="string">f"Found {len(passes)} passes for AO-91 in next 7 days:\n"</span>)
+<span class="keyword">for</span> i, p <span class="keyword">in</span> <span class="function">enumerate</span>(passes, <span class="number">1</span>):
+    duration_min = <span class="function">int</span>(p[<span class="string">'duration'</span>] / <span class="number">60</span>)
+    duration_sec = <span class="function">int</span>(p[<span class="string">'duration'</span>] % <span class="number">60</span>)
+    <span class="keyword">print</span>(<span class="string">f"Pass {i}:"</span>)
+    <span class="keyword">print</span>(<span class="string">f"  AOS: {p['aos_time']} at {p['aos_azimuth']:.1f}°"</span>)
+    <span class="keyword">print</span>(<span class="string">f"  TCA: {p['tca_time']} at {p['max_elevation']:.1f}° elevation"</span>)
+    <span class="keyword">print</span>(<span class="string">f"  LOS: {p['los_time']} at {p['los_azimuth']:.1f}°"</span>)
+    <span class="keyword">print</span>(<span class="string">f"  Duration: {duration_min}:{duration_sec:02d}\n"</span>)
+                </div>
+            </div>
+
+            <h3>Project 2: Automated Doppler Tuning System</h3>
+            <div class="success-box">
+                <h4>Objective:</h4>
+                <p>Build a hardware/software system that automatically tunes your radio frequency to compensate for Doppler shift throughout a satellite pass, enabling hands-free operation.</p>
+                
+                <h4>Hardware Components:</h4>
+                <table>
+                    <tr>
+                        <th>Component</th>
+                        <th>Purpose</th>
+                        <th>Options</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Microcontroller</strong></td>
+                        <td>Run tracking software, control radio</td>
+                        <td>
+                            • Raspberry Pi 4 (full-featured)<br>
+                            • Arduino Mega (real-time control)<br>
+                            • ESP32 (WiFi/Bluetooth capable)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>GPS Module</strong></td>
+                        <td>Accurate time and position</td>
+                        <td>
+                            • u-blox NEO-6M ($15)<br>
+                            • Adafruit Ultimate GPS ($40)<br>
+                            • 1 PPS output for time sync
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Radio Interface</strong></td>
+                        <td>CAT control to radio</td>
+                        <td>
+                            • USB-to-serial adapter<br>
+                            • CI-V interface (Icom)<br>
+                            • Hamlib compatible
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Display (Optional)</strong></td>
+                        <td>Show current status</td>
+                        <td>
+                            • 16x2 LCD ($5)<br>
+                            • OLED display ($10)<br>
+                            • Touch screen ($30)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Rotator Interface (Optional)</strong></td>
+                        <td>Control antenna pointing</td>
+                        <td>
+                            • Relay board for rotator control<br>
+                            • RS-232 interface (Yaesu)<br>
+                            • USB adapter for SPID
+                        </td>
+                    </tr>
+                </table>
+                
+                <h4>Software Architecture:</h4>
+                <ol>
+                    <li><strong>TLE Management:</strong>
+                        <ul>
+                            <li>Download and parse TLEs automatically</li>
+                            <li>Update daily from Celestrak</li>
+                            <li>Store locally with timestamp</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Real-Time Propagation:</strong>
+                        <ul>
+                            <li>Use GPS time for accurate calculations</li>
+                            <li>Implement SGP4 propagator</li>
+                            <li>Calculate satellite position every 1-2 seconds</li>
+                            <li>Convert to topocentric coordinates (Az/El)</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Doppler Calculation:</strong>
+                        <ul>
+                            <li>Compute radial velocity from position/velocity vectors</li>
+                            <li>Calculate frequency shift: Δf = (v/c) × f₀</li>
+                            <li>Apply to both uplink and downlink frequencies</li>
+                            <li>Account for frequency inversion on transponders</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Radio Control:</strong>
+                        <ul>
+                            <li>Connect via CAT interface (serial or USB)</li>
+                            <li>Send frequency commands in radio-specific format</li>
+                            <li>Update VFO-A (RX) and VFO-B (TX) independently</li>
+                            <li>Adjust every 1-2 seconds for smooth tracking</li>
+                            <li>Handle radio errors gracefully</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Rotator Control (Optional):</strong>
+                        <ul>
+                            <li>Calculate azimuth and elevation commands</li>
+                            <li>Send to rotator controller</li>
+                            <li>Update every 5-10 seconds (slower than frequency)</li>
+                            <li>Implement soft stops to prevent mechanical damage</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>User Interface:</strong>
+                        <ul>
+                            <li>Display current satellite position and signal path</li>
+                            <li>Show active frequency corrections</li>
+                            <li>Countdown to AOS/TCA/LOS</li>
+                            <li>Manual override capability</li>
+                            <li>Pass logging and statistics</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <h4>Implementation Example (Python + Hamlib):</h4>
+                <div class="code-block">
+<span class="keyword">import</span> Hamlib  <span class="comment"># Radio control library</span>
+<span class="keyword">import</span> ephem
+<span class="keyword">import</span> time
+<span class="keyword">import</span> serial  <span class="comment"># For GPS communication</span>
+
+<span class="keyword">class</span> <span class="function">DopplerController</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, radio_model, radio_port, gps_port):
+        <span class="comment"># Initialize radio control</span>
+        Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_NONE)
+        self.rig = Hamlib.<span class="function">Rig</span>(radio_model)
+        self.rig.state.rigport.pathname = radio_port
+        self.rig.<span class="function">open</span>()
+        
+        <span class="comment"># Initialize GPS</span>
+        self.gps = serial.<span class="function">Serial</span>(gps_port, <span class="number">9600</span>, timeout=<span class="number">1</span>)
+        
+        <span class="comment"># Observer location (will be updated from GPS)</span>
+        self.observer = ephem.Observer()
+        self.observer.lat = <span class="string">'5.603'</span>  <span class="comment"># Default: Accra</span>
+        self.observer.lon = <span class="string">'-0.187'</span>
+        self.observer.elevation = <span class="number">61</span>
+    
+    <span class="keyword">def</span> <span class="function">calculate_doppler</span>(self, satellite, freq_mhz):
+        <span class="string">"""Calculate Doppler-shifted frequency"""</span>
+        <span class="comment"># Update satellite position</span>
+        self.observer.date = ephem.<span class="function">now</span>()
+        satellite.<span class="function">compute</span>(self.observer)
+        
+        <span class="comment"># Get satellite velocity (range rate in m/s)</span>
+        range_rate = satellite.range_velocity  <span class="comment"># meters/second</span>
+        
+        <span class="comment"># Calculate Doppler shift</span>
+        c = <span class="number">299792458</span>  <span class="comment"># speed of light (m/s)</span>
+        doppler_shift_mhz = (range_rate / c) * freq_mhz
+        
+        <span class="comment"># Corrected frequency</span>
+        corrected_freq = freq_mhz + doppler_shift_mhz
+        
+        <span class="keyword">return</span> corrected_freq, doppler_shift_mhz
+    
+    <span class="keyword">def</span> <span class="function">set_frequency</span>(self, freq_hz, vfo=Hamlib.RIG_VFO_A):
+        <span class="string">"""Set radio frequency via CAT"""</span>
+        <span class="keyword">try</span>:
+            self.rig.<span class="function">set_freq</span>(vfo, <span class="function">int</span>(freq_hz))
+            <span class="keyword">return</span> <span class="keyword">True</span>
+        <span class="keyword">except</span> <span class="function">Exception</span> <span class="keyword">as</span> e:
+            <span class="keyword">print</span>(<span class="string">f"Error setting frequency: {e}"</span>)
+            <span class="keyword">return</span> <span class="keyword">False</span>
+    
+    <span class="keyword">def</span> <span class="function">track_satellite</span>(self, satellite, downlink_mhz, uplink_mhz):
+        <span class="string">"""Track satellite and correct Doppler continuously"""</span>
+        <span class="keyword">print</span>(<span class="string">f"Starting Doppler tracking for {satellite.name}"</span>)
+        
+        <span class="keyword">while</span> <span class="keyword">True</span>:
+            <span class="comment"># Calculate Doppler-corrected frequencies</span>
+            rx_freq, rx_doppler = self.<span class="function">calculate_doppler</span>(satellite, downlink_mhz)
+            tx_freq, tx_doppler = self.<span class="function">calculate_doppler</span>(satellite, uplink_mhz)
+            
+            <span class="comment"># Uplink Doppler is inverted (pre-compensate)</span>
+            tx_freq = uplink_mhz - tx_doppler
+            
+            <span class="comment"># Update radio frequencies</span>
+            self.<span class="function">set_frequency</span>(rx_freq * <span class="number">1e6</span>, Hamlib.RIG_VFO_A)  <span class="comment"># RX</span>
+            self.<span class="function">set_frequency</span>(tx_freq * <span class="number">1e6</span>, Hamlib.RIG_VFO_B)  <span class="comment"># TX</span>
+            
+            <span class="comment"># Display current status</span>
+            <span class="keyword">print</span>(<span class="string">f"RX: {rx_freq:.6f} MHz (Doppler: {rx_doppler*1000:+.2f} kHz)"</span>)
+            <span class="keyword">print</span>(<span class="string">f"TX: {tx_freq:.6f} MHz (Doppler: {-tx_doppler*1000:+.2f} kHz)"</span>)
+            <span class="keyword">print</span>(<span class="string">f"Elevation: {float(satellite.alt)*180/ephem.pi:.1f}°\n"</span>)
+            
+            <span class="comment"># Update every 2 seconds</span>
+            time.<span class="function">sleep</span>(<span class="number">2</span>)
+            
+            <span class="comment"># Check if satellite has set</span>
+            <span class="keyword">if</span> <span class="function">float</span>(satellite.alt) < <span class="number">0</span>:
+                <span class="keyword">print</span>(<span class="string">"Satellite has set. Ending tracking."</span>)
+                <span class="keyword">break</span>
+    
+    <span class="keyword">def</span> <span class="function">close</span>(self):
+        <span class="string">"""Clean up resources"""</span>
+        self.rig.<span class="function">close</span>()
+        self.gps.<span class="function">close</span>()
+
+<span class="comment"># Usage example</span>
+controller = <span class="function">DopplerController</span>(
+    radio_model=Hamlib.RIG_MODEL_IC9700,  <span class="comment"># Icom IC-9700</span>
+    radio_port=<span class="string">'/dev/ttyUSB0'</span>,
+    gps_port=<span class="string">'/dev/ttyUSB1'</span>
+)
+
+<span class="comment"># Load satellite TLE</span>
+ao91 = ephem.<span class="function">readtle</span>(
+    <span class="string">"AO-91"</span>,
+    <span class="string">"1 43017U 17073E   25345.78916667  .00000342  00000-0  43210-4 0  9998"</span>,
+    <span class="string">"2 43017  97.7408 273.6829 0008372  58.9347 301.2947 14.81641075326482"</span>
+)
+
+<span class="comment"># Track satellite with Doppler correction</span>
+controller.<span class="function">track_satellite</span>(
+    satellite=ao91,
+    downlink_mhz=<span class="number">145.960</span>,  <span class="comment"># AO-91 downlink</span>
+    uplink_mhz=<span class="number">435.250</span>     <span class="comment"># AO-91 uplink</span>
+)
+
+controller.<span class="function">close</span>()
+                </div>
+                
+                <h4>Testing & Calibration:</h4>
+                <ul>
+                    <li>Test with known satellite (AO-91 or ISS)</li>
+                    <li>Compare manual tuning vs. automated</li>
+                    <li>Verify frequency accuracy (within ±500 Hz)</li>
+                    <li>Check update rate (should be smooth, not jumpy)</li>
+                    <li>Test error handling (what if radio disconnects?)</li>
+                    <li>Validate GPS time synchronization</li>
+                </ul>
+                
+                <h4>Project Cost: $100-300 depending on microcontroller and interfaces chosen</h4>
+            </div>
+
+            <h3>Project 3: Satellite Signal Strength Data Logger</h3>
+            <div class="success-box">
+                <h4>Objective:</h4>
+                <p>Record received signal strength (RSSI) throughout satellite passes to create signal profiles, analyze propagation effects, and validate theoretical models.</p>
+                
+                <h4>Data Collection Requirements:</h4>
+                <table>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Source</th>
+                        <th>Sampling Rate</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Timestamp</strong></td>
+                        <td>GPS receiver (PPS sync)</td>
+                        <td>Every record</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Satellite Position</strong></td>
+                        <td>SGP4 calculation from TLE</td>
+                        <td>1 Hz</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Azimuth & Elevation</strong></td>
+                        <td>Observer-relative coordinates</td>
+                        <td>1 Hz</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Range (Distance)</strong></td>
+                        <td>Calculated from position vectors</td>
+                        <td>1 Hz</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Receive Frequency</strong></td>
+                        <td>Radio CAT interface</td>
+                        <td>1 Hz</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Signal Strength (RSSI)</strong></td>
+                        <td>Radio S-meter or SDR measurement</td>
+                        <td>2-10 Hz</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Weather Data</strong></td>
+                        <td>Temperature, humidity, pressure sensors</td>
+                        <td>0.1 Hz (every 10 sec)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Antenna Polarization</strong></td>
+                        <td>Manual entry or rotator feedback</td>
+                        <td>On change</td>
+                    </tr>
+                </table>
+                
+                <h4>Hardware Setup:</h4>
+                <ul>
+                    <li><strong>SDR Receiver:</strong> RTL-SDR, Airspy, or HackRF
+                        <ul>
+                            <li>Advantage: Direct RSSI measurement in software</li>
+                            <li>Can log raw IQ samples for offline analysis</li>
+                            <li>FFT provides spectrum data</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Alternative:</strong> Radio with CAT S-meter reading
+                        <ul>
+                            <li>Query S-meter value via CAT commands</li>
+                            <li>Convert S-units to dBm (approx: S9 = -73 dBm, +6dB per S-unit above S9)</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Weather Station:</strong> BME280 sensor or similar
+                        <ul>
+                            <li>Temperature: ±1°C accuracy</li>
+                            <li>Humidity: ±3% RH</li>
+                            <li>Barometric pressure: ±1 hPa</li>
+                            <li>Connect via I2C to microcontroller</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <h4>Analysis Tasks:</h4>
+                <ol>
+                    <li><strong>Signal Strength vs. Elevation Profile:</strong>
+                        <ul>
+                            <li>Plot RSSI vs. elevation angle</li>
+                            <li>Expected: Signal strongest at TCA (highest elevation)</li>
+                            <li>Observe: How much does signal vary with elevation?</li>
+                            <li>Compare multiple passes for consistency</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Free-Space Path Loss Validation:</strong>
+                        <ul>
+                            <li>Calculate theoretical FSPL: FSPL(dB) = 32.45 + 20log(f_MHz) + 20log(d_km)</li>
+                            <li>Compare measured signal strength to prediction</li>
+                            <li>Account for antenna gains and cable losses</li>
+                            <li>Identify discrepancies (atmospheric effects, multipath, etc.)</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Faraday Rotation Effects:</strong>
+                        <ul>
+                            <li>If using linear polarization, observe signal fading</li>
+                            <li>Fading occurs when satellite polarization rotates relative to ground antenna</li>
+                            <li>Can cause 20-30 dB signal loss</li>
+                            <li>Circular polarization eliminates this issue (verify with data)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Ionospheric Scintillation:</strong>
+                        <ul>
+                            <li>Look for rapid signal fluctuations (scintillation)</li>
+                            <li>More common at low elevations, near horizon</li>
+                            <li>More pronounced at higher solar activity</li>
+                            <li>Correlate with ionospheric conditions (spaceweather.gov)</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Weather Correlation:</strong>
+                        <ul>
+                            <li>Does signal strength vary with atmospheric conditions?</li>
+                            <li>Compare clear sky vs. overcast vs. rain</li>
+                            <li>VHF/UHF mostly unaffected by weather (unlike Ku-band satellite TV)</li>
+                            <li>Heavy rain may cause slight attenuation (&lt;1 dB typically)</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>Satellite Comparison:</strong>
+                        <ul>
+                            <li>Compare different satellites at same elevation</li>
+                            <li>AO-91 vs. AO-92: Which has stronger signal?</li>
+                            <li>Differences due to transmit power, antenna pattern, age/degradation</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <h4>Visualization Examples:</h4>
+                <div class="code-block">
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+<span class="keyword">import</span> pandas <span class="keyword">as</span> pd
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Load logged data</span>
+data = pd.<span class="function">read_csv</span>(<span class="string">'ao91_pass_20251215.csv'</span>)
+
+<span class="comment"># Create figure with subplots</span>
+fig, axes = plt.<span class="function">subplots</span>(<span class="number">2</span>, <span class="number">2</span>, figsize=(<span class="number">12</span>, <span class="number">10</span>))
+
+<span class="comment"># Plot 1: Signal Strength vs. Elevation</span>
+axes[<span class="number">0</span>, <span class="number">0</span>].<span class="function">plot</span>(data[<span class="string">'elevation'</span>], data[<span class="string">'rssi_dbm'</span>], <span class="string">'b-'</span>)
+axes[<span class="number">0</span>, <span class="number">0</span>].<span class="function">set_xlabel</span>(<span class="string">'Elevation (degrees)'</span>)
+axes[<span class="number">0</span>, <span class="number">0</span>].<span class="function">set_ylabel</span>(<span class="string">'Signal Strength (dBm)'</span>)
+axes[<span class="number">0</span>, <span class="number">0</span>].<span class="function">set_title</span>(<span class="string">'Signal Strength vs. Elevation'</span>)
+
+<span class="comment"># Plot 2: Free-Space Path Loss Comparison</span>
+axes[<span class="number">0</span>, <span class="number">1</span>].<span class="function">plot</span>(data[<span class="string">'range_km'</span>], data[<span class="string">'rssi_dbm'</span>], <span class="string">'ro'</span>, label=<span class="string">'Measured'</span>)
+<span class="comment"># Calculate theoretical FSPL</span>
+freq_mhz = <span class="number">145.96</span>
+fspl = <span class="number">32.45</span> + <span class="number">20</span>*np.log10(freq_mhz) + <span class="number">20</span>*np.log10(data[<span class="string">'range_km'</span>])
+<span class="comment"># Convert to relative signal strength (simplified)</span>
+theoretical_rssi = -fspl + <span class="number">100</span>  <span class="comment"># Arbitrary offset for comparison</span>
+axes[<span class="number">0</span>, <span class="number">1</span>].<span class="function">plot</span>(data[<span class="string">'range_km'</span>], theoretical_rssi, <span class="string">'b-'</span>, label=<span class="string">'Theoretical FSPL'</span>)
+axes[<span class="number">0</span>, <span class="number">1</span>].<span class="function">set_xlabel</span>(<span class="string">'Range (km)'</span>)
+axes[<span class="number">0</span>, <span class="number">1</span>].<span class="function">set_ylabel</span>(<span class="string">'Signal Strength (dBm)'</span>)
+axes[<span class="number">0</span>, <span class="number">1</span>].<span class="function">set_title</span>(<span class="string">'FSPL Validation'</span>)
+axes[<span class="number">0</span>, <span class="number">1</span>].<span class="function">legend</span>()
+
+<span class="comment"># Plot 3: Doppler Shift Profile</span>
+axes[<span class="number">1</span>, <span class="number">0</span>].<span class="function">plot</span>(data[<span class="string">'time_min'</span>], data[<span class="string">'doppler_shift_hz'</span>]/<span class="number">1000</span>, <span class="string">'g-'</span>)
+axes[<span class="number">1</span>, <span class="number">0</span>].<span class="function">set_xlabel</span>(<span class="string">'Time from AOS (minutes)'</span>)
+axes[<span class="number">1</span>, <span class="number">0</span>].<span class="function">set_ylabel</span>(<span class="string">'Doppler Shift (kHz)'</span>)
+axes[<span class="number">1</span>, <span class="number">0</span>].<span class="function">set_title</span>(<span class="string">'Doppler Shift Profile'</span>)
+axes[<span class="number">1</span>, <span class="number">0</span>].<span class="function">axhline</span>(y=<span class="number">0</span>, color=<span class="string">'k'</span>, linestyle=<span class="string">'--'</span>, alpha=<span class="number">0.3</span>)
+
+<span class="comment"># Plot 4: Signal Strength vs. Time</span>
+axes[<span class="number">1</span>, <span class="number">1</span>].<span class="function">plot</span>(data[<span class="string">'time_min'</span>], data[<span class="string">'rssi_dbm'</span>], <span class="string">'m-'</span>)
+axes[<span class="number">1</span>, <span class="number">1</span>].<span class="function">set_xlabel</span>(<span class="string">'Time from AOS (minutes)'</span>)
+axes[<span class="number">1</span>, <span class="number">1</span>].<span class="function">set_ylabel</span>(<span class="string">'Signal Strength (dBm)'</span>)
+axes[<span class="number">1</span>, <span class="number">1</span>].<span class="function">set_title</span>(<span class="string">'Signal Strength Timeline'</span>)
+<span class="comment"># Mark TCA</span>
+tca_index = data[<span class="string">'elevation'</span>].<span class="function">idxmax</span>()
+axes[<span class="number">1</span>, <span class="number">1</span>].<span class="function">axvline</span>(x=data.<span class="function">loc</span>[tca_index, <span class="string">'time_min'</span>], color=<span class="string">'r'</span>, linestyle=<span class="string">'--'</span>, alpha=<span class="number">0.5</span>, label=<span class="string">'TCA'</span>)
+axes[<span class="number">1</span>, <span class="number">1</span>].<span class="function">legend</span>()
+
+plt.<span class="function">tight_layout</span>()
+plt.<span class="function">show</span>()
+                </div>
+            </div>
+
+        </div>
+        
+        <div class="footer">
+            <p>RadioSport Handbook - Chapter 5: Amateur Radio Satellite Communications</p>
+            <p>© 2025 RadioSport Foundation. All rights reserved.</p>
+            <p>This content is provided for educational purposes. Always operate within your license privileges and local regulations.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 3: Solar & Battery Systems - RadioSport Handbook</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #2c3e50; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .nav { background: #1e3c72; color: white; padding: 15px 30px; display: flex; justify-content: space-between; }
+        .nav a { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 40px; text-align: center; }
+        .header h1 { font-size: 42px; margin-bottom: 10px; }
+        .chapter-num { font-size: 18px; opacity: 0.9; }
+        .content { padding: 40px; }
+        h2 { color: #1e3c72; font-size: 32px; margin: 40px 0 20px 0; padding-bottom: 10px; border-bottom: 3px solid #667eea; }
+        h3 { color: #2a5298; font-size: 24px; margin: 30px 0 15px 0; }
+        h4 { color: #34495e; font-size: 20px; margin: 20px 0 10px 0; }
+        p { margin-bottom: 15px; text-align: justify; }
+        .info-box, .success-box, .highlight-box, .warning-box { padding: 25px; margin: 25px 0; border-radius: 5px; border-left: 5px solid; }
+        .info-box { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left-color: #2196f3; }
+        .success-box { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; }
+        .highlight-box { background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); border-left-color: #9c27b0; }
+        .warning-box { background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-left-color: #f44336; }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        ul, ol { margin: 20px 0 20px 40px; }
+        li { margin-bottom: 10px; }
+        .formula { background: white; padding: 15px; border-radius: 5px; text-align: center; font-size: 18px; margin: 15px 0; font-family: 'Times New Roman', serif; border: 2px solid #667eea; }
+        .footer { background: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+        
+        .diagram-container { 
+            background: white; 
+            border: 2px solid #667eea; 
+            border-radius: 10px; 
+            padding: 30px; 
+            margin: 30px 0; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .diagram-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 20px;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+        }
+        .interactive-controls {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .control-group {
+            margin: 10px 0;
+        }
+        .control-group label {
+            display: inline-block;
+            width: 180px;
+            font-weight: bold;
+        }
+        .control-group input[type="range"] {
+            width: 300px;
+            vertical-align: middle;
+        }
+        .control-group span {
+            display: inline-block;
+            width: 80px;
+            margin-left: 10px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="radiosport_ch2.html">← Chapter 2</a>
+            <span>Chapter 3 of 14</span>
+            <a href="radiosport_ch4.html">Chapter 4 →</a>
+        </div>
+        
+        <div class="header">
+            <div class="chapter-num">CHAPTER 3</div>
+            <h1>☀️ Solar & Battery Power Systems</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong>Renewable energy systems enable completely off-grid field operations. Learn photovoltaic principles, battery technology, MPPT controllers, and complete system design for powering radio equipment and drone operations.</strong></p>
+
+            <h2>Solar Power Fundamentals</h2>
+
+            <h3>Photovoltaic Effect</h3>
+            <div class="info-box">
+                <p>When photons strike a semiconductor p-n junction with energy greater than the bandgap (1.1 eV for silicon), they create electron-hole pairs. The built-in electric field separates charges, generating current.</p>
+                
+                <h4>Key Solar Parameters:</h4>
+                <ul>
+                    <li><strong>Open Circuit Voltage (Voc):</strong> 21-22V for 100W 12V panel</li>
+                    <li><strong>Short Circuit Current (Isc):</strong> 5.8-6.2A typical</li>
+                    <li><strong>Maximum Power Point (MPP):</strong> Vmpp = 17-18V, Impp = 5.5A</li>
+                    <li><strong>Fill Factor:</strong> FF = Pmax / (Voc × Isc) = 0.70-0.80</li>
+                    <li><strong>Efficiency:</strong> Mono 18-22%, Poly 15-17%, Thin film 10-13%</li>
+                </ul>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Interactive Solar Panel I-V Curve & Power Curve</div>
+                <canvas id="ivCurveCanvas" width="800" height="500"></canvas>
+                <div class="interactive-controls">
+                    <div class="control-group">
+                        <label>Irradiance (W/m²):</label>
+                        <input type="range" id="irradianceSlider" min="200" max="1000" value="1000" step="100">
+                        <span id="irradianceValue">1000</span>
+                    </div>
+                    <div class="control-group">
+                        <label>Temperature (°C):</label>
+                        <input type="range" id="tempSlider" min="0" max="60" value="25" step="5">
+                        <span id="tempValue">25</span>
+                    </div>
+                    <button onclick="resetIVCurve()">Reset to STC</button>
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Solar Cell Structure & Operation</div>
+                <canvas id="solarCellCanvas" width="800" height="400"></canvas>
+            </div>
+
+            <h3>Wavelength Calculation</h3>
+            <div class="formula">
+                λ (meters) = 300 / f (MHz)
+            </div>
+
+            <h2>Battery Technology Comparison</h2>
+
+            <table>
+                <tr>
+                    <th>Type</th>
+                    <th>Voltage</th>
+                    <th>Energy Density</th>
+                    <th>Cycle Life</th>
+                    <th>Best Use</th>
+                </tr>
+                <tr>
+                    <td><strong>Lead Acid</strong></td>
+                    <td>12V</td>
+                    <td>35-40 Wh/kg</td>
+                    <td>300-500</td>
+                    <td>Budget stations</td>
+                </tr>
+                <tr>
+                    <td><strong>LiFePO4</strong></td>
+                    <td>12.8V</td>
+                    <td>90-120 Wh/kg</td>
+                    <td>2000-5000</td>
+                    <td>Field operations</td>
+                </tr>
+                <tr>
+                    <td><strong>LiPo</strong></td>
+                    <td>11.1-14.8V</td>
+                    <td>150-200 Wh/kg</td>
+                    <td>300-500</td>
+                    <td>Drones (high discharge)</td>
+                </tr>
+            </table>
+
+            <div class="diagram-container">
+                <div class="diagram-title">LiFePO4 Battery Discharge Characteristics</div>
+                <canvas id="lifepoDischargeCanvas" width="800" height="500"></canvas>
+                <div class="interactive-controls">
+                    <div class="control-group">
+                        <label>Discharge Rate (C):</label>
+                        <input type="range" id="dischargeRateSlider" min="0.2" max="2" value="1" step="0.2">
+                        <span id="dischargeRateValue">1.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3>LiFePO4 Advantages</h3>
+            <div class="success-box">
+                <ul>
+                    <li><strong>Flat Discharge:</strong> 12.8V maintained throughout 80% capacity</li>
+                    <li><strong>Safe:</strong> No thermal runaway, operates -20°C to +60°C</li>
+                    <li><strong>Deep Cycle:</strong> Regularly discharge to 20% SOC without damage</li>
+                    <li><strong>Fast Charging:</strong> 1C charge rate (35A for 35Ah battery)</li>
+                    <li><strong>Weight:</strong> 35Ah LiFePO4 = 5kg vs 15kg lead acid</li>
+                    <li><strong>Lifespan:</strong> 2000-5000 cycles = 1,075 kWh lifetime</li>
+                </ul>
+            </div>
+
+            <h2>Power Budget Calculations</h2>
+
+            <div class="highlight-box">
+                <h3>Example: 8-Hour VHF Field Deployment</h3>
+                <table>
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Power (W)</th>
+                        <th>Hours</th>
+                        <th>Duty %</th>
+                        <th>Energy (Wh)</th>
+                    </tr>
+                    <tr>
+                        <td>VHF Radio TX</td>
+                        <td>90</td>
+                        <td>8</td>
+                        <td>10%</td>
+                        <td>72</td>
+                    </tr>
+                    <tr>
+                        <td>VHF Radio RX</td>
+                        <td>2</td>
+                        <td>8</td>
+                        <td>90%</td>
+                        <td>14.4</td>
+                    </tr>
+                    <tr>
+                        <td>Raspberry Pi + SDR</td>
+                        <td>15</td>
+                        <td>8</td>
+                        <td>100%</td>
+                        <td>120</td>
+                    </tr>
+                    <tr>
+                        <td>Laptop</td>
+                        <td>45</td>
+                        <td>4</td>
+                        <td>100%</td>
+                        <td>180</td>
+                    </tr>
+                    <tr style="background: #4caf50; color: white;">
+                        <td colspan="4"><strong>Total Required</strong></td>
+                        <td><strong>386 Wh</strong></td>
+                    </tr>
+                </table>
+
+                <p><strong>System Requirements:</strong></p>
+                <ul>
+                    <li>Battery: 386Wh ÷ 12.8V = 30Ah → Use 35Ah LiFePO4</li>
+                    <li>Solar: 100W panel (400Wh in 4 peak sun hours)</li>
+                    <li>Controller: 20A MPPT</li>
+                    <li>Wire: 10 AWG for 15A continuous</li>
+                </ul>
+            </div>
+
+            <h2>MPPT vs PWM Controllers</h2>
+
+            <div class="diagram-container">
+                <div class="diagram-title">MPPT Controller Operation & Efficiency</div>
+                <canvas id="mpptDiagramCanvas" width="800" height="450"></canvas>
+            </div>
+
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>MPPT</th>
+                    <th>PWM</th>
+                </tr>
+                <tr>
+                    <td>Efficiency</td>
+                    <td>95-99%</td>
+                    <td>70-80%</td>
+                </tr>
+                <tr>
+                    <td>Panel Voltage Use</td>
+                    <td>Full Vmpp (18V)</td>
+                    <td>Battery voltage (13V)</td>
+                </tr>
+                <tr>
+                    <td>Cold Weather</td>
+                    <td>Excellent</td>
+                    <td>Wasted voltage</td>
+                </tr>
+                <tr>
+                    <td>Cost</td>
+                    <td>$80-150</td>
+                    <td>$20-40</td>
+                </tr>
+                <tr>
+                    <td>Best For</td>
+                    <td>Field ops, performance</td>
+                    <td>Budget builds only</td>
+                </tr>
+            </table>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Complete Off-Grid Solar Power System</div>
+                <canvas id="systemDiagramCanvas" width="800" height="500"></canvas>
+            </div>
+
+            <h2>Safety Protocols</h2>
+
+            <div class="warning-box">
+                <h3>⚠️ Electrical Safety - Critical Rules</h3>
+                <ul>
+                    <li><strong>DC Arc Hazard:</strong> 12V battery delivers 500+ amps on short circuit</li>
+                    <li><strong>Fusing:</strong> Install fuse within 18" of battery positive terminal</li>
+                    <li><strong>No Jewelry:</strong> Remove ALL rings, watches, bracelets</li>
+                    <li><strong>Polarity Check:</strong> ALWAYS verify +/- before connecting</li>
+                    <li><strong>Wire Sizing:</strong> 10 AWG for 30A, 8 AWG for 50A</li>
+                    <li><strong>LiPo Fire:</strong> Use sand or dry powder, NEVER water</li>
+                </ul>
+            </div>
+
+            <h2>Practical Exercises</h2>
+
+            <h3>Exercise 1: Solar Panel I-V Curve</h3>
+            <div class="success-box">
+                <h4>Equipment:</h4>
+                <ul>
+                    <li>100W solar panel</li>
+                    <li>Variable resistor (0-50Ω)</li>
+                    <li>Multimeter and clamp meter</li>
+                </ul>
+
+                <h4>Procedure:</h4>
+                <ol>
+                    <li>Measure open circuit voltage (Voc)</li>
+                    <li>Measure short circuit current (Isc)</li>
+                    <li>Record V and I at 15-20 resistance values</li>
+                    <li>Calculate P = V × I for each point</li>
+                    <li>Plot I-V and P-V curves</li>
+                    <li>Identify MPP and calculate fill factor</li>
+                </ol>
+            </div>
+
+            <h2>Chapter Summary</h2>
+            <ul>
+                <li>✅ Solar panels convert light to DC power via photovoltaic effect</li>
+                <li>✅ MPPT controllers optimize energy harvest (30% better than PWM)</li>
+                <li>✅ LiFePO4 batteries ideal for field ops (safe, long life, lightweight)</li>
+                <li>✅ LiPo batteries for drones (high discharge rate)</li>
+                <li>✅ Power budgets ensure adequate capacity</li>
+                <li>✅ Safety: proper fusing, wire sizing, no jewelry</li>
+            </ul>
+
+            <div class="info-box">
+                <h4>Next: Chapter 4 - HF/VHF/UHF Communications</h4>
+                <p>Radio theory, propagation, antenna design, and operating procedures.</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>RadioSport STEM Education Program</strong></p>
+            <p>Chapter 3: Solar & Battery Power Systems</p>
+            <p>Version 3.0 • 2025 Edition</p>
+        </div>
+    </div>
+
+    <script>
+        function drawIVCurve() {
+            const canvas = document.getElementById('ivCurveCanvas');
+            const ctx = canvas.getContext('2d');
+            const irradiance = parseFloat(document.getElementById('irradianceSlider').value);
+            const temp = parseFloat(document.getElementById('tempSlider').value);
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const irradianceScale = irradiance / 1000;
+            const tempOffset = (temp - 25) * 0.002;
+            
+            const Voc = 22 - (temp - 25) * 0.08;
+            const Isc = 6.2 * irradianceScale;
+            const Vmpp = 18 - (temp - 25) * 0.06;
+            const Impp = 5.5 * irradianceScale;
+            
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(60, 400);
+            ctx.lineTo(750, 400);
+            ctx.moveTo(60, 400);
+            ctx.lineTo(60, 50);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '14px Arial';
+            ctx.fillText('Voltage (V)', 350, 440);
+            ctx.save();
+            ctx.translate(20, 250);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Current (A) / Power (W)', 0, 0);
+            ctx.restore();
+            
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                ctx.beginPath();
+                ctx.moveTo(60 + i * 69, 400);
+                ctx.lineTo(60 + i * 69, 50);
+                ctx.stroke();
+                ctx.fillText((i * 2.5).toFixed(1), 55 + i * 69, 420);
+            }
+            for (let i = 0; i <= 7; i++) {
+                ctx.beginPath();
+                ctx.moveTo(60, 400 - i * 50);
+                ctx.lineTo(750, 400 - i * 50);
+                ctx.stroke();
+                ctx.fillText(i.toFixed(0), 35, 405 - i * 50);
+            }
+            
+            ctx.strokeStyle = '#2196F3';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            for (let v = 0; v <= Voc; v += 0.1) {
+                const i = Isc * (1 - Math.pow(v / Voc, 3));
+                const x = 60 + (v / 25) * 690;
+                const y = 400 - (i / 7) * 350;
+                if (v === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            
+            ctx.strokeStyle = '#FF5722';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            for (let v = 0; v <= Voc; v += 0.1) {
+                const i = Isc * (1 - Math.pow(v / Voc, 3));
+                const p = v * i;
+                const x = 60 + (v / 25) * 690;
+                const y = 400 - (p / 140) * 350;
+                if (v === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            
+            const mppX = 60 + (Vmpp / 25) * 690;
+            const mppY = 400 - (Impp / 7) * 350;
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.arc(mppX, mppY, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#4CAF50';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('MPP', mppX + 10, mppY - 10);
+            ctx.fillText(`${Vmpp.toFixed(1)}V, ${Impp.toFixed(1)}A`, mppX + 10, mppY + 5);
+            ctx.fillText(`${(Vmpp * Impp).toFixed(1)}W`, mppX + 10, mppY + 20);
+            
+            ctx.fillStyle = '#2196F3';
+            ctx.fillRect(600, 70, 30, 3);
+            ctx.fillStyle = '#333';
+            ctx.fillText('I-V Curve', 635, 75);
+            
+            ctx.fillStyle = '#FF5722';
+            ctx.fillRect(600, 90, 30, 3);
+            ctx.fillStyle = '#333';
+            ctx.fillText('Power Curve', 635, 95);
+        }
+        
+        function drawSolarCell() {
+            const canvas = document.getElementById('solarCellCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#1e3c72';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('Cross-Section View', 50, 30);
+            
+            ctx.fillStyle = '#888';
+            ctx.fillRect(100, 80, 300, 10);
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.fillText('Metal Contact (-)', 420, 88);
+            
+            ctx.fillStyle = '#9EC8F5';
+            ctx.fillRect(100, 90, 300, 60);
+            ctx.fillStyle = '#333';
+            ctx.fillText('N-Type Silicon (electrons)', 420, 120);
+            
+            const gradient = ctx.createLinearGradient(100, 150, 100, 160);
+            gradient.addColorStop(0, '#9EC8F5');
+            gradient.addColorStop(1, '#F5A09E');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(100, 150, 300, 10);
+            ctx.fillStyle = '#FF5722';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('P-N Junction', 420, 158);
+            
+            ctx.fillStyle = '#F5A09E';
+            ctx.fillRect(100, 160, 300, 80);
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.fillText('P-Type Silicon (holes)', 420, 200);
+            
+            ctx.fillStyle = '#888';
+            ctx.fillRect(100, 240, 300, 10);
+            ctx.fillStyle = '#333';
+            ctx.fillText('Metal Contact (+)', 420, 248);
+            
+            for (let i = 0; i < 5; i++) {
+                const x = 150 + i * 50;
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, 20);
+                ctx.lineTo(x, 60);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(x, 60);
+                ctx.lineTo(x - 5, 50);
+                ctx.moveTo(x, 60);
+                ctx.lineTo(x + 5, 50);
+                ctx.stroke();
+            }
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('Sunlight (Photons)', 160, 50);
+            
+            ctx.fillStyle = '#2196F3';
+            ctx.beginPath();
+            ctx.arc(250, 180, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Arial';
+            ctx.fillText('e-', 245, 184);
+            
+            ctx.strokeStyle = '#E91E63';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(250, 220, 8, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.fillStyle = '#E91E63';
+            ctx.fillText('h+', 245, 224);
+            
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(250, 180);
+            ctx.lineTo(250, 100);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(250, 100);
+            ctx.lineTo(245, 110);
+            ctx.moveTo(250, 100);
+            ctx.lineTo(255, 110);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(250, 220);
+            ctx.lineTo(250, 230);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(250, 230);
+            ctx.lineTo(245, 220);
+            ctx.moveTo(250, 230);
+            ctx.lineTo(255, 220);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#4CAF50';
+            ctx.font = '12px Arial';
+            ctx.fillText('Electric Field', 270, 155);
+            ctx.fillText('Separates Charges', 270, 170);
+            
+            ctx.strokeStyle = '#FF5722';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(400, 85);
+            ctx.lineTo(450, 85);
+            ctx.lineTo(450, 245);
+            ctx.lineTo(400, 245);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = '#FF5722';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('Current Flow', 470, 165);
+        }
+        
+        function drawLiFePO4Discharge() {
+            const canvas = document.getElementById('lifepoDischargeCanvas');
+            const ctx = canvas.getContext('2d');
+            const dischargeRate = parseFloat(document.getElementById('dischargeRateSlider').value);
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(80, 400);
+            ctx.lineTo(750, 400);
+            ctx.moveTo(80, 400);
+            ctx.lineTo(80, 50);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '14px Arial';
+            ctx.fillText('Capacity (%)', 350, 440);
+            ctx.save();
+            ctx.translate(20, 250);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Voltage (V)', 0, 0);
+            ctx.restore();
+            
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                ctx.beginPath();
+                ctx.moveTo(80 + i * 67, 400);
+                ctx.lineTo(80 + i * 67, 50);
+                ctx.stroke();
+                ctx.fillText((i * 10) + '%', 70 + i * 67, 420);
+            }
+            
+            for (let i = 0; i <= 7; i++) {
+                const voltage = 10 + i * 0.5;
+                ctx.beginPath();
+                ctx.moveTo(80, 400 - i * 50);
+                ctx.lineTo(750, 400 - i * 50);
+                ctx.stroke();
+                ctx.fillText(voltage.toFixed(1), 50, 405 - i * 50);
+            }
+            
+            const voltageDrop = dischargeRate * 0.3;
+            
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            for (let capacity = 100; capacity >= 0; capacity -= 1) {
+                let voltage;
+                if (capacity > 20) {
+                    voltage = 13.2 - voltageDrop - (100 - capacity) * 0.001;
+                } else if (capacity > 10) {
+                    voltage = 12.8 - voltageDrop - (20 - capacity) * 0.02;
+                } else {
+                    voltage = 12.6 - voltageDrop - (10 - capacity) * 0.05;
+                }
+                
+                const x = 80 + ((100 - capacity) / 100) * 670;
+                const y = 400 - ((voltage - 10) / 3.5) * 350;
+                
+                if (capacity === 100) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            
+            const cutoffX = 80 + (80 / 100) * 670;
+            const cutoffY = 400 - ((12.8 - 10) / 3.5) * 350;
+            ctx.strokeStyle = '#FF5722';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(cutoffX, 400);
+            ctx.lineTo(cutoffX, cutoffY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = '#FF5722';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('Recommended Cutoff', cutoffX - 60, 430);
+            ctx.fillText('(20% SOC)', cutoffX - 40, 445);
+            
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(600, 70, 30, 3);
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.fillText(`Discharge @ ${dischargeRate}C`, 635, 75);
+            
+            ctx.fillStyle = '#1e3c72';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('Flat voltage profile = stable power', 250, 30);
+        }
+        
+        function drawMPPTDiagram() {
+            const canvas = document.getElementById('mpptDiagramCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#1e3c72';
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText('MPPT vs PWM Comparison', 280, 30);
+            
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(50, 60, 320, 160);
+            ctx.fillStyle = '#667eea';
+            ctx.fillRect(50, 60, 320, 30);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('MPPT Controller', 140, 82);
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '14px Arial';
+            ctx.fillText('Panel: 18V × 5.5A = 99W', 70, 120);
+            ctx.fillText('Battery: 13V × 7.5A = 97.5W', 70, 145);
+            ctx.fillText('Efficiency: 98%', 70, 170);
+            ctx.fillText('Power Loss: 1.5W', 70, 195);
+            
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(430, 60, 320, 160);
+            ctx.fillStyle = '#764ba2';
+            ctx.fillRect(430, 60, 320, 30);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('PWM Controller', 520, 82);
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '14px Arial';
+            ctx.fillText('Panel: 13V × 5.5A = 71.5W', 450, 120);
+            ctx.fillText('Battery: 13V × 5.3A = 69W', 450, 145);
+            ctx.fillText('Efficiency: 75%', 450, 170);
+            ctx.fillText('Power Loss: 28W', 450, 195);
+            
+            ctx.fillStyle = '#4CAF50';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('MPPT Advantage: +41% more power', 250, 260);
+            
+            ctx.strokeStyle = '#FF5722';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(210, 220);
+            ctx.lineTo(210, 280);
+            ctx.lineTo(590, 280);
+            ctx.lineTo(590, 220);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#FF5722';
+            ctx.font = '12px Arial';
+            ctx.fillText('Wasted voltage', 630, 140);
+            ctx.fillText('(18V - 13V = 5V)', 630, 155);
+            
+            ctx.fillStyle = '#2196F3';
+            ctx.fillRect(50, 310, 700, 120);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('How MPPT Works:', 70, 335);
+            ctx.font = '12px Arial';
+            ctx.fillText('1. Continuously tracks panel voltage & current to find Maximum Power Point', 90, 360);
+            ctx.fillText('2. DC-DC converter steps down voltage (18V → 13V) while increasing current', 90, 380);
+            ctx.fillText('3. Power = Voltage × Current remains nearly constant (99W in, 97.5W out)', 90, 400);
+            ctx.fillText('4. Result: Extract ALL available power regardless of battery voltage', 90, 420);
+        }
+        
+        function drawSystemDiagram() {
+            const canvas = document.getElementById('systemDiagramCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(150, 80, 40, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#FFA500';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('☀️', 140, 88);
+            
+            ctx.fillStyle = '#2196F3';
+            ctx.fillRect(100, 140, 100, 80);
+            ctx.strokeStyle = '#1565C0';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(100, 140, 100, 80);
+            
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(110 + j * 28, 150 + i * 23, 20, 18);
+                }
+            }
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('100W Solar', 115, 235);
+            
+            ctx.strokeStyle = '#E91E63';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(150, 120);
+            ctx.lineTo(150, 140);
+            ctx.stroke();
+            
+            ctx.strokeStyle = '#E91E63';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(200, 180);
+            ctx.lineTo(280, 180);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#667eea';
+            ctx.fillRect(280, 150, 120, 60);
+            ctx.strokeStyle = '#4527A0';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(280, 150, 120, 60);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('MPPT', 320, 175);
+            ctx.font = '11px Arial';
+            ctx.fillText('20A Controller', 295, 195);
+            
+            ctx.strokeStyle = '#E91E63';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(400, 180);
+            ctx.lineTo(480, 180);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(480, 140, 120, 80);
+            ctx.strokeStyle = '#2E7D32';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(480, 140, 120, 80);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('LiFePO4', 505, 170);
+            ctx.font = '12px Arial';
+            ctx.fillText('35Ah / 448Wh', 495, 190);
+            ctx.fillText('12.8V', 520, 210);
+            
+            ctx.strokeStyle = '#E91E63';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(540, 220);
+            ctx.lineTo(540, 280);
+            ctx.lineTo(350, 280);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#FF9800';
+            ctx.beginPath();
+            ctx.arc(340, 280, 12, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('F', 335, 286);
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '11px Arial';
+            ctx.fillText('40A Fuse', 300, 270);
+            
+            ctx.strokeStyle = '#E91E63';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(330, 280);
+            ctx.lineTo(150, 280);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#9C27B0';
+            ctx.fillRect(100, 300, 100, 60);
+            ctx.strokeStyle = '#6A1B9A';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(100, 300, 100, 60);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('VHF Radio', 115, 325);
+            ctx.font = '10px Arial';
+            ctx.fillText('50W / 13.8V', 115, 345);
+            
+            ctx.fillStyle = '#9C27B0';
+            ctx.fillRect(220, 300, 100, 60);
+            ctx.strokeStyle = '#6A1B9A';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(220, 300, 100, 60);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('Raspberry', 235, 325);
+            ctx.fillText('Pi + SDR', 240, 345);
+            
+            ctx.fillStyle = '#9C27B0';
+            ctx.fillRect(340, 300, 100, 60);
+            ctx.strokeStyle = '#6A1B9A';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(340, 300, 100, 60);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('Laptop', 370, 325);
+            ctx.font = '10px Arial';
+            ctx.fillText('45W / 19V', 355, 345);
+            
+            ctx.fillStyle = '#9C27B0';
+            ctx.fillRect(460, 300, 100, 60);
+            ctx.strokeStyle = '#6A1B9A';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(460, 300, 100, 60);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('Drone', 490, 325);
+            ctx.fillText('Charger', 475, 345);
+            
+            ctx.fillStyle = '#1e3c72';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('Complete Off-Grid Field Station', 240, 420);
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.fillText('Wire: 10 AWG (5.26mm²) for 30A continuous', 250, 445);
+            ctx.fillText('Total System Cost: ~$800 (battery + solar + controller)', 220, 465);
+        }
+        
+        function resetIVCurve() {
+            document.getElementById('irradianceSlider').value = 1000;
+            document.getElementById('tempSlider').value = 25;
+            document.getElementById('irradianceValue').textContent = '1000';
+            document.getElementById('tempValue').textContent = '25';
+            drawIVCurve();
+        }
+        
+        document.getElementById('irradianceSlider').addEventListener('input', function() {
+            document.getElementById('irradianceValue').textContent = this.value;
+            drawIVCurve();
+        });
+        
+        document.getElementById('tempSlider').addEventListener('input', function() {
+            document.getElementById('tempValue').textContent = this.value;
+            drawIVCurve();
+        });
+        
+        document.getElementById('dischargeRateSlider').addEventListener('input', function() {
+            document.getElementById('dischargeRateValue').textContent = parseFloat(this.value).toFixed(1);
+            drawLiFePO4Discharge();
+        });
+        
+        window.onload = function() {
+            drawIVCurve();
+            drawSolarCell();
+            drawLiFePO4Discharge();
+            drawMPPTDiagram();
+            drawSystemDiagram();
+        };
+    </script>
+</body>
+</html>

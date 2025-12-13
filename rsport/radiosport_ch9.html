@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 9: Programming & Coding - RadioSport Handbook</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #2c3e50; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .nav { background: #1e3c72; color: white; padding: 15px 30px; display: flex; justify-content: space-between; }
+        .nav a { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 40px; text-align: center; }
+        .header h1 { font-size: 42px; margin-bottom: 10px; }
+        .chapter-num { font-size: 18px; opacity: 0.9; }
+        .content { padding: 40px; }
+        h2 { color: #1e3c72; font-size: 32px; margin: 40px 0 20px 0; padding-bottom: 10px; border-bottom: 3px solid #667eea; }
+        h3 { color: #2a5298; font-size: 24px; margin: 30px 0 15px 0; }
+        h4 { color: #34495e; font-size: 20px; margin: 20px 0 10px 0; }
+        p { margin-bottom: 15px; text-align: justify; }
+        .info-box, .success-box, .highlight-box, .diagram-box { padding: 25px; margin: 25px 0; border-radius: 5px; border-left: 5px solid; }
+        .info-box { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left-color: #2196f3; }
+        .success-box { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; }
+        .highlight-box { background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); border-left-color: #9c27b0; }
+        .diagram-box { background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left-color: #ff9800; }
+        .code-block { background: #2d2d2d; color: #f8f8f2; padding: 20px; border-radius: 5px; overflow-x: auto; margin: 20px 0; font-family: 'Courier New', monospace; font-size: 14px; }
+        .code-comment { color: #6a9955; }
+        .code-keyword { color: #569cd6; }
+        .code-string { color: #ce9178; }
+        .code-function { color: #dcdcaa; }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        ul, ol { margin: 20px 0 20px 40px; }
+        li { margin-bottom: 10px; }
+        .diagram-container { background: white; padding: 30px; border-radius: 10px; margin: 30px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        .flow-diagram { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 20px 0; }
+        .flow-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 30px; border-radius: 10px; min-width: 150px; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .flow-arrow { font-size: 24px; color: #667eea; }
+        .circuit-diagram { margin: 30px 0; }
+        .footer { background: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+        svg { max-width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="radiosport_ch8.html">← Chapter 8</a>
+            <span>Chapter 9 of 14</span>
+            <a href="radiosport_ch10.html">Chapter 10 →</a>
+        </div>
+        
+        <div class="header">
+            <div class="chapter-num">CHAPTER 9</div>
+            <h1>💻 Programming & Coding for Radio</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong>Learn to program radio systems, automate operations, and build custom tools using Python and microcontrollers. This chapter bridges software engineering with amateur radio through hands-on coding projects.</strong></p>
+
+            <h2>Why Coding Matters in RadioSport</h2>
+
+            <div class="info-box">
+                <h3>🎯 Real-World Applications</h3>
+                <ul>
+                    <li>Automate contest logging and scoring calculations</li>
+                    <li>Control radios via computer (CAT control)</li>
+                    <li>Decode digital modes (APRS, FT8, PSK31)</li>
+                    <li>Track satellites and predict passes</li>
+                    <li>Analyze propagation data with machine learning</li>
+                    <li>Build custom dashboards for station monitoring</li>
+                    <li>Interface microcontrollers with RF systems</li>
+                </ul>
+            </div>
+
+            <div class="diagram-box">
+                <h3>📊 The Software Development Lifecycle for Radio Projects</h3>
+                <div class="flow-diagram">
+                    <div class="flow-box">1. Define Problem</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-box">2. Design Solution</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-box">3. Write Code</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-box">4. Test & Debug</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-box">5. Deploy & Use</div>
+                </div>
+                <p><em>This iterative process applies to all programming projects, from simple scripts to complex systems.</em></p>
+            </div>
+
+            <h2>Python Fundamentals for Radio</h2>
+
+            <h3>Getting Started with Python</h3>
+            <p>Python is the preferred language for amateur radio applications because it's easy to learn, has extensive libraries, and works across all platforms (Windows, Mac, Linux, Raspberry Pi).</p>
+
+            <div class="success-box">
+                <h4>Installation & Setup</h4>
+                <ol>
+                    <li>Download Python 3.x from <strong>python.org</strong></li>
+                    <li>Install IDE (recommended: VS Code or Thonny)</li>
+                    <li>Install essential libraries:
+                        <div class="code-block">pip install pyserial hamlib requests ephem matplotlib</div>
+                    </li>
+                    <li>Test installation with "Hello World"</li>
+                </ol>
+            </div>
+
+            <h3>Project 1: Basic Contest Logger</h3>
+
+            <div class="diagram-box">
+                <h4>Program Flow Diagram</h4>
+                <svg viewBox="0 0 600 400" style="max-width: 600px;">
+                    <defs>
+                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Start -->
+                    <rect x="225" y="20" width="150" height="50" rx="25" fill="url(#grad1)"/>
+                    <text x="300" y="50" text-anchor="middle" fill="white" font-weight="bold">START</text>
+                    <line x1="300" y1="70" x2="300" y2="100" stroke="#667eea" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    
+                    <!-- Input Contact -->
+                    <rect x="200" y="100" width="200" height="60" fill="#bbdefb" stroke="#2196f3" stroke-width="2"/>
+                    <text x="300" y="125" text-anchor="middle" font-weight="bold">Input Contact Info</text>
+                    <text x="300" y="145" text-anchor="middle" font-size="12">(Call, Freq, Mode, RST)</text>
+                    <line x1="300" y1="160" x2="300" y2="190" stroke="#667eea" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    
+                    <!-- Validate -->
+                    <path d="M 300 190 L 380 240 L 300 290 L 220 240 Z" fill="#ffe0b2" stroke="#ff9800" stroke-width="2"/>
+                    <text x="300" y="235" text-anchor="middle" font-weight="bold">Valid Call?</text>
+                    <text x="300" y="250" text-anchor="middle" font-size="12">Check Format</text>
+                    
+                    <!-- Yes path -->
+                    <line x1="380" y1="240" x2="450" y2="240" stroke="#667eea" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    <text x="415" y="230" text-anchor="middle" fill="#4caf50" font-weight="bold">YES</text>
+                    <rect x="450" y="210" width="130" height="60" fill="#c8e6c9" stroke="#4caf50" stroke-width="2"/>
+                    <text x="515" y="235" text-anchor="middle" font-weight="bold">Save to Log</text>
+                    <text x="515" y="255" text-anchor="middle" font-size="12">Append CSV</text>
+                    
+                    <!-- No path -->
+                    <line x1="220" y1="240" x2="150" y2="240" stroke="#667eea" stroke-width="3"/>
+                    <text x="185" y="230" text-anchor="middle" fill="#f44336" font-weight="bold">NO</text>
+                    <line x1="150" y1="240" x2="150" y2="130" stroke="#667eea" stroke-width="3"/>
+                    <line x1="150" y1="130" x2="200" y2="130" stroke="#667eea" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    <text x="100" y="185" text-anchor="middle" fill="#f44336" font-size="12">Show Error</text>
+                    
+                    <!-- Continue -->
+                    <line x1="515" y1="270" x2="515" y2="310" stroke="#667eea" stroke-width="3"/>
+                    <line x1="515" y1="310" x2="300" y2="310" stroke="#667eea" stroke-width="3"/>
+                    <line x1="300" y1="310" x2="300" y2="340" stroke="#667eea" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    
+                    <!-- End -->
+                    <rect x="225" y="340" width="150" height="50" rx="25" fill="url(#grad1)"/>
+                    <text x="300" y="370" text-anchor="middle" fill="white" font-weight="bold">CONTINUE</text>
+                    
+                    <!-- Arrow marker -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+                            <polygon points="0 0, 10 5, 0 10" fill="#667eea"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <p><em>This flowchart shows the logic flow for validating and logging radio contacts.</em></p>
+            </div>
+
+            <div class="code-block">
+<span class="code-comment"># Simple Contest Logger - Version 1.0</span>
+<span class="code-keyword">import</span> csv
+<span class="code-keyword">from</span> datetime <span class="code-keyword">import</span> datetime
+
+<span class="code-keyword">def</span> <span class="code-function">validate_callsign</span>(call):
+    <span class="code-comment"># Basic callsign validation</span>
+    <span class="code-keyword">if</span> <span class="code-function">len</span>(call) < 3 <span class="code-keyword">or</span> <span class="code-function">len</span>(call) > 10:
+        <span class="code-keyword">return</span> False
+    <span class="code-keyword">if not</span> <span class="code-function">any</span>(c.isdigit() <span class="code-keyword">for</span> c <span class="code-keyword">in</span> call):
+        <span class="code-keyword">return</span> False
+    <span class="code-keyword">return</span> True
+
+<span class="code-keyword">def</span> <span class="code-function">log_contact</span>(call, freq, mode, rst_sent, rst_rcvd):
+    timestamp = datetime.now().<span class="code-function">strftime</span>(<span class="code-string">"%Y-%m-%d %H:%M:%S"</span>)
+    
+    <span class="code-keyword">with</span> <span class="code-function">open</span>(<span class="code-string">'contest_log.csv'</span>, <span class="code-string">'a'</span>, newline=<span class="code-string">''</span>) <span class="code-keyword">as</span> file:
+        writer = csv.<span class="code-function">writer</span>(file)
+        writer.<span class="code-function">writerow</span>([timestamp, call, freq, mode, rst_sent, rst_rcvd])
+    
+    <span class="code-function">print</span>(<span class="code-string">f"✓ Logged: {call} on {freq} MHz"</span>)
+
+<span class="code-comment"># Main program loop</span>
+<span class="code-function">print</span>(<span class="code-string">"=== Contest Logger v1.0 ==="</span>)
+<span class="code-keyword">while</span> True:
+    call = <span class="code-function">input</span>(<span class="code-string">"Callsign (or 'quit'): "</span>).<span class="code-function">upper</span>()
+    
+    <span class="code-keyword">if</span> call == <span class="code-string">'QUIT'</span>:
+        <span class="code-keyword">break</span>
+    
+    <span class="code-keyword">if not</span> <span class="code-function">validate_callsign</span>(call):
+        <span class="code-function">print</span>(<span class="code-string">"❌ Invalid callsign format!"</span>)
+        <span class="code-keyword">continue</span>
+    
+    freq = <span class="code-function">input</span>(<span class="code-string">"Frequency (MHz): "</span>)
+    mode = <span class="code-function">input</span>(<span class="code-string">"Mode (SSB/CW/FM): "</span>).<span class="code-function">upper</span>()
+    rst_sent = <span class="code-function">input</span>(<span class="code-string">"RST Sent: "</span>)
+    rst_rcvd = <span class="code-function">input</span>(<span class="code-string">"RST Received: "</span>)
+    
+    <span class="code-function">log_contact</span>(call, freq, mode, rst_sent, rst_rcvd)
+</div>
+
+            <h3>Project 2: Radio Control via CAT Protocol</h3>
+
+            <div class="diagram-box">
+                <h4>🔌 Computer-Radio Interface Architecture</h4>
+                <svg viewBox="0 0 700 300" style="max-width: 700px;">
+                    <!-- Computer -->
+                    <rect x="50" y="100" width="150" height="100" fill="#bbdefb" stroke="#2196f3" stroke-width="3" rx="5"/>
+                    <rect x="60" y="110" width="130" height="60" fill="#1976d2"/>
+                    <text x="125" y="175" text-anchor="middle" font-weight="bold">Computer</text>
+                    <text x="125" y="190" text-anchor="middle" font-size="12">Python Script</text>
+                    
+                    <!-- USB Cable -->
+                    <line x1="200" y1="150" x2="300" y2="150" stroke="#ff9800" stroke-width="4"/>
+                    <text x="250" y="140" text-anchor="middle" fill="#ff9800" font-weight="bold">USB Cable</text>
+                    <text x="250" y="165" text-anchor="middle" font-size="12">Serial Protocol</text>
+                    
+                    <!-- Radio -->
+                    <rect x="300" y="100" width="150" height="100" fill="#c8e6c9" stroke="#4caf50" stroke-width="3" rx="5"/>
+                    <circle cx="325" cy="130" r="8" fill="#4caf50"/>
+                    <circle cx="345" cy="130" r="8" fill="#4caf50"/>
+                    <circle cx="365" cy="130" r="8" fill="#4caf50"/>
+                    <rect x="310" y="150" width="130" height="40" fill="#2e7d32" rx="3"/>
+                    <text x="375" y="175" text-anchor="middle" fill="white" font-weight="bold" font-size="14">VFO: 14.250</text>
+                    
+                    <!-- Antenna -->
+                    <line x1="450" y1="150" x2="550" y2="150" stroke="#666" stroke-width="3"/>
+                    <line x1="550" y1="150" x2="550" y2="50" stroke="#666" stroke-width="3"/>
+                    <line x1="550" y1="50" x2="520" y2="80" stroke="#666" stroke-width="3"/>
+                    <line x1="550" y1="50" x2="580" y2="80" stroke="#666" stroke-width="3"/>
+                    <text x="550" y="35" text-anchor="middle" font-weight="bold">Antenna</text>
+                    
+                    <!-- RF Waves -->
+                    <path d="M 580 80 Q 620 70 640 80" stroke="#f44336" stroke-width="2" fill="none"/>
+                    <path d="M 580 90 Q 620 80 640 90" stroke="#f44336" stroke-width="2" fill="none"/>
+                    <path d="M 580 100 Q 620 90 640 100" stroke="#f44336" stroke-width="2" fill="none"/>
+                    
+                    <!-- Command Examples -->
+                    <rect x="50" y="220" width="600" height="60" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+                    <text x="60" y="240" font-weight="bold">CAT Commands:</text>
+                    <text x="60" y="255" font-size="12" font-family="monospace">• FA14250000; ← Set Frequency to 14.250 MHz</text>
+                    <text x="60" y="270" font-size="12" font-family="monospace">• MD02; ← Set Mode to USB</text>
+                </svg>
+            </div>
+
+            <div class="code-block">
+<span class="code-comment"># Radio CAT Control Example (Kenwood Protocol)</span>
+<span class="code-keyword">import</span> serial
+<span class="code-keyword">import</span> time
+
+<span class="code-keyword">class</span> <span class="code-function">RadioController</span>:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(self, port, baudrate=9600):
+        self.ser = serial.<span class="code-function">Serial</span>(port, baudrate, timeout=1)
+        time.<span class="code-function">sleep</span>(2)  <span class="code-comment"># Wait for connection</span>
+        
+    <span class="code-keyword">def</span> <span class="code-function">send_command</span>(self, cmd):
+        self.ser.<span class="code-function">write</span>((cmd + <span class="code-string">';'</span>).<span class="code-function">encode</span>())
+        response = self.ser.<span class="code-function">readline</span>().<span class="code-function">decode</span>().<span class="code-function">strip</span>()
+        <span class="code-keyword">return</span> response
+    
+    <span class="code-keyword">def</span> <span class="code-function">set_frequency</span>(self, freq_mhz):
+        <span class="code-comment"># Convert MHz to Hz and format as 11 digits</span>
+        freq_hz = <span class="code-function">int</span>(freq_mhz * 1000000)
+        cmd = <span class="code-string">f"FA{freq_hz:011d}"</span>
+        <span class="code-keyword">return</span> self.<span class="code-function">send_command</span>(cmd)
+    
+    <span class="code-keyword">def</span> <span class="code-function">get_frequency</span>(self):
+        response = self.<span class="code-function">send_command</span>(<span class="code-string">"FA"</span>)
+        <span class="code-keyword">if</span> response.<span class="code-function">startswith</span>(<span class="code-string">"FA"</span>):
+            freq_hz = <span class="code-function">int</span>(response[2:])
+            <span class="code-keyword">return</span> freq_hz / 1000000
+        <span class="code-keyword">return</span> None
+    
+    <span class="code-keyword">def</span> <span class="code-function">set_mode</span>(self, mode):
+        modes = {<span class="code-string">'LSB'</span>: <span class="code-string">'1'</span>, <span class="code-string">'USB'</span>: <span class="code-string">'2'</span>, <span class="code-string">'CW'</span>: <span class="code-string">'3'</span>, <span class="code-string">'FM'</span>: <span class="code-string">'4'</span>}
+        <span class="code-keyword">return</span> self.<span class="code-function">send_command</span>(<span class="code-string">f"MD{modes[mode]}"</span>)
+
+<span class="code-comment"># Example usage</span>
+radio = <span class="code-function">RadioController</span>(<span class="code-string">'/dev/ttyUSB0'</span>)
+radio.<span class="code-function">set_frequency</span>(14.250)  <span class="code-comment"># 20m band</span>
+radio.<span class="code-function">set_mode</span>(<span class="code-string">'USB'</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Current frequency: {radio.get_frequency()} MHz"</span>)
+</div>
+
+            <h2>Arduino & Microcontroller Projects</h2>
+
+            <h3>Project 3: Antenna Rotator Controller</h3>
+
+            <div class="diagram-box">
+                <h4>📡 Rotator Control System Block Diagram</h4>
+                <svg viewBox="0 0 800 400" style="max-width: 800px;">
+                    <!-- Arduino -->
+                    <rect x="50" y="150" width="140" height="100" fill="#4caf50" stroke="#2e7d32" stroke-width="3" rx="5"/>
+                    <text x="120" y="190" text-anchor="middle" fill="white" font-weight="bold" font-size="16">ARDUINO</text>
+                    <text x="120" y="210" text-anchor="middle" fill="white" font-size="12">UNO R3</text>
+                    <circle cx="70" cy="230" r="4" fill="#ffd600"/>
+                    <circle cx="85" cy="230" r="4" fill="#ffd600"/>
+                    <circle cx="100" cy="230" r="4" fill="#ffd600"/>
+                    
+                    <!-- Motor Driver -->
+                    <rect x="280" y="50" width="120" height="80" fill="#ff9800" stroke="#f57c00" stroke-width="2" rx="5"/>
+                    <text x="340" y="80" text-anchor="middle" font-weight="bold">Motor Driver</text>
+                    <text x="340" y="100" text-anchor="middle" font-size="12">L298N</text>
+                    
+                    <!-- Motor CCW -->
+                    <rect x="500" y="50" width="100" height="80" fill="#2196f3" stroke="#1565c0" stroke-width="2" rx="5"/>
+                    <circle cx="550" cy="90" r="25" fill="#1565c0" stroke="white" stroke-width="2"/>
+                    <text x="550" y="75" text-anchor="middle" fill="white" font-weight="bold" font-size="10">CCW</text>
+                    <text x="550" y="120" text-anchor="middle" font-size="12">Motor 1</text>
+                    
+                    <!-- Compass Sensor -->
+                    <rect x="280" y="270" width="120" height="80" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2" rx="5"/>
+                    <text x="340" y="300" text-anchor="middle" font-weight="bold" fill="white">Compass</text>
+                    <text x="340" y="320" text-anchor="middle" font-size="12" fill="white">HMC5883L</text>
+                    <text x="340" y="335" text-anchor="middle" font-size="10" fill="white">I2C Interface</text>
+                    
+                    <!-- Motor CW -->
+                    <rect x="500" y="270" width="100" height="80" fill="#2196f3" stroke="#1565c0" stroke-width="2" rx="5"/>
+                    <circle cx="550" cy="310" r="25" fill="#1565c0" stroke="white" stroke-width="2"/>
+                    <text x="550" y="295" text-anchor="middle" fill="white" font-weight="bold" font-size="10">CW</text>
+                    <text x="550" y="340" text-anchor="middle" font-size="12">Motor 2</text>
+                    
+                    <!-- Rotator -->
+                    <rect x="680" y="150" width="100" height="100" fill="#607d8b" stroke="#37474f" stroke-width="3" rx="5"/>
+                    <circle cx="730" cy="200" r="30" fill="#455a64"/>
+                    <line x1="730" y1="200" x2="730" y2="170" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                    <text x="730" y="265" text-anchor="middle" font-weight="bold">Rotator</text>
+                    
+                    <!-- Connections -->
+                    <line x1="190" y1="170" x2="280" y2="90" stroke="#333" stroke-width="3" marker-end="url(#arrow2)"/>
+                    <line x1="400" y1="90" x2="500" y2="90" stroke="#333" stroke-width="3" marker-end="url(#arrow2)"/>
+                    <line x1="190" y1="230" x2="280" y2="310" stroke="#333" stroke-width="3" marker-end="url(#arrow2)"/>
+                    <line x1="400" y1="310" x2="500" y2="310" stroke="#333" stroke-width="3" marker-end="url(#arrow2)"/>
+                    <line x1="600" y1="90" x2="680" y2="180" stroke="#333" stroke-width="3" marker-end="url(#arrow2)"/>
+                    <line x1="600" y1="310" x2="680" y2="220" stroke="#333" stroke-width="3" marker-end="url(#arrow2)"/>
+                    
+                    <!-- Labels -->
+                    <text x="235" y="70" font-size="11" fill="#666">PWM</text>
+                    <text x="235" y="330" font-size="11" fill="#666">I2C</text>
+                    
+                    <!-- Arrow marker -->
+                    <defs>
+                        <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#333"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <p><em>The Arduino reads compass direction and controls motors to rotate the antenna to the desired heading.</em></p>
+            </div>
+
+            <div class="code-block">
+<span class="code-comment">// Arduino Rotator Controller</span>
+<span class="code-keyword">#include</span> &lt;Wire.h&gt;
+<span class="code-keyword">#include</span> &lt;HMC5883L.h&gt;
+
+HMC5883L compass;
+
+<span class="code-comment">// Motor driver pins</span>
+<span class="code-keyword">const int</span> MOTOR_CW = 9;   <span class="code-comment">// PWM pin</span>
+<span class="code-keyword">const int</span> MOTOR_CCW = 10;  <span class="code-comment">// PWM pin</span>
+
+<span class="code-keyword">int</span> targetHeading = 0;
+<span class="code-keyword">int</span> currentHeading = 0;
+<span class="code-keyword">const int</span> TOLERANCE = 5;  <span class="code-comment">// degrees</span>
+
+<span class="code-keyword">void</span> <span class="code-function">setup</span>() {
+  Serial.<span class="code-function">begin</span>(9600);
+  Wire.<span class="code-function">begin</span>();
+  
+  compass.<span class="code-function">initialize</span>();
+  
+  <span class="code-function">pinMode</span>(MOTOR_CW, OUTPUT);
+  <span class="code-function">pinMode</span>(MOTOR_CCW, OUTPUT);
+  
+  Serial.<span class="code-function">println</span>(<span class="code-string">"Rotator Controller Ready"</span>);
+}
+
+<span class="code-keyword">void</span> <span class="code-function">loop</span>() {
+  <span class="code-comment">// Read compass heading</span>
+  Vector mag = compass.<span class="code-function">readRaw</span>();
+  currentHeading = <span class="code-function">atan2</span>(mag.YAxis, mag.XAxis) * 180 / M_PI;
+  <span class="code-keyword">if</span> (currentHeading < 0) currentHeading += 360;
+  
+  <span class="code-comment">// Calculate error</span>
+  <span class="code-keyword">int</span> error = targetHeading - currentHeading;
+  <span class="code-keyword">if</span> (error > 180) error -= 360;
+  <span class="code-keyword">if</span> (error < -180) error += 360;
+  
+  <span class="code-comment">// Control motors</span>
+  <span class="code-keyword">if</span> (<span class="code-function">abs</span>(error) > TOLERANCE) {
+    <span class="code-keyword">int</span> speed = <span class="code-function">constrain</span>(<span class="code-function">abs</span>(error) * 2, 100, 255);
+    
+    <span class="code-keyword">if</span> (error > 0) {
+      <span class="code-comment">// Turn clockwise</span>
+      <span class="code-function">analogWrite</span>(MOTOR_CW, speed);
+      <span class="code-function">analogWrite</span>(MOTOR_CCW, 0);
+    } <span class="code-keyword">else</span> {
+      <span class="code-comment">// Turn counter-clockwise</span>
+      <span class="code-function">analogWrite</span>(MOTOR_CW, 0);
+      <span class="code-function">analogWrite</span>(MOTOR_CCW, speed);
+    }
+  } <span class="code-keyword">else</span> {
+    <span class="code-comment">// Stop motors</span>
+    <span class="code-function">analogWrite</span>(MOTOR_CW, 0);
+    <span class="code-function">analogWrite</span>(MOTOR_CCW, 0);
+  }
+  
+  <span class="code-comment">// Check for serial commands</span>
+  <span class="code-keyword">if</span> (Serial.<span class="code-function">available</span>() > 0) {
+    targetHeading = Serial.<span class="code-function">parseInt</span>();
+    Serial.<span class="code-function">print</span>(<span class="code-string">"New target: "</span>);
+    Serial.<span class="code-function">println</span>(targetHeading);
+  }
+  
+  <span class="code-function">delay</span>(100);
+}
+</div>
+
+            <h2>Satellite Tracking Software</h2>
+
+            <h3>Project 4: Orbital Pass Predictor</h3>
+
+            <div class="diagram-box">
+                <h4>🛰️ Satellite Pass Prediction Algorithm</h4>
+                <svg viewBox="0 0 700 500" style="max-width: 700px;">
+                    <!-- Earth -->
+                    <circle cx="350" cy="300" r="80" fill="#4caf50" stroke="#2e7d32" stroke-width="3"/>
+                    <circle cx="350" cy="300" r="80" fill="url(#earthGrad)" opacity="0.7"/>
+                    <text x="350" y="310" text-anchor="middle" fill="white" font-weight="bold" font-size="16">EARTH</text>
+                    
+                    <!-- Observer Location -->
+                    <circle cx="350" cy="220" r="8" fill="#f44336"/>
+                    <text x="350" y="205" text-anchor="middle" font-weight="bold" fill="#f44336">Observer</text>
+                    <text x="350" y="195" text-anchor="middle" font-size="10">(Your Location)</text>
+                    
+                    <!-- Horizon Line -->
+                    <line x1="200" y1="300" x2="500" y2="300" stroke="#ff9800" stroke-width="2" stroke-dasharray="5,5"/>
+                    <text x="510" y="305" font-size="12" fill="#ff9800">Horizon</text>
+                    
+                    <!-- Satellite Orbit -->
+                    <ellipse cx="350" cy="300" rx="200" ry="140" fill="none" stroke="#2196f3" stroke-width="3" stroke-dasharray="10,5"/>
+                    
+                    <!-- Satellite Positions -->
+                    <circle cx="200" cy="240" r="12" fill="#ffd600" stroke="#f57f17" stroke-width="2"/>
+                    <text x="200" y="225" text-anchor="middle" font-size="10" font-weight="bold">AOS</text>
+                    <text x="200" y="260" text-anchor="middle" font-size="9">Acquisition</text>
+                    
+                    <circle cx="350" cy="160" r="12" fill="#ffd600" stroke="#f57f17" stroke-width="2"/>
+                    <text x="350" y="145" text-anchor="middle" font-size="10" font-weight="bold">TCA</text>
+                    <text x="350" y="180" text-anchor="middle" font-size="9">Max Elevation</text>
+                    
+                    <circle cx="500" cy="240" r="12" fill="#ffd600" stroke="#f57f17" stroke-width="2"/>
+                    <text x="500" y="225" text-anchor="middle" font-size="10" font-weight="bold">LOS</text>
+                    <text x="500" y="260" text-anchor="middle" font-size="9">Loss of Signal</text>
+                    
+                    <!-- Arrows -->
+                    <path d="M 212 240 Q 280 200 338 165" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrow3)"/>
+                    <path d="M 362 165 Q 430 200 488 240" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrow3)"/>
+                    
+                    <!-- Legend -->
+                    <rect x="50" y="400" width="600" height="80" fill="#f5f5f5" stroke="#666" stroke-width="2" rx="5"/>
+                    <text x="60" y="425" font-weight="bold">Pass Parameters:</text>
+                    <text x="60" y="445" font-size="12">• AOS (Acquisition of Signal): Satellite rises above horizon</text>
+                    <text x="60" y="460" font-size="12">• TCA (Time of Closest Approach): Maximum elevation angle</text>
+                    <text x="60" y="475" font-size="12">• LOS (Loss of Signal): Satellite sets below horizon</text>
+                    
+                    <defs>
+                        <radialGradient id="earthGrad">
+                            <stop offset="0%" style="stop-color:#66bb6a;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#1b5e20;stop-opacity:1" />
+                        </radialGradient>
+                        <marker id="arrow3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#666"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+
+            <div class="code-block">
+<span class="code-comment"># Satellite Pass Predictor using Skyfield</span>
+<span class="code-keyword">from</span> skyfield.api <span class="code-keyword">import</span> load, wgs84
+<span class="code-keyword">from</span> skyfield.api <span class="code-keyword">import</span> EarthSatellite
+<span class="code-keyword">from</span> datetime <span class="code-keyword">import</span> datetime, timedelta
+
+<span class="code-comment"># Load TLE data for ISS</span>
+stations_url = <span class="code-string">'http://celestrak.com/NORAD/elements/stations.txt'</span>
+satellites = load.<span class="code-function">tle_file</span>(stations_url)
+iss = {sat.name: sat <span class="code-keyword">for</span> sat <span class="code-keyword">in</span> satellites}[<span class="code-string">'ISS (ZARYA)'</span>]
+
+<span class="code-comment"># Observer location (example: Accra, Ghana)</span>
+observer = wgs84.<span class="code-function">latlon</span>(5.6037, -0.1870)
+
+<span class="code-comment"># Time range for predictions</span>
+ts = load.<span class="code-function">timescale</span>()
+t0 = ts.<span class="code-function">now</span>()
+t1 = ts.<span class="code-function">utc</span>(t0.utc_datetime() + timedelta(days=7))
+
+<span class="code-keyword">def</span> <span class="code-function">find_passes</span>(satellite, observer, t0, t1, min_elevation=10):
+    <span class="code-string">"""Find all passes above minimum elevation"""</span>
+    passes = []
+    
+    t, events = satellite.<span class="code-function">find_events</span>(observer, t0, t1, altitude_degrees=min_elevation)
+    
+    <span class="code-keyword">for</span> ti, event <span class="code-keyword">in</span> <span class="code-function">zip</span>(t, events):
+        <span class="code-keyword">if</span> event == 0:  <span class="code-comment"># Rise (AOS)</span>
+            aos_time = ti
+        <span class="code-keyword">elif</span> event == 1:  <span class="code-comment"># Culmination (TCA)</span>
+            difference = satellite - observer
+            topocentric = difference.<span class="code-function">at</span>(ti)
+            alt, az, distance = topocentric.<span class="code-function">altaz</span>()
+            max_elevation = alt.degrees
+            tca_time = ti
+        <span class="code-keyword">elif</span> event == 2:  <span class="code-comment"># Set (LOS)</span>
+            los_time = ti
+            duration = (los_time.utc_datetime() - aos_time.utc_datetime()).total_seconds()
+            
+            passes.<span class="code-function">append</span>({
+                <span class="code-string">'aos'</span>: aos_time.utc_datetime(),
+                <span class="code-string">'tca'</span>: tca_time.utc_datetime(),
+                <span class="code-string">'los'</span>: los_time.utc_datetime(),
+                <span class="code-string">'max_el'</span>: max_elevation,
+                <span class="code-string">'duration'</span>: duration
+            })
+    
+    <span class="code-keyword">return</span> passes
+
+<span class="code-comment"># Find and display passes</span>
+passes = <span class="code-function">find_passes</span>(iss, observer, t0, t1)
+
+<span class="code-function">print</span>(<span class="code-string">"=== ISS Pass Predictions ==="</span>)
+<span class="code-keyword">for</span> i, p <span class="code-keyword">in</span> <span class="code-function">enumerate</span>(passes, 1):
+    <span class="code-function">print</span>(<span class="code-string">f"\nPass {i}:"</span>)
+    <span class="code-function">print</span>(<span class="code-string">f"  AOS: {p['aos'].strftime('%Y-%m-%d %H:%M:%S')} UTC"</span>)
+    <span class="code-function">print</span>(<span class="code-string">f"  Max Elevation: {p['max_el']:.1f}°"</span>)
+    <span class="code-function">print</span>(<span class="code-string">f"  Duration: {p['duration']/60:.1f} minutes"</span>)
+</div>
+
+            <h2>Digital Mode Decoding</h2>
+
+            <h3>Project 5: APRS Packet Decoder</h3>
+
+            <div class="diagram-box">
+                <h4>📡 APRS Data Flow & Packet Structure</h4>
+                <svg viewBox="0 0 800 450" style="max-width: 800px;">
+                    <!-- Transmitter -->
+                    <rect x="50" y="50" width="120" height="80" fill="#2196f3" stroke="#1565c0" stroke-width="2" rx="5"/>
+                    <text x="110" y="80" text-anchor="middle" font-weight="bold" fill="white">Mobile</text>
+                    <text x="110" y="100" text-anchor="middle" font-size="12" fill="white">Transmitter</text>
+                    <circle cx="170" cy="90" r="3" fill="#ffd600"/>
+                    <path d="M 175 85 L 195 80" stroke="#ffd600" stroke-width="2"/>
+                    <path d="M 175 90 L 200 90" stroke="#ffd600" stroke-width="2"/>
+                    <path d="M 175 95 L 195 100" stroke="#ffd600" stroke-width="2"/>
+                    
+                    <!-- Receiver -->
+                    <rect x="630" y="50" width="120" height="80" fill="#4caf50" stroke="#2e7d32" stroke-width="2" rx="5"/>
+                    <text x="690" y="80" text-anchor="middle" font-weight="bold" fill="white">Receiver</text>
+                    <text x="690" y="100" text-anchor="middle" font-size="12" fill="white">+ TNC/PC</text>
+                    <circle cx="630" cy="90" r="3" fill="#ffd600"/>
+                    
+                    <!-- Audio Signal -->
+                    <path d="M 200 90 Q 300 50 400 90" stroke="#ff9800" stroke-width="3" fill="none"/>
+                    <text x="300" y="45" text-anchor="middle" fill="#ff9800" font-weight="bold">1200 Hz Audio Tones</text>
+                    <text x="300" y="60" text-anchor="middle" fill="#ff9800" font-size="11">(AFSK Modulation)</text>
+                    
+                    <!-- Packet Structure -->
+                    <rect x="50" y="200" width="700" height="220" fill="#f5f5f5" stroke="#333" stroke-width="2" rx="5"/>
+                    <text x="60" y="225" font-weight="bold" font-size="14">APRS Packet Structure:</text>
+                    
+                    <!-- Flag -->
+                    <rect x="70" y="240" width="80" height="50" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2"/>
+                    <text x="110" y="260" text-anchor="middle" fill="white" font-size="11" font-weight="bold">FLAG</text>
+                    <text x="110" y="275" text-anchor="middle" fill="white" font-size="10">0x7E</text>
+                    
+                    <!-- Address -->
+                    <rect x="160" y="240" width="120" height="50" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+                    <text x="220" y="260" text-anchor="middle" fill="white" font-size="11" font-weight="bold">ADDRESS</text>
+                    <text x="220" y="275" text-anchor="middle" fill="white" font-size="10">Callsigns</text>
+                    
+                    <!-- Control -->
+                    <rect x="290" y="240" width="70" height="50" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
+                    <text x="325" y="260" text-anchor="middle" fill="white" font-size="11" font-weight="bold">CTRL</text>
+                    <text x="325" y="275" text-anchor="middle" fill="white" font-size="10">0x03</text>
+                    
+                    <!-- PID -->
+                    <rect x="370" y="240" width="70" height="50" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
+                    <text x="405" y="260" text-anchor="middle" fill="white" font-size="11" font-weight="bold">PID</text>
+                    <text x="405" y="275" text-anchor="middle" fill="white" font-size="10">0xF0</text>
+                    
+                    <!-- Information -->
+                    <rect x="450" y="240" width="180" height="50" fill="#4caf50" stroke="#2e7d32" stroke-width="2"/>
+                    <text x="540" y="260" text-anchor="middle" fill="white" font-size="11" font-weight="bold">INFORMATION</text>
+                    <text x="540" y="275" text-anchor="middle" fill="white" font-size="10">Position, Status, etc.</text>
+                    
+                    <!-- FCS -->
+                    <rect x="640" y="240" width="80" height="50" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2"/>
+                    <text x="680" y="260" text-anchor="middle" fill="white" font-size="11" font-weight="bold">FCS</text>
+                    <text x="680" y="275" text-anchor="middle" fill="white" font-size="10">CRC</text>
+                    
+                    <!-- Example Decoded Data -->
+                    <rect x="70" y="310" width="660" height="95" fill="white" stroke="#2196f3" stroke-width="2" rx="3"/>
+                    <text x="80" y="330" font-weight="bold">Example Decoded Packet:</text>
+                    <text x="80" y="350" font-family="monospace" font-size="11">Source: W1ABC-9</text>
+                    <text x="80" y="365" font-family="monospace" font-size="11">Destination: APRS</text>
+                    <text x="80" y="380" font-family="monospace" font-size="11">Position: 42.3601°N, 71.0589°W (Boston, MA)</text>
+                    <text x="80" y="395" font-family="monospace" font-size="11">Status: "Mobile - Heading North on I-95"</text>
+                </svg>
+            </div>
+
+            <div class="code-block">
+<span class="code-comment"># Simple APRS Packet Parser</span>
+<span class="code-keyword">import</span> re
+
+<span class="code-keyword">def</span> <span class="code-function">parse_aprs_position</span>(packet):
+    <span class="code-string">"""Parse APRS position packet"""</span>
+    
+    <span class="code-comment"># Example: W1ABC-9>APRS:!4221.50N/07103.50W>Mobile</span>
+    match = re.<span class="code-function">match</span>(<span class="code-string">r'(.+?)>(.+?):(.+)'</span>, packet)
+    <span class="code-keyword">if not</span> match:
+        <span class="code-keyword">return</span> None
+    
+    source = match.<span class="code-function">group</span>(1)
+    destination = match.<span class="code-function">group</span>(2)
+    info = match.<span class="code-function">group</span>(3)
+    
+    <span class="code-comment"># Parse position (simplified)</span>
+    pos_match = re.<span class="code-function">search</span>(<span class="code-string">r'(\d{4}\.\d{2})([NS])/(\d{5}\.\d{2})([EW])'</span>, info)
+    <span class="code-keyword">if</span> pos_match:
+        lat_deg = <span class="code-function">int</span>(pos_match.<span class="code-function">group</span>(1)[:2])
+        lat_min = <span class="code-function">float</span>(pos_match.<span class="code-function">group</span>(1)[2:])
+        lat = lat_deg + lat_min / 60
+        <span class="code-keyword">if</span> pos_match.<span class="code-function">group</span>(2) == <span class="code-string">'S'</span>:
+            lat = -lat
+        
+        lon_deg = <span class="code-function">int</span>(pos_match.<span class="code-function">group</span>(3)[:3])
+        lon_min = <span class="code-function">float</span>(pos_match.<span class="code-function">group</span>(3)[3:])
+        lon = lon_deg + lon_min / 60
+        <span class="code-keyword">if</span> pos_match.<span class="code-function">group</span>(4) == <span class="code-string">'W'</span>:
+            lon = -lon
+        
+        <span class="code-keyword">return</span> {
+            <span class="code-string">'source'</span>: source,
+            <span class="code-string">'latitude'</span>: lat,
+            <span class="code-string">'longitude'</span>: lon
+        }
+    
+    <span class="code-keyword">return</span> None
+
+<span class="code-comment"># Test the parser</span>
+packet = <span class="code-string">"W1ABC-9>APRS:!4221.50N/07103.50W>Mobile"</span>
+result = <span class="code-function">parse_aprs_position</span>(packet)
+<span class="code-function">print</span>(<span class="code-string">f"Station: {result['source']}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Position: {result['latitude']:.4f}°, {result['longitude']:.4f}°"</span>)
+</div>
+
+            <h2>Web-Based Station Dashboard</h2>
+
+            <h3>Project 6: Real-Time Monitoring Interface</h3>
+
+            <div class="diagram-box">
+                <h4>🖥️ Dashboard Architecture</h4>
+                <div class="flow-diagram">
+                    <div class="flow-box">Sensors<br/>(Voltage, Current,<br/>Temperature)</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-box">Raspberry Pi<br/>(Flask Server)</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-box">Web Browser<br/>(Live Dashboard)</div>
+                </div>
+                <p style="margin-top: 20px;"><strong>Features:</strong></p>
+                <ul style="text-align: left; max-width: 600px; margin: 10px auto;">
+                    <li>Real-time power consumption graphs</li>
+                    <li>Battery state of charge (SOC) gauge</li>
+                    <li>Solar charging status indicator</li>
+                    <li>Historical data logging (24 hours)</li>
+                    <li>Alert system for low voltage</li>
+                    <li>Mobile-responsive design</li>
+                </ul>
+            </div>
+
+            <div class="code-block">
+<span class="code-comment"># Flask Web Dashboard for Station Monitoring</span>
+<span class="code-keyword">from</span> flask <span class="code-keyword">import</span> Flask, render_template, jsonify
+<span class="code-keyword">import</span> board
+<span class="code-keyword">import</span> busio
+<span class="code-keyword">import</span> adafruit_ads1x15.ads1115 <span class="code-keyword">as</span> ADS
+<span class="code-keyword">from</span> adafruit_ads1x15.analog_in <span class="code-keyword">import</span> AnalogIn
+
+app = <span class="code-function">Flask</span>(__name__)
+
+<span class="code-comment"># Initialize ADC for voltage/current sensing</span>
+i2c = busio.<span class="code-function">I2C</span>(board.SCL, board.SDA)
+ads = ADS.<span class="code-function">ADS1115</span>(i2c)
+chan_voltage = <span class="code-function">AnalogIn</span>(ads, ADS.P0)
+chan_current = <span class="code-function">AnalogIn</span>(ads, ADS.P1)
+
+<span class="code-keyword">def</span> <span class="code-function">read_sensors</span>():
+    <span class="code-comment"># Read and scale voltage (0-20V range)</span>
+    voltage = chan_voltage.voltage * 5.0
+    
+    <span class="code-comment"># Read and scale current (0-20A range via shunt)</span>
+    current = chan_current.voltage * 10.0
+    
+    power = voltage * current
+    
+    <span class="code-keyword">return</span> {
+        <span class="code-string">'voltage'</span>: <span class="code-function">round</span>(voltage, 2),
+        <span class="code-string">'current'</span>: <span class="code-function">round</span>(current, 2),
+        <span class="code-string">'power'</span>: <span class="code-function">round</span>(power, 1)
+    }
+
+<span class="code-comment">@app.route('/')</span>
+<span class="code-keyword">def</span> <span class="code-function">index</span>():
+    <span class="code-keyword">return</span> <span class="code-function">render_template</span>(<span class="code-string">'dashboard.html'</span>)
+
+<span class="code-comment">@app.route('/api/data')</span>
+<span class="code-keyword">def</span> <span class="code-function">get_data</span>():
+    <span class="code-keyword">return</span> <span class="code-function">jsonify</span>(<span class="code-function">read_sensors</span>())
+
+<span class="code-keyword">if</span> __name__ == <span class="code-string">'__main__'</span>:
+    app.<span class="code-function">run</span>(host=<span class="code-string">'0.0.0.0'</span>, port=5000, debug=True)
+</div>
+
+            <h2>Machine Learning for Propagation</h2>
+
+            <div class="highlight-box">
+                <h3>🤖 AI-Powered Band Predictions</h3>
+                <p>Use machine learning to predict optimal operating times based on historical contact data.</p>
+                
+                <h4>Data Collection Requirements:</h4>
+                <table>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Description</th>
+                        <th>Source</th>
+                    </tr>
+                    <tr>
+                        <td>Hour of Day</td>
+                        <td>0-23 UTC time</td>
+                        <td>System clock</td>
+                    </tr>
+                    <tr>
+                        <td>Solar Flux</td>
+                        <td>Daily SFI value</td>
+                        <td>NOAA Space Weather</td>
+                    </tr>
+                    <tr>
+                        <td>K-Index</td>
+                        <td>Geomagnetic activity</td>
+                        <td>NOAA Space Weather</td>
+                    </tr>
+                    <tr>
+                        <td>Frequency</td>
+                        <td>Operating frequency (MHz)</td>
+                        <td>Radio CAT</td>
+                    </tr>
+                    <tr>
+                        <td>Distance</td>
+                        <td>Miles to contact</td>
+                        <td>Grid square calculation</td>
+                    </tr>
+                    <tr>
+                        <td>Success</td>
+                        <td>Contact made (yes/no)</td>
+                        <td>Logger output</td>
+                    </tr>
+                </table>
+
+                <h4>Model Training Process:</h4>
+                <ol>
+                    <li>Collect 3+ months of contact data (minimum 500 attempts)</li>
+                    <li>Clean and normalize data</li>
+                    <li>Split into training (80%) and testing (20%) sets</li>
+                    <li>Train Random Forest or Neural Network model</li>
+                    <li>Validate accuracy on test set (target: 70%+ accuracy)</li>
+                    <li>Deploy model for real-time predictions</li>
+                </ol>
+            </div>
+
+            <div class="code-block">
+<span class="code-comment"># Machine Learning Propagation Predictor</span>
+<span class="code-keyword">import</span> pandas <span class="code-keyword">as</span> pd
+<span class="code-keyword">from</span> sklearn.ensemble <span class="code-keyword">import</span> RandomForestClassifier
+<span class="code-keyword">from</span> sklearn.model_selection <span class="code-keyword">import</span> train_test_split
+<span class="code-keyword">from</span> sklearn.metrics <span class="code-keyword">import</span> accuracy_score
+
+<span class="code-comment"># Load historical contact data</span>
+data = pd.<span class="code-function">read_csv</span>(<span class="code-string">'contact_log.csv'</span>)
+
+<span class="code-comment"># Prepare features</span>
+features = [<span class="code-string">'hour'</span>, <span class="code-string">'solar_flux'</span>, <span class="code-string">'k_index'</span>, <span class="code-string">'frequency'</span>, <span class="code-string">'distance'</span>]
+X = data[features]
+y = data[<span class="code-string">'success'</span>]  <span class="code-comment"># 1 = contact made, 0 = failed</span>
+
+<span class="code-comment"># Split data</span>
+X_train, X_test, y_train, y_test = <span class="code-function">train_test_split</span>(X, y, test_size=0.2)
+
+<span class="code-comment"># Train model</span>
+model = <span class="code-function">RandomForestClassifier</span>(n_estimators=100, random_state=42)
+model.<span class="code-function">fit</span>(X_train, y_train)
+
+<span class="code-comment"># Evaluate</span>
+predictions = model.<span class="code-function">predict</span>(X_test)
+accuracy = <span class="code-function">accuracy_score</span>(y_test, predictions)
+<span class="code-function">print</span>(<span class="code-string">f"Model Accuracy: {accuracy*100:.1f}%"</span>)
+
+<span class="code-comment"># Make prediction for current conditions</span>
+<span class="code-keyword">def</span> <span class="code-function">predict_success</span>(hour, solar_flux, k_index, freq, distance):
+    input_data = pd.<span class="code-function">DataFrame</span>([[hour, solar_flux, k_index, freq, distance]], 
+                               columns=features)
+    probability = model.<span class="code-function">predict_proba</span>(input_data)[0][1]
+    <span class="code-keyword">return</span> probability
+
+<span class="code-comment"># Example: Predict 20m contact at 1400 UTC</span>
+prob = <span class="code-function">predict_success</span>(hour=14, solar_flux=120, k_index=2, 
+                         freq=14.2, distance=3000)
+<span class="code-function">print</span>(<span class="code-string">f"Success Probability: {prob*100:.1f}%"</span>)
+</div>
+
+            <h2>Advanced Projects</h2>
+
+            <h3>Project 7: Automated CW Decoder</h3>
+
+            <div class="success-box">
+                <h4>🔊 Morse Code Recognition System</h4>
+                <p>Build software that decodes CW (Morse code) from audio input in real-time.</p>
+                
+                <h4>Algorithm Overview:</h4>
+                <ol>
+                    <li>Capture audio from radio's speaker or line-out</li>
+                    <li>Apply bandpass filter (700-900 Hz for CW tone)</li>
+                    <li>Detect tone on/off transitions (envelope detection)</li>
+                    <li>Measure timing of dots (dits) and dashes (dahs)</li>
+                    <li>Decode character based on timing ratios</li>
+                    <li>Display decoded text in real-time</li>
+                </ol>
+
+                <h4>Timing Relationships:</h4>
+                <ul>
+                    <li><strong>Dot duration:</strong> 1 unit (reference)</li>
+                    <li><strong>Dash duration:</strong> 3 units</li>
+                    <li><strong>Intra-character space:</strong> 1 unit</li>
+                    <li><strong>Character space:</strong> 3 units</li>
+                    <li><strong>Word space:</strong> 7 units</li>
+                </ul>
+            </div>
+
+            <div class="code-block">
+<span class="code-comment"># CW Morse Code Decoder (simplified)</span>
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+<span class="code-keyword">import</span> pyaudio
+
+<span class="code-comment"># Morse code dictionary</span>
+MORSE_CODE = {
+    <span class="code-string">'.-'</span>: <span class="code-string">'A'</span>, <span class="code-string">'-...'</span>: <span class="code-string">'B'</span>, <span class="code-string">'-.-.'</span>: <span class="code-string">'C'</span>, <span class="code-string">'-..'</span>: <span class="code-string">'D'</span>, <span class="code-string">'.'</span>: <span class="code-string">'E'</span>,
+    <span class="code-string">'..-.'</span>: <span class="code-string">'F'</span>, <span class="code-string">'--.'</span>: <span class="code-string">'G'</span>, <span class="code-string">'....'</span>: <span class="code-string">'H'</span>, <span class="code-string">'..'</span>: <span class="code-string">'I'</span>, <span class="code-string">'.---'</span>: <span class="code-string">'J'</span>,
+    <span class="code-string">'-.-'</span>: <span class="code-string">'K'</span>, <span class="code-string">'.-..'</span>: <span class="code-string">'L'</span>, <span class="code-string">'--'</span>: <span class="code-string">'M'</span>, <span class="code-string">'-.'</span>: <span class="code-string">'N'</span>, <span class="code-string">'---'</span>: <span class="code-string">'O'</span>,
+    <span class="code-string">'.--.'</span>: <span class="code-string">'P'</span>, <span class="code-string">'--.-'</span>: <span class="code-string">'Q'</span>, <span class="code-string">'.-.'</span>: <span class="code-string">'R'</span>, <span class="code-string">'...'</span>: <span class="code-string">'S'</span>, <span class="code-string">'-'</span>: <span class="code-string">'T'</span>,
+    <span class="code-string">'..-'</span>: <span class="code-string">'U'</span>, <span class="code-string">'...-'</span>: <span class="code-string">'V'</span>, <span class="code-string">'.--'</span>: <span class="code-string">'W'</span>, <span class="code-string">'-..-'</span>: <span class="code-string">'X'</span>, <span class="code-string">'-.--'</span>: <span class="code-string">'Y'</span>, <span class="code-string">'--..'</span>: <span class="code-string">'Z'</span>,
+    <span class="code-string">'.----'</span>: <span class="code-string">'1'</span>, <span class="code-string">'..---'</span>: <span class="code-string">'2'</span>, <span class="code-string">'...--'</span>: <span class="code-string">'3'</span>, <span class="code-string">'....-'</span>: <span class="code-string">'4'</span>, <span class="code-string">'.....'</span>: <span class="code-string">'5'</span>,
+    <span class="code-string">'-....'</span>: <span class="code-string">'6'</span>, <span class="code-string">'--...'</span>: <span class="code-string">'7'</span>, <span class="code-string">'---..'</span>: <span class="code-string">'8'</span>, <span class="code-string">'----.'</span>: <span class="code-string">'9'</span>, <span class="code-string">'-----'</span>: <span class="code-string">'0'</span>
+}
+
+<span class="code-keyword">def</span> <span class="code-function">decode_morse</span>(pattern):
+    <span class="code-string">"""Decode a dit/dah pattern to a character"""</span>
+    <span class="code-keyword">return</span> MORSE_CODE.<span class="code-function">get</span>(pattern, <span class="code-string">'?'</span>)
+
+<span class="code-keyword">def</span> <span class="code-function">detect_tone</span>(audio_chunk, threshold=0.1):
+    <span class="code-string">"""Simple envelope detection"""</span>
+    <span class="code-keyword">return</span> np.<span class="code-function">abs</span>(audio_chunk).<span class="code-function">mean</span>() > threshold
+
+<span class="code-comment"># Main decoder loop (conceptual)</span>
+<span class="code-keyword">def</span> <span class="code-function">cw_decoder</span>():
+    current_pattern = <span class="code-string">""</span>
+    decoded_text = <span class="code-string">""</span>
+    
+    <span class="code-comment"># In real implementation, process audio stream</span>
+    <span class="code-comment"># Measure timing, classify as dit/dah</span>
+    <span class="code-comment"># Build pattern and decode when complete</span>
+    
+    <span class="code-function">print</span>(<span class="code-string">"CW Decoder Ready..."</span>)
+    <span class="code-comment"># Audio processing loop would go here</span>
+</div>
+
+            <h3>Project 8: Grid Square Calculator & Mapper</h3>
+
+            <div class="diagram-box">
+                <h4>🌍 Maidenhead Locator System</h4>
+                <svg viewBox="0 0 700 400" style="max-width: 700px;">
+                    <!-- World Map Outline -->
+                    <rect x="50" y="50" width="600" height="300" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+                    
+                    <!-- Grid Lines -->
+                    <line x1="50" y1="200" x2="650" y2="200" stroke="#2196f3" stroke-width="1" stroke-dasharray="3,3"/>
+                    <line x1="350" y1="50" x2="350" y2="350" stroke="#2196f3" stroke-width="1" stroke-dasharray="3,3"/>
+                    
+                    <!-- Example Grid Squares -->
+                    <rect x="200" y="150" width="100" height="100" fill="rgba(76, 175, 80, 0.3)" stroke="#4caf50" stroke-width="3"/>
+                    <text x="250" y="205" text-anchor="middle" font-weight="bold" font-size="18" fill="#2e7d32">FN42</text>
+                    
+                    <rect x="400" y="100" width="100" height="100" fill="rgba(255, 152, 0, 0.3)" stroke="#ff9800" stroke-width="3"/>
+                    <text x="450" y="155" text-anchor="middle" font-weight="bold" font-size="18" fill="#f57c00">IO91</text>
+                    
+                    <!-- Distance Line -->
+                    <line x1="250" y1="200" x2="450" y2="150" stroke="#f44336" stroke-width="3" marker-end="url(#arrow4)"/>
+                    <text x="350" y="165" text-anchor="middle" fill="#f44336" font-weight="bold">~1,200 km</text>
+                    
+                    <!-- Labels -->
+                    <text x="50" y="40" font-weight="bold" font-size="14">180°W</text>
+                    <text x="620" y="40" font-weight="bold" font-size="14">180°E</text>
+                    <text x="30" y="60" font-weight="bold" font-size="14">90°N</text>
+                    <text x="30" y="350" font-weight="bold" font-size="14">90°S</text>
+                    
+                    <!-- Info Box -->
+                    <rect x="50" y="360" width="600" height="30" fill="#f5f5f5" stroke="#666" stroke-width="1"/>
+                    <text x="60" y="380" font-size="12"><tspan font-weight="bold">Grid Format:</tspan> AA00aa (Field-Square-Subsquare) • Example: FN42db</text>
+                    
+                    <defs>
+                        <marker id="arrow4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#f44336"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+
+            <div class="code-block">
+<span class="code-comment"># Grid Square Calculator</span>
+<span class="code-keyword">import</span> math
+
+<span class="code-keyword">def</span> <span class="code-function">latlon_to_grid</span>(lat, lon):
+    <span class="code-string">"""Convert latitude/longitude to Maidenhead grid square"""</span>
+    
+    <span class="code-comment"># Adjust longitude to 0-360 range</span>
+    lon = lon + 180
+    lat = lat + 90
+    
+    <span class="code-comment"># Calculate field (AA)</span>
+    field_lon = <span class="code-function">chr</span>(<span class="code-function">int</span>(lon / 20) + <span class="code-function">ord</span>(<span class="code-string">'A'</span>))
+    field_lat = <span class="code-function">chr</span>(<span class="code-function">int</span>(lat / 10) + <span class="code-function">ord</span>(<span class="code-string">'A'</span>))
+    
+    <span class="code-comment"># Calculate square (00)</span>
+    square_lon = <span class="code-function">str</span>(<span class="code-function">int</span>((lon % 20) / 2))
+    square_lat = <span class="code-function">str</span>(<span class="code-function">int</span>((lat % 10)))
+    
+    <span class="code-comment"># Calculate subsquare (aa)</span>
+    subsq_lon = <span class="code-function">chr</span>(<span class="code-function">int</span>((lon % 2) * 12) + <span class="code-function">ord</span>(<span class="code-string">'a'</span>))
+    subsq_lat = <span class="code-function">chr</span>(<span class="code-function">int</span>((lat % 1) * 24) + <span class="code-function">ord</span>(<span class="code-string">'a'</span>))
+    
+    <span class="code-keyword">return</span> field_lon + field_lat + square_lon + square_lat + subsq_lon + subsq_lat
+
+<span class="code-keyword">def</span> <span class="code-function">grid_to_latlon</span>(grid):
+    <span class="code-string">"""Convert grid square to center latitude/longitude"""</span>
+    
+    grid = grid.<span class="code-function">upper</span>()
+    
+    <span class="code-comment"># Field</span>
+    lon = (<span class="code-function">ord</span>(grid[0]) - <span class="code-function">ord</span>(<span class="code-string">'A'</span>)) * 20
+    lat = (<span class="code-function">ord</span>(grid[1]) - <span class="code-function">ord</span>(<span class="code-string">'A'</span>)) * 10
+    
+    <span class="code-comment"># Square</span>
+    lon += <span class="code-function">int</span>(grid[2]) * 2
+    lat += <span class="code-function">int</span>(grid[3])
+    
+    <span class="code-comment"># Subsquare (if provided)</span>
+    <span class="code-keyword">if</span> <span class="code-function">len</span>(grid) >= 6:
+        lon += (<span class="code-function">ord</span>(grid[4]) - <span class="code-function">ord</span>(<span class="code-string">'A'</span>)) / 12
+        lat += (<span class="code-function">ord</span>(grid[5]) - <span class="code-function">ord</span>(<span class="code-string">'A'</span>)) / 24
+    
+    <span class="code-comment"># Center of square</span>
+    lon += 1
+    lat += 0.5
+    
+    <span class="code-comment"># Convert back to -180 to 180, -90 to 90</span>
+    <span class="code-keyword">return</span> lat - 90, lon - 180
+
+<span class="code-keyword">def</span> <span class="code-function">distance_between_grids</span>(grid1, grid2):
+    <span class="code-string">"""Calculate great circle distance between two grid squares"""</span>
+    
+    lat1, lon1 = <span class="code-function">grid_to_latlon</span>(grid1)
+    lat2, lon2 = <span class="code-function">grid_to_latlon</span>(grid2)
+    
+    <span class="code-comment"># Haversine formula</span>
+    R = 6371  <span class="code-comment"># Earth radius in km</span>
+    
+    dlat = math.<span class="code-function">radians</span>(lat2 - lat1)
+    dlon = math.<span class="code-function">radians</span>(lon2 - lon1)
+    
+    a = math.<span class="code-function">sin</span>(dlat/2)**2 + math.<span class="code-function">cos</span>(math.<span class="code-function">radians</span>(lat1)) * \
+        math.<span class="code-function">cos</span>(math.<span class="code-function">radians</span>(lat2)) * math.<span class="code-function">sin</span>(dlon/2)**2
+    
+    c = 2 * math.<span class="code-function">atan2</span>(math.<span class="code-function">sqrt</span>(a), math.<span class="code-function">sqrt</span>(1-a))
+    
+    <span class="code-keyword">return</span> R * c
+
+<span class="code-comment"># Example usage</span>
+my_grid = <span class="code-function">latlon_to_grid</span>(42.3601, -71.0589)  <span class="code-comment"># Boston</span>
+<span class="code-function">print</span>(<span class="code-string">f"Boston grid: {my_grid}"</span>)
+
+their_grid = <span class="code-string">"IO91"</span>  <span class="code-comment"># London area</span>
+distance = <span class="code-function">distance_between_grids</span>(my_grid, their_grid)
+<span class="code-function">print</span>(<span class="code-string">f"Distance to {their_grid}: {distance:.0f} km"</span>)
+</div>
+
+            <h2>Programming Best Practices</h2>
+
+            <div class="info-box">
+                <h3>📝 Code Quality Guidelines</h3>
+                
+                <h4>1. Documentation</h4>
+                <ul>
+                    <li>Add comments explaining complex logic</li>
+                    <li>Include docstrings for all functions</li>
+                    <li>Maintain a README with setup instructions</li>
+                    <li>Document hardware connections and pin assignments</li>
+                </ul>
+
+                <h4>2. Error Handling</h4>
+                <ul>
+                    <li>Always use try/except for serial communications</li>
+                    <li>Validate user input before processing</li>
+                    <li>Provide helpful error messages</li>
+                    <li>Log errors to file for debugging</li>
+                </ul>
+
+                <h4>3. Testing</h4>
+                <ul>
+                    <li>Test with simulated data before live radio</li>
+                    <li>Create unit tests for calculation functions</li>
+                    <li>Verify CAT commands with radio manual</li>
+                    <li>Test edge cases (invalid callsigns, out-of-range values)</li>
+                </ul>
+
+                <h4>4. Version Control</h4>
+                <ul>
+                    <li>Use Git to track code changes</li>
+                    <li>Commit frequently with descriptive messages</li>
+                    <li>Create branches for experimental features</li>
+                    <li>Share projects on GitHub for collaboration</li>
+                </ul>
+            </div>
+
+            <h2>Student Project Requirements</h2>
+
+            <div class="highlight-box">
+                <h3>🎯 Final Coding Project Guidelines</h3>
+                
+                <p>Students must complete ONE major programming project demonstrating learned skills.</p>
+
+                <h4>Project Categories:</h4>
+                <table>
+                    <tr>
+                        <th>Category</th>
+                        <th>Example Projects</th>
+                        <th>Difficulty</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Radio Control</strong></td>
+                        <td>Memory channel manager, band scanner, frequency scheduler</td>
+                        <td>Intermediate</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Digital Modes</strong></td>
+                        <td>APRS tracker, FT8 logger, PSK31 decoder</td>
+                        <td>Advanced</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Satellite Ops</strong></td>
+                        <td>Pass predictor, Doppler compensator, antenna tracker</td>
+                        <td>Advanced</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Station Monitoring</strong></td>
+                        <td>Power dashboard, SWR logger, weather station</td>
+                        <td>Beginner</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Contest Tools</strong></td>
+                        <td>Logger with scoring, multiplier tracker, duplicate checker</td>
+                        <td>Intermediate</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Arduino/Hardware</strong></td>
+                        <td>Antenna switch, CW keyer, rotator controller</td>
+                        <td>Intermediate</td>
+                    </tr>
+                </table>
+
+                <h4>Minimum Requirements:</h4>
+                <ul>
+                    <li>✅ 200+ lines of documented code</li>
+                    <li>✅ User interface (CLI, web, or GUI)</li>
+                    <li>✅ Error handling and input validation</li>
+                    <li>✅ Data storage (CSV, JSON, or database)</li>
+                    <li>✅ GitHub repository with README</li>
+                    <li>✅ 5-minute video demonstration</li>
+                    <li>✅ Written documentation (setup & usage)</li>
+                </ul>
+
+                <h4>Grading Rubric:</h4>
+                <ul>
+                    <li><strong>Functionality (40%):</strong> Does it work as intended?</li>
+                    <li><strong>Code Quality (25%):</strong> Clean, documented, organized</li>
+                    <li><strong>User Experience (20%):</strong> Easy to use, clear feedback</li>
+                    <li><strong>Documentation (10%):</strong> README, comments, demo video</li>
+                    <li><strong>Creativity (5%):</strong> Innovative features or approach</li>
+                </ul>
+            </div>
+
+            <h2>Programming Resources</h2>
+
+            <div class="success-box">
+                <h3>📚 Learning Resources & Libraries</h3>
+                
+                <h4>Recommended Python Libraries:</h4>
+                <ul>
+                    <li><strong>pyserial</strong> - Serial port communication for CAT control</li>
+                    <li><strong>hamlib</strong> - Universal radio control library</li>
+                    <li><strong>skyfield</strong> - Satellite tracking and orbital calculations</li>
+                    <li><strong>maidenhead</strong> - Grid square conversions</li>
+                    <li><strong>flask</strong> - Web-based dashboards and APIs</li>
+                    <li><strong>matplotlib</strong> - Data visualization and plotting</li>
+                    <li><strong>pandas</strong> - Data analysis and CSV handling</li>
+                    <li><strong>numpy</strong> - Numerical computations and signal processing</li>
+                </ul>
+
+                <h4>Online Tutorials:</h4>
+                <ul>
+                    <li>Python.org - Official Python tutorials</li>
+                    <li>Arduino.cc - Arduino project examples</li>
+                    <li>GitHub - Search for "amateur radio" projects</li>
+                    <li>YouTube - "Ham Radio Coding" tutorials</li>
+                </ul>
+
+                <h4>Development Tools:</h4>
+                <ul>
+                    <li><strong>VS Code</strong> - Professional code editor with extensions</li>
+                    <li><strong>Thonny</strong> - Beginner-friendly Python IDE</li>
+                    <li><strong>Arduino IDE</strong> - For microcontroller programming</li>
+                    <li><strong>Git/GitHub</strong> - Version control and collaboration</li>
+                </ul>
+            </div>
+
+            <h2>Chapter Summary</h2>
+
+            <ul>
+                <li>✅ Python enables powerful radio automation and control</li>
+                <li>✅ CAT protocol provides computer-radio communication</li>
+                <li>✅ Arduino/microcontrollers interface with RF hardware</li>
+                <li>✅ Satellite tracking requires orbital mechanics calculations</li>
+                <li>✅ Digital mode decoding uses signal processing techniques</li>
+                <li>✅ Web dashboards provide real-time station monitoring</li>
+                <li>✅ Machine learning can predict propagation conditions</li>
+                <li>✅ Grid square math enables distance calculations</li>
+                <li>✅ Proper documentation and testing ensure reliable code</li>
+                <li>✅ Open-source libraries accelerate development</li>
+            </ul>
+
+            <div class="info-box">
+                <h4>🎓 Key Takeaway</h4>
+                <p>Programming transforms amateur radio from a passive hobby into an active engineering discipline. The ability to write code unlocks automation, data analysis, and custom tools that enhance every aspect of RadioSport operations. Modern radio operators are as comfortable with Python and Arduino as they are with antennas and transceivers.</p>
+            </div>
+
+            <div class="diagram-box">
+                <h4>Next: Chapter 10 - Competition Strategies</h4>
+                <p>Learn tactics and techniques for excelling in RadioSport championships, including operating skills, time management, and team coordination.</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>RadioSport STEM Education Program</strong></p>
+            <p>Chapter 9: Programming & Coding for Radio</p>
+            <p>Version 3.0 • 2025 Edition • Enhanced with Diagrams</p>
+        </div>
+    </div>
+</body>
+</html>
+                    

@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 11: Integrated Projects - RadioSport Handbook</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #2c3e50; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .nav { background: #1e3c72; color: white; padding: 15px 30px; display: flex; justify-content: space-between; }
+        .nav a { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 40px; text-align: center; }
+        .header h1 { font-size: 42px; margin-bottom: 10px; }
+        .chapter-num { font-size: 18px; opacity: 0.9; }
+        .content { padding: 40px; }
+        h2 { color: #1e3c72; font-size: 32px; margin: 40px 0 20px 0; padding-bottom: 10px; border-bottom: 3px solid #667eea; }
+        h3 { color: #2a5298; font-size: 24px; margin: 30px 0 15px 0; }
+        h4 { color: #34495e; font-size: 20px; margin: 20px 0 10px 0; }
+        p { margin-bottom: 15px; text-align: justify; }
+        .info-box, .success-box, .highlight-box, .project-box { padding: 25px; margin: 25px 0; border-radius: 5px; border-left: 5px solid; }
+        .info-box { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left-color: #2196f3; }
+        .success-box { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; }
+        .highlight-box { background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); border-left-color: #9c27b0; }
+        .project-box { background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left-color: #ff9800; }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        ul, ol { margin: 20px 0 20px 40px; }
+        li { margin-bottom: 10px; }
+        .footer { background: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+        
+        .diagram-container { background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 25px; margin: 25px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .diagram-title { text-align: center; font-weight: bold; color: #1e3c72; margin-bottom: 20px; font-size: 18px; padding: 10px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-radius: 5px; }
+        svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+        .legend { background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-top: 15px; border-radius: 5px; font-size: 13px; }
+        .legend-item { display: inline-block; margin-right: 20px; margin-bottom: 8px; }
+        .legend-line { display: inline-block; width: 30px; height: 3px; margin-right: 8px; vertical-align: middle; }
+        .diagram-note { background: #fffde7; border-left: 4px solid #fbc02d; padding: 12px; margin: 15px 0; font-size: 14px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="radiosport_ch10.html">← Chapter 10</a>
+            <span>Chapter 11 of 14</span>
+            <a href="radiosport_ch12.html">Chapter 12 →</a>
+        </div>
+        
+        <div class="header">
+            <div class="chapter-num">CHAPTER 11</div>
+            <h1>🔧 Integrated Hands-On Projects</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong>Combine all RadioSport technologies—radio, solar, satellites, drones, AI, and coding—into complete working systems. These capstone projects demonstrate real-world engineering skills and prepare students for competitions.</strong></p>
+
+            <h2>Project 1: Complete Solar Field Station</h2>
+
+            <div class="project-box">
+                <h3>🔋 Off-Grid Communications Platform</h3>
+                <p><strong>Objective:</strong> Build fully solar-powered VHF/UHF station for 8+ hour field operations</p>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">Solar Field Station - Complete Wiring Diagram</div>
+                    <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#2196f3" />
+                            </marker>
+                        </defs>
+                        
+                        <!-- Solar Panel -->
+                        <rect x="50" y="40" width="140" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="120" y="70" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">Solar Panel</text>
+                        <text x="120" y="88" style="fill:#666; font-size:12px; text-anchor:middle;">100W / 18V</text>
+                        <text x="120" y="105" style="fill:#666; font-size:12px; text-anchor:middle;">5.5A Max</text>
+                        <circle cx="190" cy="100" r="4" fill="#d32f2f"/>
+                        <text x="200" y="103" style="fill:#d32f2f; font-size:11px; font-weight:bold;">+</text>
+                        <circle cx="190" cy="120" r="4" fill="#000"/>
+                        <text x="200" y="123" style="fill:#000; font-size:11px; font-weight:bold;">-</text>
+                        
+                        <!-- Charge Controller -->
+                        <rect x="300" y="40" width="160" height="110" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="380" y="70" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">MPPT Charge</text>
+                        <text x="380" y="88" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">Controller</text>
+                        <text x="380" y="108" style="fill:#666; font-size:12px; text-anchor:middle;">20A / 12V Output</text>
+                        <text x="380" y="125" style="fill:#666; font-size:12px; text-anchor:middle;">Voltage Regulation</text>
+                        
+                        <!-- Battery -->
+                        <rect x="550" y="40" width="160" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="630" y="70" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">LiFePO4 Battery</text>
+                        <text x="630" y="88" style="fill:#666; font-size:12px; text-anchor:middle;">35Ah @ 12.8V</text>
+                        <text x="630" y="105" style="fill:#666; font-size:12px; text-anchor:middle;">448Wh Capacity</text>
+                        <circle cx="550" cy="80" r="4" fill="#d32f2f"/>
+                        <text x="540" y="83" style="fill:#d32f2f; font-size:11px; font-weight:bold; text-anchor:end;">+</text>
+                        <circle cx="550" cy="100" r="4" fill="#000"/>
+                        <text x="540" y="103" style="fill:#000; font-size:11px; font-weight:bold; text-anchor:end;">-</text>
+                        
+                        <!-- Power Distribution -->
+                        <rect x="300" y="220" width="160" height="70" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="380" y="245" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">Powerpole</text>
+                        <text x="380" y="263" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">Distribution</text>
+                        <text x="380" y="280" style="fill:#666; font-size:12px; text-anchor:middle;">30A Fused</text>
+                        
+                        <!-- Radio -->
+                        <rect x="80" y="370" width="140" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="150" y="400" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">VHF/UHF Radio</text>
+                        <text x="150" y="418" style="fill:#666; font-size:12px; text-anchor:middle;">50W Dual-Band</text>
+                        <text x="150" y="435" style="fill:#666; font-size:12px; text-anchor:middle;">13.8V @ 10A TX</text>
+                        
+                        <!-- Raspberry Pi -->
+                        <rect x="280" y="370" width="140" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="350" y="400" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">Raspberry Pi</text>
+                        <text x="350" y="418" style="fill:#666; font-size:12px; text-anchor:middle;">Power Monitor</text>
+                        <text x="350" y="435" style="fill:#666; font-size:12px; text-anchor:middle;">5V @ 0.7A</text>
+                        
+                        <!-- Antenna -->
+                        <rect x="480" y="370" width="140" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="550" y="400" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">Antenna</text>
+                        <text x="550" y="418" style="fill:#666; font-size:12px; text-anchor:middle;">Dual-Band Vertical</text>
+                        <text x="550" y="435" style="fill:#666; font-size:12px; text-anchor:middle;">2m / 70cm</text>
+                        
+                        <!-- Positive Wiring -->
+                        <path d="M 190,110 L 300,95" stroke="#d32f2f" stroke-width="3" fill="none"/>
+                        <text x="235" y="95" style="fill:#d32f2f; font-size:11px; font-weight:bold;">+18V</text>
+                        
+                        <path d="M 460,80 L 550,80" stroke="#d32f2f" stroke-width="3" fill="none"/>
+                        <text x="495" y="72" style="fill:#d32f2f; font-size:11px; font-weight:bold;">+12.8V</text>
+                        
+                        <path d="M 630,130 L 630,220 L 460,220 L 460,235" stroke="#d32f2f" stroke-width="3" fill="none"/>
+                        
+                        <!-- Negative Wiring -->
+                        <path d="M 190,120 L 240,120 L 240,140 L 300,140" stroke="#000" stroke-width="3" fill="none"/>
+                        <path d="M 460,100 L 550,100" stroke="#000" stroke-width="3" fill="none"/>
+                        <path d="M 610,130 L 610,270 L 300,270" stroke="#000" stroke-width="3" fill="none"/>
+                        
+                        <!-- Distribution to Loads -->
+                        <path d="M 300,255 L 220,255 L 220,370" stroke="#d32f2f" stroke-width="3" fill="none"/>
+                        <path d="M 380,290 L 380,370" stroke="#d32f2f" stroke-width="3" fill="none"/>
+                        
+                        <!-- RF Connection -->
+                        <path d="M 220,415 L 480,415" stroke="#ff9800" stroke-width="2" fill="none" stroke-dasharray="8,4"/>
+                        <text x="335" y="408" style="fill:#ff6f00; font-size:11px;">Coax (50Ω)</text>
+                        
+                        <!-- Data Connection -->
+                        <path d="M 350,370 L 350,320 L 380,320 L 380,150" stroke="#4caf50" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+                        <text x="330" y="330" style="fill:#2e7d32; font-size:11px; transform:rotate(-90deg); transform-origin:330px 330px;">USB</text>
+                    </svg>
+                    
+                    <div class="legend">
+                        <strong>Legend:</strong>
+                        <div class="legend-item"><span class="legend-line" style="background:#d32f2f;"></span> Positive Power (+)</div>
+                        <div class="legend-item"><span class="legend-line" style="background:#000;"></span> Negative/Ground (-)</div>
+                        <div class="legend-item"><span class="legend-line" style="background:#ff9800; height:2px;"></span> RF Signal</div>
+                        <div class="legend-item"><span class="legend-line" style="background:#4caf50; height:2px; border-top:2px dashed #4caf50;"></span> Data/USB</div>
+                    </div>
+                    
+                    <div class="diagram-note">
+                        <strong>⚠️ Safety:</strong> Use 30A fuses between battery and distribution. Never reverse polarity. Verify all connections before powering on.
+                    </div>
+                </div>
+
+                <h4>System Components:</h4>
+                <table>
+                    <tr><th>Component</th><th>Specification</th><th>Cost (USD)</th></tr>
+                    <tr><td>Solar Panel</td><td>100W monocrystalline</td><td>$80</td></tr>
+                    <tr><td>Battery</td><td>35Ah LiFePO4 with BMS</td><td>$180</td></tr>
+                    <tr><td>Charge Controller</td><td>20A MPPT</td><td>$50</td></tr>
+                    <tr><td>VHF/UHF Radio</td><td>Dual-band 50W mobile</td><td>$180</td></tr>
+                    <tr><td>Antenna</td><td>Dual-band vertical + coax</td><td>$40</td></tr>
+                    <tr><td>Monitoring System</td><td>Raspberry Pi + sensors</td><td>$60</td></tr>
+                    <tr><td>Enclosure & Wiring</td><td>Weather-proof box, cables</td><td>$50</td></tr>
+                    <tr style="background:#4caf50; color:white; font-weight:bold;">
+                        <td colspan="2">TOTAL PROJECT COST</td><td>$640</td>
+                    </tr>
+                </table>
+
+                <h4>Assembly Steps:</h4>
+                <ol>
+                    <li><strong>Power System:</strong>
+                        <ul>
+                            <li>Mount solar panel on tilting frame (optimized for latitude)</li>
+                            <li>Install charge controller in weatherproof enclosure</li>
+                            <li>Connect battery with appropriate fusing (30A)</li>
+                            <li>Wire Anderson Powerpole distribution panel</li>
+                        </ul>
+                    </li>
+                    <li><strong>Radio Installation:</strong>
+                        <ul>
+                            <li>Mount transceiver in equipment box</li>
+                            <li>Connect 12V power with inline fuse</li>
+                            <li>Install antenna on 6m mast with guy wires</li>
+                            <li>Test SWR on both 2m and 70cm bands</li>
+                        </ul>
+                    </li>
+                    <li><strong>Monitoring System:</strong>
+                        <ul>
+                            <li>Raspberry Pi with voltage/current sensors</li>
+                            <li>Real-time power dashboard via web interface</li>
+                            <li>Data logging to SD card (CSV format)</li>
+                            <li>Solar panel angle optimization display</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <div class="diagram-container">
+                    <div class="diagram-title">Energy Flow & Runtime Calculation</div>
+                    <svg viewBox="0 0 800 350" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="energyArrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#ff9800" />
+                            </marker>
+                        </defs>
+                        
+                        <!-- Sun -->
+                        <circle cx="100" cy="80" r="35" fill="#ffc107" stroke="#ff9800" stroke-width="3"/>
+                        <text x="100" y="88" style="font-size:28px; text-anchor:middle;">☀️</text>
+                        
+                        <!-- Solar Panel -->
+                        <rect x="220" y="50" width="110" height="60" fill="#1976d2" stroke="#0d47a1" stroke-width="2" rx="5"/>
+                        <text x="275" y="77" style="fill:white; font-size:13px; font-weight:600; text-anchor:middle;">Solar 100W</text>
+                        <text x="275" y="95" style="fill:white; font-size:11px; text-anchor:middle;">18V / 5.5A</text>
+                        
+                        <!-- Battery -->
+                        <rect x="420" y="50" width="110" height="60" fill="#4caf50" stroke="#2e7d32" stroke-width="2" rx="5"/>
+                        <text x="475" y="77" style="fill:white; font-size:13px; font-weight:600; text-anchor:middle;">Battery</text>
+                        <text x="475" y="95" style="fill:white; font-size:11px; text-anchor:middle;">448Wh Total</text>
+                        
+                        <!-- Radio -->
+                        <rect x="620" y="50" width="110" height="60" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2" rx="5"/>
+                        <text x="675" y="77" style="fill:white; font-size:13px; font-weight:600; text-anchor:middle;">Radio 50W</text>
+                        <text x="675" y="95" style="fill:white; font-size:11px; text-anchor:middle;">90W Avg Use</text>
+                        
+                        <!-- Energy Arrows -->
+                        <path d="M 135,80 L 220,80" stroke="#ff9800" stroke-width="4" fill="none" marker-end="url(#energyArrow)"/>
+                        <text x="170" y="72" style="fill:#ff6f00; font-size:12px; font-weight:600;">Light</text>
+                        
+                        <path d="M 330,80 L 420,80" stroke="#ff9800" stroke-width="4" fill="none" marker-end="url(#energyArrow)"/>
+                        <text x="365" y="72" style="fill:#ff6f00; font-size:12px; font-weight:600;">Charge</text>
+                        
+                        <path d="M 530,80 L 620,80" stroke="#ff9800" stroke-width="4" fill="none" marker-end="url(#energyArrow)"/>
+                        <text x="565" y="72" style="fill:#ff6f00; font-size:12px; font-weight:600;">Power</text>
+                        
+                        <!-- Runtime Calculation Box -->
+                        <rect x="50" y="180" width="700" height="140" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+                        <text x="400" y="210" style="fill:#2c3e50; font-size:16px; font-weight:700; text-anchor:middle;">⚡ Runtime Calculation</text>
+                        
+                        <text x="400" y="240" style="fill:#2c3e50; font-size:14px; text-anchor:middle;">Battery Capacity: 35Ah × 12.8V = 448Wh</text>
+                        <text x="400" y="265" style="fill:#2c3e50; font-size:14px; text-anchor:middle;">Radio Power (Average): 90W (mix of TX @ 50W and RX @ 1W)</text>
+                        <text x="400" y="290" style="fill:#d32f2f; font-size:16px; font-weight:700; text-anchor:middle;">Runtime = 448Wh ÷ 90W = 5 hours @ 100% TX duty cycle</text>
+                        <text x="400" y="312" style="fill:#2e7d32; font-size:13px; font-weight:600; text-anchor:middle;">✅ Real-world: 8+ hours with typical TX/RX mix (20% duty cycle)</text>
+                    </svg>
+                    
+                    <div class="diagram-note">
+                        <strong>💡 Pro Tip:</strong> Actual field operations alternate between transmit and receive (typical 20% TX duty cycle), extending runtime to 8+ hours. Monitor battery SOC and avoid discharge below 30%.
+                    </div>
+                </div>
+
+                <h4>Testing Protocol:</h4>
+                <ol>
+                    <li>Verify solar charging in full sun (>5A current)</li>
+                    <li>Confirm battery voltage monitoring accuracy</li>
+                    <li>Test radio TX/RX on local repeaters</li>
+                    <li>Measure power consumption during transmit</li>
+                    <li>Calculate runtime: 35Ah × 12.8V / 90W avg = 5 hours TX</li>
+                    <li>Conduct 8-hour field test with mixed TX/RX</li>
+                </ol>
+
+                <h4>Success Metrics:</h4>
+                <ul>
+                    <li>✅ 8+ hours continuous operation</li>
+                    <li>✅ Battery never below 30% SOC</li>
+                    <li>✅ Successful contacts on 2m and 70cm</li>
+                    <li>✅ All monitoring data logged correctly</li>
+                    <li>✅ Weather-resistant setup (tested in rain)</li>
+                </ul>
+            </div>
+
+            <h2>Project 2: Automated Satellite Tracking System</h2>
+
+            <div class="project-box">
+                <h3>🛰️ Computer-Controlled Ground Station</h3>
+                <p><strong>Objective:</strong> Build station that automatically tracks satellites and corrects Doppler shift</p>
+
+                <div class="diagram-container">
+                    <div class="diagram-title">Satellite Ground Station System Architecture</div>
+                    <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Computer -->
+                        <rect x="320" y="30" width="160" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="400" y="60" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">💻 Computer</text>
+                        <text x="400" y="78" style="fill:#666; font-size:11px; text-anchor:middle;">Tracking Software</text>
+                        <text x="400" y="93" style="fill:#666; font-size:11px; text-anchor:middle;">Doppler Correction</text>
+                        <text x="400" y="108" style="fill:#666; font-size:11px; text-anchor:middle;">TLE Updates</text>
+                        
+                        <!-- GPS -->
+                        <rect x="80" y="40" width="130" height="70" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="145" y="70" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">📡 GPS</text>
+                        <text x="145" y="88" style="fill:#666; font-size:11px; text-anchor:middle;">Time/Position</text>
+                        <text x="145" y="103" style="fill:#666; font-size:11px; text-anchor:middle;">±10ns accuracy</text>
+                        
+                        <!-- Radio -->
+                        <rect x="590" y="30" width="130" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="655" y="60" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">📻 Radio</text>
+                        <text x="655" y="78" style="fill:#666; font-size:11px; text-anchor:middle;">VHF/UHF</text>
+                        <text x="655" y="93" style="fill:#666; font-size:11px; text-anchor:middle;">CAT Control</text>
+                        <text x="655" y="108" style="fill:#666; font-size:11px; text-anchor:middle;">Auto Frequency</text>
+                        
+                        <!-- Rotator Controller -->
+                        <rect x="340" y="190" width="120" height="70" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="400" y="217" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">🎚️ Rotator</text>
+                        <text x="400" y="235" style="fill:#666; font-size:11px; text-anchor:middle;">Az/El Control</text>
+                        <text x="400" y="250" style="fill:#666; font-size:11px; text-anchor:middle;">G-5500</text>
+                        
+                        <!-- Antenna -->
+                        <rect x="320" y="340" width="160" height="110" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="400" y="370" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">📡 Antenna Array</text>
+                        <text x="400" y="388" style="fill:#666; font-size:11px; text-anchor:middle;">2m Crossed Yagi</text>
+                        <text x="400" y="403" style="fill:#666; font-size:11px; text-anchor:middle;">70cm Crossed Yagi</text>
+                        <text x="400" y="418" style="fill:#666; font-size:11px; text-anchor:middle;">Az: 0-360°</text>
+                        <text x="400" y="433" style="fill:#666; font-size:11px; text-anchor:middle;">El: 0-90°</text>
+                        
+                        <!-- Satellite -->
+                        <circle cx="650" cy="380" r="28" fill="#4caf50" stroke="#2e7d32" stroke-width="2"/>
+                        <text x="650" y="390" style="font-size:22px; text-anchor:middle;">🛰️</text>
+                        <text x="650" y="420" style="fill:#2e7d32; font-size:11px; font-weight:600; text-anchor:middle;">LEO Satellite</text>
+                        
+                        <!-- Signal Path -->
+                        <path d="M 480,395 L 622,385" stroke="#ffc107" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <text x="540" y="385" style="fill:#ff6f00; font-size:11px; font-weight:600;">RF Signal</text>
+                        
+                        <!-- Connections -->
+                        <path d="M 210,75 L 320,75" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <text x="255" y="68" style="fill:#2e7d32; font-size:10px;">Time Data</text>
+                        
+                        <path d="M 480,75 L 590,75" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <text x="520" y="68" style="fill:#2e7d32; font-size:10px;">CAT Control</text>
+                        
+                        <path d="M 400,120 L 400,190" stroke="#2196f3" stroke-width="2" fill="none"/>
+                        <text x="410" y="155" style="fill:#2196f3; font-size:10px;">Az/El Cmd</text>
+                        
+                        <path d="M 400,260 L 400,340" stroke="#2196f3" stroke-width="3" fill="none"/>
+                        <text x="410" y="300" style="fill:#2196f3; font-size:10px;">Motors</text>
+                        
+                        <path d="M 480,395 L 590,395 L 620,385" stroke="#ff9800" stroke-width="2" stroke-dasharray="8,4" fill="none"/>
+                    </svg>
+                    
+                    <div class="legend">
+                        <strong>Connections:</strong>
+                        <div class="legend-item"><span class="legend-line" style="background:#2196f3;"></span> Power/Control</div>
+                        <div class="legend-item"><span class="legend-line" style="background:#4caf50; height:2px; border-top:2px dashed #4caf50;"></span> Data</div>
+                        <div class="legend-item"><span class="legend-line" style="background:#ff9800; height:2px;"></span> RF Signal</div>
+                    </div>
+                </div>
+
+                <h4>Hardware Requirements:</h4>
+                <ul>
+                    <li>Dual-band VHF/UHF transceiver with CAT control</li>
+                    <li>Az/El rotator system (Yaesu G-5500 or equivalent)</li>
+                    <li>Crossed-Yagi antennas (2m and 70cm)</li>
+                    <li>Computer (Raspberry Pi 4 or laptop)</li>
+                    <li>GPS module for accurate time</li>
+                    <li>Rotator interface (USB or serial)</li>
+                </ul>
+
+                <div class="diagram-container">
+                    <div class="diagram-title">Doppler Shift Correction Process</div>
+                    <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Frequency Graph -->
+                        <line x1="100" y1="300" x2="700" y2="300" stroke="#2c3e50" stroke-width="2"/>
+                        <line x1="100" y1="50" x2="100" y2="300" stroke="#2c3e50" stroke-width="2"/>
+                        
+                        <!-- Labels -->
+                        <text x="400" y="330" style="fill:#2c3e50; font-size:13px; text-anchor:middle; font-weight:600;">Time (Pass Duration)</text>
+                        <text x="50" y="180" style="fill:#2c3e50; font-size:13px; text-anchor:middle; font-weight:600; transform:rotate(-90 50,180);">Frequency (kHz)</text>
+                        
+                        <!-- Doppler Curve -->
+                        <path d="M 150,100 Q 250,80 400,150 T 650,280" stroke="#d32f2f" stroke-width="3" fill="none"/>
+                        <text x="400" y="70" style="fill:#d32f2f; font-size:13px; font-weight:600; text-anchor:middle;">Doppler Shift Pattern</text>
+                        
+                        <!-- Reference Line -->
+                        <line x1="100" y1="150" x2="700" y2="150" stroke="#4caf50" stroke-width="2" stroke-dasharray="8,4"/>
+                        <text x="720" y="155" style="fill:#4caf50; font-size:12px; font-weight:600;">Nominal Freq</text>
+                        
+                        <!-- Key Points -->
+                        <circle cx="150" cy="100" r="5" fill="#2196f3"/>
+                        <text x="150" y="85" style="fill:#2196f3; font-size:11px; text-anchor:middle; font-weight:600;">AOS</text>
+                        <text x="150" y="125" style="fill:#666; font-size:10px; text-anchor:middle;">+3kHz</text>
+                        
+                        <circle cx="400" cy="150" r="5" fill="#2196f3"/>
+                        <text x="400" y="135" style="fill:#2196f3; font-size:11px; text-anchor:middle; font-weight:600;">TCA</text>
+                        <text x="400" y="175" style="fill:#666; font-size:10px; text-anchor:middle;">0kHz</text>
+                        
+                        <circle cx="650" cy="280" r="5" fill="#2196f3"/>
+                        <text x="650" y="265" style="fill:#2196f3; font-size:11px; text-anchor:middle; font-weight:600;">LOS</text>
+                        <text x="650" y="305" style="fill:#666; font-size:10px; text-anchor:middle;">-3kHz</text>
+                        
+                        <!-- Correction Box -->
+                        <rect x="200" y="320" width="400" height="60" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+                        <text x="400" y="345" style="fill:#2c3e50; font-size:12px; font-weight:600; text-anchor:middle;">Software calculates shift every 1 second</text>
+                        <text x="400" y="365" style="fill:#2c3e50; font-size:12px; text-anchor:middle;">Radio frequency adjusted via CAT commands</text>
+                    </svg>
+                    
+                    <div class="diagram-note">
+                        <strong>📊 Note:</strong> VHF satellites (145 MHz) experience ±3 kHz Doppler shift. UHF (435 MHz) sees ±9 kHz shift. Continuous correction ensures clear reception throughout the pass.
+                    </div>
+                </div>
+
+                <h4>Software Components:</h4>
+                <ol>
+                    <li><strong>Tracking Core:</strong> Python + Skyfield for orbital calculations, TLE auto-update from Celestrak, Real-time Az/El computation</li>
+                    <li><strong>Doppler Correction:</strong> Calculate frequency shift every 1 second, Send CAT commands to radio, Separate uplink and downlink correction</li>
+                    <li><strong>Rotator Control:</strong> Send position commands via serial, Monitor actual antenna position, Smooth tracking (avoid hunting)</li>
+                    <li><strong>User Interface:</strong> Web-based dashboard (Flask/HTML), Real-time satellite position display, Pass prediction table, Manual override controls</li>
+                </ol>
+
+                <h4>Key Features to Implement:</h4>
+                <ul>
+                    <li>Automatic pass scheduling (start tracking 2 min before AOS)</li>
+                    <li>Multi-satellite database (AO-91, AO-92, SO-50, ISS)</li>
+                    <li>Audio recording of each pass</li>
+                    <li>Contact logging with grid square extraction</li>
+                    <li>Signal strength vs elevation plotting</li>
+                </ul>
+
+                <h4>Calibration Process:</h4>
+                <ol>
+                    <li>Align antennas to true north using compass</li>
+                    <li>Calibrate elevation zero (horizontal)</li>
+                    <li>Test tracking on Moon (easy, slow-moving target)</li>
+                    <li>Verify Doppler correction on known beacon</li>
+                    <li>Fine-tune timing using GPS reference</li>
+                </ol>
+            </div>
+
+            <h2>Project 3: Drone-Integrated RF Platform</h2>
+
+            <div class="project-box">
+                <h3>🚁 Aerial Communications Relay</h3>
+                <p><strong>Objective:</strong> Use drone to extend VHF/UHF range via elevated antenna platform</p>
+
+                <div class="diagram-container">
+                    <div class="diagram-title">Drone RF Relay - Coverage Comparison</div>
+                    <svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Ground Level -->
+                        <line x1="50" y1="350" x2="750" y2="350" stroke="#8d6e63" stroke-width="3"/>
+                        <text x="400" y="370" style="fill:#5d4037; font-size:12px; text-anchor:middle; font-weight:600;">Ground Level</text>
+                        
+                        <!-- Station A -->
+                        <rect x="80" y="320" width="40" height="30" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+                        <text x="100" y="395" style="fill:#2c3e50; font-size:12px; text-anchor:middle; font-weight:600;">Station A</text>
+                        
+                        <!-- Station B -->
+                        <rect x="680" y="320" width="40" height="30" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+                        <text x="700" y="395" style="fill:#2c3e50; font-size:12px; text-anchor:middle; font-weight:600;">Station B</text>
+                        
+                        <!-- Ground-to-Ground (Blocked) -->
+                        <path d="M 120,335 Q 400,380 680,335" stroke="#d32f2f" stroke-width="2" stroke-dasharray="8,4" fill="none"/>
+                        <text x="400" y="410" style="fill:#d32f2f; font-size:11px; text-anchor:middle; font-weight:600;">Ground-to-Ground: 10km (BLOCKED)</text>
+                        
+                        <!-- Terrain Obstacle -->
+                        <path d="M 300,350 Q 350,280 400,250 Q 450,280 500,350" fill="#a1887f" stroke="#6d4c41" stroke-width="2"/>
+                        <text x="400" y="305" style="fill:#5d4037; font-size:11px; text-anchor:middle; font-weight:600;">⛰️ Terrain</text>
+                        
+                        <!-- Drone -->
+                        <circle cx="400" cy="150" r="25" fill="#ff9800" stroke="#e65100" stroke-width="2"/>
+                        <text x="400" y="160" style="font-size:20px; text-anchor:middle;">🚁</text>
+                        <text x="400" y="125" style="fill:#e65100; font-size:12px; text-anchor:middle; font-weight:600;">Drone @ 100m AGL</text>
+                        
+                        <!-- Drone Coverage Lines -->
+                        <path d="M 120,335 L 375,155" stroke="#4caf50" stroke-width="3" fill="none"/>
+                        <path d="M 425,155 L 680,335" stroke="#4caf50" stroke-width="3" fill="none"/>
+                        
+                        <!-- Coverage Circles -->
+                        <circle cx="400" cy="150" r="280" fill="none" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
+                        <text x="400" y="430" style="fill:#2e7d32; font-size:13px; text-anchor:middle; font-weight:700;">Via Drone: 50km Range (Line-of-Sight)</text>
+                        
+                        <!-- Height Indicator -->
+                        <line x1="450" y1="150" x2="450" y2="350" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
+                        <text x="470" y="250" style="fill:#666; font-size:11px;">100m</text>
+                        
+                        <!-- Distance Indicator -->
+                        <line x1="100" y1="300" x2="700" y2="300" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
+                        <text x="400" y="290" style="fill:#666; font-size:11px; text-anchor:middle;">50km Total Coverage</text>
+                    </svg>
+                    
+                    <div class="diagram-note">
+                        <strong>📡 Coverage Advantage:</strong> Elevating antenna to 100m provides line-of-sight over terrain obstacles, extending range from 10km to 50km radius. Perfect for emergency communications and field exercises.
+                    </div>
+                </div>
+
+                <h4>System Design:</h4>
+                <table>
+                    <tr><th>Component</th><th>Details</th><th>Weight</th></tr>
+                    <tr><td>Drone</td><td>DJI Phantom 4 or Mavic Pro</td><td>1375g</td></tr>
+                    <tr><td>Radio Module</td><td>Baofeng UV-5R (modified)</td><td>200g</td></tr>
+                    <tr><td>Antenna</td><td>Lightweight dipole</td><td>20g</td></tr>
+                    <tr><td>Control Interface</td><td>Arduino + relay board</td><td>50g</td></tr>
+                    <tr><td>Power Adapter</td><td>12V regulator from drone battery</td><td>30g</td></tr>
+                    <tr style="background:#2196f3; color:white;"><td colspan="2"><strong>Total Payload</strong></td><td><strong>300g</strong></td></tr>
+                </table>
+
+                <h4>Operating Modes:</h4>
+                <ol>
+                    <li><strong>Manual Relay:</strong> Ground operator keys drone radio via RC channel</li>
+                    <li><strong>Cross-Band Repeat:</strong> Receive on 2m, transmit on 70cm automatically</li>
+                    <li><strong>APRS Beacon:</strong> Transmit position every 30 seconds</li>
+                    <li><strong>Signal Mapping:</strong> Record RSSI at multiple locations</li>
+                </ol>
+
+                <h4>Mission Profile Example:</h4>
+                <ul>
+                    <li><strong>Altitude:</strong> 100m AGL (below 400ft regulation)</li>
+                    <li><strong>Position:</strong> Midpoint between two ground stations</li>
+                    <li><strong>Coverage:</strong> 50km radius (vs 10km ground-to-ground)</li>
+                    <li><strong>Flight Time:</strong> 15 minutes with payload</li>
+                    <li><strong>Application:</strong> Emergency communications, field exercises</li>
+                </ul>
+
+                <h4>Safety Requirements:</h4>
+                <ul>
+                    <li>✅ Visual line of sight maintained</li>
+                    <li>✅ 30% battery reserve for RTH</li>
+                    <li>✅ Spotter assigned to watch for aircraft</li>
+                    <li>✅ Frequency coordination with local repeater group</li>
+                    <li>✅ Secure payload mounting (vibration test)</li>
+                </ul>
+            </div>
+
+            <h2>Project 4: AI-Powered Propagation Predictor</h2>
+
+            <div class="success-box">
+                <h3>🤖 Machine Learning for HF Forecasting</h3>
+                <p><strong>Objective:</strong> Train neural network to predict optimal HF operating times</p>
+
+                <div class="diagram-container">
+                    <div class="diagram-title">AI Training & Prediction Workflow</div>
+                    <svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="flowArrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#2196f3"/>
+                            </marker>
+                        </defs>
+                        
+                        <!-- Data Collection -->
+                        <rect x="50" y="50" width="160" height="80" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="130" y="80" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">📊 Data Collection</text>
+                        <text x="130" y="98" style="fill:#666; font-size:10px; text-anchor:middle;">3+ months</text>
+                        <text x="130" y="112" style="fill:#666; font-size:9px; text-anchor:middle;">• Contact attempts</text>
+                        <text x="130" y="124" style="fill:#666; font-size:9px; text-anchor:middle;">• Solar data (SFI, K-index)</text>
+                        
+                        <!-- Feature Engineering -->
+                        <rect x="270" y="50" width="160" height="80" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="350" y="80" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">⚙️ Features</text>
+                        <text x="350" y="98" style="fill:#666; font-size:9px; text-anchor:middle;">Hour, Day, SFI</text>
+                        <text x="350" y="110" style="fill:#666; font-size:9px; text-anchor:middle;">K-index, Frequency</text>
+                        <text x="350" y="122" style="fill:#666; font-size:9px; text-anchor:middle;">Distance</text>
+                        
+                        <!-- ML Model -->
+                        <rect x="490" y="50" width="160" height="80" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+                        <text x="570" y="80" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">🧠 ML Model</text>
+                        <text x="570" y="98" style="fill:#666; font-size:9px; text-anchor:middle;">Neural Network</text>
+                        <text x="570" y="110" style="fill:#666; font-size:9px; text-anchor:middle;">or Random Forest</text>
+                        <text x="570" y="122" style="fill:#666; font-size:9px; text-anchor:middle;">Training: 80/20 split</text>
+                        
+                        <!-- Arrows -->
+                        <path d="M 210,90 L 270,90" stroke="#2196f3" stroke-width="2" marker-end="url(#flowArrow)" fill="none"/>
+                        <path d="M 430,90 L 490,90" stroke="#2196f3" stroke-width="2" marker-end="url(#flowArrow)" fill="none"/>
+                        
+                        <!-- Prediction Output -->
+                        <rect x="270" y="200" width="260" height="100" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="5"/>
+                        <text x="400" y="230" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">📈 Predictions</text>
+                        <text x="400" y="250" style="fill:#666; font-size:11px; text-anchor:middle;">Success Probability: 0.0 - 1.0</text>
+                        <text x="400" y="268" style="fill:#2e7d32; font-size:11px; font-weight:600; text-anchor:middle;">Best Times for Next 7 Days</text>
+                        <text x="400" y="286" style="fill:#666; font-size:10px; text-anchor:middle;">Per band & distance</text>
+                        
+                        <!-- Arrow to Prediction -->
+                        <path d="M 570,130 L 570,250 L 530,250" stroke="#2196f3" stroke-width="2" marker-end="url(#flowArrow)" fill="none"/>
+                        
+                        <!-- Dashboard -->
+                        <rect x="150" y="340" width="500" height="80" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+                        <text x="400" y="370" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">💻 Web Dashboard</text>
+                        <text x="400" y="390" style="fill:#666; font-size:11px; text-anchor:middle;">Real-time propagation forecast • SMS/Email alerts</text>
+                        <text x="400" y="408" style="fill:#666; font-size:11px; text-anchor:middle;">Continuous learning from new contacts</text>
+                        
+                        <!-- Arrow to Dashboard -->
+                        <path d="M 400,300 L 400,340" stroke="#2196f3" stroke-width="2" marker-end="url(#flowArrow)" fill="none"/>
+                    </svg>
+                </div>
+
+                <h4>Data Collection (3+ months):</h4>
+                <ul>
+                    <li>Time/date of each contact attempt</li>
+                    <li>Frequency and band used</li>
+                    <li>Solar flux index (daily)</li>
+                    <li>K-index (geomagnetic activity)</li>
+                    <li>Contact success (yes/no)</li>
+                    <li>Signal report if successful (S-units)</li>
+                    <li>Distance to station contacted</li>
+                </ul>
+
+                <h4>Model Development:</h4>
+                <ul>
+                    <li>Input features: [hour, day_of_year, solar_flux, k_index, frequency, distance]</li>
+                    <li>Output: Probability of successful contact (0-1)</li>
+                    <li>Architecture: 3-layer neural network or Random Forest</li>
+                    <li>Training: 80% data for training, 20% for validation</li>
+                </ul>
+
+                <h4>Deployment:</h4>
+                <ul>
+                    <li>Web dashboard showing "best times" for next 7 days</li>
+                    <li>SMS/email alerts when conditions are optimal</li>
+                    <li>Comparison to traditional propagation tools</li>
+                    <li>Continuous learning from new contacts</li>
+                </ul>
+            </div>
+
+            <h2>Project 5: Contest-Ready Multi-Op Station</h2>
+
+            <div class="highlight-box">
+                <h3>🏆 Competition Field Station</h3>
+                <p><strong>Objective:</strong> Design station for RadioSport championship events</p>
+
+                <div class="diagram-container">
+                    <div class="diagram-title">Multi-Operator Contest Station Layout</div>
+                    <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Operator Positions -->
+                        <rect x="50" y="80" width="150" height="100" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="125" y="110" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">👤 Operator 1</text>
+                        <text x="125" y="130" style="fill:#666; font-size:11px; text-anchor:middle;">VHF 2m SSB/FM</text>
+                        <text x="125" y="148" style="fill:#666; font-size:10px; text-anchor:middle;">Yagi Antenna</text>
+                        <text x="125" y="165" style="fill:#666; font-size:10px; text-anchor:middle;">50W Mobile</text>
+                        
+                        <rect x="230" y="80" width="150" height="100" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="305" y="110" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">👤 Operator 2</text>
+                        <text x="305" y="130" style="fill:#666; font-size:11px; text-anchor:middle;">UHF 70cm SSB/FM</text>
+                        <text x="305" y="148" style="fill:#666; font-size:10px; text-anchor:middle;">Yagi Antenna</text>
+                        <text x="305" y="165" style="fill:#666; font-size:10px; text-anchor:middle;">50W Mobile</text>
+                        
+                        <rect x="410" y="80" width="150" height="100" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                        <text x="485" y="110" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">👤 Operator 3</text>
+                        <text x="485" y="130" style="fill:#666; font-size:11px; text-anchor:middle;">HF 40m/20m</text>
+                        <text x="485" y="148" style="fill:#666; font-size:10px; text-anchor:middle;">Wire Antenna</text>
+                        <text x="485" y="165" style="fill:#666; font-size:10px; text-anchor:middle;">QRP 10W</text>
+                        
+                        <!-- Logger Position -->
+                        <rect x="590" y="80" width="150" height="100" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+                        <text x="665" y="110" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">💻 Logger</text>
+                        <text x="665" y="130" style="fill:#666; font-size:11px; text-anchor:middle;">Contact Database</text>
+                        <text x="665" y="148" style="fill:#666; font-size:10px; text-anchor:middle;">Real-time Scoring</text>
+                        <text x="665" y="165" style="fill:#666; font-size:10px; text-anchor:middle;">Network Sync</text>
+                        
+                        <!-- Central Network -->
+                        <circle cx="400" cy="280" r="60" fill="#e8f5e9" stroke="#4caf50" stroke-width="2"/>
+                        <text x="400" y="275" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">🌐 Network</text>
+                        <text x="400" y="295" style="fill:#666; font-size:11px; text-anchor:middle;">Shared</text>
+                        <text x="400" y="310" style="fill:#666; font-size:11px; text-anchor:middle;">Database</text>
+                        
+                        <!-- Power Management -->
+                        <rect x="280" y="390" width="240" height="80" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+                        <text x="400" y="420" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">⚡ Power Manager</text>
+                        <text x="400" y="440" style="fill:#666; font-size:11px; text-anchor:middle;">Solar/Battery System</text>
+                        <text x="400" y="458" style="fill:#666; font-size:10px; text-anchor:middle;">Energy Budget Optimization</text>
+                        
+                        <!-- Network Connections -->
+                        <path d="M 125,180 L 360,250" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <path d="M 305,180 L 385,245" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <path d="M 485,180 L 415,245" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <path d="M 665,180 L 440,250" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        
+                        <!-- Power Connections -->
+                        <path d="M 400,340 L 400,390" stroke="#9c27b0" stroke-width="3" fill="none"/>
+                    </svg>
+                    
+                    <div class="diagram-note">
+                        <strong>🏆 Contest Strategy:</strong> Multiple operators work different bands simultaneously. Networked logging prevents duplicate contacts and maximizes score. Power manager ensures all stations stay operational throughout the competition.
+                    </div>
+                </div>
+
+                <h4>Station Layout:</h4>
+                <table>
+                    <tr><th>Position</th><th>Equipment</th><th>Function</th></tr>
+                    <tr><td><strong>Op 1</strong></td><td>VHF mobile + Yagi</td><td>2m SSB/FM contacts</td></tr>
+                    <tr><td><strong>Op 2</strong></td><td>UHF mobile + Yagi</td><td>70cm SSB/FM contacts</td></tr>
+                    <tr><td><strong>Op 3</strong></td><td>HF QRP rig + wire antenna</td><td>40m/20m CW/SSB</td></tr>
+                    <tr><td><strong>Logger</strong></td><td>Laptop + software</td><td>Contact database, scoring</td></tr>
+                    <tr><td><strong>Power Mgr</strong></td><td>Solar/battery system</td><td>Energy budget optimization</td></tr>
+                </table>
+
+                <h4>Competition Features:</h4>
+                <ul>
+                    <li>Networked logging (all ops see same database)</li>
+                    <li>Automated scoring calculations</li>
+                    <li>Band activity monitoring (SDR waterfall)</li>
+                    <li>Multiplier tracking (grids, states, etc.)</li>
+                    <li>Power consumption dashboard</li>
+                    <li>Team communication (intercom system)</li>
+                </ul>
+
+                <h4>Strategy Elements:</h4>
+                <ol>
+                    <li>Pre-contest band planning (when to work each band)</li>
+                    <li>Operating schedule (shifts, breaks)</li>
+                    <li>Equipment backup plans</li>
+                    <li>Antenna rotation strategy</li>
+                    <li>Power conservation during low-activity hours</li>
+                </ol>
+            </div>
+
+            <h2>Capstone Project Requirements</h2>
+
+            <div class="info-box">
+                <h4>Final Project Guidelines (Month 8-9)</h4>
+                <p>Students select ONE major project combining multiple technologies.</p>
+
+                <h4>Deliverables:</h4>
+                <ol>
+                    <li><strong>Written Proposal:</strong> System design, components, budget</li>
+                    <li><strong>Working Prototype:</strong> Demonstrated at final presentation</li>
+                    <li><strong>Documentation:</strong> Build instructions, code, schematics</li>
+                    <li><strong>Test Results:</strong> Performance data, analysis</li>
+                    <li><strong>Presentation:</strong> 10-minute demo to class and parents</li>
+                </ol>
+
+                <h4>Grading Criteria:</h4>
+                <ul>
+                    <li>Technical complexity (30%)</li>
+                    <li>Functionality (25%)</li>
+                    <li>Documentation quality (20%)</li>
+                    <li>Innovation/creativity (15%)</li>
+                    <li>Presentation (10%)</li>
+                </ul>
+
+                <h4>Example Capstone Topics:</h4>
+                <ul>
+                    <li>Automatic APRS weather station with solar power</li>
+                    <li>Portable satellite ground station in backpack</li>
+                    <li>AI signal classifier for interference identification</li>
+                    <li>Multi-band antenna with automatic tuner</li>
+                    <li>Emergency communications kit (72-hour deployment)</li>
+                </ul>
+            </div>
+
+            <h2>Chapter Summary</h2>
+            <ul>
+                <li>✅ Projects integrate 3+ RadioSport technologies</li>
+                <li>✅ Real-world applications with measurable results</li>
+                <li>✅ Documentation teaches technical writing</li>
+                <li>✅ Capstone demonstrates mastery of program material</li>
+                <li>✅ Competition-ready systems for championships</li>
+            </ul>
+
+            <div class="info-box">
+                <h4>Next: Chapter 12 - Field Operations</h4>
+                <p>Plan and execute multi-day deployments with complete RadioSport systems.</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>RadioSport STEM Education Program</strong></p>
+            <p>Chapter 11: Integrated Hands-On Projects</p>
+            <p>Version 3.0 • 2025 Edition</p>
+        </div>
+    </div>
+</body>
+</html>

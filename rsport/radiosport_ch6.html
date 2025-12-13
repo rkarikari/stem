@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 6: Drone Operations - RadioSport Handbook</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .nav {
+            background: #1e3c72;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+        }
+        
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        
+        .header {
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+        
+        .header h1 { font-size: 42px; margin-bottom: 10px; }
+        .chapter-num { font-size: 18px; opacity: 0.9; }
+        
+        .content { padding: 40px; }
+        
+        h2 {
+            color: #1e3c72;
+            font-size: 32px;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #00d2ff;
+        }
+        
+        h3 { color: #2a5298; font-size: 24px; margin: 30px 0 15px 0; }
+        h4 { color: #34495e; font-size: 20px; margin: 20px 0 10px 0; }
+        
+        p { margin-bottom: 15px; text-align: justify; }
+        
+        .info-box, .warning-box, .success-box, .drone-box {
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 5px;
+            border-left: 5px solid;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left-color: #2196f3;
+        }
+        
+        .warning-box {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border-left-color: #ff9800;
+        }
+        
+        .success-box {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-left-color: #4caf50;
+        }
+        
+        .drone-box {
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+            border-left-color: #00bcd4;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        th {
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+        
+        td { padding: 12px 15px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        
+        ul, ol { margin: 20px 0 20px 40px; }
+        li { margin-bottom: 10px; }
+        
+        .diagram-container {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .diagram-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: #1e3c72;
+            margin-bottom: 15px;
+        }
+        
+        .diagram-caption {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            margin-top: 15px;
+            font-style: italic;
+        }
+        
+        svg {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="radiosport_ch5.html">← Chapter 5</a>
+            <span>Chapter 6 of 14</span>
+            <a href="radiosport_ch7.html">Chapter 7 →</a>
+        </div>
+        
+        <div class="header">
+            <div class="chapter-num">CHAPTER 6</div>
+            <h1>🚁 Drone Operations & RadioSport Integration</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong>Unmanned Aerial Systems (UAS/drones) enhance RadioSport by providing mobile aerial platforms for antennas, sensors, and communications equipment. Learn flight operations, mission planning, regulations, and system integration with radio and satellite systems.</strong></p>
+
+            <h2>Aviation Fundamentals for Multirotors</h2>
+
+            <h3>Four Forces of Flight</h3>
+            
+            <div class="diagram-container">
+                <div class="diagram-title">Quadcopter Flight Dynamics - Four Forces</div>
+                <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Drone body -->
+                    <rect x="350" y="220" width="100" height="60" fill="#2c3e50" rx="5"/>
+                    <circle cx="400" cy="250" r="35" fill="#34495e"/>
+                    
+                    <!-- Arms -->
+                    <line x1="400" y1="250" x2="300" y2="180" stroke="#2c3e50" stroke-width="8"/>
+                    <line x1="400" y1="250" x2="500" y2="180" stroke="#2c3e50" stroke-width="8"/>
+                    <line x1="400" y1="250" x2="300" y2="320" stroke="#2c3e50" stroke-width="8"/>
+                    <line x1="400" y1="250" x2="500" y2="320" stroke="#2c3e50" stroke-width="8"/>
+                    
+                    <!-- Rotors -->
+                    <circle cx="300" cy="180" r="25" fill="none" stroke="#3498db" stroke-width="3"/>
+                    <circle cx="500" cy="180" r="25" fill="none" stroke="#3498db" stroke-width="3"/>
+                    <circle cx="300" cy="320" r="25" fill="none" stroke="#3498db" stroke-width="3"/>
+                    <circle cx="500" cy="320" r="25" fill="none" stroke="#3498db" stroke-width="3"/>
+                    
+                    <defs>
+                        <marker id="arrowhead-up" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+                            <polygon points="0 0, 10 5, 0 10" fill="#2ecc71" />
+                        </marker>
+                        <marker id="arrowhead-down" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+                            <polygon points="0 0, 10 5, 0 10" fill="#e74c3c" />
+                        </marker>
+                        <marker id="arrowhead-right" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+                            <polygon points="0 0, 10 5, 0 10" fill="#f39c12" />
+                        </marker>
+                        <marker id="arrowhead-left" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+                            <polygon points="0 0, 10 5, 0 10" fill="#9b59b6" />
+                        </marker>
+                    </defs>
+                    
+                    <!-- Lift arrow (up) -->
+                    <line x1="400" y1="250" x2="400" y2="80" stroke="#2ecc71" stroke-width="6" marker-end="url(#arrowhead-up)"/>
+                    <text x="420" y="160" fill="#2ecc71" font-size="18" font-weight="bold">LIFT</text>
+                    <text x="420" y="180" fill="#2ecc71" font-size="14">(Rotor Thrust)</text>
+                    
+                    <!-- Weight arrow (down) -->
+                    <line x1="400" y1="250" x2="400" y2="420" stroke="#e74c3c" stroke-width="6" marker-end="url(#arrowhead-down)"/>
+                    <text x="310" y="370" fill="#e74c3c" font-size="18" font-weight="bold">WEIGHT</text>
+                    <text x="310" y="390" fill="#e74c3c" font-size="14">(m × 9.8 m/s²)</text>
+                    
+                    <!-- Thrust arrow (forward) -->
+                    <line x1="400" y1="250" x2="580" y2="250" stroke="#f39c12" stroke-width="6" marker-end="url(#arrowhead-right)"/>
+                    <text x="590" y="245" fill="#f39c12" font-size="18" font-weight="bold">THRUST</text>
+                    <text x="590" y="265" fill="#f39c12" font-size="14">(Forward)</text>
+                    
+                    <!-- Drag arrow (backward) -->
+                    <line x1="400" y1="250" x2="220" y2="250" stroke="#9b59b6" stroke-width="6" marker-end="url(#arrowhead-left)"/>
+                    <text x="90" y="245" fill="#9b59b6" font-size="18" font-weight="bold">DRAG</text>
+                    <text x="90" y="265" fill="#9b59b6" font-size="14">(Air Resistance)</text>
+                    
+                    <!-- Ground line -->
+                    <line x1="50" y1="470" x2="750" y2="470" stroke="#7f8c8d" stroke-width="2" stroke-dasharray="10,5"/>
+                    <text x="650" y="465" fill="#7f8c8d" font-size="12">Ground Level</text>
+                </svg>
+                <div class="diagram-caption">Four fundamental forces acting on a multirotor drone in forward flight</div>
+            </div>
+
+            <div class="info-box">
+                <h4>Understanding Multirotor Dynamics:</h4>
+                <ul>
+                    <li><strong>Lift:</strong> Upward force from rotor thrust (must equal weight for hover)</li>
+                    <li><strong>Weight:</strong> Downward gravitational force (mass × 9.8 m/s²)</li>
+                    <li><strong>Thrust:</strong> Forward component when drone tilts (controlled by differential rotor speeds)</li>
+                    <li><strong>Drag:</strong> Air resistance opposing motion (increases with speed)</li>
+                </ul>
+                
+                <h4>Flight Control Methods:</h4>
+                <ul>
+                    <li><strong>Hover:</strong> All rotors equal speed, total thrust = weight</li>
+                    <li><strong>Climb:</strong> Increase all rotor speeds equally (thrust > weight)</li>
+                    <li><strong>Descend:</strong> Decrease all rotor speeds (thrust < weight)</li>
+                    <li><strong>Forward:</strong> Tilt forward by speeding up rear rotors, slowing front</li>
+                    <li><strong>Yaw:</strong> Opposite rotor pairs spin at different speeds (torque imbalance)</li>
+                </ul>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Quadcopter Motor Control - Top View</div>
+                <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Central body -->
+                    <circle cx="400" cy="300" r="60" fill="#34495e"/>
+                    <text x="400" y="305" text-anchor="middle" fill="white" font-size="16" font-weight="bold">BODY</text>
+                    
+                    <!-- Forward direction indicator -->
+                    <polygon points="400,240 410,260 390,260" fill="#e74c3c"/>
+                    <text x="400" y="220" text-anchor="middle" fill="#e74c3c" font-size="16" font-weight="bold">FORWARD</text>
+                    
+                    <!-- Motor 1 (Front-Left) - CCW -->
+                    <circle cx="250" cy="200" r="50" fill="#3498db"/>
+                    <text x="250" y="200" text-anchor="middle" fill="white" font-size="20" font-weight="bold">M1</text>
+                    <text x="250" y="220" text-anchor="middle" fill="white" font-size="12">CCW ↺</text>
+                    <path d="M 250 200 m -30,-30 a 42,42 0 1,1 60,0" fill="none" stroke="white" stroke-width="3" marker-end="url(#arrow-ccw)"/>
+                    
+                    <!-- Motor 2 (Front-Right) - CW -->
+                    <circle cx="550" cy="200" r="50" fill="#2ecc71"/>
+                    <text x="550" y="200" text-anchor="middle" fill="white" font-size="20" font-weight="bold">M2</text>
+                    <text x="550" y="220" text-anchor="middle" fill="white" font-size="12">CW ↻</text>
+                    <path d="M 550 200 m 30,-30 a 42,42 0 1,0 -60,0" fill="none" stroke="white" stroke-width="3" marker-end="url(#arrow-cw)"/>
+                    
+                    <!-- Motor 3 (Rear-Left) - CW -->
+                    <circle cx="250" cy="400" r="50" fill="#2ecc71"/>
+                    <text x="250" y="400" text-anchor="middle" fill="white" font-size="20" font-weight="bold">M3</text>
+                    <text x="250" y="420" text-anchor="middle" fill="white" font-size="12">CW ↻</text>
+                    <path d="M 250 400 m -30,30 a 42,42 0 1,0 60,0" fill="none" stroke="white" stroke-width="3" marker-end="url(#arrow-cw2)"/>
+                    
+                    <!-- Motor 4 (Rear-Right) - CCW -->
+                    <circle cx="550" cy="400" r="50" fill="#3498db"/>
+                    <text x="550" y="400" text-anchor="middle" fill="white" font-size="20" font-weight="bold">M4</text>
+                    <text x="550" y="420" text-anchor="middle" fill="white" font-size="12">CCW ↺</text>
+                    <path d="M 550 400 m 30,30 a 42,42 0 1,0 -60,0" fill="none" stroke="white" stroke-width="3" marker-end="url(#arrow-ccw2)"/>
+                    
+                    <!-- Arms connecting to body -->
+                    <line x1="330" y1="270" x2="265" y2="220" stroke="#2c3e50" stroke-width="12"/>
+                    <line x1="470" y1="270" x2="535" y2="220" stroke="#2c3e50" stroke-width="12"/>
+                    <line x1="330" y1="330" x2="265" y2="380" stroke="#2c3e50" stroke-width="12"/>
+                    <line x1="470" y1="330" x2="535" y2="380" stroke="#2c3e50" stroke-width="12"/>
+                    
+                    <!-- Legend -->
+                    <rect x="50" y="480" width="350" height="100" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
+                    <text x="65" y="505" font-size="14" font-weight="bold">Motor Rotation Pattern:</text>
+                    <circle cx="80" cy="530" r="15" fill="#3498db"/>
+                    <text x="105" y="535" font-size="12">CCW (Counter-Clockwise) - M1, M4</text>
+                    <circle cx="80" cy="560" r="15" fill="#2ecc71"/>
+                    <text x="105" y="565" font-size="12">CW (Clockwise) - M2, M3</text>
+                    
+                    <!-- Arrow markers -->
+                    <defs>
+                        <marker id="arrow-ccw" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+                            <polygon points="0 0, 8 4, 0 8" fill="white"/>
+                        </marker>
+                        <marker id="arrow-cw" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+                            <polygon points="0 0, 8 4, 0 8" fill="white"/>
+                        </marker>
+                        <marker id="arrow-ccw2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+                            <polygon points="0 0, 8 4, 0 8" fill="white"/>
+                        </marker>
+                        <marker id="arrow-cw2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+                            <polygon points="0 0, 8 4, 0 8" fill="white"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <div class="diagram-caption">Quadcopter motor configuration showing counter-rotating pairs to cancel torque</div>
+            </div>
+
+            <h2>DJI Platform Specifications</h2>
+
+            <h3>DJI Phantom 4 Pro V2.0</h3>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Specification</th>
+                </tr>
+                <tr>
+                    <td><strong>Weight</strong></td>
+                    <td>1375g (with battery and props)</td>
+                </tr>
+                <tr>
+                    <td><strong>Max Takeoff Weight</strong></td>
+                    <td>1500g (125g payload capacity)</td>
+                </tr>
+                <tr>
+                    <td><strong>Flight Time</strong></td>
+                    <td>30 min (no payload, calm)<br>23-25 min (with light payload)</td>
+                </tr>
+                <tr>
+                    <td><strong>Max Speed</strong></td>
+                    <td>72 km/h (Sport mode)<br>50 km/h (Normal mode)</td>
+                </tr>
+                <tr>
+                    <td><strong>Max Altitude</strong></td>
+                    <td>6000m above sea level</td>
+                </tr>
+                <tr>
+                    <td><strong>Wind Resistance</strong></td>
+                    <td>10 m/s (36 km/h)</td>
+                </tr>
+                <tr>
+                    <td><strong>Operating Temperature</strong></td>
+                    <td>0°C to 40°C</td>
+                </tr>
+                <tr>
+                    <td><strong>Positioning</strong></td>
+                    <td>GPS + GLONASS dual system</td>
+                </tr>
+                <tr>
+                    <td><strong>Obstacle Sensing</strong></td>
+                    <td>5-direction (front, back, left, right, down)</td>
+                </tr>
+                <tr>
+                    <td><strong>Camera</strong></td>
+                    <td>1" CMOS, 20MP, 4K60fps</td>
+                </tr>
+                <tr>
+                    <td><strong>Gimbal</strong></td>
+                    <td>3-axis mechanical stabilization</td>
+                </tr>
+                <tr>
+                    <td><strong>Battery</strong></td>
+                    <td>5870 mAh LiPo 4S (15.2V), 89.2 Wh</td>
+                </tr>
+                <tr>
+                    <td><strong>Control Range</strong></td>
+                    <td>7 km (FCC) / 4 km (CE) - OcuSync 2.0</td>
+                </tr>
+            </table>
+
+            <h3>DJI Mavic Pro</h3>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Specification</th>
+                </tr>
+                <tr>
+                    <td><strong>Weight</strong></td>
+                    <td>743g (foldable design)</td>
+                </tr>
+                <tr>
+                    <td><strong>Max Takeoff Weight</strong></td>
+                    <td>1000g (257g payload capacity)</td>
+                </tr>
+                <tr>
+                    <td><strong>Flight Time</strong></td>
+                    <td>27 min (no payload)<br>18-22 min (200g payload)</td>
+                </tr>
+                <tr>
+                    <td><strong>Max Speed</strong></td>
+                    <td>65 km/h (Sport mode)</td>
+                </tr>
+                <tr>
+                    <td><strong>Max Altitude</strong></td>
+                    <td>5000m above sea level</td>
+                </tr>
+                <tr>
+                    <td><strong>Camera</strong></td>
+                    <td>1/2.3" CMOS, 12.35MP, 4K30fps</td>
+                </tr>
+                <tr>
+                    <td><strong>Battery</strong></td>
+                    <td>3830 mAh LiPo 3S (11.4V), 43.6 Wh</td>
+                </tr>
+                <tr>
+                    <td><strong>Special Features</strong></td>
+                    <td>Foldable arms, compact transport</td>
+                </tr>
+            </table>
+
+            <h2>Drone-Radio Integration Applications</h2>
+
+            <h3>Application 1: Elevated Antenna Platform</h3>
+            
+            <div class="diagram-container">
+                <div class="diagram-title">Radio Horizon Extension with Drone Altitude</div>
+                <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Earth curve -->
+                    <ellipse cx="400" cy="1200" rx="900" ry="900" fill="#95a5a6" opacity="0.3"/>
+                    <path d="M 50 450 Q 400 380, 750 450" fill="none" stroke="#7f8c8d" stroke-width="3"/>
+                    
+                    <!-- Ground station -->
+                    <rect x="80" y="430" width="30" height="20" fill="#34495e"/>
+                    <line x1="95" y1="430" x2="95" y2="410" stroke="#e74c3c" stroke-width="3"/>
+                    <circle cx="95" cy="408" r="5" fill="#e74c3c"/>
+                    <text x="95" y="480" text-anchor="middle" font-size="12" fill="#2c3e50">Ground</text>
+                    <text x="95" y="495" text-anchor="middle" font-size="12" fill="#2c3e50">h=2m</text>
+                    
+                    <!-- Ground horizon arc -->
+                    <path d="M 95 410 Q 150 400, 180 405" fill="none" stroke="#e74c3c" stroke-width="2" stroke-dasharray="5,5"/>
+                    <text x="150" y="390" font-size="11" fill="#e74c3c">~5.8 km</text>
+                    
+                    <!-- Drone at altitude -->
+                    <g transform="translate(400, 200)">
+                        <!-- Drone body -->
+                        <rect x="-15" y="-8" width="30" height="16" fill="#2c3e50" rx="2"/>
+                        <!-- Rotors -->
+                        <circle cx="-12" cy="-12" r="8" fill="none" stroke="#3498db" stroke-width="2"/>
+                        <circle cx="12" cy="-12" r="8" fill="none" stroke="#3498db" stroke-width="2"/>
+                        <circle cx="-12" cy="12" r="8" fill="none" stroke="#3498db" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="8" fill="none" stroke="#3498db" stroke-width="2"/>
+                        <!-- Antenna -->
+                        <line x1="0" y1="-8" x2="0" y2="-25" stroke="#e74c3c" stroke-width="2"/>
+                        <circle cx="0" cy="-27" r="4" fill="#e74c3c"/>
+                    </g>
+                    
+                    <text x="400" y="240" text-anchor="middle" font-size="12" fill="#2c3e50">Drone + Antenna</text>
+                    <text x="400" y="255" text-anchor="middle" font-size="12" fill="#2c3e50">h=100m AGL</text>
+                    
+                    <!-- Altitude line -->
+                    <line x1="400" y1="220" x2="400" y2="450" stroke="#95a5a6" stroke-width="2" stroke-dasharray="5,5"/>
+                    <text x="410" y="335" font-size="11" fill="#95a5a6">100m</text>
+                    
+                    <!-- Extended horizon arc -->
+                    <path d="M 95 410 Q 400 280, 705 410" fill="none" stroke="#2ecc71" stroke-width="3"/>
+                    <text x="400" y="320" text-anchor="middle" font-size="14" fill="#2ecc71" font-weight="bold">Extended Range: ~41 km</text>
+                    <text x="400" y="340" text-anchor="middle" font-size="12" fill="#2ecc71">(7× improvement!)</text>
+                    
+                    <!-- Coverage area circles -->
+                    <circle cx="95" cy="410" r="40" fill="#e74c3c" opacity="0.2"/>
+                    <circle cx="400" cy="200" r="180" fill="#2ecc71" opacity="0.2"/>
+                    
+                    <!-- Formula box -->
+                    <rect x="520" y="50" width="250" height="120" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
+                    <text x="645" y="75" text-anchor="middle" font-size="14" font-weight="bold" fill="#2c3e50">Radio Horizon Formula</text>
+                    <text x="645" y="100" text-anchor="middle" font-size="12" fill="#34495e">d = 4.12 × √h km</text>
+                    <line x1="540" y1="110" x2="750" y2="110" stroke="#95a5a6" stroke-width="1"/>
+                    <text x="645" y="130" text-anchor="middle" font-size="11" fill="#34495e">h=2m: d ≈ 5.8 km</text>
+                    <text x="645" y="148" text-anchor="middle" font-size="11" fill="#34495e">h=100m: d ≈ 41 km</text>
+                    <text x="645" y="165" text-anchor="middle" font-size="10" fill="#7f8c8d">where h = height in meters</text>
+                </svg>
+                <div class="diagram-caption">Dramatic range extension achieved by elevating antenna to 100m altitude</div>
+            </div>
+            
+            <div class="drone-box">
+                <h4>Concept: Extending VHF/UHF Range</h4>
+                
+                <p><strong>Theory:</strong> Radio horizon = 4.12 × √h kilometers</p>
+                <ul>
+                    <li>Ground level (h=2m): range ≈ 5.8 km</li>
+                    <li>At 100m altitude: range ≈ 41 km (7× improvement!)</li>
+                </ul>
+                
+                <p><strong>Hardware Setup:</strong></p>
+                <ul>
+                    <li>DJI Phantom 4 or Mavic Pro</li>
+                    <li>Handheld VHF transceiver (200g with battery)</li>
+                    <li>Lightweight dipole antenna (20g)</li>
+                    <li>PTT relay (RC-controlled or autonomous)</li>
+                    <li>3D-printed mounting cradle</li>
+                    <li>Power via drone battery or separate LiPo</li>
+                </ul>
+                
+                <p><strong>Operating Modes:</strong></p>
+                <ol>
+                    <li><strong>Manual Relay:</strong> Pilot triggers PTT via spare channel</li>
+                    <li><strong>Cross-Band Repeat:</strong> RX on 2m, TX on 70cm</li>
+                    <li><strong>APRS Beacon:</strong> Transmit GPS position every 30 sec</li>
+                </ol>
+                
+                <p><strong>Mission Profile:</strong></p>
+                <ul>
+                    <li>Climb to 100m AGL</li>
+                    <li>Hover or slow orbit for coverage</li>
+                    <li>Extend range from 10 km to 50+ km</li>
+                    <li>Flight time: 15-18 minutes with payload</li>
+                    <li>Coverage area: ~7,850 km² (vs 314 km² ground)</li>
+                </ul>
+            </div>
+
+            <h3>Application 2: Propagation Mapping</h3>
+            
+            <div class="diagram-container">
+                <div class="diagram-title">RF Coverage Mapping Flight Pattern</div>
+                <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Ground -->
+                    <rect x="0" y="500" width="800" height="100" fill="#95a5a6" opacity="0.3"/>
+                    
+                    <!-- Transmitter station -->
+                    <rect x="380" y="470" width="40" height="30" fill="#34495e"/>
+                    <line x1="400" y1="470" x2="400" y2="440" stroke="#e74c3c" stroke-width="4"/>
+                    <circle cx="400" cy="440" r="8" fill="#e74c3c"/>
+                    <text x="400" y="530" text-anchor="middle" font-size="14" font-weight="bold" fill="#2c3e50">TX Station</text>
+                    
+                    <!-- Signal waves -->
+                    <g opacity="0.3">
+                        <circle cx="400" cy="440" r="50" fill="none" stroke="#e74c3c" stroke-width="2"/>
+                        <circle cx="400" cy="440" r="100" fill="none" stroke="#e74c3c" stroke-width="2"/>
+                        <circle cx="400" cy="440" r="150" fill="none" stroke="#e74c3c" stroke-width="2"/>
+                        <circle cx="400" cy="440" r="200" fill="none" stroke="#e74c3c" stroke-width="2"/>
+                    </g>
+                    
+                    <!-- Grid flight pattern -->
+                    <!-- Horizontal lines -->
+                    <line x1="150" y1="150" x2="650" y2="150" stroke="#3498db" stroke-width="3" stroke-dasharray="10,5"/>
+                    <line x1="150" y1="250" x2="650" y2="250" stroke="#3498db" stroke-width="3" stroke-dasharray="10,5"/>
+                    <line x1="150" y1="350" x2="650" y2="350" stroke="#3498db" stroke-width="3" stroke-dasharray="10,5"/>
+                    
+                    <!-- Vertical connecting lines -->
+                    <line x1="650" y1="150" x2="650" y2="250" stroke="#3498db" stroke-width="3"/>
+                    <line x1="150" y1="250" x2="150" y2="350" stroke="#3498db" stroke-width="3"/>
+                    
+                    <!-- Waypoints -->
+                    <circle cx="150" cy="150" r="8" fill="#2ecc71"/>
+                    <circle cx="300" cy="150" r="8" fill="#2ecc71"/>
+                    <circle cx="450" cy="150" r="8" fill="#2ecc71"/>
+                    <circle cx="600" cy="150" r="8" fill="#2ecc71"/>
+                    <circle cx="650" cy="150" r="8" fill="#2ecc71"/>
+                    
+                    <circle cx="650" cy="250" r="8" fill="#2ecc71"/>
+                    <circle cx="500" cy="250" r="8" fill="#2ecc71"/>
+                    <circle cx="350" cy="250" r="8" fill="#2ecc71"/>
+                    <circle cx="200" cy="250" r="8" fill="#2ecc71"/>
+                    <circle cx="150" cy="250" r="8" fill="#2ecc71"/>
+                    
+                    <circle cx="150" cy="350" r="8" fill="#2ecc71"/>
+                    <circle cx="300" cy="350" r="8" fill="#2ecc71"/>
+                    <circle cx="450" cy="350" r="8" fill="#2ecc71"/>
+                    <circle cx="600" cy="350" r="8" fill="#2ecc71"/>
+                    <circle cx="650" cy="350" r="8" fill="#2ecc71"/>
+                    
+                    <!-- Drone at current waypoint -->
+                    <g transform="translate(300, 150)">
+                        <rect x="-12" y="-6" width="24" height="12" fill="#2c3e50" rx="2"/>
+                        <circle cx="-10" cy="-10" r="6" fill="none" stroke="#f39c12" stroke-width="2"/>
+                        <circle cx="10" cy="-10" r="6" fill="none" stroke="#f39c12" stroke-width="2"/>
+                        <circle cx="-10" cy="10" r="6" fill="none" stroke="#f39c12" stroke-width="2"/>
+                        <circle cx="10" cy="10" r="6" fill="none" stroke="#f39c12" stroke-width="2"/>
+                        <line x1="0" y1="-6" x2="0" y2="-18" stroke="#9b59b6" stroke-width="2"/>
+                        <circle cx="0" cy="-20" r="3" fill="#9b59b6"/>
+                    </g>
+                    
+                    <!-- Signal strength indicators at waypoints -->
+                    <rect x="145" y="130" width="10" height="15" fill="#2ecc71" opacity="0.7"/>
+                    <rect x="295" y="120" width="10" height="25" fill="#2ecc71" opacity="0.7"/>
+                    <rect x="445" y="125" width="10" height="20" fill="#f39c12" opacity="0.7"/>
+                    <rect x="595" y="135" width="10" height="10" fill="#e74c3c" opacity="0.7"/>
+                    
+                    <!-- Legend -->
+                    <rect x="50" y="400" width="220" height="90" fill="#ecf0f1" stroke="#34495e" stroke-width="2" rx="5"/>
+                    <text x="160" y="420" text-anchor="middle" font-size="12" font-weight="bold">Signal Strength</text>
+                    <rect x="60" y="430" width="15" height="15" fill="#2ecc71"/>
+                    <text x="85" y="442" font-size="11">Strong (> -70 dBm)</text>
+                    <rect x="60" y="450" width="15" height="15" fill="#f39c12"/>
+                    <text x="85" y="462" font-size="11">Medium (-70 to -90)</text>
+                    <rect x="60" y="470" width="15" height="15" fill="#e74c3c"/>
+                    <text x="85" y="482" font-size="11">Weak (< -90 dBm)</text>
+                    
+                    <!-- Info box -->
+                    <rect x="530" y="400" width="240" height="90" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="5"/>
+                    <text x="650" y="420" text-anchor="middle" font-size="12" font-weight="bold" fill="#2c3e50">Data Collected</text>
+                    <text x="650" y="440" text-anchor="middle" font-size="10" fill="#34495e">• GPS Position (lat/lon)</text>
+                    <text x="650" y="455" text-anchor="middle" font-size="10" fill="#34495e">• Altitude (AGL)</text>
+                    <text x="650" y="470" text-anchor="middle" font-size="10" fill="#34495e">• RSSI (dBm)</text>
+                    <text x="650" y="485" text-anchor="middle" font-size="10" fill="#34495e">• Timestamp</text>
+                    
+                    <!-- Arrows showing direction -->
+                    <polygon points="645,155 655,150 645,145" fill="#3498db"/>
+                    <polygon points="155,245 145,250 155,255" fill="#3498db"/>
+                </svg>
+                <div class="diagram-caption">Autonomous grid pattern for 3D RF coverage mapping with signal strength measurement at each waypoint</div>
+            </div>
+            
+            <div class="drone-box">
+                <h4>Objective: Create 3D RF Coverage Map</h4>
+                
+                <p><strong>Equipment:</strong></p>
+                <ul>
+                    <li>Drone with GPS and data logger</li>
+                    <li>RF power meter or SDR receiver (RTL-SDR, 50g)</li>
+                    <li>VHF/UHF antenna</li>
+                    <li>Storage for telemetry data</li>
+                </ul>
+                
+                <p><strong>Procedure:</strong></p>
+                <ol>
+                    <li>Ground station transmits continuous carrier</li>
+                    <li>Drone flies programmed grid pattern at multiple altitudes</li>
+                    <li>Records signal strength (RSSI) at each waypoint</li>
+                    <li>GPS tags each measurement</li>
+                    <li>Downloads data, creates heatmap</li>
+                </ol>
+                
+                <p><strong>Analysis:</strong></p>
+                <ul>
+                    <li>Identify terrain shadowing effects</li>
+                    <li>Measure antenna pattern in real environment</li>
+                    <li>Determine optimal repeater placement</li>
+                    <li>Observe altitude effects on range</li>
+                    <li>Validate propagation models</li>
+                </ul>
+            </div>
+
+            <h3>Application 3: Airborne Relay Station</h3>
+            
+            <div class="diagram-container">
+                <div class="diagram-title">Cross-Band Repeater Configuration</div>
+                <svg viewBox="0 0 800 550" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Ground -->
+                    <line x1="0" y1="450" x2="800" y2="450" stroke="#95a5a6" stroke-width="3"/>
+                    
+                    <!-- Left station -->
+                    <g transform="translate(100, 400)">
+                        <rect x="-20" y="-15" width="40" height="30" fill="#34495e"/>
+                        <circle cx="0" cy="0" r="25" fill="none" stroke="#3498db" stroke-width="2"/>
+                        <text x="0" y="60" text-anchor="middle" font-size="12" font-weight="bold">Station A</text>
+                        <text x="0" y="75" text-anchor="middle" font-size="10">146.520 MHz</text>
+                    </g>
+                    
+                    <!-- Right station -->
+                    <g transform="translate(700, 400)">
+                        <rect x="-20" y="-15" width="40" height="30" fill="#34495e"/>
+                        <circle cx="0" cy="0" r="25" fill="none" stroke="#2ecc71" stroke-width="2"/>
+                        <text x="0" y="60" text-anchor="middle" font-size="12" font-weight="bold">Station B</text>
+                        <text x="0" y="75" text-anchor="middle" font-size="10">146.520 MHz</text>
+                    </g>
+                    
+                    <!-- Drone repeater -->
+                    <g transform="translate(400, 180)">
+                        <!-- Body -->
+                        <rect x="-25" y="-15" width="50" height="30" fill="#2c3e50" rx="3"/>
+                        <circle cx="0" cy="0" r="20" fill="#34495e"/>
+                        <!-- Rotors -->
+                        <circle cx="-25" cy="-25" r="15" fill="none" stroke="#f39c12" stroke-width="3"/>
+                        <circle cx="25" cy="-25" r="15" fill="none" stroke="#f39c12" stroke-width="3"/>
+                        <circle cx="-25" cy="25" r="15" fill="none" stroke="#f39c12" stroke-width="3"/>
+                        <circle cx="25" cy="25" r="15" fill="none" stroke="#f39c12" stroke-width="3"/>
+                        <!-- Antennas -->
+                        <line x1="-15" y1="-15" x2="-15" y2="-45" stroke="#3498db" stroke-width="3"/>
+                        <circle cx="-15" cy="-48" r="5" fill="#3498db"/>
+                        <text x="-15" y="-55" text-anchor="middle" font-size="9" fill="#3498db">RX 2m</text>
+                        <line x1="15" y1="-15" x2="15" y2="-45" stroke="#2ecc71" stroke-width="3"/>
+                        <circle cx="15" cy="-48" r="5" fill="#2ecc71"/>
+                        <text x="15" y="-55" text-anchor="middle" font-size="9" fill="#2ecc71">TX 70cm</text>
+                        
+                        <text x="0" y="60" text-anchor="middle" font-size="13" font-weight="bold">Airborne Repeater</text>
+                        <text x="0" y="78" text-anchor="middle" font-size="10">100m AGL</text>
+                    </g>
+                    
+                    <!-- Uplink from Station A -->
+                    <path d="M 120 380 Q 250 280, 380 200" fill="none" stroke="#3498db" stroke-width="3" stroke-dasharray="8,4" marker-end="url(#arrow-blue)"/>
+                    <text x="220" y="300" font-size="11" fill="#3498db" font-weight="bold">146.520 MHz</text>
+                    <text x="220" y="315" font-size="9" fill="#3498db">(2m uplink)</text>
+                    
+                    <!-- Downlink to Station B -->
+                    <path d="M 420 200 Q 550 280, 680 380" fill="none" stroke="#2ecc71" stroke-width="3" stroke-dasharray="8,4" marker-end="url(#arrow-green)"/>
+                    <text x="580" y="300" font-size="11" fill="#2ecc71" font-weight="bold">446.000 MHz</text>
+                    <text x="580" y="315" font-size="9" fill="#2ecc71">(70cm downlink)</text>
+                    
+                    <!-- Coverage circles -->
+                    <circle cx="400" cy="180" r="220" fill="#f39c12" opacity="0.1" stroke="#f39c12" stroke-width="2" stroke-dasharray="5,5"/>
+                    <text x="400" y="410" text-anchor="middle" font-size="11" fill="#f39c12">~50 km coverage radius</text>
+                    
+                    <!-- Info box -->
+                    <rect x="50" y="50" width="280" height="110" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+                    <text x="190" y="75" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e3c72">Cross-Band Operation</text>
+                    <line x1="65" y1="82" x2="315" y2="82" stroke="#95a5a6" stroke-width="1"/>
+                    <text x="70" y="100" font-size="10" fill="#34495e">• RX: 146.520 MHz (2m calling)</text>
+                    <text x="70" y="117" font-size="10" fill="#34495e">• TX: 446.000 MHz (70cm)</text>
+                    <text x="70" y="134" font-size="10" fill="#34495e">• Prevents desensitization</text>
+                    <text x="70" y="151" font-size="10" fill="#34495e">• Extends simplex range</text>
+                    
+                    <!-- Performance box -->
+                    <rect x="470" y="50" width="280" height="110" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="5"/>
+                    <text x="610" y="75" text-anchor="middle" font-size="13" font-weight="bold" fill="#2c3e50">Performance</text>
+                    <line x1="485" y1="82" x2="735" y2="82" stroke="#95a5a6" stroke-width="1"/>
+                    <text x="490" y="100" font-size="10" fill="#34495e">• Coverage: ~7,850 km²</text>
+                    <text x="490" y="117" font-size="10" fill="#34495e">• Flight time: 10-15 min</text>
+                    <text x="490" y="134" font-size="10" fill="#34495e">• Power: 5-15W continuous</text>
+                    <text x="490" y="151" font-size="10" fill="#34495e">• Users: 20+ simultaneous</text>
+                    
+                    <defs>
+                        <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#3498db"/>
+                        </marker>
+                        <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#2ecc71"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <div class="diagram-caption">Airborne cross-band repeater extends communication range between ground stations</div>
+            </div>
+            
+            <div class="success-box">
+                <h4>Temporary Repeater for Field Operations</h4>
+                
+                <p><strong>Concept:</strong> Drone carries dual-band radio configured as cross-band repeater</p>
+                
+                <p><strong>Hardware:</strong></p>
+                <ul>
+                    <li>Dual-band transceiver (Yaesu FT-8900R or similar)</li>
+                    <li>Dual-band antenna system</li>
+                    <li>Duplexer or isolated antennas</li>
+                    <li>12V power from drone battery (regulated)</li>
+                    <li>VOX or COR for automatic triggering</li>
+                </ul>
+                
+                <p><strong>Configuration:</strong></p>
+                <ul>
+                    <li>Receive: 146.520 MHz (2m calling freq)</li>
+                    <li>Transmit: 446.000 MHz (70cm)</li>
+                    <li>Altitude: 100m AGL</li>
+                    <li>Coverage: ~50 km radius</li>
+                </ul>
+                
+                <p><strong>Applications:</strong></p>
+                <ul>
+                    <li>Emergency communications</li>
+                    <li>Search and rescue operations</li>
+                    <li>Field day extended coverage</li>
+                    <li>Special event communications</li>
+                    <li>RF propagation demonstrations</li>
+                </ul>
+                
+                <p><strong>Safety Considerations:</strong></p>
+                <ul>
+                    <li>RF isolation to prevent desensitization</li>
+                    <li>Power consumption monitoring (5-15W continuous)</li>
+                    <li>Reduced flight time (10-15 min under load)</li>
+                    <li>Frequency coordination required</li>
+                    <li>Timeout timer (5-minute max transmission)</li>
+                </ul>
+            </div>
+
+            <h2>Mission Planning</h2>
+
+            <h3>Pre-Flight Checklist</h3>
+            <div class="warning-box">
+                <h4>⚠️ Never Skip These Steps:</h4>
+                <ol>
+                    <li>✅ Check weather (wind <10 m/s, no rain)</li>
+                    <li>✅ Inspect drone (props, motors, frame)</li>
+                    <li>✅ Check battery voltage (>3.8V per cell)</li>
+                    <li>✅ Test RC link and telemetry</li>
+                    <li>✅ Verify GPS lock (>6 satellites)</li>
+                    <li>✅ Set home point and RTH altitude</li>
+                    <li>✅ Brief team on flight plan</li>
+                    <li>✅ Confirm airspace clearance</li>
+                    <li>✅ Station visual observer (spotter)</li>
+                    <li>✅ Test emergency procedures</li>
+                </ol>
+            </div>
+
+            <h3>Mission Planning Software</h3>
+            <table>
+                <tr>
+                    <th>Software</th>
+                    <th>Platform</th>
+                    <th>Features</th>
+                    <th>Best For</th>
+                </tr>
+                <tr>
+                    <td><strong>DJI GS Pro</strong></td>
+                    <td>iPad</td>
+                    <td>Waypoint, area mapping, 3D view</td>
+                    <td>DJI platforms, official support</td>
+                </tr>
+                <tr>
+                    <td><strong>Litchi</strong></td>
+                    <td>iOS/Android</td>
+                    <td>Advanced waypoints, POI orbits</td>
+                    <td>Automated missions, repeatability</td>
+                </tr>
+                <tr>
+                    <td><strong>DroneDeploy</strong></td>
+                    <td>Web/Mobile</td>
+                    <td>Area surveys, 3D reconstruction</td>
+                    <td>Mapping and surveying</td>
+                </tr>
+                <tr>
+                    <td><strong>Mission Planner</strong></td>
+                    <td>Windows</td>
+                    <td>ArduPilot support, telemetry</td>
+                    <td>Custom builds, advanced users</td>
+                </tr>
+            </table>
+
+            <h2>Battery Management</h2>
+
+            <div class="diagram-container">
+                <div class="diagram-title">LiPo Battery Voltage Discharge Curve</div>
+                <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Axes -->
+                    <line x1="80" y1="50" x2="80" y2="420" stroke="#2c3e50" stroke-width="2"/>
+                    <line x1="80" y1="420" x2="750" y2="420" stroke="#2c3e50" stroke-width="2"/>
+                    
+                    <!-- Y-axis labels (Voltage) -->
+                    <text x="50" y="60" text-anchor="middle" font-size="12" fill="#2c3e50">4.2V</text>
+                    <line x1="75" y1="55" x2="80" y2="55" stroke="#95a5a6" stroke-width="1"/>
+                    <text x="50" y="145" text-anchor="middle" font-size="12" fill="#2c3e50">4.0V</text>
+                    <line x1="75" y1="140" x2="80" y2="140" stroke="#95a5a6" stroke-width="1"/>
+                    <text x="50" y="230" text-anchor="middle" font-size="12" fill="#2c3e50">3.8V</text>
+                    <line x1="75" y1="225" x2="80" y2="225" stroke="#95a5a6" stroke-width="1"/>
+                    <text x="50" y="315" text-anchor="middle" font-size="12" fill="#2c3e50">3.6V</text>
+                    <line x1="75" y1="310" x2="80" y2="310" stroke="#95a5a6" stroke-width="1"/>
+                    <text x="50" y="385" text-anchor="middle" font-size="12" fill="#2c3e50">3.3V</text>
+                    <line x1="75" y1="380" x2="80" y2="380" stroke="#95a5a6" stroke-width="1"/>
+                    <text x="50" y="425" text-anchor="middle" font-size="12" fill="#2c3e50">3.0V</text>
+                    
+                    <!-- X-axis labels (Capacity) -->
+                    <text x="80" y="445" text-anchor="middle" font-size="12" fill="#2c3e50">0%</text>
+                    <line x1="80" y1="420" x2="80" y2="425" stroke="#95a5a6" stroke-width="1"/>
+                    <text x="246" y="445" text-anchor="middle" font-size="12" fill="#2c3e50">25%</text>
+                    <line x1="246" y1="420" x2="246" y2="425" stroke="#95a5a6" stroke-width="1"/>
+                    <text x="413" y="445" text-anchor="middle" font-size="12" fill="#2c3e50">50%</text>
+                    <line x1="413" y1="420" x2="413" y2="425" stroke="#95a5a6" stroke-width="1"/>
+                    <text x="580" y="445" text-anchor="middle" font-size="12" fill="#2c3e50">75%</text>
+                    <line x1="580" y1="420" x2="580" y2="425" stroke="#95a5a6" stroke-width="1"/>
+                    <text x="747" y="445" text-anchor="middle" font-size="12" fill="#2c3e50">100%</text>
+                    <line x1="747" y1="420" x2="747" y2="425" stroke="#95a5a6" stroke-width="1"/>
+                    
+                    <!-- Grid lines -->
+                    <line x1="80" y1="55" x2="747" y2="55" stroke="#ecf0f1" stroke-width="1"/>
+                    <line x1="80" y1="140" x2="747" y2="140" stroke="#ecf0f1" stroke-width="1"/>
+                    <line x1="80" y1="225" x2="747" y2="225" stroke="#ecf0f1" stroke-width="1"/>
+                    <line x1="80" y1="310" x2="747" y2="310" stroke="#ecf0f1" stroke-width="1"/>
+                    <line x1="80" y1="380" x2="747" y2="380" stroke="#ecf0f1" stroke-width="1"/>
+                    
+                    <!-- Discharge curve -->
+                    <path d="M 80 55 L 200 60 L 350 75 L 500 140 L 600 225 L 680 310 L 730 380 L 747 420" 
+                          fill="none" stroke="#3498db" stroke-width="4"/>
+                    
+                    <!-- Zone shading -->
+                    <rect x="80" y="55" width="667" height="100" fill="#2ecc71" opacity="0.15"/>
+                    <text x="400" y="105" text-anchor="middle" font-size="14" font-weight="bold" fill="#27ae60">SAFE ZONE</text>
+                    
+                    <rect x="80" y="155" width="667" height="155" fill="#f39c12" opacity="0.15"/>
+                    <text x="400" y="232" text-anchor="middle" font-size="14" font-weight="bold" fill="#e67e22">CAUTION ZONE</text>
+                    
+                    <rect x="80" y="310" width="667" height="110" fill="#e74c3c" opacity="0.15"/>
+                    <text x="400" y="365" text-anchor="middle" font-size="14" font-weight="bold" fill="#c0392b">DANGER ZONE</text>
+                    
+                    <!-- Critical markers -->
+                    <circle cx="80" cy="55" r="6" fill="#2ecc71"/>
+                    <text x="95" y="50" font-size="11" fill="#27ae60" font-weight="bold">Fully Charged</text>
+                    
+                    <circle cx="413" cy="225" r="6" fill="#f39c12"/>
+                    <text x="428" y="220" font-size="11" fill="#e67e22" font-weight="bold">Storage Voltage</text>
+                    
+                    <circle cx="730" cy="380" r="6" fill="#e74c3c"/>
+                    <text x="600" y="395" font-size="11" fill="#c0392b" font-weight="bold">Empty - Land NOW!</text>
+                    
+                    <!-- Axis labels -->
+                    <text x="20" y="240" text-anchor="middle" font-size="14" font-weight="bold" fill="#2c3e50" transform="rotate(-90 20 240)">Voltage per Cell (V)</text>
+                    <text x="413" y="480" text-anchor="middle" font-size="14" font-weight="bold" fill="#2c3e50">Discharge (% Capacity Used)</text>
+                </svg>
+                <div class="diagram-caption">LiPo discharge curve showing safe operating zones and critical voltage thresholds</div>
+            </div>
+
+            <h3>LiPo Battery Care</h3>
+            <div class="info-box">
+                <h4>Critical LiPo Parameters:</h4>
+                <ul>
+                    <li><strong>Voltage per Cell:</strong>
+                        <ul>
+                            <li>Fully charged: 4.2V</li>
+                            <li>Storage: 3.8V (50% SOC)</li>
+                            <li>Nominal: 3.7V</li>
+                            <li>Empty: 3.0V (NEVER go below!)</li>
+                        </ul>
+                    </li>
+                    <li><strong>C-Rating:</strong> Max discharge rate (25C × 5000mAh = 125A max)</li>
+                    <li><strong>Balance Charging:</strong> Each cell within 0.01V for safety</li>
+                    <li><strong>Storage Voltage:</strong> 3.8V/cell if unused >3 days</li>
+                    <li><strong>Temperature:</strong> Never charge below 0°C</li>
+                    <li><strong>Charge Rate:</strong> 1C standard (5A for 5000mAh)</li>
+                    <li><strong>Cycle Life:</strong> 300-500 cycles typical</li>
+                </ul>
+            </div>
+
+            <h3>Solar Charging Integration</h3>
+            <div class="success-box">
+                <h4>Field Charging System:</h4>
+                <p><strong>Components:</strong></p>
+                <ul>
+                    <li>100W solar panel</li>
+                    <li>MPPT controller</li>
+                    <li>35Ah LiFePO4 battery bank</li>
+                    <li>Multi-port LiPo charger (4× simultaneous)</li>
+                </ul>
+                
+                <p><strong>Charging Time:</strong></p>
+                <ul>
+                    <li>5000mAh 4S LiPo: ~60Wh capacity</li>
+                    <li>At 50W solar input (85% efficiency): 1.4 hours per battery</li>
+                    <li>Can charge 4 batteries in 6 hours (sunny day)</li>
+                </ul>
+                
+                <p><strong>Field Operations:</strong></p>
+                <ul>
+                    <li>Deploy solar panel at flight site</li>
+                    <li>Continuous battery rotation</li>
+                    <li>All-day flight operations possible</li>
+                    <li>No grid power required</li>
+                </ul>
+            </div>
+
+            <h2>Safety Protocols</h2>
+
+            <h3>Flight Safety Rules</h3>
+            <div class="warning-box">
+                <h4>⚠️ NON-NEGOTIABLE SAFETY RULES:</h4>
+                <ul>
+                    <li>❌ NEVER fly over people</li>
+                    <li>❌ NEVER fly beyond visual line of sight (VLOS)</li>
+                    <li>❌ NEVER fly near airports without authorization</li>
+                    <li>❌ NEVER fly above 400 ft AGL (unless authorized)</li>
+                    <li>❌ NEVER fly in controlled airspace without clearance</li>
+                    <li>❌ NEVER fly in bad weather (wind, rain, fog)</li>
+                    <li>✅ ALWAYS maintain VLOS (visual line of sight)</li>
+                    <li>✅ ALWAYS have visual observer for complex missions</li>
+                    <li>✅ ALWAYS check NOTAMs before flight</li>
+                    <li>✅ ALWAYS respect privacy (no filming without permission)</li>
+                    <li>✅ ALWAYS plan emergency landing zones</li>
+                    <li>✅ ALWAYS maintain 30% battery reserve for RTH</li>
+                </ul>
+            </div>
+
+            <h3>LiPo Fire Safety</h3>
+            <div class="warning-box">
+                <h4>⚠️ LiPo Battery Fire Procedures:</h4>
+                <p><strong>Prevention:</strong></p>
+                <ul>
+                    <li>Never overcharge (>4.2V per cell)</li>
+                    <li>Never overdischarge (<3.0V per cell)</li>
+                    <li>Never puncture or crush</li>
+                    <li>Store in LiPo-safe bags</li>
+                    <li>Charge on non-flammable surface</li>
+                    <li>Never leave charging unattended</li>
+                </ul>
+                
+                <p><strong>If Fire Occurs:</strong></p>
+                <ul>
+                    <li>❌ DO NOT use water (makes it worse!)</li>
+                    <li>✅ Use sand, dry powder, or CO2 extinguisher</li>
+                    <li>✅ Move away from fire (toxic smoke)</li>
+                    <li>✅ Let it burn out in safe area if cannot extinguish</li>
+                    <li>✅ Ventilate area after fire</li>
+                </ul>
+            </div>
+
+            <h2>Regulations and Licensing</h2>
+
+            <h3>UAS Operating Rules (General Guidelines)</h3>
+            <div class="info-box">
+                <h4>Common Regulations (Vary by Country):</h4>
+                <ul>
+                    <li><strong>Registration:</strong> Required for drones >250g</li>
+                    <li><strong>Remote Pilot Certificate:</strong> Required for commercial operations</li>
+                    <li><strong>Altitude Limit:</strong> 400 ft (120m) AGL</li>
+                    <li><strong>Speed Limit:</strong> 100 mph (160 km/h)</li>
+                    <li><strong>Visual Line of Sight:</strong> Required at all times</li>
+                    <li><strong>Airspace Authorization:</strong> Required in controlled airspace</li>
+                    <li><strong>Night Operations:</strong> Requires anti-collision lighting</li>
+                    <li><strong>Over People:</strong> Generally prohibited (exceptions exist)</li>
+                </ul>
+                
+                <p><strong>Note:</strong> Always check local regulations. Requirements vary significantly by country and region.</p>
+            </div>
+
+            <h2>Hands-On Projects</h2>
+
+            <h3>Project 1: Aerial Photography Mission</h3>
+            <div class="success-box">
+                <h4>Objective:</h4>
+                <p>Document RadioSport field operations from aerial perspective</p>
+                
+                <h4>Mission Plan:</h4>
+                <ol>
+                    <li>Scout location, identify key features to photograph</li>
+                    <li>Plan flight path (orbits, reveal shots, overhead)</li>
+                    <li>Set camera parameters (4K video, manual exposure)</li>
+                    <li>Execute flight with smooth movements</li>
+                    <li>Download and edit footage</li>
+                    <li>Create promotional video for program</li>
+                </ol>
+                
+                <h4>Learning Outcomes:</h4>
+                <ul>
+                    <li>Drone piloting skills</li>
+                    <li>Cinematography and composition</li>
+                    <li>Video editing</li>
+                    <li>Mission planning</li>
+                    <li>Documentation techniques</li>
+                </ul>
+            </div>
+
+            <h3>Project 2: Autonomous Inspection Flight</h3>
+            <div class="success-box">
+                <h4>Objective:</h4>
+                <p>Program autonomous mission to inspect antenna array</p>
+                
+                <h4>Requirements:</h4>
+                <ul>
+                    <li>Mission planning software (Litchi or DJI GS Pro)</li>
+                    <li>Waypoint programming</li>
+                    <li>Camera gimbal control</li>
+                    <li>Automated image capture</li>
+                </ul>
+                
+                <h4>Mission Steps:</h4>
+                <ol>
+                    <li>Survey antenna site, identify inspection points</li>
+                    <li>Create waypoint mission (each antenna element)</li>
+                    <li>Program gimbal angles for optimal viewing</li>
+                    <li>Set photo triggers at each waypoint</li>
+                    <li>Execute autonomous mission</li>
+                    <li>Review images for antenna damage or issues</li>
+                </ol>
+            </div>
+
+            <h3>Project 3: Search and Rescue Training</h3>
+            <div class="success-box">
+                <h4>Objective:</h4>
+                <p>Practice locating hidden radio transmitter using drone</p>
+                
+                <h4>Setup:</h4>
+                <ul>
+                    <li>Hide APRS beacon in field (fox hunt)</li>
+                    <li>Drone with receiver and direction finding antenna</li>
+                    <li>Ground team with handheld receivers</li>
+                </ul>
+                
+                <h4>Procedure:</h4>
+                <ol>
+                    <li>Ground team gets initial bearing to transmitter</li>
+                    <li>Drone launches to altitude for wider search area</li>
+                    <li>Aerial search pattern to narrow location</li>
+                    <li>Ground team approaches based on drone guidance</li>
+                    <li>Locate transmitter, document time and method</li>
+                </ol>
+                
+                <h4>Applications:</h4>
+                <ul>
+                    <li>Emergency locator beacon (ELT) searches</li>
+                    <li>Lost person with radio</li>
+                    <li>Interference source location</li>
+                    <li>Coordination of ground and aerial teams</li>
+                </ul>
+            </div>
+
+            <h2>Chapter Summary</h2>
+            
+            <div class="success-box">
+                <h4>Key Takeaways:</h4>
+                <ul>
+                    <li>✅ Aviation fundamentals and multirotor flight dynamics</li>
+                    <li>✅ DJI platform specifications and capabilities</li>
+                    <li>✅ Radio-drone integration applications</li>
+                    <li>✅ Mission planning and execution</li>
+                    <li>✅ Battery management and solar charging</li>
+                    <li>✅ Safety protocols and regulations</li>
+                    <li>✅ Hands-on projects for skill development</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <h4>Next Steps:</h4>
+                <p><strong>Chapter 7: Artificial Intelligence Applications</strong></p>
+                <p>Learn how AI and machine learning enhance RadioSport operations including propagation prediction, signal classification, autonomous navigation, and intelligent decision-making systems.</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>RadioSport STEM Education Program</strong></p>
+            <p>Chapter 6: Drone Operations & Integration</p>
+            <p>Version 3.0 • 2025 Edition</p>
+        </div>
+    </div>
+</body>
+</html>
