@@ -13,7 +13,7 @@ import json
 # ============================================================================
 # APP METADATA & VERSION TRACKING
 # ============================================================================
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.3.0"
 APP_NAME = "RadioSport X-Repeater"
 APP_DESCRIPTION = "Drone-Borne Repeater RF Coverage Analyzer"
 DEVELOPER = "RNK"
