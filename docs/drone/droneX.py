@@ -840,7 +840,7 @@ with tab2:
         }
         
         df_2m = pd.DataFrame(link_budget_data)
-        st.dataframe(df_2m, hide_index=True, use_container_width=True, height=500)
+        st.dataframe(df_2m, hide_index=True, width="stretch", height=500)
         
         if fade_margin_2m < 6:
             st.error(f"❌ Critical: {fade_margin_2m:.1f} dB margin")
@@ -895,7 +895,7 @@ with tab2:
         }
         
         df_70cm = pd.DataFrame(link_budget_data_70cm)
-        st.dataframe(df_70cm, hide_index=True, use_container_width=True, height=500)
+        st.dataframe(df_70cm, hide_index=True, width="stretch", height=500)
         
         if fade_margin_70cm > fade_margin_2m + 5:
             st.info("ℹ️ 70cm has better margin")
@@ -969,7 +969,7 @@ with tab2:
         margin=dict(t=20, b=40, l=40, r=20),
         title=f"Propagation Model: {propagation_model.upper()} | Environment: {environment}"
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 with tab3:
     col1, col2 = st.columns(2)
@@ -996,7 +996,7 @@ with tab3:
         fig_power.update_layout(xaxis_title="TX Power (W)", yaxis_title="Range (km)",
                                hovermode='x unified', height=350, margin=dict(t=20, b=40, l=40, r=20),
                                title=f"Availability: {link_availability:.1f}%")
-        st.plotly_chart(fig_power, use_container_width=True)
+        st.plotly_chart(fig_power, width="stretch")
         
         power_efficiency = range_2m / tx_power_2m if tx_power_2m > 0 else 0
         st.metric("Power Efficiency", f"{power_efficiency:.1f} km/W")
@@ -1034,7 +1034,7 @@ with tab3:
         
         fig_alt.update_layout(xaxis_title="Altitude (m)", yaxis_title="Range (km)",
                              hovermode='x unified', height=350, margin=dict(t=20, b=40, l=40, r=20))
-        st.plotly_chart(fig_alt, use_container_width=True)
+        st.plotly_chart(fig_alt, width="stretch")
         
         altitude_efficiency = range_2m / drone_altitude if drone_altitude > 0 else 0
         st.metric("Altitude Efficiency", f"{altitude_efficiency:.2f} km/m")
@@ -1071,7 +1071,7 @@ with tab3:
     fig_models.update_layout(xaxis_title="Propagation Model", yaxis_title="Range (km)",
                            height=300, margin=dict(t=20, b=40, l=40, r=20),
                            title="Comparison of Different Propagation Models")
-    st.plotly_chart(fig_models, use_container_width=True)
+    st.plotly_chart(fig_models, width="stretch")
 
 with tab4:
     st.markdown("**Optimization Recommendations**")
@@ -1207,7 +1207,7 @@ with tab5:
         }
         
         df_config = pd.DataFrame(config_data)
-        st.dataframe(df_config, hide_index=True, use_container_width=True, height=400)
+        st.dataframe(df_config, hide_index=True, width="stretch", height=400)
     
     with col2:
         st.markdown("**Performance Metrics**")
@@ -1253,21 +1253,21 @@ with tab5:
                      f"{max(0, 100 - abs(range_2m - range_70cm)*5):.0f}/100"]
         })
         
-        st.dataframe(metrics_df, hide_index=True, use_container_width=True, height=200)
+        st.dataframe(metrics_df, hide_index=True, width="stretch", height=200)
     
     with col4:
         st.markdown("**🎯 Quick Actions**")
         
-        if st.button("📈 Maximize Range", use_container_width=True):
+        if st.button("📈 Maximize Range", width="stretch"):
             st.info("To maximize range: 1) Increase altitude, 2) Use directional antenna, 3) Reduce NF, 4) Add filtering")
         
-        if st.button("⚡ Optimize Efficiency", use_container_width=True):
+        if st.button("⚡ Optimize Efficiency", width="stretch"):
             st.info("For efficiency: 1) Set power to 1.5-2.0W, 2) Tune antennas (SWR<1.5), 3) Use optimal bandwidth")
         
-        if st.button("🛡️ Improve Reliability", use_container_width=True):
+        if st.button("🛡️ Improve Reliability", width="stretch"):
             st.info("For reliability: 1) Increase fade margin, 2) Add diversity, 3) Use cavity filters, 4) Lower NF")
         
-        if st.button("💰 Cost-Effective", use_container_width=True):
+        if st.button("💰 Cost-Effective", width="stretch"):
             st.info("Cost-effective upgrades: 1) Better antenna, 2) LNA, 3) Filters, 4) Tune existing equipment")
 
 with tab6:
@@ -1406,7 +1406,7 @@ st.markdown("### 📤 Export Results")
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    if st.button("📄 Full Report", use_container_width=True):
+    if st.button("📄 Full Report", width="stretch"):
         report_text = f"""
 # {APP_NAME} RF Coverage Analysis Report
 
@@ -1503,11 +1503,11 @@ with col1:
             data=report_text,
             file_name=f"{APP_NAME.replace(' ', '_')}_report_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.md",
             mime="text/markdown",
-            use_container_width=True
+            width="stretch"
         )
 
 with col2:
-    if st.button("📊 Data CSV", use_container_width=True):
+    if st.button("📊 Data CSV", width="stretch"):
         csv_data = pd.DataFrame({
             'Parameter': ['System Range', '2m Range', '70cm Range', 'Radio Horizon',
                          'Horizon Utilization', '2m Fade Margin', '70cm Fade Margin', 
@@ -1533,11 +1533,11 @@ with col2:
             data=csv_data.to_csv(index=False),
             file_name=f"{APP_NAME.replace(' ', '_')}_data_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
             mime="text/csv",
-            use_container_width=True
+            width="stretch"
         )
 
 with col3:
-    if st.button("🗺️ KML Export", use_container_width=True):
+    if st.button("🗺️ KML Export", width="stretch"):
         if st.session_state.drone_location:
             kml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -1602,13 +1602,13 @@ with col3:
                 data=kml_content,
                 file_name=f"{APP_NAME.replace(' ', '_')}_coverage_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.kml",
                 mime="application/vnd.google-earth.kml+xml",
-                use_container_width=True
+                width="stretch"
             )
         else:
             st.warning("Set drone location on map first")
 
 with col4:
-    if st.button("📋 Copy Config", use_container_width=True):
+    if st.button("📋 Copy Config", width="stretch"):
         config_text = f"""{APP_NAME} v{APP_VERSION}
 2m: {tx_power_2m}W @ {freq_2m}MHz | 70cm: {tx_power_70cm}W @ {freq_70cm}MHz
 Alt: {drone_altitude}m | Gain: {antenna_gain}dBi | NF: {noise_figure}dB
