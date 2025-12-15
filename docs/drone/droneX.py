@@ -11,49 +11,109 @@ import time
 import json
 
 # ============================================================================
-# PAGE CONFIGURATION
+# APP METADATA & VERSION TRACKING
 # ============================================================================
-st.set_page_config(
-    page_title="Drone Repeater RF Coverage Analyzer",
-    layout="wide",
-    page_icon="📡",
-    initial_sidebar_state="expanded"
-)
+APP_VERSION = "1.1.0"
+APP_NAME = "RadioSport X-Repeater"
+APP_DESCRIPTION = "Drone-Borne Repeater RF Coverage Analyzer"
+DEVELOPER = "RNK"
+COPYRIGHT = "Copyright © RNK, 2026 RadioSport. All rights reserved."
+GITHUB_URL = "https://github.com/rkarikari/stem"
+
+# ============================================================================
+# INITIALIZE UI
+# ============================================================================
+def initialize_ui():
+    st.set_page_config(
+        page_title=f"{APP_NAME} - {APP_DESCRIPTION}",
+        page_icon="📡",
+        layout="wide",
+        menu_items={
+            'Report a Bug': GITHUB_URL,
+            'About': f"{APP_NAME} v{APP_VERSION}\n\n{COPYRIGHT}"
+        }
+    )
+
+initialize_ui()
 
 # ============================================================================
 # CUSTOM CSS FOR IMPROVED UI
 # ============================================================================
-st.markdown("""
+st.markdown(f"""
 <style>
-    .main-header {
+    .app-title {{
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a73e8;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #1a73e8 0%, #6c8ef5 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }}
+    .app-subtitle {{
+        font-size: 14px;
+        color: #5f6368;
+        margin: 0 0 10px 0;
+        padding: 0;
+    }}
+    .version-badge {{
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-left: 8px;
+    }}
+    .main-header {{
         font-size: 24px;
         font-weight: 600;
         color: #1f77b4;
         margin: 0;
         padding: 0;
-    }
-    .sub-header {
+    }}
+    .sub-header {{
         font-size: 13px;
         color: #666;
         margin: 0 0 10px 0;
         padding: 0;
-    }
-    .metric-card {
+    }}
+    .metric-card {{
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 15px;
         border-radius: 10px;
         color: white;
         margin: 5px 0;
-    }
-    .stMetric {
+    }}
+    .stMetric {{
         background-color: #f0f2f6;
         padding: 10px;
         border-radius: 5px;
-    }
-    div[data-testid="stExpander"] {
+    }}
+    div[data-testid="stExpander"] {{
         border: 1px solid #e0e0e0;
         border-radius: 5px;
-    }
+    }}
+    .sidebar-title {{
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a73e8;
+        margin: 0 0 15px 0;
+        padding: 0;
+        text-align: center;
+        background: linear-gradient(135deg, #1a73e8 0%, #6c8ef5 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }}
+    .footer {{
+        text-align: center;
+        color: #666;
+        font-size: 12px;
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #e0e0e0;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -70,6 +130,8 @@ if 'current_tip' not in st.session_state:
     st.session_state.current_tip = ""
 if 'last_cleanup' not in st.session_state:
     st.session_state.last_cleanup = pd.Timestamp.now()
+if 'app_start_time' not in st.session_state:
+    st.session_state.app_start_time = pd.Timestamp.now()
 
 # ============================================================================
 # RF CALCULATION FUNCTIONS (OPTIMIZED & CACHED)
@@ -395,27 +457,48 @@ def calculate_radio_horizon(altitude_m):
 # ============================================================================
 # UI HEADER
 # ============================================================================
-col1, col2 = st.columns([4, 1])
+col1, col2, col3 = st.columns([3, 1, 1])
 with col1:
-    st.markdown("<div class='main-header'>📡 Drone-Based Repeater RF Coverage Analyzer</div>", 
+    st.markdown(f"<div class='app-title'>📡 {APP_NAME}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='app-subtitle'>Wouxun KG-UV9D Plus | 2m/70cm Cross-Band | Drone-Borne RF Coverage Simulation</div>", 
                 unsafe_allow_html=True)
-    st.markdown("<div class='sub-header'>Wouxun KG-UV9D Plus | 2m/70cm Cross-Band | Drone-borne RF Coverage Simulation</div>", unsafe_allow_html=True)
 with col2:
-    if st.button("📋 Save Config"):
+    st.markdown(f"<div class='version-badge'>v{APP_VERSION}</div>", unsafe_allow_html=True)
+with col3:
+    if st.button("💾 Save Config"):
         config = {
             'tx_2m': st.session_state.get('tx2m', 0.65),
             'tx_70cm': st.session_state.get('tx70cm', 1.3),
-            'alt': st.session_state.get('alt', 100)
+            'alt': st.session_state.get('alt', 100),
+            'timestamp': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         st.session_state.saved_configs.append(config)
-        st.success("Saved!")
+        st.success("Configuration saved!")
 
 st.markdown("<hr style='margin:5px 0;'>", unsafe_allow_html=True)
 
 # ============================================================================
 # SIDEBAR CONTROLS (ENHANCED)
 # ============================================================================
-st.sidebar.markdown("### ⚙️ System Configuration")
+st.sidebar.markdown(f"<div class='sidebar-title'>⚙️ System Configuration</div>", unsafe_allow_html=True)
+
+# App Info in Sidebar
+with st.sidebar.expander("ℹ️ App Info", expanded=False):
+    st.markdown(f"""
+    **{APP_NAME}** v{APP_VERSION}
+    
+    **Description:** {APP_DESCRIPTION}
+    
+    **Developer:** {DEVELOPER}
+    
+    **Copyright:** {COPYRIGHT}
+    
+    **GitHub:** [Report Bug]({GITHUB_URL})
+    
+    **Session Started:** {st.session_state.app_start_time.strftime('%Y-%m-%d %H:%M:%S')}
+    
+    **Saved Configs:** {len(st.session_state.saved_configs)}
+    """)
 
 # Radio Configuration
 with st.sidebar.expander("📻 Radio Parameters", expanded=True):
@@ -574,7 +657,7 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📈 Performance", 
     "🎯 Optimization",
     "📋 Summary",
-    "📚 Help"
+    "📚 Help & About"
 ])
 
 with tab1:
@@ -599,7 +682,7 @@ with tab1:
             folium.Marker(
                 st.session_state.drone_location,
                 popup=f"""
-                <b>Drone Repeater</b><br>
+                <b>{APP_NAME}</b><br>
                 Altitude: {drone_altitude}m AGL<br>
                 2m Range: {range_2m:.1f} km<br>
                 70cm Range: {range_70cm:.1f} km<br>
@@ -1188,131 +1271,131 @@ with tab5:
             st.info("Cost-effective upgrades: 1) Better antenna, 2) LNA, 3) Filters, 4) Tune existing equipment")
 
 with tab6:
-    st.markdown("**Help & Documentation**")
+    st.markdown(f"**Help & About {APP_NAME}**")
     
-    with st.expander("📖 User Guide", expanded=True):
-        st.markdown("""
-        ### How to Use This Tool
-        
-        1. **Configure Parameters**: Use sidebar to set all system parameters
-        2. **Set Location**: Click on map to place drone (optional)
-        3. **Analyze Results**: Review different tabs for analysis
-        4. **Optimize**: Use recommendations to improve system
-        
-        ### Key Parameters Explained
-        
-        - **Noise Figure (NF)**: Lower is better. Affects receiver sensitivity
-        - **Bandwidth (BW)**: Narrower = better sensitivity but may affect signal quality
-        - **Desense**: Loss from nearby transmitters. Use filters to reduce
-        - **SWR**: Should be <1.5 for good efficiency
-        - **Availability**: Higher % = more reliable but shorter range
-        """)
+    col_about, col_features = st.columns(2)
     
-    with st.expander("📡 Propagation Physics", expanded=False):
-        st.markdown("""
-        ### VHF vs UHF Propagation Physics
-        
-        **VHF (2m band: 144-148 MHz)**:
-        - **Better diffraction**: Longer wavelengths bend around obstacles better
-        - **Lower foliage loss**: ~0.1 dB/m vs UHF's ~0.3 dB/m
-        - **Ground wave propagation**: VHF can follow Earth's curvature better
-        - **Lower atmospheric absorption**: Especially in humid environments
-        - **Typical advantage**: 10-20 dB over UHF at same distance
-        
-        **UHF (70cm band: 420-450 MHz)**:
-        - **Shorter wavelengths**: Better for line-of-sight but worse diffraction
-        - **Higher path loss**: 6dB higher than VHF at same distance (free space)
-        - **More affected by obstacles**: Buildings, trees, terrain
-        - **Better for dense urban**: When line-of-sight is available
-        
-        **Real-World Expectation**:
-        - VHF range should typically be **1.5-3x** UHF range
-        - UHF only outperforms VHF in pure line-of-sight scenarios
-        - For drone applications, VHF is almost always superior
-        """)
+    with col_about:
+        with st.expander("📖 About This App", expanded=True):
+            st.markdown(f"""
+            ### {APP_NAME} v{APP_VERSION}
+            
+            **{APP_DESCRIPTION}**
+            
+            A comprehensive RF planning tool for drone-based cross-band repeater systems.
+            
+            **Key Features:**
+            - Multi-band RF coverage analysis (2m/70cm)
+            - Physics-based propagation models
+            - Real-time interactive mapping
+            - Link budget calculations
+            - Optimization recommendations
+            
+            **Developer:** {DEVELOPER}
+            
+            **Copyright:** {COPYRIGHT}
+            
+            **Source Code:** [GitHub]({GITHUB_URL})
+            
+            **Session Started:** {st.session_state.app_start_time.strftime('%Y-%m-%d %H:%M:%S')}
+            """)
     
-    with st.expander("📡 Propagation Models", expanded=False):
-        st.markdown("""
-        ### Propagation Model Details
-        
-        1. **Free Space (FSPL)**: Ideal line-of-sight
-           - Formula: PL = 20log10(d) + 20log10(f) + 32.45
-        
-        2. **Two-Ray Ground**: Accounts for ground reflection
-           - Critical distance: d_c = (4πh_t h_r)/λ
-           - Before d_c: Use FSPL
-           - After d_c: PL = 40log10(d) - 20log10(h_t) - 20log10(h_r)
-        
-        3. **Okumura-Hata**: Empirical model for urban/suburban
-           - **Valid range**: 150-1500 MHz, 1-20 km, base station: 30-200m, mobile: 1-10m
-           - **IMPORTANT**: Not valid for 2m band (146 MHz) - automatically applies VHF corrections
-           - Urban formula: L = 69.55 + 26.16*log10(f) - 13.82*log10(hb) - a(hr) + (44.9 - 6.55*log10(hb))*log10(d)
-           - Suburban correction: -2[log10(f/28)]^2 - 5.4
-        
-        4. **ITU-R P.1546**: Statistical model for VHF/UHF planning
-           - Valid for 30-3000 MHz
-           - Based on field strength measurements
-           - Includes time percentage (availability)
-           - Recommended for VHF (2m band)
-        
-        5. **VHF/UHF Physics-Based Corrections**:
-           - VHF advantage: Up to 15dB based on frequency and distance
-           - UHF penalty: Increases with frequency and distance
-           - Environment factors: Urban > Suburban > Rural
-        """)
+    with col_features:
+        with st.expander("🚀 Key Features", expanded=True):
+            st.markdown("""
+            ### Advanced Features
+            
+            **📡 RF Physics Engine:**
+            - VHF/UHF physics-based corrections
+            - Radio horizon awareness
+            - Realistic range calculations
+            
+            **🗺️ Interactive Mapping:**
+            - Click-to-place drone positioning
+            - Multi-layer coverage visualization
+            - KML export for Google Earth
+            
+            **📊 Comprehensive Analysis:**
+            - Link budget calculations
+            - Propagation model comparisons
+            - Power vs range optimization
+            
+            **⚡ Optimization Tools:**
+            - Automatic recommendations
+            - Performance scoring
+            - Quick action suggestions
+            """)
     
-    with st.expander("⚙️ Technical Details", expanded=False):
-        st.markdown("""
-        ### Calculation Formulas
-        
-        **Receiver Sensitivity**:
-        ```
-        Noise Floor = -174 dBm/Hz + 10log10(BW)
-        Theoretical Sensitivity = Noise Floor + NF + Required SNR
-        Minimum Practical Sensitivity = -127 dBm (real-world limit)
-        Effective Sensitivity = max(Theoretical, -127) + Desense
-        ```
-        
-        **VHF Advantage Calculation**:
-        ```
-        VHF Advantage = 15 * (1 - f/300) * (1 - d/100)
-        Where: f = frequency in MHz, d = distance in km
-        ```
-        
-        **UHF Penalty Calculation**:
-        ```
-        UHF Penalty = 10 * (f/600) * Environment * Distance_Factor
-        Environment: Urban=1.5, Suburban=1.2, Rural=1.0
-        Distance_Factor = min(2.0, 1 + d/50)
-        ```
-        
-        ### Physical Reality Checks
-        
-        1. **VHF should always have equal or better range than UHF**
-        2. **Maximum UHF advantage over VHF is only in pure line-of-sight**
-        3. **For drone-to-ground, VHF typically wins by 50-200%**
-        4. **Cross-band repeaters are limited by the weaker link**
-        
-        ### Range Calculation Fix
-        
-        **Key Fix in calculate_range()**:
-        ```
-        1. Calculate radio horizon for given altitude
-        2. Check if received power at horizon >= required power
-        3. If YES: return radio horizon (reached physical limit)
-        4. If NO: binary search between 0.1 km and radio horizon
-        ```
-        
-        This ensures that with minimal settings and good link budget, 
-        the range will approach or reach the radio horizon.
-        
-        ### Limitations
-        
-        - Models are approximations
-        - Real-world factors may vary
-        - Always verify with field testing
-        - Tool is for planning purposes only
-        """)
+    st.markdown("---")
+    
+    col_guide, col_tech = st.columns(2)
+    
+    with col_guide:
+        with st.expander("📖 User Guide", expanded=False):
+            st.markdown("""
+            ### How to Use This Tool
+            
+            1. **Configure Parameters**: Use sidebar to set all system parameters
+            2. **Set Location**: Click on map to place drone (optional)
+            3. **Analyze Results**: Review different tabs for analysis
+            4. **Optimize**: Use recommendations to improve system
+            5. **Export**: Download reports and data for sharing
+            
+            ### Key Parameters Explained
+            
+            - **Noise Figure (NF)**: Lower is better. Affects receiver sensitivity
+            - **Bandwidth (BW)**: Narrower = better sensitivity but may affect signal quality
+            - **Desense**: Loss from nearby transmitters. Use filters to reduce
+            - **SWR**: Should be <1.5 for good efficiency
+            - **Availability**: Higher % = more reliable but shorter range
+            """)
+    
+    with col_tech:
+        with st.expander("⚙️ Technical Details", expanded=False):
+            st.markdown("""
+            ### Calculation Formulas
+            
+            **Receiver Sensitivity**:
+            ```
+            Noise Floor = -174 dBm/Hz + 10log10(BW)
+            Theoretical Sensitivity = Noise Floor + NF + Required SNR
+            Minimum Practical Sensitivity = -127 dBm (real-world limit)
+            Effective Sensitivity = max(Theoretical, -127) + Desense
+            ```
+            
+            **Radio Horizon**:
+            ```
+            d_horizon = 4.12 × √h
+            Where: h = altitude in meters, d = horizon in km
+            ```
+            
+            **Range Calculation Fix**:
+            ```
+            1. Calculate radio horizon for given altitude
+            2. Check if received power at horizon >= required power
+            3. If YES: return radio horizon (reached physical limit)
+            4. If NO: binary search between 0.1 km and radio horizon
+            ```
+            
+            ### Version History
+            
+            **v1.1.0** (Current):
+            - Added RadioSport branding
+            - Version tracking system
+            - Enhanced UI/UX
+            - App info panel
+            
+            **v1.0.0**:
+            - Fixed range calculation bug
+            - Radio horizon physical limit respect
+            - VHF/UHF physics corrections
+            
+            ### License & Usage
+            
+            This tool is provided for educational and planning purposes.
+            Always verify calculations with field testing.
+            Commercial use requires permission.
+            """)
 
 # ============================================================================
 # EXPORT OPTIONS
@@ -1325,7 +1408,12 @@ col1, col2, col3, col4 = st.columns(4)
 with col1:
     if st.button("📄 Full Report", use_container_width=True):
         report_text = f"""
-# Drone Repeater RF Coverage Analysis Report
+# {APP_NAME} RF Coverage Analysis Report
+
+## App Information
+- **Application**: {APP_NAME} v{APP_VERSION}
+- **Generated**: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}
+- **Session Start**: {st.session_state.app_start_time.strftime('%Y-%m-%d %H:%M:%S')}
 
 ## Configuration Summary
 - **Radio**: Wouxun KG-UV9D Plus
@@ -1342,6 +1430,7 @@ with col1:
 - **2m Range**: {range_2m:.1f} km
 - **70cm Range**: {range_70cm:.1f} km
 - **Radio Horizon**: {radio_horizon:.1f} km
+- **Horizon Utilization**: {(range_2m/radio_horizon*100 if radio_horizon > 0 else 0):.0f}%
 - **Fade Margin**: {fade_margin_2m:.1f} dB
 - **Effective Sensitivity**: {effective_sensitivity:.0f} dBm
 
@@ -1393,14 +1482,17 @@ with col1:
         
         report_text += f"""
 ## Physical Reality Check
+- **Radio Horizon**: {radio_horizon:.1f} km (absolute limit for line-of-sight)
+- **Horizon Utilization**: {(range_2m/radio_horizon*100 if radio_horizon > 0 else 0):.0f}%
 - **VHF Propagation Advantage**: Yes, applied based on frequency and distance
 - **UHF Propagation Penalty**: Yes, applied for higher frequencies
 - **Cross-Band Limitation**: System limited by weaker of 2 bands
-- **Horizon Utilization**: {min((system_range/radio_horizon)*100, 100):.0f}% of radio horizon
+- **Beyond Horizon**: Not considered (requires special propagation modes)
 
 ## Notes
-- Report generated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}
-- Tool version: 3.5 (Fixed Range Calculation)
+- Report generated by: {APP_NAME} v{APP_VERSION}
+- Developer: {DEVELOPER}
+- Copyright: {COPYRIGHT}
 - For planning purposes only - verify with field testing
 - **Important**: With minimal settings and good link budget, range approaches radio horizon
 - **Important**: VHF should have equal or better range than UHF in most scenarios
@@ -1409,7 +1501,7 @@ with col1:
         st.download_button(
             "📥 Download Markdown",
             data=report_text,
-            file_name=f"drone_repeater_report_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.md",
+            file_name=f"{APP_NAME.replace(' ', '_')}_report_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.md",
             mime="text/markdown",
             use_container_width=True
         )
@@ -1418,25 +1510,28 @@ with col2:
     if st.button("📊 Data CSV", use_container_width=True):
         csv_data = pd.DataFrame({
             'Parameter': ['System Range', '2m Range', '70cm Range', 'Radio Horizon',
-                         '2m Fade Margin', '70cm Fade Margin', 'Coverage Area',
-                         'VHF/UHF Ratio', 'VHF Advantage', 'UHF Penalty',
+                         'Horizon Utilization', '2m Fade Margin', '70cm Fade Margin', 
+                         'Coverage Area', 'VHF/UHF Ratio', 'VHF Advantage', 'UHF Penalty',
                          'TX Power 2m', 'TX Power 70cm', 'Altitude', 'Desense',
-                         'Noise Figure', 'Bandwidth', 'Availability', 'Avail Margin'],
+                         'Noise Figure', 'Bandwidth', 'Availability', 'Avail Margin',
+                         'App Version', 'Generation Time'],
             'Value': [system_range, range_2m, range_70cm, radio_horizon,
+                     (range_2m/radio_horizon*100 if radio_horizon > 0 else 0),
                      fade_margin_2m, fade_margin_70cm, np.pi * (system_range ** 2),
                      range_2m/range_70cm if range_70cm > 0 else 0,
                      calculate_vhf_advantage(system_range, freq_2m),
                      calculate_uhf_penalty(range_70cm, freq_70cm, environment),
                      tx_power_2m, tx_power_70cm, drone_altitude, desense_penalty,
-                     noise_figure, if_bandwidth_khz, link_availability, additional_availability_margin],
-            'Unit': ['km', 'km', 'km', 'km', 'dB', 'dB', 'km²', 'ratio', 'dB', 'dB',
-                    'W', 'W', 'm', 'dB', 'dB', 'kHz', '%', 'dB']
+                     noise_figure, if_bandwidth_khz, link_availability, additional_availability_margin,
+                     APP_VERSION, pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')],
+            'Unit': ['km', 'km', 'km', 'km', '%', 'dB', 'dB', 'km²', 'ratio', 'dB', 'dB',
+                    'W', 'W', 'm', 'dB', 'dB', 'kHz', '%', 'dB', 'version', 'timestamp']
         })
         
         st.download_button(
             "📥 Download CSV",
             data=csv_data.to_csv(index=False),
-            file_name=f"drone_repeater_data_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            file_name=f"{APP_NAME.replace(' ', '_')}_data_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
             mime="text/csv",
             use_container_width=True
         )
@@ -1447,25 +1542,27 @@ with col3:
             kml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
-    <name>Drone Repeater Coverage</name>
+    <name>{APP_NAME} Coverage</name>
     <description>RF Coverage Analysis - {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M')}</description>
     <Placemark>
-      <name>Drone Repeater Station</name>
+      <name>{APP_NAME} Station</name>
       <description>
+        Application: {APP_NAME} v{APP_VERSION}
         Altitude: {drone_altitude}m AGL
         2m Range: {range_2m:.1f} km
         70cm Range: {range_70cm:.1f} km
         System Range: {system_range:.1f} km
-        Horizon: {radio_horizon:.1f} km<br>
+        Radio Horizon: {radio_horizon:.1f} km
         Availability: {link_availability:.1f}%
         VHF Advantage: {calculate_vhf_advantage(system_range, freq_2m):.1f} dB
+        UHF Penalty: {calculate_uhf_penalty(range_70cm, freq_70cm, environment):.1f} dB
       </description>
       <Point>
         <coordinates>{st.session_state.drone_location[1]},{st.session_state.drone_location[0]},{drone_altitude}</coordinates>
       </Point>
     </Placemark>
     <Placemark>
-      <name>Coverage Area</name>
+      <name>System Coverage</name>
       <Style>
         <LineStyle>
           <color>ff0000ff</color>
@@ -1503,7 +1600,7 @@ with col3:
             st.download_button(
                 "📥 Download KML",
                 data=kml_content,
-                file_name=f"drone_repeater_coverage_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.kml",
+                file_name=f"{APP_NAME.replace(' ', '_')}_coverage_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.kml",
                 mime="application/vnd.google-earth.kml+xml",
                 use_container_width=True
             )
@@ -1512,11 +1609,14 @@ with col3:
 
 with col4:
     if st.button("📋 Copy Config", use_container_width=True):
-        config_text = f"""2m: {tx_power_2m}W @ {freq_2m}MHz | 70cm: {tx_power_70cm}W @ {freq_70cm}MHz
+        config_text = f"""{APP_NAME} v{APP_VERSION}
+2m: {tx_power_2m}W @ {freq_2m}MHz | 70cm: {tx_power_70cm}W @ {freq_70cm}MHz
 Alt: {drone_altitude}m | Gain: {antenna_gain}dBi | NF: {noise_figure}dB
-2m Range: {range_2m:.1f}km | 70cm Range: {range_70cm:.1f}km | System: {system_range:.1f}km
+Horizon: {radio_horizon:.1f}km | 2m Range: {range_2m:.1f}km | 70cm Range: {range_70cm:.1f}km
+Horizon Utilization: {(range_2m/radio_horizon*100 if radio_horizon > 0 else 0):.0f}%
 VHF/UHF Ratio: {range_2m/range_70cm if range_70cm > 0 else 'N/A':.2f}
-Availability: {link_availability:.1f}% | Model: {propagation_model}"""
+Availability: {link_availability:.1f}% | Model: {propagation_model}
+Generated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}"""
         st.code(config_text, language="text")
         st.info("Select and copy the text above")
 
@@ -1524,12 +1624,12 @@ Availability: {link_availability:.1f}% | Model: {propagation_model}"""
 # FOOTER
 # ============================================================================
 st.markdown("---")
-st.markdown("""
-<div style='text-align: center; color: #666; font-size: 12px;'>
-    <p><strong>Drone-Based Repeater RF Coverage Analyzer v3.5</strong></p>
+st.markdown(f"""
+<div class='footer'>
+    <p><strong>{APP_NAME} v{APP_VERSION}</strong></p>
     <p>Wouxun KG-UV9D Plus | Multi-Model Propagation | VHF/UHF Physics Corrected</p>
     <p>✅ Fixed range calculation | ✅ Radio horizon respected | ✅ Realistic range ratios</p>
-    <p>© 2025 | Streamlit + Folium + Plotly | Always verify with field measurements</p>
+    <p>{COPYRIGHT} | <a href="{GITHUB_URL}" target="_blank">GitHub</a> | Always verify with field measurements</p>
 </div>
 """, unsafe_allow_html=True)
 
