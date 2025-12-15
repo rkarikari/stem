@@ -309,11 +309,19 @@ def calculate_uhf_penalty(distance_km, freq_mhz, environment='suburban'):
     
     return base_penalty * env_factor * distance_factor
 
+
 @st.cache_data
 def calculate_path_loss_db(distance_km, freq_mhz, n=2.0, altitude_m=0, 
                           propagation_model='simple', h_rx_m=2.0, environment='suburban',
                           time_percent=50):
-    """Calculate path loss with optional time percentage for statistical models"""
+    """
+    Calculate path loss with optional time percentage for statistical models.
+    
+    v1.2.0 FIX: Removed custom VHF advantage and UHF penalty.
+    Propagation models now handle frequency effects naturally without artificial adjustments.
+    This produces physically realistic VHF/UHF range ratios (1.2-1.5:1) instead of 
+    impossible ratios (10:1).
+    """
     if distance_km <= 0.001:
         return 0
     
@@ -339,16 +347,8 @@ def calculate_path_loss_db(distance_km, freq_mhz, n=2.0, altitude_m=0,
             fspl_1km = calculate_fspl_db(1.0, freq_mhz)
             base_loss = fspl_1km + 10 * n * np.log10(distance_km)
     
-    # Apply VHF/UHF corrections based on physics
-    if freq_mhz < 300:
-        vhf_advantage = calculate_vhf_advantage(distance_km, freq_mhz)
-        final_loss = base_loss - vhf_advantage
-    else:
-        uhf_penalty = calculate_uhf_penalty(distance_km, freq_mhz, environment)
-        final_loss = base_loss + uhf_penalty
-    
-    # Apply altitude bonus
-    final_loss = final_loss - altitude_bonus
+    # Apply only altitude bonus - let models handle frequency effects naturally
+    final_loss = base_loss - altitude_bonus
     
     # Ensure loss is at least free space loss
     min_loss = calculate_fspl_db(distance_km, freq_mhz)
