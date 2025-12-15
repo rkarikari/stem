@@ -13,7 +13,7 @@ import json
 # ============================================================================
 # APP METADATA & VERSION TRACKING
 # ============================================================================
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 APP_NAME = "RadioSport X-Repeater"
 APP_DESCRIPTION = "Drone-Borne Repeater RF Coverage Analyzer"
 DEVELOPER = "RNK"
@@ -275,39 +275,21 @@ def calculate_itu_p1546(distance_km, freq_mhz, h_tx_m, time_percent=50):
 
 @st.cache_data
 def calculate_vhf_advantage(distance_km, freq_mhz):
-    """Calculate VHF propagation advantage over UHF"""
-    if freq_mhz >= 300:
-        return 0
-    
-    # VHF advantage: 15dB base at 30MHz, reducing as frequency approaches 300MHz
-    base_advantage = 15 * (1 - freq_mhz / 300)
-    
-    # Distance factor: advantage reduces with distance
-    distance_factor = max(0.3, 1 - distance_km / 100)
-    
-    return base_advantage * distance_factor
+    """
+    [DEPRECATED in v1.2.0]
+    VHF advantage now handled by propagation models directly.
+    This function kept for API compatibility but returns 0.
+    """
+    return 0
 
 @st.cache_data
 def calculate_uhf_penalty(distance_km, freq_mhz, environment='suburban'):
-    """Calculate UHF propagation penalty relative to VHF"""
-    if freq_mhz < 300:
-        return 0
-    
-    # UHF penalty increases with frequency
-    base_penalty = 10 * (freq_mhz / 600)
-    
-    # Environment factor
-    if environment == 'urban':
-        env_factor = 1.5
-    elif environment == 'suburban':
-        env_factor = 1.2
-    else:
-        env_factor = 1.0
-    
-    # Distance factor: penalty increases with distance
-    distance_factor = min(2.0, 1 + distance_km / 50)
-    
-    return base_penalty * env_factor * distance_factor
+    """
+    [DEPRECATED in v1.2.0]
+    UHF penalty now handled by propagation models directly.
+    This function kept for API compatibility but returns 0.
+    """
+    return 0
 
 
 @st.cache_data
@@ -1450,12 +1432,13 @@ with col1:
 - TX Antenna Gain: +{antenna_gain:.1f} dBi
 - EIRP: {10*np.log10(tx_power_2m*1000) + antenna_gain:.1f} dBm
 - Path Loss: {calculate_path_loss_db(system_range, freq_2m, path_loss_exponent, drone_altitude, propagation_model, ground_rx_height, environment, time_percent):.1f} dB
-- VHF Advantage Applied: {calculate_vhf_advantage(system_range, freq_2m):.1f} dB
-- Total Losses: {total_additional_loss:.1f} dB
+- Total Additional Losses: {total_additional_loss:.1f} dB
 - RX Power: {calculate_received_power(tx_power_2m, antenna_gain, antenna_gain, system_range, freq_2m, path_loss_exponent, total_additional_loss, swr_2m, drone_altitude, propagation_model, ground_rx_height, environment, time_percent, polarization_mismatch, antenna_efficiency):.1f} dBm
 
 ## Link Budget (70cm Band)
-- UHF Penalty Applied: {calculate_uhf_penalty(range_70cm, freq_70cm, environment):.1f} dB
+- TX Power: {10*np.log10(tx_power_70cm*1000):.1f} dBm
+- Path Loss: {calculate_path_loss_db(range_70cm, freq_70cm, path_loss_exponent, drone_altitude, propagation_model, ground_rx_height, environment, time_percent):.1f} dB
+- Total Additional Losses: {total_additional_loss:.1f} dB
 
 ## Recommendations
 """
@@ -1481,11 +1464,11 @@ with col1:
             report_text += f"- Tune antenna for lower SWR (current: {swr_2m:.1f})\n"
         
         report_text += f"""
-## Physical Reality Check
+## Physical Reality Check (v1.2.0)
 - **Radio Horizon**: {radio_horizon:.1f} km (absolute limit for line-of-sight)
 - **Horizon Utilization**: {(range_2m/radio_horizon*100 if radio_horizon > 0 else 0):.0f}%
-- **VHF Propagation Advantage**: Yes, applied based on frequency and distance
-- **UHF Propagation Penalty**: Yes, applied for higher frequencies
+- **Propagation Model**: {propagation_model.upper()} handles frequency effects naturally
+- **VHF/UHF Behavior**: Ratio of {range_2m/range_70cm if range_70cm > 0 else 'N/A':.2f} (expected: 1.2-1.5)
 - **Cross-Band Limitation**: System limited by weaker of 2 bands
 - **Beyond Horizon**: Not considered (requires special propagation modes)
 
@@ -1511,7 +1494,7 @@ with col2:
         csv_data = pd.DataFrame({
             'Parameter': ['System Range', '2m Range', '70cm Range', 'Radio Horizon',
                          'Horizon Utilization', '2m Fade Margin', '70cm Fade Margin', 
-                         'Coverage Area', 'VHF/UHF Ratio', 'VHF Advantage', 'UHF Penalty',
+                         'Coverage Area', 'VHF/UHF Ratio', 'Propagation Model',
                          'TX Power 2m', 'TX Power 70cm', 'Altitude', 'Desense',
                          'Noise Figure', 'Bandwidth', 'Availability', 'Avail Margin',
                          'App Version', 'Generation Time'],
@@ -1519,12 +1502,11 @@ with col2:
                      (range_2m/radio_horizon*100 if radio_horizon > 0 else 0),
                      fade_margin_2m, fade_margin_70cm, np.pi * (system_range ** 2),
                      range_2m/range_70cm if range_70cm > 0 else 0,
-                     calculate_vhf_advantage(system_range, freq_2m),
-                     calculate_uhf_penalty(range_70cm, freq_70cm, environment),
+                     propagation_model.upper(),
                      tx_power_2m, tx_power_70cm, drone_altitude, desense_penalty,
                      noise_figure, if_bandwidth_khz, link_availability, additional_availability_margin,
                      APP_VERSION, pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')],
-            'Unit': ['km', 'km', 'km', 'km', '%', 'dB', 'dB', 'km²', 'ratio', 'dB', 'dB',
+            'Unit': ['km', 'km', 'km', 'km', '%', 'dB', 'dB', 'km²', 'ratio', 'model',
                     'W', 'W', 'm', 'dB', 'dB', 'kHz', '%', 'dB', 'version', 'timestamp']
         })
         
@@ -1554,8 +1536,8 @@ with col3:
         System Range: {system_range:.1f} km
         Radio Horizon: {radio_horizon:.1f} km
         Availability: {link_availability:.1f}%
-        VHF Advantage: {calculate_vhf_advantage(system_range, freq_2m):.1f} dB
-        UHF Penalty: {calculate_uhf_penalty(range_70cm, freq_70cm, environment):.1f} dB
+        Propagation: {propagation_model.upper()}
+        VHF/UHF Ratio: {range_2m/range_70cm if range_70cm > 0 else 'N/A':.2f}
       </description>
       <Point>
         <coordinates>{st.session_state.drone_location[1]},{st.session_state.drone_location[0]},{drone_altitude}</coordinates>
