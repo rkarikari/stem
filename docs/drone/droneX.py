@@ -140,7 +140,7 @@ if 'app_start_time' not in st.session_state:
 # Clear cache on code changes - increment this number to force recalculation
 CACHE_VERSION = 2  # Changed from 1 to force recalculation
 
-@st.cache_data
+@st.cache_data(ttl=1)
 def calculate_fspl_db(distance_km, freq_mhz, _cache_version=CACHE_VERSION):
     """Calculate Free Space Path Loss in dB - pure physics, no artificial corrections"""
     if distance_km <= 0.001:
@@ -151,7 +151,7 @@ def calculate_fspl_db(distance_km, freq_mhz, _cache_version=CACHE_VERSION):
     fspl = 20 * np.log10(distance_m) + 20 * np.log10(freq_mhz) + 32.45
     return fspl
 
-@st.cache_data
+@st.cache_data(ttl=1)
 def calculate_two_ray_model(distance_km, freq_mhz, h_tx_m, h_rx_m):
     """
     Calculate path loss using Two-Ray Ground Reflection Model
@@ -178,7 +178,7 @@ def calculate_two_ray_model(distance_km, freq_mhz, h_tx_m, h_rx_m):
         
         return base_loss
 
-@st.cache_data
+@st.cache_data(ttl=1)
 def calculate_okumura_hata(distance_km, freq_mhz, h_tx_m, h_rx_m, environment='suburban'):
     """
     Calculate path loss using Okumura-Hata model for VHF/UHF
@@ -234,7 +234,7 @@ def calculate_okumura_hata(distance_km, freq_mhz, h_tx_m, h_rx_m, environment='s
     
     return L
 
-@st.cache_data
+@st.cache_data(ttl=1)
 def calculate_itu_p1546(distance_km, freq_mhz, h_tx_m, time_percent=50):
     """
     Calculate path loss using ITU-R P.1546 model
