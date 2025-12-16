@@ -1238,3 +1238,5 @@ if(pd.Timestamp.now()-st.session_state.last_cleanup).total_seconds()>300:
 	if len(st.session_state.saved_configs)>20:st.session_state.saved_configs=st.session_state.saved_configs[-10:]
 	st.session_state.last_cleanup=pd.Timestamp.now()The file cannot be copied onto itself.
         0 file(s) copied.
+The file cannot be copied onto itself.
+        0 file(s) copied.
