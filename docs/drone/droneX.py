@@ -137,8 +137,11 @@ if 'app_start_time' not in st.session_state:
 # RF CALCULATION FUNCTIONS (OPTIMIZED & CACHED)
 # ============================================================================
 
+# Clear cache on code changes - increment this number to force recalculation
+CACHE_VERSION = 2  # Changed from 1 to force recalculation
+
 @st.cache_data
-def calculate_fspl_db(distance_km, freq_mhz):
+def calculate_fspl_db(distance_km, freq_mhz, _cache_version=CACHE_VERSION):
     """Calculate Free Space Path Loss in dB - pure physics, no artificial corrections"""
     if distance_km <= 0.001:
         return 0
