@@ -133,6 +133,17 @@ if 'last_cleanup' not in st.session_state:
 if 'app_start_time' not in st.session_state:
     st.session_state.app_start_time = pd.Timestamp.now()
 
+
+
+
+# Load saved configs from file
+if 'saved_configs' not in st.session_state:
+    try:
+        with open('saved_configs.json', 'r') as f:
+            st.session_state.saved_configs = json.load(f)
+    except:
+        st.session_state.saved_configs = []
+
 # ============================================================================
 # RF CALCULATION FUNCTIONS (OPTIMIZED & CACHED)
 # ============================================================================
@@ -456,13 +467,28 @@ with col2:
 with col3:
     if st.button("💾 Save Config"):
         config = {
-            'tx_2m': st.session_state.get('tx2m', 0.65),
-            'tx_70cm': st.session_state.get('tx70cm', 1.3),
-            'alt': st.session_state.get('alt', 100),
+            'tx_2m': tx_power_2m,
+            'tx_70cm': tx_power_70cm,
+            'antenna_gain': antenna_gain,
+            'altitude': drone_altitude,
+            'nf': noise_figure,
+            'bw': if_bandwidth_khz,
+            'desense': desense_penalty,
+            'fade_margin': required_fade_margin,
+            'availability': link_availability,
+            'propagation_model': propagation_model,
             'timestamp': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         st.session_state.saved_configs.append(config)
-        st.success("Configuration saved!")
+        
+        # Save to JSON file for persistence
+        import json
+        try:
+            with open('saved_configs.json', 'w') as f:
+                json.dump(st.session_state.saved_configs, f, indent=2)
+            st.success("Configuration saved to file!")
+        except Exception as e:
+            st.success("Configuration saved to session!")
 
 st.markdown("<hr style='margin:5px 0;'>", unsafe_allow_html=True)
 
