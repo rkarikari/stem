@@ -75,7 +75,8 @@ os.environ['PYDUB_UTILS_QUIET']='1'
 import streamlit as st,asyncio,wave,tempfile,sys,warnings,base64,numpy as np,json,threading,time,io
 from datetime import datetime,timedelta
 from io import BytesIO
-from pydub import AudioSegment
+try:from pydub import AudioSegment;PYDUB_AVAILABLE=_A
+except(ImportError,ModuleNotFoundError):PYDUB_AVAILABLE=_C;AudioSegment=_B
 from shazamio import Shazam
 import logging
 from pathlib import Path
