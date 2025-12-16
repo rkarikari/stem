@@ -245,7 +245,7 @@ def calculate_okumura_hata(distance_km, freq_mhz, h_tx_m, h_rx_m, environment='s
     
     return L
 
-@st.cache_data(ttl=1)
+@st.cache_data(ttl=60)  # 60 second cache
 def calculate_itu_p1546(distance_km, freq_mhz, h_tx_m, time_percent=50):
     """
     Calculate path loss using ITU-R P.1546 model
@@ -465,30 +465,7 @@ with col1:
 with col2:
     st.markdown(f"<div class='version-badge'>v{APP_VERSION}</div>", unsafe_allow_html=True)
 with col3:
-    if st.button("💾 Save Config"):
-        config = {
-            'tx_2m': tx_power_2m,
-            'tx_70cm': tx_power_70cm,
-            'antenna_gain': antenna_gain,
-            'altitude': drone_altitude,
-            'nf': noise_figure,
-            'bw': if_bandwidth_khz,
-            'desense': desense_penalty,
-            'fade_margin': required_fade_margin,
-            'availability': link_availability,
-            'propagation_model': propagation_model,
-            'timestamp': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-        st.session_state.saved_configs.append(config)
-        
-        # Save to JSON file for persistence
-        import json
-        try:
-            with open('saved_configs.json', 'w') as f:
-                json.dump(st.session_state.saved_configs, f, indent=2)
-            st.success("Configuration saved to file!")
-        except Exception as e:
-            st.success("Configuration saved to session!")
+    pass
 
 st.markdown("<hr style='margin:5px 0;'>", unsafe_allow_html=True)
 
@@ -1675,3 +1652,34 @@ if (pd.Timestamp.now() - st.session_state.last_cleanup).total_seconds() > 300:
     if len(st.session_state.saved_configs) > 20:
         st.session_state.saved_configs = st.session_state.saved_configs[-10:]
     st.session_state.last_cleanup = pd.Timestamp.now()
+    
+# ============================================================================
+# SAVE CONFIG BUTTON (MOVED HERE AFTER VARIABLES ARE DEFINED)
+# ============================================================================
+col_save1, col_save2, col_save3 = st.columns([2, 1, 2])
+with col_save2:
+    if st.button("💾 Save Config", width="stretch"):
+        config = {
+            'tx_2m': tx_power_2m,
+            'tx_70cm': tx_power_70cm,
+            'antenna_gain': antenna_gain,
+            'altitude': drone_altitude,
+            'nf': noise_figure,
+            'bw': if_bandwidth_khz,
+            'desense': desense_penalty,
+            'fade_margin': required_fade_margin,
+            'availability': link_availability,
+            'propagation_model': propagation_model,
+            'timestamp': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        st.session_state.saved_configs.append(config)
+        
+        # Save to JSON file for persistence
+        try:
+            with open('saved_configs.json', 'w') as f:
+                json.dump(st.session_state.saved_configs, f, indent=2)
+            st.success("✅ Configuration saved to file!")
+        except Exception as e:
+            st.warning(f"⚠️ Saved to session only: {str(e)}")
+
+st.markdown("<hr style='margin:10px 0;'>", unsafe_allow_html=True)
