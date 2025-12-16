@@ -1301,15 +1301,18 @@ with tab5:
         df_config = pd.DataFrame(config_data)
         st.dataframe(df_config, hide_index=True, width="stretch", height=400)
     
-    with col2a:
-        st.metric("System Range", f"{system_range:.1f} km", 
-                 f"{'2m' if range_2m < range_70cm else '70cm'} limited")
-        st.metric("2m Range", f"{range_2m:.1f} km")
-        st.metric("70cm Range", f"{range_70cm:.1f} km")
-        st.metric("Radio Horizon", f"{radio_horizon:.1f} km")
+    with col2:
+        col2a, col2b = st.columns(2)
+        
+        with col2a:
+            st.metric("System Range", f"{system_range:.1f} km", 
+                     f"{'2m' if range_2m < range_70cm else '70cm'} limited")
+            st.metric("2m Range", f"{range_2m:.1f} km")
+            st.metric("70cm Range", f"{range_70cm:.1f} km")
+            st.metric("Radio Horizon", f"{radio_horizon:.1f} km")
 
-    with col2b:
-        st.metric("Fade Margin", f"{fade_margin_2m:.1f} dB", 
+        with col2b:
+            st.metric("Fade Margin", f"{fade_margin_2m:.1f} dB",
                  f"{'✓' if fade_margin_2m >= total_fade_margin else '✗'} target")
         st.metric("Availability", f"{link_availability:.1f}%", 
                  f"+{additional_availability_margin:.0f}dB")
