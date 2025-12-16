@@ -72,6 +72,10 @@ _B=True
 _A=None
 import os
 os.environ['PYDUB_UTILS_QUIET']='1'
+try:import audioop
+except ImportError:
+	try:import pyaudioop as audioop
+	except ImportError:import subprocess;subprocess.check_call([sys.executable,'-m','pip','install','pyaudioop']);import pyaudioop as audioop
 import streamlit as st,asyncio,wave,tempfile,sys,warnings,base64,numpy as np,json,threading,time,io
 from datetime import datetime,timedelta
 from io import BytesIO

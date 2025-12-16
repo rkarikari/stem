@@ -1,10 +1,12 @@
 streamlit
-numpy
-pandas
-matplotlib
-seaborn
-pydub
+st-audiorec
 shazamio
+numpy
 requests
+matplotlib
+pandas
+seaborn
 PyPDF2
-pyaudio; platform_system != "Linux"
+soundfile
+
+
