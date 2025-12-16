@@ -1634,7 +1634,7 @@ Generated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}"""
         st.code(config_text, language="text")
         st.info("Select and copy the text above")
 
-with col5
+with col5:
 
 # ============================================================================
 # SAVE CONFIG BUTTON (MOVED HERE AFTER VARIABLES ARE DEFINED)
