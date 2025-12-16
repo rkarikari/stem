@@ -875,7 +875,22 @@ with tab2:
         theoretical_sensitivity = noise_floor + noise_figure + snr_required
         practical_min_sensitivity = -127  # Real-world limit
         
-        # ... link budget calculations ...
+        # Calculate 2m band link budget variables
+        tx_power_dbm_2m = 10 * np.log10(tx_power_2m * 1000)
+        path_loss_2m = calculate_path_loss_db(
+            range_2m, freq_2m, path_loss_exponent, drone_altitude,
+            propagation_model, ground_rx_height, environment, time_percent
+        )
+        swr_loss_2m = 10 * np.log10(swr_2m) if swr_2m > 1.0 else 0
+        efficiency_loss_2m = -10 * np.log10(antenna_efficiency)
+        
+        rx_power_2m = calculate_received_power(
+            tx_power_2m, antenna_gain, antenna_gain, range_2m, freq_2m,
+            path_loss_exponent, total_additional_loss, swr_2m, drone_altitude,
+            propagation_model, ground_rx_height, environment, time_percent,
+            polarization_mismatch, antenna_efficiency
+        )
+        fade_margin_2m = rx_power_2m - effective_sensitivity
         
         link_budget_data = {
             'Parameter': [
