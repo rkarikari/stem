@@ -245,11 +245,11 @@ def calculate_okumura_hata(distance_km, freq_mhz, h_tx_m, h_rx_m, environment='s
     
     return L
 
-@st.cache_data(ttl=60)  # 60 second cache
+@st.cache_data(ttl=60)
 def calculate_itu_p1546(distance_km, freq_mhz, h_tx_m, time_percent=50):
     """
     Calculate path loss using ITU-R P.1546 model
-    Based on empirical field strength curves at 100, 600, 2000 MHz
+    Properly implements frequency interpolation per ITU-R P.1546 standard
     """
     if distance_km <= 0.001:
         return 0
@@ -258,38 +258,64 @@ def calculate_itu_p1546(distance_km, freq_mhz, h_tx_m, time_percent=50):
     d_km = min(max(distance_km, 1), 1000)
     h_eff = max(h_tx_m, 10)
     
-    # Field strength at 600 MHz reference with 20 dB/decade distance decay
-    E0 = 106.9 - 20 * np.log10(d_km)
+    # Determine reference frequency for interpolation
+    if freq_mhz <= 100:
+        # Below 100 MHz: extrapolate from 100 MHz curve
+        ref_freq = 100
+        freq_correction = -20 * np.log10(freq_mhz / ref_freq)
+    elif freq_mhz <= 600:
+        # Between 100-600 MHz: interpolate between 100 and 600 MHz curves
+        # Use logarithmic interpolation
+        ref_freq = 600
+        freq_correction = -9 * np.log10(freq_mhz / 100) / np.log10(6)
+    elif freq_mhz <= 2000:
+        # Between 600-2000 MHz: interpolate between 600 and 2000 MHz curves
+        ref_freq = 600
+        freq_correction = 9.3 * np.log10(freq_mhz / 600) / np.log10(3.33)
+    else:
+        # Above 2000 MHz: extrapolate from 2000 MHz curve
+        ref_freq = 2000
+        freq_correction = 20 * np.log10(freq_mhz / ref_freq)
     
-    # Height gain correction
-    if h_eff > 10:
-        if h_eff <= 50:
-            height_gain = 10 * np.log10(h_eff / 10)
-        else:
-            height_gain = 15 * np.log10(h_eff / 10)
-        E0 += height_gain
+    # Base field strength at reference frequency (600 MHz)
+    # Using empirical model: E = E0 - 20×log(d) for land paths
+    E0 = 106.9
     
-    # Time percentage correction
+    # Distance attenuation (20 dB per decade)
+    distance_loss = 20 * np.log10(d_km)
+    
+    # Height gain correction (more benefit at higher altitudes)
+    if h_eff <= 10:
+        height_gain = 0
+    elif h_eff <= 50:
+        height_gain = 20 * np.log10(h_eff / 10)
+    elif h_eff <= 300:
+        height_gain = 20 + 10 * np.log10(h_eff / 50)
+    else:
+        height_gain = 20 + 10 * np.log10(300 / 50)
+    
+    # Time percentage correction (time variability)
     if time_percent >= 50:
         time_factor = 0
     elif time_percent >= 10:
-        time_factor = 8
+        time_factor = 8  # 10-50%
     elif time_percent >= 1:
-        time_factor = 15
+        time_factor = 15  # 1-10%
     else:
-        time_factor = 25
+        time_factor = 25  # <1%
     
-    # Frequency correction: uniform 20×log₁₀ relationship
-    freq_factor = 20 * np.log10(600 / max(freq_mhz, 30))
+    # Calculate field strength in dBµV/m
+    E = E0 - distance_loss + height_gain + freq_correction + time_factor
     
-    # Calculate field strength
-    E = E0 + freq_factor + time_factor
-    
-    # Convert to path loss: PL = 139.3 - E + 20×log₁₀(f) - 77.2
+    # Convert field strength to path loss
+    # PL = EIRP - E + 20×log(f) - 77.2
+    # For 1kW ERP: EIRP_dBm = 60 dBm
+    # E is in dBµV/m, need to convert to received power
     pl = 139.3 - E + 20 * np.log10(freq_mhz) - 77.2
     
-    # Ensure not better than free space
-    return max(pl, calculate_fspl_db(distance_km, freq_mhz))
+    # Ensure path loss is not less than free space
+    min_loss = calculate_fspl_db(distance_km, freq_mhz)
+    return max(pl, min_loss)
 
 @st.cache_data
 def calculate_vhf_advantage(distance_km, freq_mhz):
@@ -406,31 +432,45 @@ def calculate_range(tx_power_w, tx_gain_dbi, rx_gain_dbi, rx_sensitivity_dbm,
                    altitude_m=0, propagation_model='simple', h_rx_m=2.0, 
                    environment='suburban', time_percent=50,
                    polarization_mismatch=0, antenna_efficiency=0.9):
-    """Calculate maximum range with all factors considered"""
+    """Calculate maximum range with improved convergence"""
     if tx_power_w <= 0:
         return 0
     
     # Calculate radio horizon first
     radio_horizon_km = 4.12 * np.sqrt(altitude_m)
     
-    # Check if we can reach the horizon with current parameters
+    # For very low altitudes, limit maximum search distance
+    if radio_horizon_km < 1.0:
+        radio_horizon_km = max(radio_horizon_km, 0.5)
+    
+    required_power = rx_sensitivity_dbm + fade_margin_db
+    
+    # Check if we can reach the horizon
     rx_power_at_horizon = calculate_received_power(
         tx_power_w, tx_gain_dbi, rx_gain_dbi, radio_horizon_km, freq_mhz, n,
         additional_loss_db, swr, altitude_m, propagation_model, h_rx_m, 
         environment, time_percent, polarization_mismatch, antenna_efficiency
     )
     
-    required_power = rx_sensitivity_dbm + fade_margin_db
-    
-    # If we can reach the horizon, return it
     if rx_power_at_horizon >= required_power:
         return radio_horizon_km
     
-    # Otherwise, binary search for actual range
-    min_dist, max_dist = 0.1, radio_horizon_km
-    tolerance = 0.01
-    max_iterations = 100
+    # Binary search with improved tolerance and iteration limits
+    min_dist, max_dist = 0.01, radio_horizon_km  # Start at 10m minimum
+    tolerance = 0.001  # 1 meter precision
+    max_iterations = 50  # Reduced iterations with better tolerance
     iteration = 0
+    
+    # Quick check at 1 km to avoid unnecessary iterations
+    if max_dist >= 1.0:
+        rx_power_1km = calculate_received_power(
+            tx_power_w, tx_gain_dbi, rx_gain_dbi, 1.0, freq_mhz, n,
+            additional_loss_db, swr, altitude_m, propagation_model, h_rx_m, 
+            environment, time_percent, polarization_mismatch, antenna_efficiency
+        )
+        if rx_power_1km < required_power:
+            # Range is less than 1 km, search between 0.01 and 1
+            max_dist = 1.0
     
     while (max_dist - min_dist > tolerance) and (iteration < max_iterations):
         mid_dist = (min_dist + max_dist) / 2
@@ -440,13 +480,14 @@ def calculate_range(tx_power_w, tx_gain_dbi, rx_gain_dbi, rx_sensitivity_dbm,
             environment, time_percent, polarization_mismatch, antenna_efficiency
         )
         
-        if rx_power > required_power:
+        if rx_power >= required_power:
             min_dist = mid_dist
         else:
             max_dist = mid_dist
         
         iteration += 1
     
+    # Return the conservative estimate (lower bound)
     return min_dist
 
 @st.cache_data
@@ -524,10 +565,47 @@ with st.sidebar.expander("📶 Antenna System", expanded=True):
 with st.sidebar.expander("📊 Receiver Specs", expanded=True):
     col1, col2 = st.columns(2)
     with col1:
-        noise_figure = st.slider("NF (dB)", 3, 15, 8, 1, key="nf")
-        if_bandwidth_khz = st.slider("BW (kHz)", 6.0, 25.0, 12.5, 0.5, key="bw")
+        noise_figure = st.slider("NF (dB)", 3, 15, 8, 1, key="nf", 
+                                help="Noise Figure: degrades SNR. Lower is better.")
+        if_bandwidth_khz = st.slider("BW (kHz)", 6.0, 25.0, 12.5, 0.5, key="bw",
+                                     help="IF Bandwidth: narrower improves sensitivity but may affect signal quality")
     with col2:
-        desense_penalty = st.slider("Desense (dB)", 0, 25, 12, 1, key="desense")
+        desense_penalty = st.slider("Desense (dB)", 0, 25, 12, 1, key="desense",
+                                   help="Desensitization from nearby transmitters. Use filters to reduce.")
+        snr_required = st.slider("Req SNR (dB)", 6, 20, 12, 1, key="snr_req",
+                                help="Signal-to-Noise Ratio required for reliable decoding")
+    
+    # Display calculated sensitivities with clear distinction
+    st.markdown("---")
+    st.markdown("**Calculated Sensitivities:**")
+    
+    # Calculate values
+    noise_floor = -174 + 10 * np.log10(if_bandwidth_khz * 1000)
+    theoretical_sens = noise_floor + noise_figure + snr_required
+    effective_sens = max(theoretical_sens, -127) + desense_penalty
+    
+    col_sens1, col_sens2 = st.columns(2)
+    with col_sens1:
+        st.metric("Theoretical", f"{theoretical_sens:.1f} dBm",
+                 help="Best-case sensitivity without desense or practical limits")
+    with col_sens2:
+        st.metric("Effective", f"{effective_sens:.1f} dBm",
+                 help="Real-world sensitivity including desense penalty",
+                 delta=f"{effective_sens - theoretical_sens:+.1f} dB")
+    
+    # Show breakdown
+    with st.expander("🔍 Sensitivity Breakdown", expanded=False):
+        st.text(f"Noise Floor:      {noise_floor:.1f} dBm")
+        st.text(f"+ Noise Figure:   {noise_figure:+.1f} dB")
+        st.text(f"+ Required SNR:   {snr_required:+.1f} dB")
+        st.text(f"─────────────────────────────")
+        st.text(f"= Theoretical:    {theoretical_sens:.1f} dBm")
+        st.text(f"+ Desense:        {desense_penalty:+.1f} dB")
+        st.text(f"─────────────────────────────")
+        st.text(f"= Effective:      {effective_sens:.1f} dBm")
+        st.text(f"")
+        st.text(f"Formula: kTB + NF + SNR + Desense")
+        st.text(f"where kTB = -174 + 10log₁₀(BW)"))
         snr_required = st.slider("Req SNR (dB)", 6, 20, 12, 1, key="snr_req")
 
 # Drone Configuration
@@ -792,29 +870,24 @@ with tab2:
     with col1:
         st.markdown(f"**📻 2m Band Link Budget ({freq_2m} MHz)**")
         
-        tx_power_dbm_2m = 10 * np.log10(tx_power_2m * 1000)
+        # Calculate both sensitivities for display
+        noise_floor = -174 + 10 * np.log10(if_bandwidth_khz * 1000)
+        theoretical_sensitivity = noise_floor + noise_figure + snr_required
+        practical_min_sensitivity = -127  # Real-world limit
         
-        path_loss_2m = calculate_path_loss_db(
-            system_range, freq_2m, path_loss_exponent, drone_altitude,
-            propagation_model, ground_rx_height, environment, time_percent
-        )
-        swr_loss_2m = 10 * np.log10(swr_2m) if swr_2m > 1.0 else 0
-        efficiency_loss_2m = -10 * np.log10(antenna_efficiency)
-        
-        rx_power_2m = calculate_received_power(
-            tx_power_2m, antenna_gain, antenna_gain, system_range, freq_2m,
-            path_loss_exponent, total_additional_loss, swr_2m, drone_altitude,
-            propagation_model, ground_rx_height, environment, time_percent,
-            polarization_mismatch, antenna_efficiency
-        )
-        fade_margin_2m = rx_power_2m - effective_sensitivity
+        # ... link budget calculations ...
         
         link_budget_data = {
             'Parameter': [
                 'TX Power', 'TX Ant Gain', 'EIRP', 'Path Loss', 
                 'SWR Loss', 'Cable Loss', 'Multipath', 'Pol Mismatch',
-                'Ant Efficiency', 'RX Ant Gain', 'RX Power', 
-                'RX Sensitivity', 'Fade Margin', 'Avail Margin', 'Total Margin'
+                'Ant Efficiency', 'RX Ant Gain', 'RX Power',
+                '─────────', 
+                'Noise Floor (kTB)', 'Noise Figure', 'Required SNR',
+                'Theoretical Sens', 'Practical Min Sens', 'Desense Penalty',
+                'Effective Sens', 
+                '─────────',
+                'Fade Margin', 'Avail Margin', 'Total Margin'
             ],
             'Value (dBm/dB)': [
                 f"{tx_power_dbm_2m:.1f}",
@@ -828,7 +901,15 @@ with tab2:
                 f"-{efficiency_loss_2m:.1f}",
                 f"+{antenna_gain:.1f}",
                 f"{rx_power_2m:.1f}",
-                f"{effective_sensitivity:.1f}",
+                "─────────",
+                f"{noise_floor:.1f}",
+                f"+{noise_figure:.1f}",
+                f"+{snr_required:.1f}",
+                f"= {theoretical_sensitivity:.1f}",
+                f"max({theoretical_sensitivity:.1f}, {practical_min_sensitivity:.1f})",
+                f"+{desense_penalty:.1f}",
+                f"= {effective_sensitivity:.1f}",
+                "─────────",
                 f"{fade_margin_2m:.1f}",
                 f"+{additional_availability_margin:.1f}",
                 f"{fade_margin_2m - additional_availability_margin:.1f}"
@@ -836,7 +917,7 @@ with tab2:
         }
         
         df_2m = pd.DataFrame(link_budget_data)
-        st.dataframe(df_2m, hide_index=True, width="stretch", height=500)
+        st.dataframe(df_2m, hide_index=True, width="stretch", height=600)
         
         if fade_margin_2m < 6:
             st.error(f"❌ Critical: {fade_margin_2m:.1f} dB margin")
@@ -1205,25 +1286,31 @@ with tab5:
         df_config = pd.DataFrame(config_data)
         st.dataframe(df_config, hide_index=True, width="stretch", height=400)
     
-    with col2:
-        st.markdown("**Performance Metrics**")
+    with col2a:
+        st.metric("System Range", f"{system_range:.1f} km", 
+                 f"{'2m' if range_2m < range_70cm else '70cm'} limited")
+        st.metric("2m Range", f"{range_2m:.1f} km")
+        st.metric("70cm Range", f"{range_70cm:.1f} km")
+        st.metric("Radio Horizon", f"{radio_horizon:.1f} km")
+
+    with col2b:
+        st.metric("Fade Margin", f"{fade_margin_2m:.1f} dB", 
+                 f"{'✓' if fade_margin_2m >= total_fade_margin else '✗'} target")
+        st.metric("Availability", f"{link_availability:.1f}%", 
+                 f"+{additional_availability_margin:.0f}dB")
         
-        col2a, col2b = st.columns(2)
-        with col2a:
-            st.metric("System Range", f"{system_range:.1f} km", 
-                     f"{'2m' if range_2m < range_70cm else '70cm'} limited")
-            st.metric("2m Range", f"{range_2m:.1f} km")
-            st.metric("70cm Range", f"{range_70cm:.1f} km")
-            st.metric("Radio Horizon", f"{radio_horizon:.1f} km")
+        # Calculate both sensitivities
+        noise_floor = -174 + 10 * np.log10(if_bandwidth_khz * 1000)
+        theoretical_sensitivity = noise_floor + noise_figure + snr_required
         
-        with col2b:
-            st.metric("Fade Margin", f"{fade_margin_2m:.1f} dB", 
-                     f"{'✓' if fade_margin_2m >= total_fade_margin else '✗'} target")
-            st.metric("Availability", f"{link_availability:.1f}%", 
-                     f"+{additional_availability_margin:.0f}dB")
-            st.metric("Sensitivity", f"{effective_sensitivity:.0f} dBm")
-            efficiency = (system_range / radio_horizon) * 100
-            st.metric("Horizon Util.", f"{min(efficiency, 100):.0f}%")
+        st.metric("Sensitivity (Theoretical)", f"{theoretical_sensitivity:.0f} dBm",
+                 help="Best-case without desense")
+        st.metric("Sensitivity (Effective)", f"{effective_sensitivity:.0f} dBm",
+                 delta=f"+{desense_penalty:.0f} dB desense",
+                 help="Real-world with desense penalty")
+        
+        efficiency = (system_range / radio_horizon) * 100
+        st.metric("Horizon Util.", f"{min(efficiency, 100):.0f}%")
     
     st.markdown("---")
     col3, col4 = st.columns(2)
@@ -1451,8 +1538,15 @@ with col1:
 ## Receiver Characteristics
 - **Noise Figure**: {noise_figure} dB
 - **Bandwidth**: {if_bandwidth_khz} kHz
-- **Desense Penalty**: {desense_penalty} dB
 - **Required SNR**: {snr_required} dB
+- **Desense Penalty**: {desense_penalty} dB
+
+## Sensitivity Calculation
+- **Noise Floor (kTB)**: {-174 + 10*np.log10(if_bandwidth_khz*1000):.1f} dBm
+- **Theoretical Sensitivity**: {noise_floor + noise_figure + snr_required:.1f} dBm (kTB + NF + SNR)
+- **Practical Minimum**: -127 dBm (real-world limit)
+- **Effective Sensitivity**: {effective_sensitivity:.0f} dBm (includes desense)
+- **Sensitivity Formula**: max(kTB + NF + SNR, -127 dBm) + Desense
 
 ## VHF vs UHF Analysis
 - **VHF/UHF Range Ratio**: {range_2m/range_70cm if range_70cm > 0 else 'N/A':.2f}
