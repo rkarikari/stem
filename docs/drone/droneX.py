@@ -1417,7 +1417,7 @@ with tab6:
 st.markdown("---")
 st.markdown("### 📤 Export Results")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
     if st.button("📄 Full Report", width="stretch"):
@@ -1634,30 +1634,12 @@ Generated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}"""
         st.code(config_text, language="text")
         st.info("Select and copy the text above")
 
-# ============================================================================
-# FOOTER
-# ============================================================================
-st.markdown("---")
-st.markdown(f"""
-<div class='footer'>
-    <p><strong>{APP_NAME} v{APP_VERSION}</strong></p>
-    <p>Wouxun KG-UV9D Plus | Multi-Model Propagation | VHF/UHF Physics Corrected</p>
-    <p>✅ Fixed range calculation | ✅ Radio horizon respected | ✅ Realistic range ratios</p>
-    <p>{COPYRIGHT} | <a href="{GITHUB_URL}" target="_blank">GitHub</a> | Always verify with field measurements</p>
-</div>
-""", unsafe_allow_html=True)
+with col5
 
-# Session cleanup
-if (pd.Timestamp.now() - st.session_state.last_cleanup).total_seconds() > 300:
-    if len(st.session_state.saved_configs) > 20:
-        st.session_state.saved_configs = st.session_state.saved_configs[-10:]
-    st.session_state.last_cleanup = pd.Timestamp.now()
-    
 # ============================================================================
 # SAVE CONFIG BUTTON (MOVED HERE AFTER VARIABLES ARE DEFINED)
 # ============================================================================
-col_save1, col_save2, col_save3 = st.columns([2, 1, 2])
-with col_save2:
+
     if st.button("💾 Save Config", width="stretch"):
         config = {
             'tx_2m': tx_power_2m,
@@ -1683,3 +1665,23 @@ with col_save2:
             st.warning(f"⚠️ Saved to session only: {str(e)}")
 
 st.markdown("<hr style='margin:10px 0;'>", unsafe_allow_html=True)
+
+# ============================================================================
+# FOOTER
+# ============================================================================
+st.markdown("---")
+st.markdown(f"""
+<div class='footer'>
+    <p><strong>{APP_NAME} v{APP_VERSION}</strong></p>
+    <p>Wouxun KG-UV9D Plus | Multi-Model Propagation | VHF/UHF Physics Corrected</p>
+    <p>✅ Fixed range calculation | ✅ Radio horizon respected | ✅ Realistic range ratios</p>
+    <p>{COPYRIGHT} | <a href="{GITHUB_URL}" target="_blank">GitHub</a> | Always verify with field measurements</p>
+</div>
+""", unsafe_allow_html=True)
+
+# Session cleanup
+if (pd.Timestamp.now() - st.session_state.last_cleanup).total_seconds() > 300:
+    if len(st.session_state.saved_configs) > 20:
+        st.session_state.saved_configs = st.session_state.saved_configs[-10:]
+    st.session_state.last_cleanup = pd.Timestamp.now()
+    
