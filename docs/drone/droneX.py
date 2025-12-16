@@ -605,7 +605,7 @@ with st.sidebar.expander("📊 Receiver Specs", expanded=True):
         st.text(f"= Effective:      {effective_sens:.1f} dBm")
         st.text(f"")
         st.text(f"Formula: kTB + NF + SNR + Desense")
-        st.text(f"where kTB = -174 + 10log₁₀(BW)"))
+        st.text(f"where kTB = -174 + 10log₁₀(BW)")
         snr_required = st.slider("Req SNR (dB)", 6, 20, 12, 1, key="snr_req")
 
 # Drone Configuration
