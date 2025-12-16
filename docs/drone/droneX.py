@@ -244,12 +244,10 @@ def calculate_itu_p1546(distance_km, freq_mhz, h_tx_m, time_percent=50):
     d_km = min(max(distance_km, 1), 1000)
     h_eff = max(h_tx_m, 10)
     
-    # Simplified field strength calculation based on ITU-R P.1546
-    # Reference: 600 MHz, 10m height baseline
-    # Distance decay: approximately -20 dB/decade for terrestrial paths
+    # Field strength at 600 MHz reference with 20 dB/decade distance decay
     E0 = 106.9 - 20 * np.log10(d_km)
     
-    # Height gain correction (standard empirical)
+    # Height gain correction
     if h_eff > 10:
         if h_eff <= 50:
             height_gain = 10 * np.log10(h_eff / 10)
@@ -257,7 +255,7 @@ def calculate_itu_p1546(distance_km, freq_mhz, h_tx_m, time_percent=50):
             height_gain = 15 * np.log10(h_eff / 10)
         E0 += height_gain
     
-    # Time percentage correction (50%, 10%, 1%)
+    # Time percentage correction
     if time_percent >= 50:
         time_factor = 0
     elif time_percent >= 10:
@@ -267,15 +265,13 @@ def calculate_itu_p1546(distance_km, freq_mhz, h_tx_m, time_percent=50):
     else:
         time_factor = 25
     
-    # Frequency correction from 600 MHz reference
-    # ITU-R P.1546 uses approximately 20×log₁₀(f₂/f₁) for VHF/UHF
+    # Frequency correction: uniform 20×log₁₀ relationship
     freq_factor = 20 * np.log10(600 / max(freq_mhz, 30))
     
     # Calculate field strength
     E = E0 + freq_factor + time_factor
     
-    # Convert field strength (dBμV/m) to path loss (dB)
-    # Formula: PL = 139.3 - E + 20×log₁₀(f_MHz) - 77.2
+    # Convert to path loss: PL = 139.3 - E + 20×log₁₀(f) - 77.2
     pl = 139.3 - E + 20 * np.log10(freq_mhz) - 77.2
     
     # Ensure not better than free space
