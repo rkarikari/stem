@@ -1,0 +1,10 @@
+streamlit
+numpy
+pandas
+matplotlib
+seaborn
+pydub
+shazamio
+requests
+PyPDF2
+pyaudio; platform_system != "Linux"
