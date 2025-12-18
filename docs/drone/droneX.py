@@ -73,7 +73,7 @@ from plotly.subplots import make_subplots
 import math,random,time,json,inspect
 APP_VERSION='3.1.2'
 APP_NAME='RadioSport X-Repeater'
-APP_DESCRIPTION='Drone-Borne Repeater RF Coverage Analyzer - Physics FINALLY FIXED v2.3.5'
+APP_DESCRIPTION='Drone-Borne Repeater RF Coverage Analyzer'
 DEVELOPER='RNK'
 COPYRIGHT='Copyright © RNK, 2026 RadioSport. All rights reserved.'
 GITHUB_URL='https://github.com/rkarikari/stem'
