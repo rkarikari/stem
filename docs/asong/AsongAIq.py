@@ -49,13 +49,13 @@ _Z='start_time'
 _Y='code'
 _X='ollama_host'
 _W='document_cache_hits'
-_V='ignore'
-_U='user'
-_T='Cloud'
-_S='model_cache_hits'
-_R='type'
-_Q='Local'
-_P='sections'
+_V='user'
+_U='Cloud'
+_T='model_cache_hits'
+_S='type'
+_R='Local'
+_Q='sections'
+_P='ignore'
 _O='---'
 _N='openrouter'
 _M='timestamp'
@@ -73,13 +73,20 @@ _B=None
 _A=True
 import os
 os.environ['PYDUB_UTILS_QUIET']='1'
-try:import audioop
+import sys
+AUDIOOP_AVAILABLE=_C
+try:import audioop;AUDIOOP_AVAILABLE=_A
 except ImportError:
-	try:import pyaudioop as audioop
-	except ImportError:import subprocess;subprocess.check_call([sys.executable,'-m','pip','install','pyaudioop']);import pyaudioop as audioop
-import streamlit as st,asyncio,wave,tempfile,sys,warnings,base64,numpy as np,json,threading,time,io
+	try:import pyaudioop as audioop;AUDIOOP_AVAILABLE=_A
+	except ImportError:
+		try:import subprocess;subprocess.check_call([sys.executable,'-m','pip','install','pyaudioop','--quiet']);import pyaudioop as audioop;AUDIOOP_AVAILABLE=_A
+		except Exception:AUDIOOP_AVAILABLE=_C;pass
+import streamlit as st,asyncio,wave,tempfile,warnings,base64,numpy as np,json,threading,time,io
 from datetime import datetime,timedelta
 from io import BytesIO
+import warnings
+warnings.filterwarnings(_P,category=DeprecationWarning)
+warnings.filterwarnings(_P,category=SyntaxWarning)
 try:from pydub import AudioSegment;PYDUB_AVAILABLE=_A
 except(ImportError,ModuleNotFoundError):PYDUB_AVAILABLE=_C;AudioSegment=_B
 from shazamio import Shazam
@@ -95,18 +102,22 @@ from matplotlib.animation import FuncAnimation
 import PyPDF2
 PYAUDIO_AVAILABLE=_C
 BROWSER_AUDIO_AVAILABLE=_C
-try:import pyaudio;PYAUDIO_AVAILABLE=_A
-except ImportError:pass
+if AUDIOOP_AVAILABLE:
+	try:import pyaudio;PYAUDIO_AVAILABLE=_A
+	except ImportError:PYAUDIO_AVAILABLE=_C;pass
+else:PYAUDIO_AVAILABLE=_C
 st_audiorec_func=_B
-warnings.simplefilter(_V)
-warnings.filterwarnings(_V,category=RuntimeWarning)
-warnings.filterwarnings(_V,category=FutureWarning)
-warnings.filterwarnings(_V,category=DeprecationWarning)
-os.environ['PYTHONWARNINGS']=_V
+warnings.simplefilter(_P)
+warnings.filterwarnings(_P,category=RuntimeWarning)
+warnings.filterwarnings(_P,category=FutureWarning)
+warnings.filterwarnings(_P,category=DeprecationWarning)
+warnings.filterwarnings(_P,category=SyntaxWarning)
+os.environ['PYTHONWARNINGS']=_P
 logging.getLogger('pydub.converter').setLevel(logging.ERROR)
 logging.getLogger('pydub.utils').setLevel(logging.ERROR)
 logging.getLogger(_A5).setLevel(logging.ERROR)
-st.set_option('client.showErrorDetails',_C)
+try:st.set_option('client.showErrorDetails',_C)
+except Exception:pass
 CHUNK=1024
 FORMAT=pyaudio.paInt16 if PYAUDIO_AVAILABLE else _B
 CHANNELS=1
@@ -149,7 +160,7 @@ def initialize_session_state():
 	if'auto_mode_thread'not in st.session_state:st.session_state.auto_mode_thread=_B
 	if _AC not in st.session_state:st.session_state.auto_mode_stats={_Z:_B,_AD:0,'unique_songs':0,'genres_detected':{},'artists_detected':{},'failed_detections':0,'session_log':[]}
 	if'auto_mode_settings'not in st.session_state:st.session_state.auto_mode_settings={'monitoring_duration':60,'detection_threshold':.3,'silence_duration':3,'min_song_length':30,_AE:_AF,'output_format':'CSV'}
-	if'cache_stats'not in st.session_state:st.session_state.cache_stats={_S:0,_a:0,_W:0,_b:0,_q:datetime.now()}
+	if'cache_stats'not in st.session_state:st.session_state.cache_stats={_T:0,_a:0,_W:0,_b:0,_q:datetime.now()}
 	if'file_uploader_key'not in st.session_state:st.session_state.file_uploader_key='uploader_0'
 	if'reasoning_window'not in st.session_state:st.session_state.reasoning_window=_B
 	if _r not in st.session_state:st.session_state.messages=[]
@@ -162,8 +173,8 @@ def initialize_session_state():
 	if'in_thinking_block'not in st.session_state:st.session_state.in_thinking_block=_C
 	if'reasoning_window_id'not in st.session_state:st.session_state.reasoning_window_id=f"reasoning_{time.time()}"
 	if _g not in st.session_state:
-		if IS_CLOUD_ENVIRONMENT:st.session_state.api_provider=_T;st.session_state.environment='cloud'
-		else:st.session_state.api_provider=_Q;st.session_state.environment='local'
+		if IS_CLOUD_ENVIRONMENT:st.session_state.api_provider=_U;st.session_state.environment='cloud'
+		else:st.session_state.api_provider=_R;st.session_state.environment='local'
 	if'api_keys'not in st.session_state:st.session_state.api_keys={_N:''}
 	if _AH not in st.session_state:st.session_state.selected_online_model=0
 	if'analysis_depth'not in st.session_state:st.session_state.analysis_depth=_h
@@ -202,7 +213,7 @@ def get_ollama_models_cached():
 	except Exception as e:st.error(f"Models error: {str(e)}");return[]
 def get_ollama_models():
 	start_time=time.time();result=get_ollama_models_cached();end_time=time.time()
-	if end_time-start_time<.1 and result:st.session_state.cache_stats[_S]+=1
+	if end_time-start_time<.1 and result:st.session_state.cache_stats[_T]+=1
 	else:st.session_state.cache_stats[_a]+=1
 	return result
 @lru_cache(maxsize=128)
@@ -230,11 +241,11 @@ def split_message_cached(content):
 		start,end=match.span()
 		if last_end<start:
 			text_content=content[last_end:start]
-			if text_content.strip():parts.append({_R:_L,_E:text_content})
-		language=match.group(1)or _L;code=match.group(2);parts.append({_R:_Y,'language':language,_Y:code});last_end=end
+			if text_content.strip():parts.append({_S:_L,_E:text_content})
+		language=match.group(1)or _L;code=match.group(2);parts.append({_S:_Y,'language':language,_Y:code});last_end=end
 	if last_end<len(content):
 		remaining_content=content[last_end:]
-		if remaining_content.strip():parts.append({_R:_L,_E:remaining_content})
+		if remaining_content.strip():parts.append({_S:_L,_E:remaining_content})
 	return parts
 def split_message(content):return split_message_cached(content)
 def process_single_file(file_data):
@@ -338,9 +349,9 @@ def get_song_history_context():
 		if _G in song and _H in song[_G]:
 			track=song[_G][_H]
 			if _J in track:genre=track[_J].get(_e,_D);context+=f"   - Genre: {genre}\n"
-			if _P in track:
-				for section in track[_P]:
-					if section.get(_R)==_u:
+			if _Q in track:
+				for section in track[_Q]:
+					if section.get(_S)==_u:
 						metadata=section.get(_v,[])
 						for meta in metadata:
 							if meta.get(_F)=='Album':context+=f"   - Album: {meta.get(_L,_D)}\n"
@@ -372,9 +383,9 @@ def prepare_song_history_data():
 		song_data['genre']=genre;data[C].append(song_data);data[_J][genre]=data[_J].get(genre,0)+1;data[A][song[_I]]=data[A].get(song[_I],0)+1;release_year=_D
 		if _G in song and _H in song[_G]:
 			track=song[_G][_H]
-			if _P in track:
-				for section in track[_P]:
-					if section.get(_R)==_u:
+			if _Q in track:
+				for section in track[_Q]:
+					if section.get(_S)==_u:
 						metadata=section.get(_v,[])
 						for meta in metadata:
 							if meta.get(_F)==_w:
@@ -458,7 +469,7 @@ async def identify_song(audio_file_path):
 	'Identify song using Shazam API'
 	try:
 		with warnings.catch_warnings():
-			warnings.simplefilter(_V);shazam=Shazam()
+			warnings.simplefilter(_P);shazam=Shazam()
 			if not os.path.exists(audio_file_path):return
 			file_size=os.path.getsize(audio_file_path)
 			if file_size<1000:return
@@ -490,9 +501,9 @@ def display_song_info(song_data,compact=_C):
 	with col2:
 		if not compact:st.subheader('🎵 Song Details')
 		st.markdown(f"**🎵 Title:** {track.get(_F,_D)}");st.markdown(f"**🎤 Artist:** {track.get(_z,_D)}");album=_D;released=_D
-		if _P in track:
-			for section in track[_P]:
-				if section.get(_R)==_u:
+		if _Q in track:
+			for section in track[_Q]:
+				if section.get(_S)==_u:
 					metadata=section.get(_v,[])
 					for meta in metadata:
 						if meta.get(_F)=='Album':album=meta.get(_L,_D)
@@ -681,12 +692,12 @@ def generate_ai_analysis_response(response_text):
 	for title in section_titles:
 		section_match=re.search('## '+re.escape(title)+'\\n(.*?)(?=##|$)',response_text,re.DOTALL)
 		if section_match:sections[title.strip()]=section_match.group(1).strip()
-	return{_f:recommendations,_P:sections,'full_response':response_text}
+	return{_f:recommendations,_Q:sections,'full_response':response_text}
 def export_analysis():
 	'Export analysis results as text file'
 	if not st.session_state.analysis_results:return
 	output=io.StringIO();output.write('RadioSport AI Analysis Report\n');output.write('='*40+'\n\n');output.write(f"Generated: {datetime.now().strftime(_n)}\n");output.write(f"Analysis Depth: {st.session_state.analysis_depth}\n\n")
-	for(title,content)in st.session_state.analysis_results.get(_P,{}).items():output.write(f"{title.upper()}\n");output.write('-'*len(title)+_i);output.write(f"{content}\n\n")
+	for(title,content)in st.session_state.analysis_results.get(_Q,{}).items():output.write(f"{title.upper()}\n");output.write('-'*len(title)+_i);output.write(f"{content}\n\n")
 	if st.session_state.analysis_results.get(_f):
 		output.write('RECOMMENDATIONS\n');output.write('='*40+_i)
 		for(i,rec)in enumerate(st.session_state.analysis_results[_f],1):output.write(f'{i}. "{rec[_F]}" by {rec[_I]}\n');output.write(f"   Reason: {rec[_A3]}\n\n")
@@ -695,7 +706,7 @@ def export_chat_history():
 	'Export chat history as text file';A='USER'
 	if not st.session_state.messages:return
 	output=io.StringIO();output.write('RadioSport AI Chat History\n');output.write('='*40+'\n\n');output.write(f"Generated: {datetime.now().strftime(_n)}\n\n")
-	for msg in st.session_state.messages:role=A if msg[_K]==_U else'AI';content=msg.get(_A4,msg[_E])if role==A else msg[_E];output.write(f"{role}:\n");output.write(f"{content}\n\n");output.write('-'*40+'\n\n')
+	for msg in st.session_state.messages:role=A if msg[_K]==_V else'AI';content=msg.get(_A4,msg[_E])if role==A else msg[_E];output.write(f"{role}:\n");output.write(f"{content}\n\n");output.write('-'*40+'\n\n')
 	return output.getvalue()
 def ai_analysis_tab():
 	'AI analysis tab for song history insights with all new features';C='text/plain';B='choices';A='assistant';st.markdown('### 🧠 AI Song History Analysis')
@@ -710,7 +721,7 @@ def ai_analysis_tab():
 	st.caption(f"Selected: **{st.session_state.analysis_depth}**")
 	if st.session_state.analysis_results:
 		st.markdown('#### 📊 Analysis Results');st.markdown(f"*Depth: {st.session_state.analysis_depth}*")
-		for(title,content)in st.session_state.analysis_results.get(_P,{}).items():
+		for(title,content)in st.session_state.analysis_results.get(_Q,{}).items():
 			with st.expander(f"📌 {title}",expanded=_A):st.markdown(content)
 		if st.session_state.analysis_results.get(_f):
 			st.markdown('#### 🎵 Recommendations');st.info('Based on your song history, you might enjoy these songs:')
@@ -728,29 +739,29 @@ def ai_analysis_tab():
 			if st.button(question,key=f"q_{i}"):st.session_state.auto_prompt=question;st.rerun()
 	st.markdown('#### 💬 AI Chat')
 	for msg in st.session_state.messages:
-		if msg[_K]==_U:
-			with st.chat_message(_U):prompt=msg.get(_A4,msg[_E]);st.markdown(prompt,unsafe_allow_html=_A)
+		if msg[_K]==_V:
+			with st.chat_message(_V):prompt=msg.get(_A4,msg[_E]);st.markdown(prompt,unsafe_allow_html=_A)
 		elif msg[_K]==A:
 			with st.chat_message(A):
 				parts=split_message(msg[_E])
 				for part in parts:
-					if part[_R]==_L:st.markdown(part[_E],unsafe_allow_html=_A)
-					elif part[_R]==_Y:
+					if part[_S]==_L:st.markdown(part[_E],unsafe_allow_html=_A)
+					elif part[_S]==_Y:
 						with st.expander('View Code',expanded=_C):st.code(part[_Y],language=part['language'])
 	prompt=st.chat_input('Ask about your song history...',key='ai_input')
 	if'auto_prompt'in st.session_state:prompt=st.session_state.auto_prompt;del st.session_state.auto_prompt
 	selected_model=st.session_state.get(_AK,DEFAULT_MODEL)
 	if prompt and selected_model:
-		history_context=get_song_history_context();full_prompt=f"{history_context}\n\nUser Question: {prompt}";message={_K:_U,_E:full_prompt,_A4:prompt,_t:selected_model};st.session_state.messages.append(message)
-		with st.chat_message(_U):st.markdown(prompt,unsafe_allow_html=_A)
+		history_context=get_song_history_context();full_prompt=f"{history_context}\n\nUser Question: {prompt}";message={_K:_V,_E:full_prompt,_A4:prompt,_t:selected_model};st.session_state.messages.append(message)
+		with st.chat_message(_V):st.markdown(prompt,unsafe_allow_html=_A)
 		messages=[];messages.append({_K:'system',_E:"You are an AI music analyst. Analyze the user's song history and provide insights."})
 		for msg in st.session_state.messages[-6:]:
-			if msg[_K]==_U:messages.append({_K:_U,_E:msg[_E]})
+			if msg[_K]==_V:messages.append({_K:_V,_E:msg[_E]})
 			elif msg[_K]==A:messages.append({_K:A,_E:msg[_E]})
 		with st.chat_message(A):
 			response_placeholder=st.empty();accumulated_response=''
 			try:
-				if st.session_state.api_provider==_Q:
+				if st.session_state.api_provider==_R:
 					api_payload={_t:selected_model,_r:messages,'stream':_A};response=requests.post(f"{get_ollama_host()}/api/chat",json=api_payload,headers={_AJ:_s},stream=_A,timeout=300);response.raise_for_status()
 					for line in response.iter_lines():
 						if line:
@@ -758,7 +769,7 @@ def ai_analysis_tab():
 								data=json.loads(line.decode(_d))
 								if _k in data and _E in data[_k]:content_chunk=data[_k][_E];accumulated_response+=content_chunk;response_placeholder.markdown(accumulated_response,unsafe_allow_html=_A)
 							except json.JSONDecodeError:continue
-				elif st.session_state.api_provider==_T:
+				elif st.session_state.api_provider==_U:
 					api_key=st.session_state.api_keys[_N]
 					if not api_key:st.error('OpenRouter API key is missing!');return
 					try:response=call_openrouter_api(messages,selected_model,api_key)
@@ -797,27 +808,27 @@ def main():
 	with st.sidebar:
 		st.markdown('<div class="sidebar-title">RadioSport AI 🧟🎵</div>',unsafe_allow_html=_A);st.markdown(f'<div class="version-text">Version {APP_VERSION}</div>',unsafe_allow_html=_A)
 		if IS_CLOUD_ENVIRONMENT:st.subheader('☁️Cloud🌥️')
-		else:st.subheader(_Q)
+		else:st.subheader(_R)
 		st.markdown(_O);st.subheader('🎵 Song ID Settings');col1,col2=st.columns([2,1])
 		with col1:
 			if st.button('🔄 Audio Devices',use_container_width=_A):st.session_state.audio_devices=get_audio_devices();st.rerun()
 		st.markdown(_O);st.subheader('🧠 AI Engine Settings')
-		if IS_CLOUD_ENVIRONMENT:api_provider=_T;st.session_state.api_provider=_T;st.radio(A,[_T],index=0,key=_g,disabled=_A,help='Local AI not available in cloud environment')
-		else:provider_options=[_Q,_T];current_provider=st.session_state.get(_g,_Q);current_index=0 if current_provider==_Q else 1;api_provider=st.radio(A,provider_options,index=current_index,key=_g)
-		if api_provider==_Q:
+		if IS_CLOUD_ENVIRONMENT:api_provider=_U;st.session_state.api_provider=_U;st.radio(A,[_U],index=0,key=_g,disabled=_A,help='Local AI not available in cloud environment')
+		else:provider_options=[_R,_U];current_provider=st.session_state.get(_g,_R);current_index=0 if current_provider==_R else 1;api_provider=st.radio(A,provider_options,index=current_index,key=_g)
+		if api_provider==_R:
 			col1,col2=st.columns([2,1])
 			with col1:
 				if st.button('Refresh Models',use_container_width=_A):get_ollama_models_cached.clear();st.session_state.ollama_models=get_ollama_models();st.rerun()
 			with col2:auto_refresh=st.checkbox('Auto',help='Auto-refresh models')
 			if not st.session_state.ollama_models or auto_refresh:st.session_state.ollama_models=get_ollama_models()
-			else:st.session_state.cache_stats[_S]+=1
+			else:st.session_state.cache_stats[_T]+=1
 			ollama_models=st.session_state.ollama_models
 			if ollama_models:
 				default_index=0
 				if DEFAULT_MODEL in ollama_models:default_index=ollama_models.index(DEFAULT_MODEL)
 				selected_model=st.selectbox('Select a model:',ollama_models,index=default_index,help=f"Available models: {len(ollama_models)}",key=_AK)
 			else:st.warning(f"Models Unavailable: {st.session_state.get(_X,OLLAMA_HOST)}.");selected_model=_B
-		if api_provider==_Q and not IS_CLOUD_ENVIRONMENT:
+		if api_provider==_R and not IS_CLOUD_ENVIRONMENT:
 			with st.expander('🔧 Local Settings',expanded=_C):
 				if _X not in st.session_state:st.session_state.ollama_host=DEFAULT_OLLAMA_HOST
 				new_host=st.text_input('Ollama Host URL:',value=st.session_state.ollama_host,help='Default: http://localhost:11434\nRemote: http://192.168.x.x:11434',placeholder=_A7,key='ollama_host_input')
@@ -827,7 +838,7 @@ def main():
 					except Exception as e:st.error(f"❌ Failed to connect to {new_host}: {str(e)}");st.session_state.ollama_models=[]
 					st.rerun()
 				if st.session_state.ollama_host:st.info(f"Current host: {st.session_state.ollama_host}")
-		elif api_provider==_T:
+		elif api_provider==_U:
 			try:
 				api_key=get_load_balanced_api_key(_N)
 				if api_key:st.session_state.api_keys[_N]=api_key
@@ -859,14 +870,14 @@ def main():
 			with col2:st.session_state.teacher_mode=st.toggle('Teacher',value=st.session_state.get('teacher_mode',_C),help='Activate enhanced teaching mode for detailed explanations')
 		if st.button('Clear AI Chat',use_container_width=_A):st.session_state.messages=[];st.rerun()
 		with st.expander('📊 Cache Statistics'):
-			stats=st.session_state.cache_stats;total_model_requests=stats[_S]+stats[_a];total_doc_requests=stats[_W]+stats[_b];model_hit_rate=stats[_S]/max(total_model_requests,1)*100;doc_hit_rate=stats[_W]/max(total_doc_requests,1)*100;uptime=datetime.now()-stats[_q];uptime_str=f"{uptime.days}d {uptime.seconds//3600}h {uptime.seconds%3600//60}m";stats_html=f'''
+			stats=st.session_state.cache_stats;total_model_requests=stats[_T]+stats[_a];total_doc_requests=stats[_W]+stats[_b];model_hit_rate=stats[_T]/max(total_model_requests,1)*100;doc_hit_rate=stats[_W]/max(total_doc_requests,1)*100;uptime=datetime.now()-stats[_q];uptime_str=f"{uptime.days}d {uptime.seconds//3600}h {uptime.seconds%3600//60}m";stats_html=f'''
             <div class="cache-stats">
                 <table>
                     <tr><th>Metric</th><th>Value</th></tr>
                     <tr><td>Uptime</td><td>{uptime_str}</td></tr>
                     <tr><td colspan="2"><strong>Model Cache</strong></td></tr>
                     <tr><td>Hit Rate</td><td class="{D if model_hit_rate>50 else E}">{model_hit_rate:.1f}%</td></tr>
-                    <tr><td>Hits</td><td class="cache-hit">{stats[_S]}</td></tr>
+                    <tr><td>Hits</td><td class="cache-hit">{stats[_T]}</td></tr>
                     <tr><td>Misses</td><td class="cache-miss">{stats[_a]}</td></tr>
                     <tr><td colspan="2"><strong>Document Cache</strong></td></tr>
                     <tr><td>Hit Rate</td><td class="{D if doc_hit_rate>50 else E}">{doc_hit_rate:.1f}%</td></tr>
@@ -878,7 +889,7 @@ def main():
                 </table>
             </div>
             ''';st.markdown(stats_html,unsafe_allow_html=_A)
-			if st.button('Reset Stats'):st.session_state.cache_stats={_S:0,_a:0,_W:0,_b:0,_q:datetime.now()};st.rerun()
+			if st.button('Reset Stats'):st.session_state.cache_stats={_T:0,_a:0,_W:0,_b:0,_q:datetime.now()};st.rerun()
 	tab1,tab2,tab3,tab4=st.tabs(['🎤 Song ID','📻 Auto Mode','📚 History','🧠 AI Analysis'])
 	with tab1:main_tab()
 	with tab2:auto_mode_tab()
