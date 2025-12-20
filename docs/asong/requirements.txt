@@ -8,7 +8,7 @@ pandas
 seaborn
 PyPDF2
 soundfile
-pyaudioop
+
 
 
 
