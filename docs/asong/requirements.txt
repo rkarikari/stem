@@ -8,6 +8,8 @@ pandas
 seaborn
 PyPDF2
 soundfile
+streamlit-audiorec
+
 
 
 
