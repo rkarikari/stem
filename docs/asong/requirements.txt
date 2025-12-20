@@ -1,5 +1,5 @@
 streamlit
-streamlit-audio-recorder
+audio-recorder-streamlit
 shazamio
 numpy
 requests
@@ -8,7 +8,7 @@ pandas
 seaborn
 PyPDF2
 soundfile
-pyaudioop
+audioop-py
 
 
 
