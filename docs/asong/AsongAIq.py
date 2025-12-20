@@ -137,7 +137,7 @@ def is_running_in_cloud():
 		except(requests.ConnectionError,requests.Timeout):return _A
 	except Exception:return _A
 IS_CLOUD_ENVIRONMENT=is_running_in_cloud()
-APP_VERSION='5.0.0'
+APP_VERSION='5.0.1'
 OPENROUTER_API_URL='https://openrouter.ai/api/v1/chat/completions'
 OPENROUTER_MODELS_URL=_A6
 DEFAULT_OLLAMA_HOST=_A7
@@ -654,23 +654,37 @@ def auto_mode_tab():
 		else:sleep_time=5
 		time.sleep(sleep_time);st.session_state.last_refresh=time.time();st.rerun()
 def main_tab():
-	'Main song identification interface - Browser recording only';col1,col2=st.columns([1,1])
+	'Main song identification interface - Browser recording only'
+	if'recording_start_time'not in st.session_state:st.session_state.recording_start_time=_B
+	if'is_recording'not in st.session_state:st.session_state.is_recording=_C
+	if'auto_stop_triggered'not in st.session_state:st.session_state.auto_stop_triggered=_C
+	col1,col2=st.columns([1,1])
 	with col1:
 		st.markdown('### 🎤 Browser Microphone Recording');st.info('🌐 Works on any device - Desktop, Tablet, or Mobile')
 		try:
-			from st_audiorec import st_audiorec;st.markdown('#### 🎵 Record Audio');st.caption('Click the button below to start recording:');audio_bytes=st_audiorec()
+			from st_audiorec import st_audiorec;st.markdown('#### 🎵 Record Audio');st.caption('Recording will automatically stop after 12 seconds')
+			if st.session_state.is_recording and st.session_state.recording_start_time:
+				elapsed=time.time()-st.session_state.recording_start_time;remaining=max(0,12-int(elapsed))
+				if remaining>0:st.markdown(f"### ⏱️ Recording: {remaining} seconds remaining");progress=elapsed/12;st.progress(min(progress,1.));time.sleep(.5);st.rerun()
+				elif not st.session_state.auto_stop_triggered:st.session_state.auto_stop_triggered=_A;st.info('⏹️ 12 seconds reached - Processing recording...')
+			audio_bytes=st_audiorec()
+			if audio_bytes is _B and not st.session_state.is_recording:0
+			elif audio_bytes is not _B and not st.session_state.is_recording:st.session_state.is_recording=_A;st.session_state.recording_start_time=time.time();st.session_state.auto_stop_triggered=_C;st.rerun()
 			if audio_bytes is not _B:
-				audio_hash=hashlib.md5(audio_bytes).hexdigest()
-				if'last_processed_audio'not in st.session_state:st.session_state.last_processed_audio=_B
-				if st.session_state.last_processed_audio!=audio_hash:
-					st.session_state.last_processed_audio=audio_hash
-					try:
-						temp_file=tempfile.NamedTemporaryFile(delete=_C,suffix=_m);temp_file.write(audio_bytes);temp_file.close();st.success(_y)
-						with st.spinner(_A0):process_audio_file(temp_file.name)
-					except Exception as e:st.error(f"Error processing audio: {str(e)}")
+				elapsed_time=0
+				if st.session_state.recording_start_time:elapsed_time=time.time()-st.session_state.recording_start_time
+				if elapsed_time>=12 or st.session_state.auto_stop_triggered:
+					audio_hash=hashlib.md5(audio_bytes).hexdigest()
+					if'last_processed_audio'not in st.session_state:st.session_state.last_processed_audio=_B
+					if st.session_state.last_processed_audio!=audio_hash:
+						st.session_state.last_processed_audio=audio_hash;st.session_state.is_recording=_C;st.session_state.recording_start_time=_B;st.session_state.auto_stop_triggered=_C
+						try:
+							temp_file=tempfile.NamedTemporaryFile(delete=_C,suffix=_m);temp_file.write(audio_bytes);temp_file.close();st.success(_y)
+							with st.spinner(_A0):process_audio_file(temp_file.name)
+						except Exception as e:st.error(f"Error processing audio: {str(e)}");st.session_state.is_recording=_C;st.session_state.recording_start_time=_B
 		except ImportError as e:st.error('❌ Browser audio recorder not available!');st.markdown('### 📦 Installation Required');st.markdown('The `st-audiorec` package is needed for browser recording.');st.code('pip install st-audiorec',language=_p);st.markdown('**Then restart the Streamlit app:**');st.code('streamlit run AsongAIq.py',language=_p);st.markdown(_O);st.markdown('**Package Info:**');st.markdown('- 🌐 Works in any browser');st.markdown('- 📱 Mobile-friendly');st.markdown("- 🔒 Secure (uses browser's Media API)")
 		except Exception as e:st.error(f"Recording error: {str(e)}");st.exception(e)
-		st.markdown(_O);st.markdown('**💡 Tips for Best Results:**');st.markdown('• 🔊 Play music clearly near your device');st.markdown('• 🤫 Minimize background noise');st.markdown('• 🎵 Record during chorus or distinctive parts');st.markdown('• ⏱️ Recording duration: ~10-15 seconds');st.markdown('• 🔒 Works on HTTPS or localhost only')
+		st.markdown(_O);st.markdown('**💡 Tips for Best Results:**');st.markdown('• 📊 Play music clearly near your device');st.markdown('• 🤫 Minimize background noise');st.markdown('• 🎵 Record during chorus or distinctive parts');st.markdown('• ⏱️ **Auto-stops at 12 seconds** - No manual stop needed!');st.markdown('• 🔒 Works on HTTPS or localhost only')
 	with col2:
 		st.markdown('### 🎵 Current Song Result')
 		if hasattr(st.session_state,_AA)and st.session_state.current_song_result:display_song_info(st.session_state.current_song_result)
