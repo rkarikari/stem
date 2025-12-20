@@ -1,8 +1,7 @@
-_AK='selected_model'
-_AJ='Content-Type'
-_AI='api_usage'
-_AH='selected_online_model'
-_AG='auto_run_plots'
+_AJ='selected_model'
+_AI='Content-Type'
+_AH='api_usage'
+_AG='selected_online_model'
 _AF='Radio Station'
 _AE='station_name'
 _AD='total_songs'
@@ -10,7 +9,7 @@ _AC='auto_mode_stats'
 _AB='auto_mode_active'
 _AA='current_song_result'
 _A9='https://github.com/rkarikari/RadioSport-chat'
-_A8='RadioSport AI'
+_A8='RadioSport SongAI'
 _A7='http://localhost:11434'
 _A6='https://openrouter.ai/api/v1/models'
 _A5='streamlit'
@@ -55,8 +54,8 @@ _T='Cloud'
 _S='model_cache_hits'
 _R='type'
 _Q='Local'
-_P='sections'
-_O='---'
+_P='---'
+_O='sections'
 _N='openrouter'
 _M='timestamp'
 _L='text'
@@ -137,7 +136,7 @@ def is_running_in_cloud():
 		except(requests.ConnectionError,requests.Timeout):return _A
 	except Exception:return _A
 IS_CLOUD_ENVIRONMENT=is_running_in_cloud()
-APP_VERSION='5.0.2'
+APP_VERSION='5.0.5'
 OPENROUTER_API_URL='https://openrouter.ai/api/v1/chat/completions'
 OPENROUTER_MODELS_URL=_A6
 DEFAULT_OLLAMA_HOST=_A7
@@ -165,7 +164,7 @@ def initialize_session_state():
 	if'file_uploader_key'not in st.session_state:st.session_state.file_uploader_key='uploader_0'
 	if'reasoning_window'not in st.session_state:st.session_state.reasoning_window=_B
 	if _r not in st.session_state:st.session_state.messages=[]
-	if _AG not in st.session_state:st.session_state.auto_run_plots=_A
+	if'auto_run_plots'not in st.session_state:st.session_state.auto_run_plots=_A
 	if'ollama_models'not in st.session_state:st.session_state.ollama_models=[]
 	if'doc_cache'not in st.session_state:st.session_state.doc_cache={}
 	if'last_reasoning_update'not in st.session_state:st.session_state.last_reasoning_update=time.time()
@@ -177,7 +176,7 @@ def initialize_session_state():
 		if IS_CLOUD_ENVIRONMENT:st.session_state.api_provider=_T;st.session_state.environment='cloud'
 		else:st.session_state.api_provider=_Q;st.session_state.environment='local'
 	if'api_keys'not in st.session_state:st.session_state.api_keys={_N:''}
-	if _AH not in st.session_state:st.session_state.selected_online_model=0
+	if _AG not in st.session_state:st.session_state.selected_online_model=0
 	if'analysis_depth'not in st.session_state:st.session_state.analysis_depth=_h
 	if'analysis_results'not in st.session_state:st.session_state.analysis_results={}
 	if'quick_questions'not in st.session_state:st.session_state.quick_questions=["What's my most common genre?",'Who is my top artist?','What time period are most songs from?','Do I have a diverse taste?']
@@ -309,16 +308,16 @@ def get_load_balanced_api_key(provider):
 	except Exception:return''
 	if not keys:return''
 	if len(keys)==1:return keys[0]
-	if _AI not in st.session_state:st.session_state.api_usage={}
+	if _AH not in st.session_state:st.session_state.api_usage={}
 	if provider not in st.session_state.api_usage:st.session_state.api_usage[provider]={A:0,_j:set(),B:{}}
 	usage=st.session_state.api_usage[provider];valid_keys=[k for k in keys if k not in usage[_j]]
 	if not valid_keys:usage[_j].clear();valid_keys=keys
 	selected=valid_keys[usage[A]%len(valid_keys)];usage[A]=(usage[A]+1)%len(valid_keys);usage[B][selected]=usage[B].get(selected,0)+1;usage['last_used']=time.time();usage['selected_key']=selected;return selected
 def mark_key_failed(provider,key):
 	'Mark key as failed for load balancing.'
-	if _AI in st.session_state and provider in st.session_state.api_usage:st.session_state.api_usage[provider][_j].add(key)
+	if _AH in st.session_state and provider in st.session_state.api_usage:st.session_state.api_usage[provider][_j].add(key)
 def call_openrouter_api(messages,model,api_key):
-	headers={'Authorization':f"Bearer {api_key}",_AJ:_s,'HTTP-Referer':_A9,'X-Title':_A8};max_tokens=2048;payload={_t:model,_r:messages,'stream':_A,'max_tokens':max_tokens,'temperature':.7}
+	headers={'Authorization':f"Bearer {api_key}",_AI:_s,'HTTP-Referer':_A9,'X-Title':_A8};max_tokens=2048;payload={_t:model,_r:messages,'stream':_A,'max_tokens':max_tokens,'temperature':.7}
 	try:
 		response=requests.post(OPENROUTER_API_URL,headers=headers,json=payload,stream=_A,timeout=60)
 		if response.status_code!=200:
@@ -350,8 +349,8 @@ def get_song_history_context():
 		if _G in song and _H in song[_G]:
 			track=song[_G][_H]
 			if _J in track:genre=track[_J].get(_e,_D);context+=f"   - Genre: {genre}\n"
-			if _P in track:
-				for section in track[_P]:
+			if _O in track:
+				for section in track[_O]:
 					if section.get(_R)==_u:
 						metadata=section.get(_v,[])
 						for meta in metadata:
@@ -384,8 +383,8 @@ def prepare_song_history_data():
 		song_data['genre']=genre;data[C].append(song_data);data[_J][genre]=data[_J].get(genre,0)+1;data[A][song[_I]]=data[A].get(song[_I],0)+1;release_year=_D
 		if _G in song and _H in song[_G]:
 			track=song[_G][_H]
-			if _P in track:
-				for section in track[_P]:
+			if _O in track:
+				for section in track[_O]:
 					if section.get(_R)==_u:
 						metadata=section.get(_v,[])
 						for meta in metadata:
@@ -502,8 +501,8 @@ def display_song_info(song_data,compact=_C):
 	with col2:
 		if not compact:st.subheader('🎵 Song Details')
 		st.markdown(f"**🎵 Title:** {track.get(_F,_D)}");st.markdown(f"**🎤 Artist:** {track.get(_z,_D)}");album=_D;released=_D
-		if _P in track:
-			for section in track[_P]:
+		if _O in track:
+			for section in track[_O]:
 				if section.get(_R)==_u:
 					metadata=section.get(_v,[])
 					for meta in metadata:
@@ -536,11 +535,11 @@ def history_tab():
 				st.session_state.identified_songs=[];st.session_state.selected_song=_B
 				if A in st.session_state:del st.session_state.selected_history_index
 				st.rerun()
-		st.markdown(_O);songs=list(reversed(st.session_state.identified_songs))
+		st.markdown(_P);songs=list(reversed(st.session_state.identified_songs))
 		if len(songs)>0:
 			st.markdown('### 🆕 Latest Song')
 			with st.container():st.markdown('*Most recently identified*');display_song_info(songs[0][_G]);st.markdown(f"🕒 **Identified:** {songs[0][_M]}")
-			st.markdown(_O)
+			st.markdown(_P)
 			if len(songs)>1:
 				st.markdown('### 📋 Previous Songs')
 				if A not in st.session_state:st.session_state.selected_history_index=_B
@@ -568,7 +567,7 @@ def history_tab():
 				with main_col2:
 					st.markdown('**🎵 Song Details**')
 					if st.session_state.selected_history_index is not _B and st.session_state.selected_song:
-						display_song_info(st.session_state.selected_song[_G],compact=_C);st.markdown(_O);st.markdown(f"🕒 **Identified:** {st.session_state.selected_song[_M]}")
+						display_song_info(st.session_state.selected_song[_G],compact=_C);st.markdown(_P);st.markdown(f"🕒 **Identified:** {st.session_state.selected_song[_M]}")
 						if st.button('✖️ Close Details',key='close_details'):st.session_state.selected_history_index=_B;st.session_state.selected_song=_B;st.rerun()
 					else:st.info('👈 Select a song from the list to view full details');st.markdown(B);st.markdown('• 🆕 Latest song shown above in full detail');st.markdown('• 👁️ Click any song to view complete information');st.markdown('• 🎵 Selected songs are highlighted');st.markdown('• ✖️ Close details to return to list view');st.markdown('• 🗑️ Clear all history when needed')
 	else:st.info('📭 No songs identified yet. Use the Song ID tab to identify your first song!');st.markdown('**🚀 Get Started:**');st.markdown("1. 🎤 Go to the 'Song ID' tab");st.markdown('2. 🎵 Play music near your microphone');st.markdown("3. 📱 Click 'Start Recording & Identify Song'");st.markdown('4. 📚 Return here to view your song history');st.markdown(B);st.markdown('• 🖼️ Album artwork and song details in organized layout');st.markdown('• 🆕 Latest songs displayed prominently');st.markdown('• 📜 Browsable list of all identified songs');st.markdown('• 🔗 Direct links to streaming platforms');st.markdown('• 🕒 Timestamp tracking for each identification')
@@ -583,7 +582,7 @@ def auto_mode_tab():
 		if _AB not in st.session_state:st.session_state.auto_mode_active=_C
 		if _AC not in st.session_state:st.session_state.auto_mode_stats={_Z:_B,B:0,C:_B,A:0,D:_B}
 		if'auto_mode_message'not in st.session_state:st.session_state.auto_mode_message=''
-		st.markdown(_O)
+		st.markdown(_P)
 		if not st.session_state.auto_mode_active:
 			if st.button('🚀 Start Auto Monitoring',type=_e,key='start_auto'):st.session_state.auto_mode_active=_A;st.session_state.auto_mode_stats={_Z:datetime.now(),B:0,C:_B,A:0,D:datetime.now(),F:auto_interval,_AE:station_name};st.session_state.auto_mode_message='🚀 Auto monitoring started!';st.success('Auto monitoring started!');st.rerun()
 		elif st.button('⏹️ Stop Auto Monitoring',type='secondary',key='stop_auto'):st.session_state.auto_mode_active=_C;st.session_state.auto_mode_message='⏹️ Auto monitoring stopped';st.info('Auto monitoring stopped!');st.rerun()
@@ -645,7 +644,7 @@ def auto_mode_tab():
                         ''',unsafe_allow_html=_A)
 		else:
 			st.info('📭 No songs identified yet')
-			if not st.session_state.auto_mode_active:st.markdown('**🚀 Start Auto Mode to begin identifying songs automatically!**');st.markdown(_O);st.markdown('**📋 This list will show:**');st.markdown('• 🆕 Most recent song highlighted');st.markdown('• 🎵 Song title and artist');st.markdown('• 🕒 Time of identification');st.markdown('• 📊 Last 10 songs identified')
+			if not st.session_state.auto_mode_active:st.markdown('**🚀 Start Auto Mode to begin identifying songs automatically!**');st.markdown(_P);st.markdown('**📋 This list will show:**');st.markdown('• 🆕 Most recent song highlighted');st.markdown('• 🎵 Song title and artist');st.markdown('• 🕒 Time of identification');st.markdown('• 📊 Last 10 songs identified')
 			else:st.markdown('**🎤 Auto mode is running...**');st.markdown("Songs will appear here as they're identified!")
 	if st.session_state.auto_mode_active:
 		current_time=time.time();elapsed=current_time-st.session_state.last_refresh
@@ -668,9 +667,9 @@ def main_tab():
 						temp_file=tempfile.NamedTemporaryFile(delete=_C,suffix=_m);temp_file.write(audio_bytes);temp_file.close();st.success(_y)
 						with st.spinner(_A0):process_audio_file(temp_file.name)
 					except Exception as e:st.error(f"Error processing audio: {str(e)}")
-		except ImportError as e:st.error('❌ Browser audio recorder not available!');st.markdown('### 📦 Installation Required');st.markdown('The `st-audiorec` package is needed for browser recording.');st.code('pip install st-audiorec',language=_p);st.markdown('**Then restart the Streamlit app:**');st.code('streamlit run AsongAIq.py',language=_p);st.markdown(_O);st.markdown('**Package Info:**');st.markdown('- 🌐 Works in any browser');st.markdown('- 📱 Mobile-friendly');st.markdown("- 🔒 Secure (uses browser's Media API)")
+		except ImportError as e:st.error('❌ Browser audio recorder not available!');st.markdown('### 📦 Installation Required');st.markdown('The `st-audiorec` package is needed for browser recording.');st.code('pip install st-audiorec',language=_p);st.markdown('**Then restart the Streamlit app:**');st.code('streamlit run AsongAIq.py',language=_p);st.markdown(_P);st.markdown('**Package Info:**');st.markdown('- 🌐 Works in any browser');st.markdown('- 📱 Mobile-friendly');st.markdown("- 🔒 Secure (uses browser's Media API)")
 		except Exception as e:st.error(f"Recording error: {str(e)}");st.exception(e)
-		st.markdown(_O);st.markdown('**💡 Tips for Best Results:**');st.markdown('• 🔊 Play music clearly near your device');st.markdown('• 🤫 Minimize background noise');st.markdown('• 🎵 Record during chorus or distinctive parts');st.markdown('• ⏱️ Recording duration: ~10-15 seconds');st.markdown('• 🔒 Works on HTTPS or localhost only')
+		st.markdown(_P);st.markdown('**💡 Tips for Best Results:**');st.markdown('• 🔊 Play music clearly near your device');st.markdown('• 🤫 Minimize background noise');st.markdown('• 🎵 Record during chorus or distinctive parts');st.markdown('• ⏱️ Recording duration: ~10-15 seconds');st.markdown('• 🔒 Works on HTTPS or localhost only')
 	with col2:
 		st.markdown('### 🎵 Current Song Result')
 		if hasattr(st.session_state,_AA)and st.session_state.current_song_result:display_song_info(st.session_state.current_song_result)
@@ -693,12 +692,12 @@ def generate_ai_analysis_response(response_text):
 	for title in section_titles:
 		section_match=re.search('## '+re.escape(title)+'\\n(.*?)(?=##|$)',response_text,re.DOTALL)
 		if section_match:sections[title.strip()]=section_match.group(1).strip()
-	return{_f:recommendations,_P:sections,'full_response':response_text}
+	return{_f:recommendations,_O:sections,'full_response':response_text}
 def export_analysis():
 	'Export analysis results as text file'
 	if not st.session_state.analysis_results:return
-	output=io.StringIO();output.write('RadioSport AI Analysis Report\n');output.write('='*40+'\n\n');output.write(f"Generated: {datetime.now().strftime(_n)}\n");output.write(f"Analysis Depth: {st.session_state.analysis_depth}\n\n")
-	for(title,content)in st.session_state.analysis_results.get(_P,{}).items():output.write(f"{title.upper()}\n");output.write('-'*len(title)+_i);output.write(f"{content}\n\n")
+	output=io.StringIO();output.write('RadioSport SongAI Analysis Report\n');output.write('='*40+'\n\n');output.write(f"Generated: {datetime.now().strftime(_n)}\n");output.write(f"Analysis Depth: {st.session_state.analysis_depth}\n\n")
+	for(title,content)in st.session_state.analysis_results.get(_O,{}).items():output.write(f"{title.upper()}\n");output.write('-'*len(title)+_i);output.write(f"{content}\n\n")
 	if st.session_state.analysis_results.get(_f):
 		output.write('RECOMMENDATIONS\n');output.write('='*40+_i)
 		for(i,rec)in enumerate(st.session_state.analysis_results[_f],1):output.write(f'{i}. "{rec[_F]}" by {rec[_I]}\n');output.write(f"   Reason: {rec[_A3]}\n\n")
@@ -706,7 +705,7 @@ def export_analysis():
 def export_chat_history():
 	'Export chat history as text file';A='USER'
 	if not st.session_state.messages:return
-	output=io.StringIO();output.write('RadioSport AI Chat History\n');output.write('='*40+'\n\n');output.write(f"Generated: {datetime.now().strftime(_n)}\n\n")
+	output=io.StringIO();output.write('RadioSport SongAI Chat History\n');output.write('='*40+'\n\n');output.write(f"Generated: {datetime.now().strftime(_n)}\n\n")
 	for msg in st.session_state.messages:role=A if msg[_K]==_U else'AI';content=msg.get(_A4,msg[_E])if role==A else msg[_E];output.write(f"{role}:\n");output.write(f"{content}\n\n");output.write('-'*40+'\n\n')
 	return output.getvalue()
 def ai_analysis_tab():
@@ -722,7 +721,7 @@ def ai_analysis_tab():
 	st.caption(f"Selected: **{st.session_state.analysis_depth}**")
 	if st.session_state.analysis_results:
 		st.markdown('#### 📊 Analysis Results');st.markdown(f"*Depth: {st.session_state.analysis_depth}*")
-		for(title,content)in st.session_state.analysis_results.get(_P,{}).items():
+		for(title,content)in st.session_state.analysis_results.get(_O,{}).items():
 			with st.expander(f"📌 {title}",expanded=_A):st.markdown(content)
 		if st.session_state.analysis_results.get(_f):
 			st.markdown('#### 🎵 Recommendations');st.info('Based on your song history, you might enjoy these songs:')
@@ -751,7 +750,7 @@ def ai_analysis_tab():
 						with st.expander('View Code',expanded=_C):st.code(part[_Y],language=part['language'])
 	prompt=st.chat_input('Ask about your song history...',key='ai_input')
 	if'auto_prompt'in st.session_state:prompt=st.session_state.auto_prompt;del st.session_state.auto_prompt
-	selected_model=st.session_state.get(_AK,DEFAULT_MODEL)
+	selected_model=st.session_state.get(_AJ,DEFAULT_MODEL)
 	if prompt and selected_model:
 		history_context=get_song_history_context();full_prompt=f"{history_context}\n\nUser Question: {prompt}";message={_K:_U,_E:full_prompt,_A4:prompt,_t:selected_model};st.session_state.messages.append(message)
 		with st.chat_message(_U):st.markdown(prompt,unsafe_allow_html=_A)
@@ -763,7 +762,7 @@ def ai_analysis_tab():
 			response_placeholder=st.empty();accumulated_response=''
 			try:
 				if st.session_state.api_provider==_Q:
-					api_payload={_t:selected_model,_r:messages,'stream':_A};response=requests.post(f"{get_ollama_host()}/api/chat",json=api_payload,headers={_AJ:_s},stream=_A,timeout=300);response.raise_for_status()
+					api_payload={_t:selected_model,_r:messages,'stream':_A};response=requests.post(f"{get_ollama_host()}/api/chat",json=api_payload,headers={_AI:_s},stream=_A,timeout=300);response.raise_for_status()
 					for line in response.iter_lines():
 						if line:
 							try:
@@ -793,7 +792,7 @@ def ai_analysis_tab():
 				if'401'in str(e):error_message+='\n\n⚠️ Invalid API Key - Please check your credentials'
 				elif'429'in str(e):error_message+='\n\n⚠️ Rate limit exceeded - Try again later'
 				st.error(error_message);st.session_state.messages.append({_K:A,_E:f"Error: {e}"});response_placeholder.markdown(error_message,unsafe_allow_html=_A)
-	st.markdown(_O);export_col1,export_col2=st.columns(2)
+	st.markdown(_P);export_col1,export_col2=st.columns(2)
 	with export_col1:
 		if st.button('💾 Export Analysis Report',use_container_width=_A):
 			report=export_analysis()
@@ -807,13 +806,10 @@ def ai_analysis_tab():
 def main():
 	'Main application with enhanced tabbed interface';E='cache-miss';D='cache-hit';C='context_length';B='openrouter_models';A='AI provider:';initialize_session_state()
 	with st.sidebar:
-		st.markdown('<div class="sidebar-title">RadioSport AI 🧟🎵</div>',unsafe_allow_html=_A);st.markdown(f'<div class="version-text">Version {APP_VERSION}</div>',unsafe_allow_html=_A)
+		st.markdown('<div class="sidebar-title">RadioSport SongAI 🧟🎵</div>',unsafe_allow_html=_A);st.markdown(f'<div class="version-text">Version {APP_VERSION}</div>',unsafe_allow_html=_A)
 		if IS_CLOUD_ENVIRONMENT:st.subheader('☁️Cloud🌥️')
 		else:st.subheader(_Q)
-		st.markdown(_O);st.subheader('🎵 Song ID Settings');col1,col2=st.columns([2,1])
-		with col1:
-			if st.button('🔄 Audio Devices',use_container_width=_A):st.session_state.audio_devices=get_audio_devices();st.rerun()
-		st.markdown(_O);st.subheader('🧠 AI Engine Settings')
+		st.markdown(_P);st.subheader('🧠 AI Engine Settings')
 		if IS_CLOUD_ENVIRONMENT:api_provider=_T;st.session_state.api_provider=_T;st.radio(A,[_T],index=0,key=_g,disabled=_A,help='Local AI not available in cloud environment')
 		else:provider_options=[_Q,_T];current_provider=st.session_state.get(_g,_Q);current_index=0 if current_provider==_Q else 1;api_provider=st.radio(A,provider_options,index=current_index,key=_g)
 		if api_provider==_Q:
@@ -827,7 +823,7 @@ def main():
 			if ollama_models:
 				default_index=0
 				if DEFAULT_MODEL in ollama_models:default_index=ollama_models.index(DEFAULT_MODEL)
-				selected_model=st.selectbox('Select a model:',ollama_models,index=default_index,help=f"Available models: {len(ollama_models)}",key=_AK)
+				selected_model=st.selectbox('Select a model:',ollama_models,index=default_index,help=f"Available models: {len(ollama_models)}",key=_AJ)
 			else:st.warning(f"Models Unavailable: {st.session_state.get(_X,OLLAMA_HOST)}.");selected_model=_B
 		if api_provider==_Q and not IS_CLOUD_ENVIRONMENT:
 			with st.expander('🔧 Local Settings',expanded=_C):
@@ -854,7 +850,7 @@ def main():
 				st.stop()
 			model_display=[f"{model.get(_c,model[_l])}"for model in available_models];col1,col2=st.columns([6,1])
 			with col1:
-				selected_index=st.selectbox('Models (Free)',range(len(model_display)),format_func=lambda x:model_display[x],index=0,help='Showing only free models from OpenRouter. List updates when refreshed.',key=_AH)
+				selected_index=st.selectbox('Models (Free)',range(len(model_display)),format_func=lambda x:model_display[x],index=0,help='Showing only free models from OpenRouter. List updates when refreshed.',key=_AG)
 				try:selected_index=int(selected_index)
 				except(TypeError,ValueError):selected_index=0
 				if model_display and 0<=selected_index<len(model_display):
@@ -865,10 +861,6 @@ def main():
 				if st.button('🔄'):
 					if B in st.session_state:del st.session_state.openrouter_models
 					st.rerun()
-		with st.expander('⚙️ AI Controls',expanded=_C):
-			col1,col2=st.columns(2)
-			with col1:st.session_state.enable_reasoning=st.toggle('Reasoning',value=st.session_state.get('enable_reasoning',_C),help='Enable reasoning for qwen3* models');st.session_state.auto_run_plots=st.toggle('AutoPlot',value=st.session_state.get(_AG,_A),help='Automatically execute Python code that generates plots')
-			with col2:st.session_state.teacher_mode=st.toggle('Teacher',value=st.session_state.get('teacher_mode',_C),help='Activate enhanced teaching mode for detailed explanations')
 		if st.button('Clear AI Chat',use_container_width=_A):st.session_state.messages=[];st.rerun()
 		with st.expander('📊 Cache Statistics'):
 			stats=st.session_state.cache_stats;total_model_requests=stats[_S]+stats[_a];total_doc_requests=stats[_W]+stats[_b];model_hit_rate=stats[_S]/max(total_model_requests,1)*100;doc_hit_rate=stats[_W]/max(total_doc_requests,1)*100;uptime=datetime.now()-stats[_q];uptime_str=f"{uptime.days}d {uptime.seconds//3600}h {uptime.seconds%3600//60}m";stats_html=f'''
