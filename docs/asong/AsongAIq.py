@@ -802,7 +802,7 @@ def main():
 		with col1:
 			if st.button('🔄 Audio Devices',use_container_width=_A):st.session_state.audio_devices=get_audio_devices();st.rerun()
 		st.markdown(_O);st.subheader('🧠 AI Engine Settings')
-		if IS_CLOUD_ENVIRONMENT:st.info('â˜ï¸ Running in cloud environment - using Cloud AI provider');api_provider=_T;st.session_state.api_provider=_T;st.radio(A,[_T],index=0,key=_g,disabled=_A,help='Local AI not available in cloud environment')
+		if IS_CLOUD_ENVIRONMENT:api_provider=_T;st.session_state.api_provider=_T;st.radio(A,[_T],index=0,key=_g,disabled=_A,help='Local AI not available in cloud environment')
 		else:provider_options=[_Q,_T];current_provider=st.session_state.get(_g,_Q);current_index=0 if current_provider==_Q else 1;api_provider=st.radio(A,provider_options,index=current_index,key=_g)
 		if api_provider==_Q:
 			col1,col2=st.columns([2,1])
