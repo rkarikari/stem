@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 15: Student Capstone Projects - RadioSport Handbook</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #2c3e50; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .nav { background: #1e3c72; color: white; padding: 15px 30px; display: flex; justify-content: space-between; }
+        .nav a { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 40px; text-align: center; }
+        .header h1 { font-size: 42px; margin-bottom: 10px; }
+        .chapter-num { font-size: 18px; opacity: 0.9; }
+        .content { padding: 40px; }
+        h2 { color: #1e3c72; font-size: 32px; margin: 40px 0 20px 0; padding-bottom: 10px; border-bottom: 3px solid #667eea; }
+        h3 { color: #2a5298; font-size: 24px; margin: 30px 0 15px 0; }
+        h4 { color: #34495e; font-size: 20px; margin: 20px 0 10px 0; }
+        p { margin-bottom: 15px; text-align: justify; }
+        .info-box, .success-box, .highlight-box, .project-box { padding: 25px; margin: 25px 0; border-radius: 8px; border-left: 5px solid; }
+        .info-box { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left-color: #2196f3; }
+        .success-box { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; }
+        .highlight-box { background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); border-left-color: #9c27b0; }
+        .project-box { background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left-color: #ff9800; }
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; margin: 30px 0; }
+        .project-card { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 4px solid #667eea; transition: transform 0.3s, box-shadow 0.3s; }
+        .project-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .project-icon { font-size: 48px; margin-bottom: 15px; }
+        .project-title { font-size: 22px; font-weight: bold; color: #1e3c72; margin-bottom: 10px; }
+        .project-difficulty { display: inline-block; background: #667eea; color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-bottom: 15px; }
+        .project-description { color: #555; font-size: 14px; line-height: 1.6; margin-bottom: 15px; }
+        .tech-stack { list-style: none; padding: 0; margin: 15px 0; }
+        .tech-stack li { display: inline-block; background: #e3f2fd; color: #1976d2; padding: 4px 10px; border-radius: 10px; font-size: 11px; margin: 3px; font-weight: bold; }
+        .project-requirements { list-style: none; padding: 0; }
+        .project-requirements li { padding: 5px 0; font-size: 13px; color: #666; }
+        .project-requirements li:before { content: "✓ "; color: #4caf50; font-weight: bold; }
+        .demo-link { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; font-weight: bold; margin-top: 10px; transition: all 0.3s; }
+        .demo-link:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        table { width: 100%; border-collapse: collapse; margin: 25px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        ul, ol { margin: 20px 0 20px 40px; }
+        li { margin-bottom: 10px; }
+        .footer { background: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+        .code-example { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; font-family: 'Courier New', monospace; margin: 15px 0; overflow-x: auto; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="radiosport_ch14.html">← Chapter 14</a>
+            <span>Chapter 15 of 15</span>
+            <a href="index.html">Index →</a>
+        </div>
+        
+        <div class="header">
+            <div class="chapter-num">CHAPTER 15</div>
+            <h1>💻 Student Capstone Projects: Building Real-World Tools</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong>RadioSport students don't just learn technology—they build production-grade applications that solve real problems in amateur radio and aerospace. This chapter showcases actual capstone projects students develop, demonstrating mastery of mobile and desktop development, RF engineering, and satellite operations.</strong></p>
+
+            <div class="project-box">
+                <h3>🎯 The Capstone Philosophy</h3>
+                <p>By Month 8-9 of the RadioSport program, students have acquired deep technical knowledge across radio, satellites, drones, AI, and software development. The capstone project is where they synthesize this knowledge into a <strong>functional, deployed application that provides genuine value</strong> to society.</p>
+                <p><strong>Key Requirements:</strong></p>
+                <ul>
+                    <li>Must solve a real problem (not just a demo)</li>
+                    <li>Publicly accessible via download or web URL</li>
+                    <li>Production-ready code quality</li>
+                    <li>User documentation included</li>
+                    <li>Demonstrates multi-domain integration</li>
+                </ul>
+            </div>
+
+            <h2>Exemplar Capstone Projects</h2>
+
+            <div class="info-box">
+                <h4>Three Development Platforms</h4>
+                <ol>
+                    <li><strong>Android Mobile Apps:</strong> Qt/C++ applications for handheld amateur radio operations</li>
+                    <li><strong>Windows Desktop Apps:</strong> Qt/C++ applications for SDR and signal processing</li>
+                    <li><strong>Web Applications:</strong> Python/Streamlit or HTML/JavaScript tools for cloud-based operations</li>
+                </ol>
+                <p style="margin-top: 15px;">Students typically work in teams of 2-4, with each member responsible for specific features while ensuring overall integration. Projects are judged on technical merit, real-world utility, code quality, and innovation.</p>
+            </div>
+
+            <h2>Production Android Applications</h2>
+
+            <div class="project-grid">
+                <div class="project-card">
+                    <div class="project-icon">🛰️</div>
+                    <div class="project-title">SatTrackRadio</div>
+                    <div class="project-difficulty">EXPERT</div>
+                    <div class="project-description">
+                        Advanced satellite tracking application with integrated radio control for Kenwood TH-D74/D75 transceivers. Features real-time satellite position tracking using SGP4/SDP4 propagation, automatic Doppler frequency correction for both uplink and downlink, pass predictions with configurable minimum elevation, and direct CAT control via Bluetooth. The app manages TLE downloads from Celestrak, transponder databases from SatNOGS, and includes GPS time synchronization for atomic-level accuracy in Doppler calculations.
+                    </div>
+                    <ul class="tech-stack">
+                        <li>Qt/C++</li>
+                        <li>Android SDK</li>
+                        <li>SGP4 Library</li>
+                        <li>Bluetooth Serial</li>
+                        <li>GPS Services</li>
+                    </ul>
+                    <ul class="project-requirements">
+                        <li>TLE parsing and SGP4 orbital propagation</li>
+                        <li>Real-time Doppler shift calculations</li>
+                        <li>Bluetooth CAT control (FT-818, TH-D74)</li>
+                        <li>Automatic frequency updates during passes</li>
+                        <li>Pass prediction with 7-day forecast</li>
+                        <li>GPS time/location integration</li>
+                        <li>Transponder database management</li>
+                        <li>Multi-satellite tracking support</li>
+                    </ul>
+                    <a href="https://github.com/rkarikari/SatTrackRadio" target="_blank" class="demo-link">View GitHub Repository →</a>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-icon">💬</div>
+                    <div class="project-title">TH-D74 DV</div>
+                    <div class="project-difficulty">ADVANCED</div>
+                    <div class="project-description">
+                        Comprehensive D-STAR and APRS communication application for Kenwood TH-D74/D75 handheld transceivers. Supports full APRS protocol with 20+ message types including position reports, bulletins, weather data, objects/items, and telemetry. Features include APRS chat messaging via TNC/KISS mode, D-STAR DATA mode reception, GPS integration with accuracy indicators, configurable digipeater paths, real-time map display with OpenStreetMap tiles, contact management, and auto-reply functionality. Includes offline map tile caching for field operations.
+                    </div>
+                    <ul class="tech-stack">
+                        <li>Qt/C++</li>
+                        <li>Android SDK</li>
+                        <li>APRS Protocol</li>
+                        <li>D-STAR</li>
+                        <li>OpenStreetMap</li>
+                    </ul>
+                    <ul class="project-requirements">
+                        <li>Full APRS protocol implementation (20+ types)</li>
+                        <li>D-STAR DATA mode receive capability</li>
+                        <li>TNC/KISS mode for reliable messaging</li>
+                        <li>Configurable digipeater path presets</li>
+                        <li>Real-time map with GPS plotting</li>
+                        <li>Offline map tile caching</li>
+                        <li>Contact management database</li>
+                        <li>Custom APRS message templates</li>
+                        <li>Automatic GPS beacon transmission</li>
+                    </ul>
+                    <a href="https://github.com/rkarikari/TH-D74dv" target="_blank" class="demo-link">View GitHub Repository →</a>
+                </div>
+            </div>
+
+            <h2>Production Desktop Applications</h2>
+
+            <div class="project-grid">
+                <div class="project-card">
+                    <div class="project-icon">📻</div>
+                    <div class="project-title">RadioSport SDR</div>
+                    <div class="project-difficulty">EXPERT</div>
+                    <div class="project-description">
+                        Professional-grade Software Defined Radio application for RTL-SDR USB dongles. Portable Windows application requiring no installation—runs directly from USB drives or any folder. Features comprehensive demodulation support (WFM stereo with RDS, NBFM, AM, USB, LSB), advanced dual-AGC system (hardware SDR AGC + software audio AGC), sophisticated noise reduction with three algorithms (Spectral Subtraction, Spectral Gating, Adaptive Wiener Filtering), spectrum-based squelch system, protocol-adaptive bandpass filtering, and intelligent decimation (1x to 8x) for CPU optimization. Includes session state management, FM presets, and real-time spectrum/audio visualization.
+                    </div>
+                    <ul class="tech-stack">
+                        <li>Qt/C++</li>
+                        <li>RTL-SDR</li>
+                        <li>FFTW3</li>
+                        <li>PortAudio</li>
+                        <li>DSP Algorithms</li>
+                    </ul>
+                    <ul class="project-requirements">
+                        <li>Multi-protocol demodulation (WFM/NBFM/AM/USB/LSB)</li>
+                        <li>RDS decoding for FM radio station info</li>
+                        <li>Coordinated dual-AGC system</li>
+                        <li>Three-mode noise reduction engine</li>
+                        <li>Spectrum-based intelligent squelch</li>
+                        <li>Protocol-adaptive audio filtering</li>
+                        <li>Variable decimation (CPU optimization)</li>
+                        <li>Real-time RF and audio spectrum display</li>
+                        <li>Session state persistence</li>
+                        <li>Portable—no installation required</li>
+                    </ul>
+                    <a href="https://github.com/rkarikari/RSRadio" target="_blank" class="demo-link">View GitHub Repository →</a>
+                </div>
+            </div>
+
+            <h2>Production Web Applications</h2>
+
+            <div class="project-grid">
+                <div class="project-card">
+                    <div class="project-icon">🧠</div>
+                    <div class="project-title">RadioSport AI</div>
+                    <div class="project-difficulty">ADVANCED</div>
+                    <div class="project-description">
+                        Multi-provider AI chat application supporting both local Ollama models and cloud-based OpenRouter API. Features intelligent document processing with support for code files, PDFs, images, and text documents. Includes automatic plot generation and execution for Python visualization code with support for static plots and animated GIFs via matplotlib. Advanced reasoning window displays model thinking process for Qwen3 models. Built-in Teacher Mode transforms the AI into an adaptive educational tutor with diagnostic questioning and personalized learning paths. Supports vision models for image analysis, context-aware file uploads, and comprehensive cache optimization for improved performance.
+                    </div>
+                    <ul class="tech-stack">
+                        <li>Python/Streamlit</li>
+                        <li>Ollama API</li>
+                        <li>OpenRouter API</li>
+                        <li>Matplotlib</li>
+                        <li>PyPDF2</li>
+                    </ul>
+                    <ul class="project-requirements">
+                        <li>Dual AI provider support (local/cloud)</li>
+                        <li>Multi-format document processing (code, PDF, images)</li>
+                        <li>Automatic plot execution with GIF animation support</li>
+                        <li>Real-time reasoning window visualization</li>
+                        <li>Teacher Mode with adaptive learning</li>
+                        <li>Vision model support for image analysis</li>
+                        <li>Intelligent caching system for performance</li>
+                        <li>Session export and chat history management</li>
+                        <li>Load-balanced API key rotation</li>
+                    </ul>
+                    <a href="https://chatxyz.streamlit.app" target="_blank" class="demo-link">Launch Application →</a>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-icon">📡</div>
+                    <div class="project-title">RadioSport X-Repeater</div>
+                    <div class="project-difficulty">EXPERT</div>
+                    <div class="project-description">
+                        Drone-borne cross-band repeater RF coverage analyzer for VHF/UHF amateur radio operations. Features interactive mapping with click-to-place drone positioning and real-time coverage visualization for 2m and 70cm bands. Implements multiple propagation models including ITU-R P.1546, Okumura-Hata, Two-Ray Ground Reflection, and Free Space Path Loss with environment-specific corrections. Comprehensive link budget calculator with noise figure analysis, receiver sensitivity calculations, and fade margin optimization. Includes physics validation to ensure realistic VHF/UHF range ratios, altitude impact analysis, and power efficiency optimization. Supports configuration export to KML for Google Earth integration and generates detailed PDF reports.
+                    </div>
+                    <ul class="tech-stack">
+                        <li>Python/Streamlit</li>
+                        <li>Folium/Leaflet</li>
+                        <li>Plotly</li>
+                        <li>NumPy</li>
+                        <li>Pandas</li>
+                    </ul>
+                    <ul class="project-requirements">
+                        <li>Multi-band RF coverage analysis (2m/70cm)</li>
+                        <li>Standard ITU/IEEE propagation models</li>
+                        <li>Interactive coverage mapping with OpenStreetMap</li>
+                        <li>Comprehensive link budget calculations</li>
+                        <li>Receiver sensitivity from noise figure and bandwidth</li>
+                        <li>Radio horizon and Fresnel zone calculations</li>
+                        <li>Physics validation for VHF/UHF propagation</li>
+                        <li>Power vs range optimization curves</li>
+                        <li>Configuration management and export (KML, CSV, Markdown)</li>
+                        <li>Real-time parameter adjustment with instant updates</li>
+                    </ul>
+                    <a href="https://dronex.streamlit.app" target="_blank" class="demo-link">Launch Application →</a>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-icon">🏫</div>
+                    <div class="project-title">RadioSport Scholium</div>
+                    <div class="project-difficulty">EXPERT</div>
+                    <div class="project-description">
+                        Comprehensive school management system with AI-powered decision support for admissions, promotions, and operational insights. Features complete CRUD operations for students, teachers, courses, grades, attendance, and finances with SQLite persistence. Implements intelligent class stream management with configurable capacity limits and multiple assignment algorithms (performance-based, random, balanced). Advanced GPA calculation engine with Ghanaian grading scale (4.0 system) and automatic promotion workflows. AI assistant powered by Ollama/OpenRouter provides contextual recommendations for academic performance, financial optimization, and infrastructure planning. Multi-currency support, bulk data operations, backup/restore functionality, and comprehensive analytics dashboard with Plotly visualizations. Includes promotional history tracking with detailed reasoning for audit trails.
+                    </div>
+                    <ul class="tech-stack">
+                        <li>Python/Streamlit</li>
+                        <li>SQLite</li>
+                        <li>Ollama/OpenRouter</li>
+                        <li>Plotly/Pandas</li>
+                        <li>Pillow/OpenpyXL</li>
+                    </ul>
+                    <ul class="project-requirements">
+                        <li>Full CRUD for students, teachers, courses, grades, attendance, finance</li>
+                        <li>AI-powered admission evaluation with clear criteria</li>
+                        <li>Automated grade promotion with AI reasoning and history tracking</li>
+                        <li>Intelligent class stream assignment (performance/random/balanced)</li>
+                        <li>Configurable stream capacity management per grade level</li>
+                        <li>GPA calculator with Ghanaian grading scale integration</li>
+                        <li>Multi-currency financial transaction management</li>
+                        <li>Bulk data import/export (CSV, Excel, JSON)</li>
+                        <li>Database backup and restore functionality</li>
+                        <li>Interactive analytics dashboard with 15+ visualizations</li>
+                        <li>AI chat assistant with contextual school data access</li>
+                        <li>Session state management for seamless user experience</li>
+                    </ul>
+                    <a href="https://scholium.streamlit.app" target="_blank" class="demo-link">Launch Application →</a>
+                </div>
+            </div>
+
+            <h3>Other Applications</h3>
+            <div class="project-grid">
+                <div class="project-card">
+                    <div class="project-icon">🔋</div>
+                    <div class="project-title">Cruze Battery Tracker</div>
+                    <div class="project-description">A web-based dashboard for tracking and analyzing the battery system of a Chevy Cruze. It shows current state-of-charge, estimated remaining days, solar input, fuel level, and uses analytics to project battery sustainability under different conditions (e.g., with/without solar). It includes sections for visualizations, activity history, configuration settings, and long-term performance projections tailored to maintain battery health.</div>
+                    <a href="https://rkarikari.github.io/stem/cruze.html" target="_blank" class="demo-link">Launch Application →</a>
+                </div>
+                <div class="project-card">
+                    <div class="project-icon">🛰️</div>
+                    <div class="project-title">Comprehensive Satellite Analysis</div>
+                    <div class="project-description">A web application for satellite tracking and orbital analysis that visualizes satellite orbits, TLE data processing, and orbital mechanics calculations. The tool provides comprehensive satellite analysis capabilities including orbital visualization, pass predictions, and satellite database management for amateur radio satellite operations.</div>
+                    <a href="https://rkarikari.github.io/stem/sat.html" target="_blank" class="demo-link">Launch Application →</a>
+                </div>
+                <div class="project-card">
+                    <div class="project-icon">🌌</div>
+                    <div class="project-title">Orbital Simulator</div>
+                    <div class="project-description">Interactive orbital mechanics simulator with real-time trajectory visualization and mission planning.</div>
+                    <a href="https://orbital.streamlit.app" target="_blank" class="demo-link">Launch Application →</a>
+                </div>
+                <div class="project-card">
+                    <div class="project-icon">🏫</div>
+                    <div class="project-title">SchoolX Management</div>
+                    <div class="project-description">Comprehensive school administration system with student tracking, attendance, and grade management.</div>
+                    <a href="https://schoolx.streamlit.app" target="_blank" class="demo-link">Launch Application →</a>
+                </div>
+                <div class="project-card">
+                    <div class="project-icon">🛡️</div>
+                    <div class="project-title">InsureX Analytics</div>
+                    <div class="project-description">Insurance risk assessment and policy management platform with predictive analytics.</div>
+                    <a href="https://insurex.streamlit.app" target="_blank" class="demo-link">Launch Application →</a>
+                </div>
+                <div class="project-card">
+                    <div class="project-icon">📊</div>
+                    <div class="project-title">GradeX Assessment</div>
+                    <div class="project-description">Advanced grading system with performance analytics, trend visualization, and reporting tools.</div>
+                    <a href="https://gradex.streamlit.app" target="_blank" class="demo-link">Launch Application →</a>
+                </div>
+            </div>
+
+            <h2>Development Process & Timeline</h2>
+
+            <h3>Month-by-Month Capstone Timeline</h3>
+            <table>
+                <tr>
+                    <th style="width: 15%;">Month</th>
+                    <th style="width: 25%;">Phase</th>
+                    <th>Activities</th>
+                </tr>
+                <tr>
+                    <td><strong>Month 6</strong></td>
+                    <td>Ideation & Planning</td>
+                    <td>Identify problem to solve in amateur radio operations, research existing solutions, define project scope, sketch UI/UX wireframes, select tech stack (Qt/C++ for mobile/desktop, Python/Streamlit for web)</td>
+                </tr>
+                <tr>
+                    <td><strong>Month 7</strong></td>
+                    <td>Core Development</td>
+                    <td>Set up project and repository, implement core algorithms (SGP4, DSP, APRS parsing, RF propagation), create basic UI with Qt widgets or Streamlit components, write unit tests</td>
+                </tr>
+                <tr>
+                    <td><strong>Month 8</strong></td>
+                    <td>Feature Completion</td>
+                    <td>Add advanced features (Doppler correction, AGC, noise reduction, AI integration, interactive mapping), integrate hardware APIs (Bluetooth, RTL-SDR, GPS) or cloud APIs (Ollama, OpenRouter), implement user settings persistence, polish UI/UX, comprehensive testing</td>
+                </tr>
+                <tr>
+                    <td><strong>Month 9</strong></td>
+                    <td>Release & Documentation</td>
+                    <td>Package application (APK for Android, portable EXE for Windows, Streamlit Cloud deployment for web), write comprehensive user guide, create tutorial videos, release on GitHub with documentation, gather community feedback</td>
+                </tr>
+            </table>
+
+            <h3>Technical Requirements</h3>
+            <div class="success-box">
+                <h4>All Capstone Projects Must Include:</h4>
+                <ul>
+                    <li><strong>Version Control:</strong> Git repository with meaningful commit history (minimum 50 commits)</li>
+                    <li><strong>Documentation:</strong> README with setup instructions, user guide, technical documentation</li>
+                    <li><strong>Code Quality:</strong> Clean code with comments, consistent style, robust error handling</li>
+                    <li><strong>Testing:</strong> Field testing with actual radio hardware and real-world conditions (or simulated environments for web apps)</li>
+                    <li><strong>Deployment:</strong> Packaged application ready for end-user installation or web access</li>
+                    <li><strong>Hardware Integration:</strong> Proven functionality with specified amateur radio equipment (for hardware-centric projects)</li>
+                    <li><strong>Performance:</strong> Real-time responsiveness, efficient resource usage</li>
+                </ul>
+            </div>
+
+            <h3>Technology Stack Standards</h3>
+            <div class="info-box">
+                <h4>Primary Development Platforms:</h4>
+                <ul>
+                    <li><strong>Qt Framework (C++):</strong> Cross-platform GUI development for Android and Windows</li>
+                    <li><strong>Android SDK:</strong> For mobile application development and hardware access</li>
+                    <li><strong>Windows Desktop:</strong> For SDR and desktop radio control applications</li>
+                    <li><strong>Python/Streamlit:</strong> For web-based interactive applications and data visualization</li>
+                </ul>
+
+                <h4>Specialized Libraries:</h4>
+                <ul>
+                    <li><strong>SGP4/SDP4:</strong> Satellite orbital propagation calculations</li>
+                    <li><strong>RTL-SDR:</strong> Software Defined Radio hardware interface</li>
+                    <li><strong>FFTW3:</strong> Fast Fourier Transform for signal processing</li>
+                    <li><strong>PortAudio:</strong> Cross-platform audio I/O</li>
+                    <li><strong>Bluetooth Serial:</strong> CAT control for amateur radios</li>
+                    <li><strong>Ollama/OpenRouter:</strong> AI model integration for chatbots and assistants</li>
+                    <li><strong>Folium/Plotly:</strong> Interactive mapping and data visualization</li>
+                    <li><strong>NumPy/Pandas:</strong> Scientific computing and data analysis</li>
+                    <li><strong>SQLite:</strong> Embedded database for data persistence</li>
+                    <li><strong>OpenpyXL:</strong> Excel file generation and processing</li>
+                </ul>
+
+                <h4>Distribution Platforms:</h4>
+                <ul>
+                    <li><strong>GitHub Releases:</strong> Primary distribution for APK and Windows executables</li>
+                    <li><strong>Direct Download:</strong> Applications packaged as standalone installers or portable executables</li>
+                    <li><strong>Streamlit Cloud:</strong> Free hosting for web applications with automatic deployment</li>
+                </ul>
+            </div>
+
+            <h2>Case Study: Building SatTrackRadio</h2>
+
+            <div class="highlight-box">
+                <h4>From Concept to Production: A 12-Week Journey</h4>
+                <p><strong>Problem:</strong> Amateur radio satellite operators need real-time Doppler frequency correction and satellite tracking, but existing solutions are either PC-only, require expensive commercial radios with built-in correction, or lack integration with handheld transceivers.</p>
+
+                <p><strong>Solution:</strong> Build an Android application that combines SGP4 orbital propagation, real-time Doppler calculations, and direct Bluetooth CAT control for affordable handheld transceivers (TH-D74/D75, FT-818).</p>
+
+                <h4>Technical Approach:</h4>
+                <ol>
+                    <li><strong>Research Phase (Week 1-2):</strong>
+                        <ul>
+                            <li>Study SGP4 propagation algorithm and orbital mechanics</li>
+                            <li>Reverse-engineer Kenwood TH-D74 CAT protocol (ASCII commands)</li>
+                            <li>Learn Yaesu FT-818 CAT protocol (binary commands, BCD encoding)</li>
+                            <li>Evaluate Android GPS and Bluetooth APIs</li>
+                            <li>Research TLE data sources (Celestrak) and transponder databases (SatNOGS)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Core Development (Week 3-6):</strong>
+                        <ul>
+                            <li>Implement SGP4 propagator with TLE parser</li>
+                            <li>Build Bluetooth serial communication layer</li>
+                            <li>Create CAT command interface for both radio types</li>
+                            <li>Develop real-time satellite position calculator</li>
+                            <li>Implement Doppler shift formulas for uplink/downlink</li>
+                        </ul>
+                    </li>
+                    <li><strong>Advanced Features (Week 7-10):</strong>
+                        <ul>
+                            <li>GPS integration with time synchronization</li>
+                            <li>Pass prediction algorithm with configurable elevation</li>
+                            <li>Automatic frequency updating during satellite passes</li>
+                            <li>TLE auto-download and update system</li>
+                            <li>Transponder database integration</li>
+                            <li>Multi-mode support (RX-only, TX-only, Full Duplex)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Polish & Release (Week 11-12):</strong>
+                        <ul>
+                            <li>Field testing with actual satellite passes</li>
+                            <li>UI refinement and user experience optimization</li>
+                            <li>Comprehensive user guide with screenshots</li>
+                            <li>Package as Android APK</li>
+                            <li>GitHub release with documentation</li>
+                            <li>Community announcement on amateur radio forums</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="code-example">
+// Doppler Frequency Correction Algorithm
+// Calculate Doppler shift based on satellite velocity and observer position
+
+double calculateDopplerShift(double baseFreq, Vector3d satVelocity, 
+                             Vector3d satPosition, Vector3d obsPosition) {
+    // Calculate range vector from observer to satellite
+    Vector3d rangeVec = satPosition - obsPosition;
+    double range = rangeVec.norm();
+    
+    // Calculate range rate (velocity along line of sight)
+    double rangeRate = rangeVec.dot(satVelocity) / range;
+    
+    // Doppler shift formula: Δf = -f₀ × (v/c)
+    // Negative because approaching satellite increases frequency
+    double speedOfLight = 299792.458; // km/s
+    double dopplerShift = -baseFreq * (rangeRate / speedOfLight);
+    
+    return dopplerShift;
+}
+
+// Apply to uplink and downlink frequencies
+double uplinkFreq = 145.950; // MHz
+double downlinkFreq = 435.750; // MHz
+
+// Uplink: Pre-compensate for satellite receiving Doppler-shifted signal
+double correctedUplink = uplinkFreq - calculateDopplerShift(uplinkFreq, 
+                                      satVel, satPos, obsPos);
+
+// Downlink: Compensate for Doppler shift in received signal  
+double correctedDownlink = downlinkFreq + calculateDopplerShift(downlinkFreq,
+                                         satVel, satPos, obsPos);
+
+// Send frequency commands to radio via Bluetooth CAT
+sendCAT_SetFrequency(BAND_A, correctedUplink);
+sendCAT_SetFrequency(BAND_B, correctedDownlink);
+            </div>
+
+            <h2>Judging Criteria</h2>
+
+            <table>
+                <tr>
+                    <th style="width: 25%;">Category</th>
+                    <th style="width: 15%;">Weight</th>
+                    <th>Evaluation Points</th>
+                </tr>
+                <tr>
+                    <td><strong>Technical Merit</strong></td>
+                    <td>30%</td>
+                    <td>Algorithm complexity, code quality, hardware integration, real-time performance</td>
+                </tr>
+                <tr>
+                    <td><strong>Real-World Utility</strong></td>
+                    <td>25%</td>
+                    <td>Solves genuine amateur radio problem, usable by target audience, field-tested</td>
+                </tr>
+                <tr>
+                    <td><strong>Innovation</strong></td>
+                    <td>20%</td>
+                    <td>Novel approach to existing problem, creative feature implementation, unique capabilities</td>
+                </tr>
+                <tr>
+                    <td><strong>User Experience</strong></td>
+                    <td>15%</td>
+                    <td>Intuitive interface, responsive design, comprehensive documentation</td>
+                </tr>
+                <tr>
+                    <td><strong>Presentation</strong></td>
+                    <td>10%</td>
+                    <td>Demo quality, technical explanation clarity, Q&A responses, team coordination</td>
+                </tr>
+            </table>
+
+            <h2>Awards for Capstone Excellence</h2>
+
+            <div class="success-box">
+                <h4>🏆 Apex Awards (Chapter 14 Integration)</h4>
+                <p>Top capstone projects receive Tier 3 Apex Awards:</p>
+                <ul>
+                    <li><strong>Best Overall Project:</strong> $400 prize + HackRF SDR + Feature on RadioSport website</li>
+                    <li><strong>Most Innovative:</strong> $300 prize + Raspberry Pi 5 kit + Conference presentation opportunity</li>
+                    <li><strong>Best Technical Implementation:</strong> $250 prize + LimeSDR + Code review with industry professional</li>
+                    <li><strong>Community Impact:</strong> $200 prize + Published case study + Mentorship opportunity</li>
+                </ul>
+            </div>
+
+            <h2>Post-Program Support</h2>
+
+            <h3>Maintaining & Evolving Student Projects</h3>
+            <div class="info-box">
+                <h4>Long-Term Project Sustainability:</h4>
+                <ul>
+                    <li><strong>Hosting Costs:</strong> GitHub hosting is free—$0/year; Streamlit Cloud free tier for web apps—$0/year</li>
+                    <li><strong>Updates:</strong> Students continue maintaining projects as portfolio pieces</li>
+                    <li><strong>Open Source:</strong> Code released on GitHub for community contributions and improvements</li>
+                    <li><strong>Version Control:</strong> GitHub releases track major versions and updates</li>
+                    <li><strong>Community Feedback:</strong> Issues and pull requests from amateur radio community</li>
+                    <li><strong>Iterative Development:</strong> Future cohorts can fork and enhance previous projects</li>
+                </ul>
+            </div>
+
+            <h3>Career Impact</h3>
+            <div class="highlight-box">
+                <h4>💼 Real-World Value for Students</h4>
+                <p><strong>These projects become portfolio centerpieces:</strong></p>
+                <ul>
+                    <li><strong>College Applications:</strong> Demonstrates initiative, technical skill, and real-world software engineering</li>
+                    <li><strong>Internship Interviews:</strong> Production applications to show interviewers—actual users in amateur radio community</li>
+                    <li><strong>Scholarship Essays:</strong> Concrete evidence of STEM achievement and community service</li>
+                    <li><strong>Job Applications:</strong> Professional-grade code in public repositories with issue tracking and releases</li>
+                    <li><strong>Amateur Radio Community:</strong> Recognition and credibility within worldwide ham radio networks</li>
+                </ul>
+                <p style="margin-top: 15px;"><strong>Success Story:</strong> "During my aerospace engineering interview, I demonstrated SatTrackRadio calculating real-time Doppler corrections for the ISS pass. The interviewer, himself a ham radio operator, was impressed by the SGP4 implementation and CAT protocol integration. The fact that other hams were actually using my app in the field made all the difference." - RadioSport Alumni, 2024</p>
+            </div>
+
+            <h2>Integration with Program Curriculum</h2>
+
+            <table>
+                <tr>
+                    <th>Chapter</th>
+                    <th>Skills Developed</th>
+                    <th>Applied in Capstone</th>
+                </tr>
+                <tr>
+                    <td><strong>Chapter 4 (Radio)</strong></td>
+                    <td>RF theory, CAT protocols, modulation</td>
+                    <td>All projects: Radio control, frequency management</td>
+                </tr>
+                <tr>
+                    <td><strong>Chapter 5 (Satellites)</strong></td>
+                    <td>Orbital mechanics, TLE, SGP4, Doppler</td>
+                    <td>SatTrackRadio: Full satellite tracking system</td>
+                </tr>
+                <tr>
+                    <td><strong>Chapter 6 (Drones)</strong></td>
+                    <td>GPS, navigation, telemetry</td>
+                    <td>TH-D74 DV: GPS integration and APRS; X-Repeater: Drone-borne repeater coverage</td>
+                </tr>
+                <tr>
+                    <td><strong>Chapter 7 (AI)</strong></td>
+                    <td>Algorithm optimization, pattern recognition</td>
+                    <td>RSRadio: Adaptive filtering and AGC; RadioSport AI: Multi-model integration</td>
+                </tr>
+                <tr>
+                    <td><strong>Chapter 8 (Coding)</strong></td>
+                    <td>C++, Python, Qt framework, mobile development</td>
+                    <td>All Projects: Production application development</td>
+                </tr>
+                <tr>
+                    <td><strong>Chapter 9 (DSP)</strong></td>
+                    <td>Signal processing, FFT, filtering</td>
+                    <td>RSRadio: Complete SDR receiver implementation</td>
+                </tr>
+                <tr>
+                    <td><strong>Chapter 10 (Antennas)</strong></td>
+                    <td>RF propagation, link budgets, antenna theory</td>
+                    <td>X-Repeater: Propagation modeling and coverage analysis</td>
+                </tr>
+                <tr>
+                    <td><strong>Chapter 14 (Budget)</strong></td>
+                    <td>Economics, project management, sustainability</td>
+                    <td>All Projects: Open-source distribution model</td>
+                </tr>
+            </table>
+
+            <h2>Getting Started: Capstone Kickoff</h2>
+
+            <div class="project-box">
+                <h4>📋 Month 6 Capstone Kickoff Checklist</h4>
+                <ol>
+                    <li><strong>Form Teams (Week 1):</strong> 2-4 students with complementary skills (coding, RF, hardware)</li>
+                    <li><strong>Problem Identification (Week 2):</strong>
+                        <ul>
+                            <li>What frustrates you in amateur radio operations?</li>
+                            <li>What tasks require expensive commercial equipment?</li>
+                            <li>What calculations are tedious or error-prone?</li>
+                            <li>What tools would make field operations easier?</li>
+                        </ul>
+                    </li>
+                    <li><strong>Research Phase (Week 3):</strong>
+                        <ul>
+                            <li>Survey existing solutions—what are their limitations?</li>
+                            <li>Interview amateur radio operators (what features do they need?)</li>
+                            <li>Define core features for minimum viable product (MVP)</li>
+                            <li>Select development platform (Android vs Windows vs Web)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Planning (Week 4):</strong>
+                        <ul>
+                            <li>Create project proposal document (2-3 pages)</li>
+                            <li>Design UI/UX wireframes with paper prototypes</li>
+                            <li>Break project into tasks with time estimates</li>
+                            <li>Set up GitHub repository with README</li>
+                            <li>Get instructor approval to proceed</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+
+            <h2>Chapter Summary</h2>
+
+            <ul>
+                <li>✅ Capstone projects are production-grade applications solving real amateur radio problems</li>
+                <li>✅ Five exemplar projects: SatTrackRadio, TH-D74 DV, RadioSport SDR, RadioSport AI, and X-Repeater</li>
+                <li>✅ Three platforms: mobile (Android), desktop (Windows), and web (Python/Streamlit)</li>
+                <li>✅ 4-month development timeline from ideation to public release</li>
+                <li>✅ All projects publicly available on GitHub or web with comprehensive documentation</li>
+                <li>✅ Projects integrate hardware (radios, SDR dongles, GPS) with software algorithms</li>
+                <li>✅ Web applications leverage cloud deployment for zero-cost hosting and global access</li>
+                <li>✅ Technical requirements ensure professional code quality and real-world testing</li>
+                <li>✅ Projects become portfolio centerpieces for college and career advancement</li>
+                <li>✅ Top projects receive Apex Awards ($200-400 value plus equipment)</li>
+                <li>✅ Open-source distribution ensures long-term community sustainability</li>
+            </ul>
+
+            <div class="project-box" style="margin-top: 40px;">
+                <h3 style="text-align: center; font-size: 28px; color: #1e3c72;">🚀 From Learner to Builder</h3>
+                <p style="text-align: center; font-size: 18px; margin-top: 20px;">
+                    RadioSport students don't just consume technology—they create tools that serve the global amateur radio community. By building production applications that solve genuine operational challenges, students demonstrate mastery that goes far beyond traditional exams or homework assignments.
+                </p>
+                <p style="text-align: center; font-size: 16px; margin-top: 20px; font-style: italic;">
+                    "The best proof of learning is building something useful that others actually use." - RadioSport Philosophy
+                </p>
+            </div>
+
+            <div class="info-box">
+                <h4>🎓 Complete Handbook: 15 Chapters</h4>
+                <p>You've now completed all 15 chapters of the RadioSport STEM Handbook. You have everything needed to:</p>
+                <ul>
+                    <li>Understand the mission and philosophy (Ch 1)</li>
+                    <li>Structure a comprehensive curriculum (Ch 2)</li>
+                    <li>Build solar and battery systems (Ch 3)</li>
+                    <li>Master radio communications (Ch 4)</li>
+                    <li>Track and contact satellites (Ch 5)</li>
+                    <li>Operate drones safely (Ch 6)</li>
+                    <li>Deploy artificial intelligence (Ch 7)</li>
+                    <li>Code in Python and C++ (Ch 8)</li>
+                    <li>Process signals with DSP (Ch 9)</li>
+                    <li>Design and build antennas (Ch 10)</li>
+                    <li>Execute integrated projects (Ch 11)</li>
+                    <li>Deploy field operations (Ch 12)</li>
+                    <li>Ensure safety and compliance (Ch 13)</li>
+                    <li>Manage budget and awards (Ch 14)</li>
+                    <li>Guide students to build production tools (Ch 15)</li>
+                </ul>
+                <p style="font-weight: bold; color: #1e3c72; text-align: center; margin-top: 20px; font-size: 18px;">
+                    Now go build the future. 73! 📡
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>RadioSport STEM Education Program</strong></p>
+            <p>Chapter 15: Student Capstone Projects - Building Real-World Tools</p>
+            <p>Version 3.0 Corrected • 2026 Complete Edition</p>
+            <p style="margin-top: 20px;">💻 From Learners to Builders 🚀</p>
+        </div>
+    </div>
+</body>
+</html>
