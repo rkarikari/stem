@@ -147,6 +147,32 @@
             transform: translateY(-3px);
             box-shadow: 0 6px 15px rgba(0,0,0,0.3);
         }
+
+        .section-divider {
+            margin: 60px 0 40px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #667eea, transparent);
+        }
+
+        .section-divider h2 {
+            display: inline-block;
+            background: white;
+            padding: 0 30px;
+            position: relative;
+            z-index: 1;
+            color: #1e3c72;
+            font-size: 28px;
+        }
         
         .chapters-grid {
             display: grid;
@@ -169,6 +195,11 @@
             transform: translateY(-5px);
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
+
+        .chapter-card.addendum {
+            border-left-color: #ff6b6b;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%);
+        }
         
         .chapter-number {
             font-size: 48px;
@@ -177,6 +208,10 @@
             opacity: 0.3;
             line-height: 1;
             margin-bottom: 10px;
+        }
+
+        .chapter-card.addendum .chapter-number {
+            color: #ff6b6b;
         }
         
         .chapter-title {
@@ -208,6 +243,11 @@
             font-weight: 600;
             border: 1px solid #667eea;
         }
+
+        .chapter-card.addendum .topic-tag {
+            color: #ff6b6b;
+            border-color: #ff6b6b;
+        }
         
         .view-button {
             display: inline-block;
@@ -225,6 +265,10 @@
         .view-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+        }
+
+        .chapter-card.addendum .view-button {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
         }
         
         .footer {
@@ -264,9 +308,10 @@
                     technologies while developing critical thinking, problem-solving, and teamwork skills.
                 </p>
                 <p>
-                    This handbook contains 14 comprehensive chapters covering everything from basic RF theory 
-                    to advanced satellite operations and autonomous drone systems. Each chapter includes 
-                    detailed technical explanations, practical exercises, code examples, and safety protocols.
+                    This handbook contains 15 comprehensive chapters covering everything from basic RF theory 
+                    to advanced satellite operations and autonomous drone systems, plus a technical addendum 
+                    on antenna system performance analysis. Each chapter includes detailed technical explanations, 
+                    practical exercises, code examples, and safety protocols.
                 </p>
                 
                 <div class="badges">
@@ -545,6 +590,34 @@
                         <span class="topic-tag">Portfolio</span>
                     </div>
                     <a href="radiosport_ch15.html" class="view-button">View Chapter →</a>
+                </div>
+            </div>
+
+            <!-- Technical Addendum Section -->
+            <div class="section-divider">
+                <h2>📚 Technical Addendum</h2>
+            </div>
+
+            <div class="chapters-grid">
+                <!-- Addendum: Antenna Analysis -->
+                <div class="chapter-card addendum" onclick="window.location.href='antenna_analysis_report.html'">
+                    <div class="icon">📡</div>
+                    <div class="chapter-number">A1</div>
+                    <div class="chapter-title">HT Antenna System Performance Analysis</div>
+                    <div class="chapter-description">
+                        Comprehensive RF performance evaluation of handheld transceiver antenna systems based on 
+                        field measurements. Analyzes realized system performance including antenna efficiency, 
+                        impedance matching, chassis coupling effects, and band-dependent radiation patterns. Features 
+                        interactive data visualization, distance modeling with path loss calculations, and engineering 
+                        conclusions for VHF/UHF antenna selection and optimization.
+                    </div>
+                    <div class="chapter-topics">
+                        <span class="topic-tag">Field Measurements</span>
+                        <span class="topic-tag">System Integration</span>
+                        <span class="topic-tag">VHF/UHF Performance</span>
+                        <span class="topic-tag">Interactive Analysis</span>
+                    </div>
+                    <a href="antenna_analysis_report.html" class="view-button">View Analysis →</a>
                 </div>
             </div>
         </div>
