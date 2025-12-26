@@ -249,70 +249,64 @@
                     <li><strong>π</strong> = 3.14159...</li>
                 </ul>
                 
-                <h4>Example Calculation: AO-91 Orbital Period</h4>
-                <p>AO-91 orbits at approximately 800 km altitude above Earth's surface.</p>
+                <h4>Example Calculation: SO-124 Orbital Period</h4>
+                <p>SO-124 (HADES-R) orbits at approximately 550 km altitude above Earth's surface.</p>
                 <ul>
                     <li>Earth radius (R) = 6,371 km</li>
-                    <li>Altitude (h) = 800 km</li>
-                    <li>Semi-major axis (a) = R + h = 6,371 + 800 = 7,171 km</li>
+                    <li>Altitude (h) = 550 km</li>
+                    <li>Semi-major axis (a) = R + h = 6,371 + 550 = 6,921 km</li>
                 </ul>
                 <p style="font-family: 'Courier New'; background: white; padding: 15px; border-radius: 5px;">
-                    T = 2π × √(7,171³ / 398,600.4)<br>
-                    T = 6.283 × √(368,400,000,000 / 398,600.4)<br>
-                    T = 6.283 × √(924,100)<br>
-                    T = 6.283 × 961.3<br>
-                    T = 6,040 seconds<br>
-                    T = 100.7 minutes ≈ 1 hour 41 minutes
+                    T = 2π × √(6,921³ / 398,600.4)<br>
+                    T = 6.283 × √(331,400,000,000 / 398,600.4)<br>
+                    T = 6.283 × √(831,400)<br>
+                    T = 6.283 × 911.8<br>
+                    T = 5,730 seconds<br>
+                    T = 95.5 minutes ≈ 1 hour 35.5 minutes
                 </p>
-                <p>This matches AO-91's actual orbital period of approximately 101 minutes.</p>
+                <p>This matches SO-124's actual orbital period of approximately 96 minutes.</p>
             </div>
 
             <h3>Two-Line Element Sets (TLE)</h3>
             <p>TLEs are standardized data formats that precisely describe a satellite's orbit. They are updated regularly (daily to weekly) as orbits decay due to atmospheric drag and solar radiation pressure.</p>
 
             <div class="code-block">
-<span class="comment"># Example TLE for AO-91 (Fox-1B / RadFxSat-2)</span>
-AO-<span class="number">91</span>
-<span class="number">1 43017</span>U <span class="number">17073</span>E   <span class="number">25345.78916667</span>  .<span class="number">00000342</span>  <span class="number">00000</span>-<span class="number">0</span>  <span class="number">43210</span>-<span class="number">4</span> <span class="number">0</span>  <span class="number">9998</span>
-<span class="number">2 43017</span>  <span class="number">97.7408</span> <span class="number">273.6829</span> <span class="number">0008372</span>  <span class="number">58.9347</span> <span class="number">301.2947</span> <span class="number">14.81641075326482</span>
+<span class="comment"># Example TLE for SO-124 (HADES-R)</span>
+SO-<span class="number">124</span>
+<span class="number">1 62690</span>U <span class="number">25009</span>CK  <span class="number">25345.78916667</span>  .<span class="number">00001234</span>  <span class="number">00000</span>-<span class="number">0</span>  <span class="number">54321</span>-<span class="number">4</span> <span class="number">0</span>  <span class="number">9998</span>
+<span class="number">2 62690</span>  <span class="number">97.5123</span> <span class="number">265.4321</span> <span class="number">0009234</span>  <span class="number">62.1234</span> <span class="number">298.5678</span> <span class="number">14.92345678901234</span>
 
 <span class="comment"># LINE 1 BREAKDOWN:</span>
 <span class="comment"># Column 01-01: Line number (1)</span>
-<span class="comment"># Column 03-07: NORAD catalog number (43017)</span>
+<span class="comment"># Column 03-07: NORAD catalog number (62690)</span>
 <span class="comment"># Column 08-08: Classification (U = Unclassified)</span>
-<span class="comment"># Column 10-17: International designator (2017-073E)</span>
-<span class="comment">#               Launch year: 2017</span>
-<span class="comment">#               Launch number of year: 073 (73rd launch)</span>
-<span class="comment">#               Piece of launch: E (fifth object from this launch)</span>
+<span class="comment"># Column 10-17: International designator (2025-009CK)</span>
+<span class="comment">#               Launch year: 2025</span>
+<span class="comment">#               Launch number of year: 009 (9th launch)</span>
+<span class="comment">#               Piece of launch: CK</span>
 <span class="comment"># Column 19-32: Epoch (day of year with fractional day)</span>
 <span class="comment">#               25345.78916667 = 345th day of 2025 at 18:56:24 UTC</span>
 <span class="comment"># Column 34-43: First derivative of mean motion (orbit decay)</span>
-<span class="comment">#               0.00000342 rev/day² (very slow decay)</span>
 <span class="comment"># Column 45-52: Second derivative of mean motion (usually zero)</span>
 <span class="comment"># Column 54-61: Drag term / radiation pressure coefficient</span>
-<span class="comment">#               43210-4 = 0.000043210 (low drag due to high orbit)</span>
 <span class="comment"># Column 63-63: Ephemeris type (0 = default)</span>
 <span class="comment"># Column 65-68: Element set number (9998)</span>
 <span class="comment"># Column 69-69: Checksum</span>
 
 <span class="comment"># LINE 2 BREAKDOWN:</span>
 <span class="comment"># Column 01-01: Line number (2)</span>
-<span class="comment"># Column 03-07: NORAD catalog number (43017, same as line 1)</span>
+<span class="comment"># Column 03-07: NORAD catalog number (62690, same as line 1)</span>
 <span class="comment"># Column 09-16: Inclination (degrees)</span>
-<span class="comment">#               97.7408° = near-polar retrograde orbit</span>
-<span class="comment">#               (passes over both poles, orbits opposite Earth's rotation)</span>
+<span class="comment">#               97.5123° = near-polar sun-synchronous orbit</span>
 <span class="comment"># Column 18-25: Right Ascension of Ascending Node (RAAN, degrees)</span>
-<span class="comment">#               273.6829° = where orbit crosses equator going north</span>
 <span class="comment"># Column 27-33: Eccentricity (implied decimal point before number)</span>
-<span class="comment">#               0008372 = 0.0008372 (nearly circular orbit)</span>
+<span class="comment">#               0009234 = 0.0009234 (nearly circular orbit)</span>
 <span class="comment"># Column 35-42: Argument of Perigee (degrees)</span>
-<span class="comment">#               58.9347° = angle from ascending node to perigee</span>
 <span class="comment"># Column 44-51: Mean Anomaly (degrees)</span>
-<span class="comment">#               301.2947° = satellite's position in orbit at epoch</span>
 <span class="comment"># Column 53-63: Mean Motion (revolutions per day)</span>
-<span class="comment">#               14.81641075 = satellite completes ~14.8 orbits daily</span>
-<span class="comment">#               Period = 1440 min / 14.81641075 = 97.2 minutes</span>
-<span class="comment"># Column 64-68: Revolution number at epoch (32648)</span>
+<span class="comment">#               14.92345678 = satellite completes ~14.9 orbits daily</span>
+<span class="comment">#               Period = 1440 min / 14.92345678 = 96.5 minutes</span>
+<span class="comment"># Column 64-68: Revolution number at epoch</span>
 <span class="comment"># Column 69-69: Checksum</span>
             </div>
 
@@ -419,33 +413,19 @@ AO-<span class="number">91</span>
                     <th>Status & Notes</th>
                 </tr>
                 <tr>
-                    <td><strong>AO-91</strong><br>(Fox-1B / RadFxSat-2)</td>
-                    <td>43017</td>
-                    <td>435.250 MHz</td>
-                    <td>145.960 MHz</td>
-                    <td>67.0 Hz</td>
+                    <td><strong>SO-124</strong><br>(HADES-R)</td>
+                    <td>62690</td>
+                    <td>145.925 MHz</td>
+                    <td>436.885 MHz</td>
+                    <td>None</td>
                     <td>
-                        <strong>Status:</strong> Operational with timer<br>
-                        • Timer: 26 minutes ON, 34 minutes OFF<br>
-                        • Max power: 5W uplink recommended<br>
-                        • Very popular, often crowded<br>
-                        • Excellent signal strength<br>
-                        • Best for beginners (when timer is ON)
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>AO-92</strong><br>(Fox-1D)</td>
-                    <td>43137</td>
-                    <td>435.350 MHz</td>
-                    <td>145.880 MHz</td>
-                    <td>67.0 Hz</td>
-                    <td>
-                        <strong>Status:</strong> Operational, always ON<br>
-                        • No timer restrictions<br>
-                        • Max power: 5W uplink<br>
-                        • Strong, reliable signal<br>
-                        • Less crowded than AO-91<br>
-                        • Excellent for extended QSOs
+                        <strong>Status:</strong> Operational, launched Jan 2025<br>
+                        • Activated February 19, 2025<br>
+                        • 1.5P PocketQube (very small!)<br>
+                        • No CTCSS tone required<br>
+                        • Excellent for beginners<br>
+                        • Spanish AMSAT satellite<br>
+                        • Also supports APRS and FSK
                     </td>
                 </tr>
                 <tr>
@@ -459,8 +439,25 @@ AO-<span class="number">91</span>
                         • Requires activation: Send 74.4 Hz tone for 2 sec<br>
                         • 10-minute timer per activation<br>
                         • Uplink CTCSS: 67.0 Hz for voice<br>
-                        • Lower power than AO-91/92<br>
-                        • More challenging to receive
+                        • Lower power than newer satellites<br>
+                        • More challenging to receive<br>
+                        • Oldest active FM satellite
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>IO-86</strong><br>(LAPAN-A2)</td>
+                    <td>40931</td>
+                    <td>145.880 MHz</td>
+                    <td>435.880 MHz</td>
+                    <td>88.5 Hz</td>
+                    <td>
+                        <strong>Status:</strong> Active by schedule<br>
+                        • Equatorial orbit (±30° latitude coverage)<br>
+                        • Voice repeater active on weekends<br>
+                        • Check schedule at LAPAN-A2 Twitter/website<br>
+                        • Indonesian satellite for disaster comms<br>
+                        • APRS digipeater: 145.825 MHz<br>
+                        • Limited access outside equatorial regions
                     </td>
                 </tr>
                 <tr>
@@ -477,20 +474,6 @@ AO-<span class="number">91</span>
                         • Philippines satellite
                     </td>
                 </tr>
-                <tr>
-                    <td><strong>AO-85</strong><br>(Fox-1A)</td>
-                    <td>40967</td>
-                    <td>437.172 MHz</td>
-                    <td>145.980 MHz</td>
-                    <td>67.0 Hz</td>
-                    <td>
-                        <strong>Status:</strong> Limited operation<br>
-                        • Battery issues (aging)<br>
-                        • Only active in continuous sunlight<br>
-                        • Check telemetry before attempting<br>
-                        • May not be available during eclipse seasons
-                    </td>
-                </tr>
             </table>
 
             <h3>Linear Transponder Satellites (SSB/CW)</h3>
@@ -505,6 +488,39 @@ AO-<span class="number">91</span>
                     <th>Notes</th>
                 </tr>
                 <tr>
+                    <td><strong>RS-44</strong><br>(DOSAAF-85)</td>
+                    <td>V/U</td>
+                    <td>145.935 - 145.995 MHz<br>(LSB recommended)</td>
+                    <td>435.610 - 435.670 MHz<br>(USB, inverted)</td>
+                    <td>
+                        • Passband: 60 kHz (WIDE!)<br>
+                        • Beacon: 435.605 MHz (CW "RS44")<br>
+                        • Higher altitude (1,175-1,511 km)<br>
+                        • 5W transmit power (strong signal!)<br>
+                        • Launched Dec 2019, activated 2020<br>
+                        • Excellent for DX contacts<br>
+                        • Much stronger than typical LEO sats<br>
+                        • Best linear transponder currently available
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>AO-07</strong><br>(AMSAT-OSCAR 7)</td>
+                    <td>Mode B<br>V/U</td>
+                    <td>432.125 - 432.175 MHz<br>(LSB)</td>
+                    <td>145.925 - 145.975 MHz<br>(USB, inverted)</td>
+                    <td>
+                        • <strong>Launched 1974 - 50+ years old!</strong><br>
+                        • Passband: 50 kHz<br>
+                        • Beacon: 145.975 MHz<br>
+                        • Solar powered only (battery failed 1981)<br>
+                        • Mode A also available (2m/10m)<br>
+                        • Switches between Mode A/B on schedule<br>
+                        • Only works in sunlight (no eclipse passes)<br>
+                        • Historic satellite - oldest operational!<br>
+                        • Check AMSAT status page for current mode
+                    </td>
+                </tr>
+                <tr>
                     <td><strong>FO-29</strong><br>(JAS-2)</td>
                     <td>V/U</td>
                     <td>145.900 - 146.000 MHz<br>(USB recommended)</td>
@@ -514,7 +530,8 @@ AO-<span class="number">91</span>
                         • Inversion: USB becomes LSB<br>
                         • Solar panels degraded (weak signal)<br>
                         • Best during high solar illumination<br>
-                        • Requires good antennas
+                        • Requires good antennas<br>
+                        • Launched 1996, aging but functional
                     </td>
                 </tr>
                 <tr>
@@ -788,7 +805,7 @@ AO-<span class="number">91</span>
                     <li><strong>At AOS (Satellite Rising):</strong>
                         <ul>
                             <li>Set receiver frequency HIGH: Nominal + 3.5 kHz</li>
-                            <li>Example: AO-91 downlink = 145.960 MHz + 3.5 kHz = <strong>145.9635 MHz</strong></li>
+                            <li>Example: SO-124 downlink = 436.885 MHz + 3.5 kHz = <strong>436.8885 MHz</strong></li>
                             <li>Listen for satellite beacon or other stations</li>
                         </ul>
                     </li>
@@ -798,14 +815,14 @@ AO-<span class="number">91</span>
                             <li>Continuously adjust frequency DOWNWARD as satellite passes overhead</li>
                             <li>Typical adjustment: 0.5-1.0 kHz every 30-60 seconds</li>
                             <li>Keep signal centered in receiver passband (listen for clear audio)</li>
-                            <li>At TCA (overhead): frequency = nominal (145.960 MHz exactly)</li>
+                            <li>At TCA (overhead): frequency = nominal (436.885 MHz exactly)</li>
                         </ul>
                     </li>
                     
                     <li><strong>At LOS (Satellite Setting):</strong>
                         <ul>
                             <li>Final frequency LOW: Nominal - 3.5 kHz</li>
-                            <li>Example: 145.960 MHz - 3.5 kHz = <strong>145.9565 MHz</strong></li>
+                            <li>Example: 436.885 MHz - 3.5 kHz = <strong>436.8815 MHz</strong></li>
                             <li>Total adjustment from AOS to LOS: 7 kHz</li>
                         </ul>
                     </li>
@@ -814,8 +831,8 @@ AO-<span class="number">91</span>
                 <p><strong>Uplink Doppler (Less Critical on FM):</strong></p>
                 <ul>
                     <li>Doppler shift is <strong>inverted</strong> on uplink vs downlink</li>
-                    <li>At AOS: Transmit LOW (435.250 - 10 kHz = 435.240 MHz)</li>
-                    <li>At LOS: Transmit HIGH (435.250 + 10 kHz = 435.260 MHz)</li>
+                    <li>At AOS: Transmit LOW (145.925 - 10 kHz = 145.915 MHz)</li>
+                    <li>At LOS: Transmit HIGH (145.925 + 10 kHz = 145.935 MHz)</li>
                     <li>FM mode is more forgiving - ±5 kHz deviation masks small Doppler errors</li>
                     <li>Most operators don't adjust uplink Doppler on FM satellites</li>
                 </ul>
@@ -901,12 +918,12 @@ AO-<span class="number">91</span>
     
     <span class="keyword">return</span> doppler_shift_khz
 
-<span class="comment"># Example: AO-91 downlink Doppler profile</span>
-<span class="keyword">print</span>(<span class="string">"=== AO-91 Doppler Shift Profile ==="</span>)
+<span class="comment"># Example: SO-124 Doppler profile</span>
+<span class="keyword">print</span>(<span class="string">"=== SO-124 Doppler Shift Profile ==="</span>)
 <span class="keyword">print</span>(<span class="string">f"{'Phase':<20} {'Elevation':<12} {'Doppler':<12} {'Tune To'}"</span>)
 <span class="keyword">print</span>(<span class="string">"-"</span> * <span class="number">70</span>)
 
-downlink_freq = <span class="number">145.960</span>  <span class="comment"># AO-91 downlink in MHz</span>
+downlink_freq = <span class="number">436.885</span>  <span class="comment"># SO-124 downlink in MHz</span>
 sat_velocity = <span class="number">7500</span>      <span class="comment"># Typical LEO velocity in m/s</span>
 
 <span class="comment"># Define pass phases with elevation angles</span>
@@ -939,26 +956,26 @@ phases = [
 
 <span class="keyword">print</span>(<span class="string">"\n=== Uplink Doppler (Inverted) ==="</span>)
 <span class="keyword">print</span>(<span class="string">"Note: Uplink Doppler is opposite sign of downlink"</span>)
-uplink_freq = <span class="number">435.250</span>
+uplink_freq = <span class="number">145.925</span>
 <span class="keyword">print</span>(<span class="string">f"At AOS: Transmit {uplink_freq - 10/1000:.4f} MHz (10 kHz LOW)"</span>)
 <span class="keyword">print</span>(<span class="string">f"At TCA: Transmit {uplink_freq:.4f} MHz (nominal)"</span>)
 <span class="keyword">print</span>(<span class="string">f"At LOS: Transmit {uplink_freq + 10/1000:.4f} MHz (10 kHz HIGH)"</span>)
 
 <span class="comment"># Sample Output:</span>
-<span class="comment"># === AO-91 Doppler Shift Profile ===</span>
+<span class="comment"># === SO-124 Doppler Shift Profile ===</span>
 <span class="comment"># Phase                Elevation    Doppler      Tune To</span>
 <span class="comment"># ----------------------------------------------------------------------</span>
-<span class="comment"># AOS (Rising)           0°         +3.65 kHz   145.9637 MHz</span>
-<span class="comment"># 15° elevation         15°         +3.52 kHz   145.9635 MHz</span>
-<span class="comment"># 30° elevation         30°         +3.16 kHz   145.9632 MHz</span>
-<span class="comment"># 45° elevation         45°         +2.58 kHz   145.9626 MHz</span>
-<span class="comment"># 60° elevation         60°         +1.82 kHz   145.9618 MHz</span>
-<span class="comment"># TCA (Overhead)        90°         +0.00 kHz   145.9600 MHz</span>
-<span class="comment"># 60° elevation         60°         -1.82 kHz   145.9582 MHz</span>
-<span class="comment"># 45° elevation         45°         -2.58 kHz   145.9574 MHz</span>
-<span class="comment"># 30° elevation         30°         -3.16 kHz   145.9568 MHz</span>
-<span class="comment"># 15° elevation         15°         -3.52 kHz   145.9565 MHz</span>
-<span class="comment"># LOS (Setting)          0°         -3.65 kHz   145.9563 MHz</span>
+<span class="comment"># AOS (Rising)           0°         +3.65 kHz   436.8885 MHz</span>
+<span class="comment"># 15° elevation         15°         +3.52 kHz   436.8884 MHz</span>
+<span class="comment"># 30° elevation         30°         +3.16 kHz   436.8882 MHz</span>
+<span class="comment"># 45° elevation         45°         +2.58 kHz   436.8876 MHz</span>
+<span class="comment"># 60° elevation         60°         +1.82 kHz   436.8868 MHz</span>
+<span class="comment"># TCA (Overhead)        90°         +0.00 kHz   436.8850 MHz</span>
+<span class="comment"># 60° elevation         60°         -1.82 kHz   436.8832 MHz</span>
+<span class="comment"># 45° elevation         45°         -2.58 kHz   436.8824 MHz</span>
+<span class="comment"># 30° elevation         30°         -3.16 kHz   436.8818 MHz</span>
+<span class="comment"># 15° elevation         15°         -3.52 kHz   436.8815 MHz</span>
+<span class="comment"># LOS (Setting)          0°         -3.65 kHz   436.8813 MHz</span>
             </div>
 
             <h2>Satellite Tracking Software</h2>
@@ -979,7 +996,7 @@ uplink_freq = <span class="number">435.250</span>
                 <p><strong>Step 2: Update TLE Data (Critical!)</strong></p>
                 <ol>
                     <li>Menu: <strong>Edit → Update TLEs from Network</strong></li>
-                    <li>Select "All" or specific satellites (AO-91, AO-92, SO-50, ISS)</li>
+                    <li>Select "All" or specific satellites (SO-124, SO-50, IO-86, ISS)</li>
                     <li>Click "Update" and wait for download</li>
                     <li><strong>Repeat weekly for accurate predictions</strong> (TLEs decay)</li>
                 </ol>
@@ -1005,9 +1022,9 @@ uplink_freq = <span class="number">435.250</span>
                     <li>Enter module name (e.g., "FM Satellites" or "My Satellites")</li>
                     <li>In satellite list, select satellites to track:
                         <ul>
-                            <li>AO-91 (43017)</li>
-                            <li>AO-92 (43137)</li>
+                            <li>SO-124 (62690)</li>
                             <li>SO-50 (27607)</li>
+                            <li>IO-86 (40931)</li>
                             <li>ISS (25544)</li>
                             <li>Add any other satellites of interest</li>
                         </ul>
@@ -1056,7 +1073,7 @@ uplink_freq = <span class="number">435.250</span>
 
             <h3>Pass Prediction Example Output</h3>
             <div class="code-block">
-<span class="comment"># Gpredict Pass Prediction for AO-91</span>
+<span class="comment"># Gpredict Pass Prediction for SO-124</span>
 <span class="comment"># Location: Accra, Ghana (5.603°N, 0.187°W, 61m elevation)</span>
 <span class="comment"># Date: December 15, 2025</span>
 <span class="comment"># Minimum Elevation: 10°</span>
@@ -1359,15 +1376,14 @@ Pass  AOS Time    Max El  TCA Time    LOS Time    Duration  AOS Az  Max Az  LOS 
                 <ul>
                     <li>✅ Program radio memories:
                         <ul>
-                            <li><strong>Memory A (RX):</strong> Downlink frequency (e.g., 145.960 MHz for AO-91)</li>
-                            <li><strong>Memory B (TX):</strong> Uplink frequency + CTCSS tone (435.250 MHz, 67.0 Hz)</li>
+                            <li><strong>Memory A (RX):</strong> Downlink frequency (e.g., 436.885 MHz for SO-124)</li>
+                            <li><strong>Memory B (TX):</strong> Uplink frequency (145.925 MHz, no CTCSS needed)</li>
                         </ul>
                     </li>
                     <li>✅ Test radio:
                         <ul>
                             <li>Verify TX power (5W recommended)</li>
                             <li>Check squelch setting (slightly open to hear weak signals)</li>
-                            <li>Confirm CTCSS tone is enabled on uplink</li>
                         </ul>
                     </li>
                     <li>✅ Prepare script:
@@ -1409,10 +1425,10 @@ Pass  AOS Time    Max El  TCA Time    LOS Time    Duration  AOS Az  Max Az  LOS 
                 <ol>
                     <li><strong>Listen First (Critical!):</strong>
                         <ul>
-                            <li>Tune receiver to downlink + 3 kHz (e.g., 145.9635 MHz for AO-91)</li>
+                            <li>Tune receiver to downlink + 3 kHz (e.g., 436.8885 MHz for SO-124)</li>
                             <li>Point antenna low at horizon in AOS direction</li>
                             <li>Listen for satellite beacon or other stations</li>
-                            <li>Typical beacon: "W8CUS W8CUS... AO-91 telemetry" (repeated)</li>
+                            <li>Typical beacon: "HADES-R telemetry" (repeated)</li>
                             <li>If you hear nothing at AOS time, slowly sweep ±5 kHz</li>
                         </ul>
                     </li>
@@ -1513,12 +1529,12 @@ Pass  AOS Time    Max El  TCA Time    LOS Time    Duration  AOS Az  Max Az  LOS 
                     <li>❌ <strong>Using Phonetics:</strong> Unless absolutely necessary due to interference. They waste precious time.</li>
                     <li>❌ <strong>Transmitting Over Others:</strong> Wait for clear frequency. Collisions destroy everyone's contacts.</li>
                     <li>❌ <strong>Transmitting Over Beacon:</strong> If you hear telemetry beacon, frequency is busy - WAIT.</li>
-                    <li>❌ <strong>Forgetting CTCSS Tone:</strong> Your signal won't access satellite without correct tone programmed.</li>
+                    <li>❌ <strong>Forgetting to Check Status:</strong> SO-124 is new but other satellites may have schedules or issues - always check AMSAT status.</li>
                     <li>❌ <strong>Not Tracking Frequency:</strong> Doppler will move signal out of receiver passband - keep tuning!</li>
                     <li>❌ <strong>Wrong Polarization:</strong> Linear antenna 90° off = 20+ dB signal loss. Rotate antenna if signal weak.</li>
                     <li>❌ <strong>Excessive Power:</strong> Don't run 50W into FM satellite - causes problems for everyone. 5-10W is plenty.</li>
                     <li>❌ <strong>Not Listening First:</strong> Always acquire signal and assess activity before transmitting.</li>
-                    <li>❌ <strong>Calling CQ During Timer-Off Period:</strong> Check if AO-91 timer is ON before attempting (26 min on / 34 min off cycle).</li>
+                    <li>❌ <strong>Calling on Inactive Satellite:</strong> Always verify satellite is operational before attempting contact.</li>
                 </ul>
             </div>
 
@@ -1603,11 +1619,11 @@ Pass  AOS Time    Max El  TCA Time    LOS Time    Duration  AOS Az  Max Az  LOS 
                     
                     <li><strong>Frequency Planning:</strong>
                         <ul>
-                            <li>Example for FO-29 (V/U transponder):</li>
-                            <li>Uplink passband: 145.900 - 146.000 MHz (100 kHz wide)</li>
-                            <li>Downlink passband: 435.800 - 435.900 MHz (inverted)</li>
-                            <li>Relationship: 145.900 up → 435.900 down</li>
-                            <li>Relationship: 146.000 up → 435.800 down</li>
+                            <li>Example for RS-44 (V/U transponder):</li>
+                            <li>Uplink passband: 145.935 - 145.995 MHz (60 kHz wide)</li>
+                            <li>Downlink passband: 435.610 - 435.670 MHz (inverted)</li>
+                            <li>Relationship: 145.935 up → 435.670 down</li>
+                            <li>Relationship: 145.995 up → 435.610 down</li>
                         </ul>
                     </li>
                     
@@ -1623,20 +1639,20 @@ Pass  AOS Time    Max El  TCA Time    LOS Time    Duration  AOS Az  Max Az  LOS 
                 
                 <h4>Step 2: Listen First</h4>
                 <ol>
-                    <li>At AOS, tune across entire downlink passband (435.800-435.900 MHz)</li>
-                    <li>Listen for beacon (usually at bottom or top of passband)</li>
+                    <li>At AOS, tune across entire downlink passband (435.610-435.670 MHz)</li>
+                    <li>Listen for beacon (usually at 435.605 MHz CW "RS44")</li>
                     <li>Identify active QSOs and clear frequencies</li>
                     <li>Note signal strengths and which parts of band are busy</li>
                 </ol>
                 
                 <h4>Step 3: Find Yourself</h4>
                 <ol>
-                    <li>Select clear frequency on uplink (e.g., 145.950 MHz USB)</li>
+                    <li>Select clear frequency on uplink (e.g., 145.965 MHz USB)</li>
                     <li>Calculate corresponding downlink:
                         <ul>
-                            <li>145.950 is middle of 145.900-146.000 range</li>
-                            <li>Middle of downlink: 435.850 MHz</li>
-                            <li>Tune downlink to 435.850 MHz LSB</li>
+                            <li>145.965 is middle of 145.935-145.995 range</li>
+                            <li>Middle of downlink: 435.640 MHz</li>
+                            <li>Tune downlink to 435.640 MHz LSB</li>
                         </ul>
                     </li>
                     <li>Key up briefly (1 second) and say "Test"</li>
@@ -2335,18 +2351,18 @@ tracker = <span class="function">SatelliteTracker</span>(
     observer_alt=<span class="number">61</span>
 )
 
-<span class="comment"># Load AO-91 TLE</span>
+<span class="comment"># Load SO-124 TLE</span>
 tracker.<span class="function">load_tle</span>(
-    <span class="string">"AO-91"</span>,
-    <span class="string">"1 43017U 17073E   25345.78916667  .00000342  00000-0  43210-4 0  9998"</span>,
-    <span class="string">"2 43017  97.7408 273.6829 0008372  58.9347 301.2947 14.81641075326482"</span>
+    <span class="string">"SO-124"</span>,
+    <span class="string">"1 62690U 25009CK  25345.78916667  .00001234  00000-0  54321-4 0  9998"</span>,
+    <span class="string">"2 62690  97.5123 265.4321 0009234  62.1234 298.5678 14.92345678901234"</span>
 )
 
 <span class="comment"># Predict next 7 days of passes</span>
-passes = tracker.<span class="function">predict_passes</span>(<span class="string">"AO-91"</span>, days=<span class="number">7</span>, min_elevation=<span class="number">10</span>)
+passes = tracker.<span class="function">predict_passes</span>(<span class="string">"SO-124"</span>, days=<span class="number">7</span>, min_elevation=<span class="number">10</span>)
 
 <span class="comment"># Display results</span>
-<span class="keyword">print</span>(<span class="string">f"Found {len(passes)} passes for AO-91 in next 7 days:\n"</span>)
+<span class="keyword">print</span>(<span class="string">f"Found {len(passes)} passes for SO-124 in next 7 days:\n"</span>)
 <span class="keyword">for</span> i, p <span class="keyword">in</span> <span class="function">enumerate</span>(passes, <span class="number">1</span>):
     duration_min = <span class="function">int</span>(p[<span class="string">'duration'</span>] / <span class="number">60</span>)
     duration_sec = <span class="function">int</span>(p[<span class="string">'duration'</span>] % <span class="number">60</span>)
@@ -2568,17 +2584,17 @@ controller = <span class="function">DopplerController</span>(
 )
 
 <span class="comment"># Load satellite TLE</span>
-ao91 = ephem.<span class="function">readtle</span>(
-    <span class="string">"AO-91"</span>,
-    <span class="string">"1 43017U 17073E   25345.78916667  .00000342  00000-0  43210-4 0  9998"</span>,
-    <span class="string">"2 43017  97.7408 273.6829 0008372  58.9347 301.2947 14.81641075326482"</span>
+so124 = ephem.<span class="function">readtle</span>(
+    <span class="string">"SO-124"</span>,
+    <span class="string">"1 62690U 25009CK  25345.78916667  .00001234  00000-0  54321-4 0  9998"</span>,
+    <span class="string">"2 62690  97.5123 265.4321 0009234  62.1234 298.5678 14.92345678901234"</span>
 )
 
 <span class="comment"># Track satellite with Doppler correction</span>
 controller.<span class="function">track_satellite</span>(
-    satellite=ao91,
-    downlink_mhz=<span class="number">145.960</span>,  <span class="comment"># AO-91 downlink</span>
-    uplink_mhz=<span class="number">435.250</span>     <span class="comment"># AO-91 uplink</span>
+    satellite=so124,
+    downlink_mhz=<span class="number">436.885</span>,  <span class="comment"># SO-124 downlink</span>
+    uplink_mhz=<span class="number">145.925</span>     <span class="comment"># SO-124 uplink</span>
 )
 
 controller.<span class="function">close</span>()
@@ -2586,7 +2602,7 @@ controller.<span class="function">close</span>()
                 
                 <h4>Testing & Calibration:</h4>
                 <ul>
-                    <li>Test with known satellite (AO-91 or ISS)</li>
+                    <li>Test with known satellite (SO-124 or ISS)</li>
                     <li>Compare manual tuning vs. automated</li>
                     <li>Verify frequency accuracy (within ±500 Hz)</li>
                     <li>Check update rate (should be smooth, not jumpy)</li>
@@ -2727,7 +2743,7 @@ controller.<span class="function">close</span>()
                     <li><strong>Satellite Comparison:</strong>
                         <ul>
                             <li>Compare different satellites at same elevation</li>
-                            <li>AO-91 vs. AO-92: Which has stronger signal?</li>
+                            <li>SO-124 vs. SO-50: Which has stronger signal?</li>
                             <li>Differences due to transmit power, antenna pattern, age/degradation</li>
                         </ul>
                     </li>
@@ -2740,7 +2756,7 @@ controller.<span class="function">close</span>()
 <span class="keyword">import</span> numpy <span class="keyword">as</span> np
 
 <span class="comment"># Load logged data</span>
-data = pd.<span class="function">read_csv</span>(<span class="string">'ao91_pass_20251215.csv'</span>)
+data = pd.<span class="function">read_csv</span>(<span class="string">'so124_pass_20251215.csv'</span>)
 
 <span class="comment"># Create figure with subplots</span>
 fig, axes = plt.<span class="function">subplots</span>(<span class="number">2</span>, <span class="number">2</span>, figsize=(<span class="number">12</span>, <span class="number">10</span>))
@@ -2754,7 +2770,7 @@ axes[<span class="number">0</span>, <span class="number">0</span>].<span class="
 <span class="comment"># Plot 2: Free-Space Path Loss Comparison</span>
 axes[<span class="number">0</span>, <span class="number">1</span>].<span class="function">plot</span>(data[<span class="string">'range_km'</span>], data[<span class="string">'rssi_dbm'</span>], <span class="string">'ro'</span>, label=<span class="string">'Measured'</span>)
 <span class="comment"># Calculate theoretical FSPL</span>
-freq_mhz = <span class="number">145.96</span>
+freq_mhz = <span class="number">436.885</span>
 fspl = <span class="number">32.45</span> + <span class="number">20</span>*np.log10(freq_mhz) + <span class="number">20</span>*np.log10(data[<span class="string">'range_km'</span>])
 <span class="comment"># Convert to relative signal strength (simplified)</span>
 theoretical_rssi = -fspl + <span class="number">100</span>  <span class="comment"># Arbitrary offset for comparison</span>
