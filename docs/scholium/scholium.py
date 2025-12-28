@@ -925,7 +925,7 @@ def main():
 				if _Z in st.session_state:del st.session_state.ai_model
 				B.get_ollama_models();st.rerun()
 	else:
-		st.sidebar.subheader('🌐 OpenRouter Settings');H,I=st.sidebar.columns([3,1])
+		st.sidebar.subheader('🌐 Model');H,I=st.sidebar.columns([3,1])
 		with H:
 			if not st.session_state.get(_Bg,[]):B.get_openrouter_free_models()
 			C=st.session_state.get(_Bg,[])
