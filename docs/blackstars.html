@@ -711,6 +711,23 @@
             const criteria = document.getElementById('autoSelectCriteria').value;
             const slots = document.querySelectorAll('.player-slot');
             
+            // Define preferred players for specific positions
+            const preferredPlayers = {
+                'CB': ['Mohammed Salisu', 'Alexander Djiku'],
+                'LB': ['Derrick Kohn'],
+                'LWB': ['Derrick Kohn'],
+                'RB': ['Caleb Yirenkyi'],
+                'RWB': ['Caleb Yirenkyi']
+            };
+            
+            // Define players to exclude from certain positions
+            const positionExclusions = {
+                'LB': ['Mohammed Salisu', 'Alexander Djiku'],
+                'LWB': ['Mohammed Salisu', 'Alexander Djiku'],
+                'RB': ['Mohammed Salisu', 'Alexander Djiku'],
+                'RWB': ['Mohammed Salisu', 'Alexander Djiku']
+            };
+            
             slots.forEach(slot => {
                 const position = slot.querySelector('.player-name').textContent;
                 if (!['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'DM', 'CM', 'AM', 'LM', 'RM', 'LW', 'RW', 'ST'].includes(position)) {
@@ -719,23 +736,44 @@
                 
                 const availablePlayers = getPlayersForPosition(position);
                 const usedPlayers = Object.values(selectedLineup).map(p => p.fullName);
-                const available = availablePlayers.filter(p => !usedPlayers.includes(p.fullName));
+                let available = availablePlayers.filter(p => !usedPlayers.includes(p.fullName));
+                
+                // Exclude certain players from specific positions
+                if (positionExclusions[position]) {
+                    available = available.filter(p => !positionExclusions[position].includes(p.fullName));
+                }
                 
                 if (available.length === 0) return;
                 
                 let bestPlayer;
-                switch(criteria) {
-                    case 'form':
-                        bestPlayer = available.sort((a, b) => b.form - a.form)[0];
-                        break;
-                    case 'experience':
-                        bestPlayer = available.sort((a, b) => b.caps - a.caps)[0];
-                        break;
-                    case 'versatility':
-                        bestPlayer = available.sort((a, b) => b.versatility - a.versatility)[0];
-                        break;
-                    default:
-                        bestPlayer = available[0];
+                
+                // Check if there's a preferred player for this position
+                if (preferredPlayers[position]) {
+                    const preferredList = preferredPlayers[position];
+                    for (let preferredName of preferredList) {
+                        const preferred = available.find(p => p.fullName === preferredName);
+                        if (preferred) {
+                            bestPlayer = preferred;
+                            break;
+                        }
+                    }
+                }
+                
+                // If no preferred player found or not a preferred position, use criteria
+                if (!bestPlayer) {
+                    switch(criteria) {
+                        case 'form':
+                            bestPlayer = available.sort((a, b) => b.form - a.form)[0];
+                            break;
+                        case 'experience':
+                            bestPlayer = available.sort((a, b) => b.caps - a.caps)[0];
+                            break;
+                        case 'versatility':
+                            bestPlayer = available.sort((a, b) => b.versatility - a.versatility)[0];
+                            break;
+                        default:
+                            bestPlayer = available[0];
+                    }
                 }
                 
                 selectedLineup[slot.id] = bestPlayer;
