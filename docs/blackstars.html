@@ -173,10 +173,10 @@
 
         .player-slot {
             background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
-            border: 3px solid #1a472a;
+            border: 4px solid #1a472a;
             border-radius: 50%;
-            width: 70px;
-            height: 70px;
+            width: 95px;
+            height: 95px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -184,12 +184,12 @@
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
 
         .player-slot:hover {
             transform: scale(1.15);
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.6);
             z-index: 10;
         }
 
@@ -199,28 +199,37 @@
         }
 
         .player-name {
-            font-size: 0.65em;
-            font-weight: bold;
+            font-size: 0.75em;
+            font-weight: 900;
             text-align: center;
-            color: #1a472a;
+            color: #000;
             margin-top: 2px;
+            text-shadow: 0 0 3px rgba(255,255,255,0.8);
+            line-height: 1.1;
+            padding: 0 4px;
+        }
+
+        .player-slot.selected .player-name {
+            color: #fff;
+            text-shadow: 0 0 4px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8);
         }
 
         .player-rating {
             position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #1a472a;
-            color: #d4af37;
-            width: 24px;
-            height: 24px;
+            top: -10px;
+            right: -10px;
+            background: #000;
+            color: #fcd116;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7em;
-            font-weight: bold;
-            border: 2px solid #d4af37;
+            font-size: 0.85em;
+            font-weight: 900;
+            border: 3px solid #fcd116;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
         }
 
         .player-modal {
@@ -332,11 +341,16 @@
         @media (max-width: 768px) {
             h1 { font-size: 1.8em; }
             .player-slot {
-                width: 50px;
-                height: 50px;
+                width: 70px;
+                height: 70px;
             }
             .player-name {
-                font-size: 0.55em;
+                font-size: 0.65em;
+            }
+            .player-rating {
+                width: 26px;
+                height: 26px;
+                font-size: 0.75em;
             }
         }
     </style>
@@ -377,6 +391,17 @@
                     <option value="versatility">Versatility</option>
                 </select>
                 <button onclick="autoSelectPlayers()">Auto-Fill Lineup</button>
+            </div>
+
+            <div class="control-group">
+                <label>Color Theme</label>
+                <select id="colorTheme">
+                    <option value="classic">Classic Gold</option>
+                    <option value="red">Red & White</option>
+                    <option value="green">Green & Gold</option>
+                    <option value="black">Black & Gold</option>
+                    <option value="blue">Blue & White</option>
+                </select>
             </div>
             
             <div class="control-group">
@@ -443,19 +468,21 @@
                 {name: 'Lamptey', fullName: 'Tariq Lamptey', club: 'Brighton', rating: 80, age: 23, caps: 12, form: 8, versatility: 6, positions: ['RB', 'RW']},
                 {name: 'Seidu', fullName: 'Alidu Seidu', club: 'Stade Rennes', rating: 78, age: 24, caps: 20, form: 8, versatility: 7, positions: ['RB', 'CB']},
                 {name: 'Mensah', fullName: 'Gideon Mensah', club: 'Bordeaux', rating: 76, age: 26, caps: 15, form: 7, versatility: 5, positions: ['LB']},
+                {name: 'Kohn', fullName: 'Derrick Kohn', club: 'Galatasaray', rating: 77, age: 25, caps: 8, form: 8, versatility: 6, positions: ['LB', 'LWB']},
                 {name: 'Ambrosius', fullName: 'Stephan Ambrosius', club: 'St. Gallen', rating: 77, age: 25, caps: 8, form: 7, versatility: 6, positions: ['CB']},
                 {name: 'Adjei', fullName: 'Nathaniel Adjei', club: 'FC Lorient', rating: 75, age: 24, caps: 3, form: 7, versatility: 5, positions: ['CB']},
                 {name: 'Simpson', fullName: 'Razak Simpson', club: 'Nations FC', rating: 73, age: 23, caps: 4, form: 8, versatility: 6, positions: ['RB', 'CB']}
             ],
             MID: [
                 {name: 'Partey', fullName: 'Thomas Partey', club: 'Arsenal', rating: 85, age: 31, caps: 54, form: 8, versatility: 7, positions: ['DM', 'CM']},
-                {name: 'Kudus', fullName: 'Mohammed Kudus', club: 'West Ham', rating: 83, age: 24, caps: 28, form: 9, versatility: 9, positions: ['AM', 'RW', 'ST']},
+                {name: 'Kudus', fullName: 'Mohammed Kudus', club: 'West Ham', rating: 83, age: 24, caps: 28, form: 9, versatility: 9, positions: ['AM', 'RW', 'ST', 'CM']},
                 {name: 'Ashimeru', fullName: 'Majeed Ashimeru', club: 'Anderlecht', rating: 77, age: 27, caps: 22, form: 7, versatility: 6, positions: ['CM', 'DM']},
                 {name: 'E. Addo', fullName: 'Edmund Addo', club: 'Sheriff', rating: 76, age: 24, caps: 11, form: 7, versatility: 5, positions: ['DM']},
                 {name: 'Samed', fullName: 'Salis Abdul Samed', club: 'Sunderland', rating: 78, age: 24, caps: 15, form: 8, versatility: 6, positions: ['DM', 'CM']},
                 {name: 'Sulemana I.', fullName: 'Ibrahim Sulemana', club: 'Atalanta', rating: 76, age: 21, caps: 6, form: 7, versatility: 6, positions: ['CM']},
+                {name: 'Sibo', fullName: 'Kwasi Sibo', club: 'Hearts of Oak', rating: 74, age: 22, caps: 5, form: 8, versatility: 6, positions: ['CM', 'DM']},
                 {name: 'Diomande', fullName: 'Mohamed Diomande', club: 'Rangers', rating: 74, age: 22, caps: 3, form: 8, versatility: 7, positions: ['CM', 'DM']},
-                {name: 'Yirenkyi', fullName: 'Caleb Yirenkyi', club: 'Nordsjaelland', rating: 72, age: 19, caps: 2, form: 8, versatility: 7, positions: ['CM', 'AM']},
+                {name: 'Yirenkyi', fullName: 'Caleb Yirenkyi', club: 'Nordsjaelland', rating: 72, age: 19, caps: 2, form: 8, versatility: 8, positions: ['CM', 'AM', 'RB', 'RW']},
                 {name: 'Mamudu', fullName: 'Kamaradini Mamudu', club: 'Medeama SC', rating: 71, age: 22, caps: 3, form: 7, versatility: 6, positions: ['CM']}
             ],
             ATT: [
@@ -643,7 +670,7 @@
                     'CB': ['CB'], 'LB': ['LB'], 'RB': ['RB'],
                     'LWB': ['LB', 'LWB'], 'RWB': ['RB', 'RWB'],
                     'DM': ['DM'], 'CM': ['CM', 'DM'], 'AM': ['AM', 'CM'],
-                    'LM': ['LW', 'LM'], 'RM': ['RW', 'RM'],
+                    'LM': ['LW', 'LM', 'CM'], 'RM': ['RW', 'RM', 'CM'],
                     'LW': ['LW', 'RW'], 'RW': ['RW', 'LW'], 'ST': ['ST']
                 };
                 
@@ -815,6 +842,81 @@
         document.getElementById('formationSelect').addEventListener('change', (e) => {
             renderFormation(e.target.value);
         });
+
+        document.getElementById('colorTheme').addEventListener('change', (e) => {
+            applyColorTheme(e.target.value);
+        });
+
+        function applyColorTheme(theme) {
+            const themes = {
+                classic: {
+                    unselected: 'linear-gradient(135deg, #d4af37 0%, #f4d03f 100%)',
+                    selected: 'linear-gradient(135deg, #ce1126 0%, #ff4444 100%)',
+                    unselectedText: '#000',
+                    selectedText: '#fff',
+                    border: '#1a472a',
+                    selectedBorder: '#fff'
+                },
+                red: {
+                    unselected: 'linear-gradient(135deg, #fff 0%, #f0f0f0 100%)',
+                    selected: 'linear-gradient(135deg, #ce1126 0%, #8b0000 100%)',
+                    unselectedText: '#000',
+                    selectedText: '#fff',
+                    border: '#ce1126',
+                    selectedBorder: '#fff'
+                },
+                green: {
+                    unselected: 'linear-gradient(135deg, #d4af37 0%, #b8941e 100%)',
+                    selected: 'linear-gradient(135deg, #006b3f 0%, #004d2d 100%)',
+                    unselectedText: '#000',
+                    selectedText: '#fcd116',
+                    border: '#006b3f',
+                    selectedBorder: '#fcd116'
+                },
+                black: {
+                    unselected: 'linear-gradient(135deg, #d4af37 0%, #f4d03f 100%)',
+                    selected: 'linear-gradient(135deg, #1a1a1a 0%, #000 100%)',
+                    unselectedText: '#000',
+                    selectedText: '#d4af37',
+                    border: '#000',
+                    selectedBorder: '#d4af37'
+                },
+                blue: {
+                    unselected: 'linear-gradient(135deg, #fff 0%, #e8e8e8 100%)',
+                    selected: 'linear-gradient(135deg, #0066cc 0%, #003d7a 100%)',
+                    unselectedText: '#000',
+                    selectedText: '#fff',
+                    border: '#0066cc',
+                    selectedBorder: '#fff'
+                }
+            };
+
+            const selectedTheme = themes[theme];
+            const style = document.createElement('style');
+            style.id = 'dynamic-theme';
+            
+            const existingStyle = document.getElementById('dynamic-theme');
+            if (existingStyle) existingStyle.remove();
+            
+            style.textContent = `
+                .player-slot {
+                    background: ${selectedTheme.unselected} !important;
+                    border-color: ${selectedTheme.border} !important;
+                }
+                .player-slot .player-name {
+                    color: ${selectedTheme.unselectedText} !important;
+                }
+                .player-slot.selected {
+                    background: ${selectedTheme.selected} !important;
+                    border-color: ${selectedTheme.selectedBorder} !important;
+                }
+                .player-slot.selected .player-name {
+                    color: ${selectedTheme.selectedText} !important;
+                }
+            `;
+            
+            document.head.appendChild(style);
+        }
 
         renderFormation('4-3-3');
     </script>
