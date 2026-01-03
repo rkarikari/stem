@@ -463,8 +463,7 @@
             ],
             DEF: [
                 {name: 'Salisu', fullName: 'Mohammed Salisu', club: 'Monaco', rating: 82, age: 25, caps: 18, form: 9, versatility: 7, positions: ['CB', 'LB']},
-                {name: 'Djiku', fullName: 'Alexander Djiku', club: 'Fenerbahce', rating: 81, age: 29, caps: 35, form: 8, versatility: 6, positions: ['CB']},
-                {name: 'Amartey', fullName: 'Daniel Amartey', club: 'Besiktas', rating: 79, age: 29, caps: 56, form: 7, versatility: 8, positions: ['CB', 'RB', 'DM']},
+                {name: 'Djiku', fullName: 'Alexander Djiku', club: 'Fenerbahce', rating: 81, age: 29, caps: 35, form: 8, versatility: 7, positions: ['CB', 'RB']},
                 {name: 'Lamptey', fullName: 'Tariq Lamptey', club: 'Brighton', rating: 80, age: 23, caps: 12, form: 8, versatility: 6, positions: ['RB', 'RW']},
                 {name: 'Seidu', fullName: 'Alidu Seidu', club: 'Stade Rennes', rating: 78, age: 24, caps: 20, form: 8, versatility: 7, positions: ['RB', 'CB']},
                 {name: 'Mensah', fullName: 'Gideon Mensah', club: 'Bordeaux', rating: 76, age: 26, caps: 15, form: 7, versatility: 5, positions: ['LB']},
@@ -482,8 +481,10 @@
                 {name: 'Sulemana I.', fullName: 'Ibrahim Sulemana', club: 'Atalanta', rating: 76, age: 21, caps: 6, form: 7, versatility: 6, positions: ['CM']},
                 {name: 'Sibo', fullName: 'Kwasi Sibo', club: 'Hearts of Oak', rating: 74, age: 22, caps: 5, form: 8, versatility: 6, positions: ['CM', 'DM']},
                 {name: 'Diomande', fullName: 'Mohamed Diomande', club: 'Rangers', rating: 74, age: 22, caps: 3, form: 8, versatility: 7, positions: ['CM', 'DM']},
-                {name: 'Yirenkyi', fullName: 'Caleb Yirenkyi', club: 'Nordsjaelland', rating: 72, age: 19, caps: 2, form: 8, versatility: 8, positions: ['CM', 'AM', 'RB', 'RW']},
                 {name: 'Mamudu', fullName: 'Kamaradini Mamudu', club: 'Medeama SC', rating: 71, age: 22, caps: 3, form: 7, versatility: 6, positions: ['CM']}
+            ],
+            VERSATILE: [
+                {name: 'Yirenkyi', fullName: 'Caleb Yirenkyi', club: 'Nordsjaelland', rating: 72, age: 19, caps: 2, form: 8, versatility: 8, positions: ['CM', 'AM', 'RB', 'RW']}
             ],
             ATT: [
                 {name: 'J. Ayew', fullName: 'Jordan Ayew', club: 'Leicester', rating: 80, age: 33, caps: 114, form: 8, versatility: 8, positions: ['ST', 'RW', 'LW']},
@@ -640,16 +641,16 @@
                 'GK': ['GK'],
                 'CB': ['DEF'],
                 'LB': ['DEF'],
-                'RB': ['DEF'],
+                'RB': ['DEF', 'VERSATILE'],
                 'LWB': ['DEF'],
                 'RWB': ['DEF'],
                 'DM': ['MID'],
-                'CM': ['MID'],
-                'AM': ['MID'],
+                'CM': ['MID', 'VERSATILE'],
+                'AM': ['MID', 'VERSATILE'],
                 'LM': ['MID'],
-                'RM': ['MID'],
+                'RM': ['MID', 'VERSATILE'],
                 'LW': ['ATT'],
-                'RW': ['ATT'],
+                'RW': ['ATT', 'VERSATILE'],
                 'ST': ['ATT']
             };
             
