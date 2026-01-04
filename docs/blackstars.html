@@ -3,370 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ghana Black Stars Lineup Builder</title>
+    <title>Ghana Black Stars Lineup Builder 2026</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%);
-            color: #fff;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .flag-colors {
-            display: flex;
-            justify-content: center;
-            gap: 5px;
-            margin-top: 10px;
-        }
-
-        .flag-colors div {
-            width: 60px;
-            height: 8px;
-        }
-
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .control-group {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            font-size: 0.9em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        select, button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        select {
-            background: rgba(255, 255, 255, 0.9);
-            color: #333;
-        }
-
-        button {
-            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
-            color: #1a472a;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
-        }
-
-        .pitch-container {
-            background: linear-gradient(to bottom, #2d5a3d 0%, #1a3d2a 100%);
-            border-radius: 15px;
-            padding: 30px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            margin-bottom: 30px;
-        }
-
-        .pitch {
-            position: relative;
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto;
-            aspect-ratio: 0.7;
-            background: 
-                repeating-linear-gradient(
-                    90deg,
-                    transparent,
-                    transparent 49.5%,
-                    rgba(255,255,255,0.1) 49.5%,
-                    rgba(255,255,255,0.1) 50.5%,
-                    transparent 50.5%
-                ),
-                repeating-linear-gradient(
-                    0deg,
-                    transparent,
-                    transparent 19.5%,
-                    rgba(255,255,255,0.1) 19.5%,
-                    rgba(255,255,255,0.1) 20.5%,
-                    transparent 20.5%
-                );
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 10px;
-        }
-
-        .pitch::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: rgba(255,255,255,0.3);
-        }
-
-        .pitch::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-        }
-
-        .formation-line {
-            position: absolute;
-            width: 100%;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 0 10px;
-        }
-
-        .player-slot {
-            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
-            border: 4px solid #1a472a;
-            border-radius: 50%;
-            width: 95px;
-            height: 95px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
-
-        .player-slot:hover {
-            transform: scale(1.15);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.6);
-            z-index: 10;
-        }
-
-        .player-slot.selected {
-            background: linear-gradient(135deg, #ce1126 0%, #ff4444 100%);
-            border-color: #fff;
-        }
-
-        .player-name {
-            font-size: 0.75em;
-            font-weight: 900;
-            text-align: center;
-            color: #000;
-            margin-top: 2px;
-            text-shadow: 0 0 3px rgba(255,255,255,0.8);
-            line-height: 1.1;
-            padding: 0 4px;
-        }
-
-        .player-slot.selected .player-name {
-            color: #fff;
-            text-shadow: 0 0 4px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8);
-        }
-
-        .player-rating {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: #000;
-            color: #fcd116;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85em;
-            font-weight: 900;
-            border: 3px solid #fcd116;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
-        }
-
-        .player-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%);
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-        }
-
-        .modal-content h2 {
-            color: #d4af37;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .player-list {
-            display: grid;
-            gap: 10px;
-        }
-
-        .player-item {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .player-item:hover {
-            background: rgba(212, 175, 55, 0.2);
-            transform: translateX(5px);
-        }
-
-        .player-info {
-            flex: 1;
-        }
-
-        .player-info strong {
-            color: #d4af37;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .player-info small {
-            color: #aaa;
-            font-size: 0.85em;
-        }
-
-        .stats-panel {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 30px;
-            backdrop-filter: blur(10px);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .stat-item {
-            text-align: center;
-            padding: 15px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-        }
-
-        .stat-value {
-            font-size: 2em;
-            color: #d4af37;
-            font-weight: bold;
-        }
-
-        .stat-label {
-            font-size: 0.85em;
-            margin-top: 5px;
-            opacity: 0.8;
-        }
-
-        .close-modal {
-            background: #ce1126;
-            color: white;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 768px) {
-            h1 { font-size: 1.8em; }
-            .player-slot {
-                width: 70px;
-                height: 70px;
-            }
-            .player-name {
-                font-size: 0.65em;
-            }
-            .player-rating {
-                width: 26px;
-                height: 26px;
-                font-size: 0.75em;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%); color: #fff; min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 30px; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 15px; backdrop-filter: blur(10px); }
+        h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .flag-colors { display: flex; justify-content: center; gap: 5px; margin-top: 10px; }
+        .flag-colors div { width: 60px; height: 8px; }
+        .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .control-group { background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 10px; backdrop-filter: blur(10px); }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; }
+        select, button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1em; cursor: pointer; transition: all 0.3s ease; }
+        select { background: rgba(255, 255, 255, 0.9); color: #333; }
+        button { background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%); color: #1a472a; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); }
+        .pitch-container { background: linear-gradient(to bottom, #2d5a3d 0%, #1a3d2a 100%); border-radius: 15px; padding: 30px; position: relative; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin-bottom: 30px; }
+        .pitch { position: relative; width: 100%; max-width: 900px; margin: 0 auto; aspect-ratio: 0.7; background: repeating-linear-gradient(90deg, transparent, transparent 49.5%, rgba(255,255,255,0.1) 49.5%, rgba(255,255,255,0.1) 50.5%, transparent 50.5%), repeating-linear-gradient(0deg, transparent, transparent 19.5%, rgba(255,255,255,0.1) 19.5%, rgba(255,255,255,0.1) 20.5%, transparent 20.5%); border: 3px solid rgba(255,255,255,0.3); border-radius: 10px; }
+        .pitch::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.3); }
+        .pitch::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; }
+        .formation-line { position: absolute; width: 100%; display: flex; justify-content: space-around; align-items: center; padding: 0 10px; }
+        .player-slot { background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%); border: 4px solid #1a472a; border-radius: 50%; width: 95px; height: 95px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .player-slot:hover { transform: scale(1.15); box-shadow: 0 8px 25px rgba(212, 175, 55, 0.6); z-index: 10; }
+        .player-slot.selected { background: linear-gradient(135deg, #ce1126 0%, #ff4444 100%); border-color: #fff; }
+        .player-name { font-size: 0.75em; font-weight: 900; text-align: center; color: #000; margin-top: 2px; text-shadow: 0 0 3px rgba(255,255,255,0.8); line-height: 1.1; padding: 0 4px; }
+        .player-slot.selected .player-name { color: #fff; text-shadow: 0 0 4px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8); }
+        .player-rating { position: absolute; top: -10px; right: -10px; background: #000; color: #fcd116; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85em; font-weight: 900; border: 3px solid #fcd116; box-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+        .player-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%); padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .modal-content h2 { color: #d4af37; margin-bottom: 20px; text-align: center; }
+        .player-list { display: grid; gap: 10px; }
+        .player-item { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; display: flex; justify-content: space-between; align-items: center; }
+        .player-item:hover { background: rgba(212, 175, 55, 0.2); transform: translateX(5px); }
+        .player-info { flex: 1; }
+        .player-info strong { color: #d4af37; display: block; margin-bottom: 5px; }
+        .player-info small { color: #aaa; font-size: 0.85em; }
+        .stats-panel { background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 10px; margin-top: 30px; backdrop-filter: blur(10px); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+        .stat-item { text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; }
+        .stat-value { font-size: 2em; color: #d4af37; font-weight: bold; }
+        .stat-label { font-size: 0.85em; margin-top: 5px; opacity: 0.8; }
+        .close-modal { background: #ce1126; color: white; margin-top: 20px; }
+        @media (max-width: 768px) { h1 { font-size: 1.8em; } .player-slot { width: 70px; height: 70px; } .player-name { font-size: 0.65em; } .player-rating { width: 26px; height: 26px; font-size: 0.75em; } }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🇬🇭 GHANA BLACK STARS</h1>
-            <p>Tactical Lineup Builder</p>
+            <h1>🇬🇭 GHANA BLACK STARS 2026</h1>
+            <p>Tactical Lineup Builder - World Cup Bound</p>
             <div class="flag-colors">
                 <div style="background: #ce1126;"></div>
                 <div style="background: #fcd116;"></div>
                 <div style="background: #006b3f;"></div>
             </div>
         </header>
-
         <div class="controls">
             <div class="control-group">
                 <label>Formation</label>
@@ -381,16 +73,14 @@
                     <option value="4-4-2-diamond">4-4-2 Diamond</option>
                 </select>
             </div>
-            
             <div class="control-group">
                 <label>Squad Selection Mode</label>
                 <select id="squadMode">
-                    <option value="full">Full Player Pool (62 players)</option>
-                    <option value="worldcup">World Cup Squad (0/25 selected)</option>
+                    <option value="full">Full Player Pool (64 players)</option>
+                    <option value="worldcup">World Cup Squad (0/26 selected)</option>
                 </select>
                 <button onclick="openWorldCupBuilder()">⚽ Build World Cup Squad</button>
             </div>
-
             <div class="control-group">
                 <label>Auto-Select by</label>
                 <select id="autoSelectCriteria">
@@ -401,7 +91,6 @@
                 </select>
                 <button onclick="autoSelectPlayers()">Auto-Fill Lineup</button>
             </div>
-
             <div class="control-group">
                 <label>Color Theme</label>
                 <select id="colorTheme">
@@ -412,57 +101,34 @@
                     <option value="blue">Blue & White</option>
                 </select>
             </div>
-            
             <div class="control-group">
                 <label>Export Options</label>
                 <button onclick="exportAsImage()">📸 Export as JPG</button>
                 <button onclick="exportAsPDF()">📄 Export as PDF</button>
             </div>
         </div>
-
-        <div class="pitch-container">
-            <div class="pitch" id="pitch"></div>
-        </div>
-
+        <div class="pitch-container"><div class="pitch" id="pitch"></div></div>
         <div class="stats-panel">
             <h2 style="color: #d4af37; margin-bottom: 15px;">Team Statistics</h2>
             <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value" id="avgRating">0</div>
-                    <div class="stat-label">Average Rating</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="avgAge">0</div>
-                    <div class="stat-label">Average Age</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="totalCaps">0</div>
-                    <div class="stat-label">Total Caps</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="attackScore">0</div>
-                    <div class="stat-label">Attack Power</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="defenseScore">0</div>
-                    <div class="stat-label">Defense Power</div>
-                </div>
+                <div class="stat-item"><div class="stat-value" id="avgRating">0</div><div class="stat-label">Average Rating</div></div>
+                <div class="stat-item"><div class="stat-value" id="avgAge">0</div><div class="stat-label">Average Age</div></div>
+                <div class="stat-item"><div class="stat-value" id="totalCaps">0</div><div class="stat-label">Total Caps</div></div>
+                <div class="stat-item"><div class="stat-value" id="attackScore">0</div><div class="stat-label">Attack Power</div></div>
+                <div class="stat-item"><div class="stat-value" id="defenseScore">0</div><div class="stat-label">Defense Power</div></div>
             </div>
         </div>
-
         <div class="stats-panel" style="margin-top: 20px;">
             <h2 style="color: #d4af37; margin-bottom: 15px;">🏆 2026 World Cup Final Squad</h2>
-            <p style="opacity: 0.9; margin-bottom: 15px; font-size: 0.9em;">The 25-man squad selected for FIFA World Cup 2026</p>
+            <p style="opacity: 0.9; margin-bottom: 15px; font-size: 0.9em;">The 26-man squad for FIFA World Cup 2026</p>
             <div id="worldCupSquad" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;"></div>
         </div>
-
         <div class="stats-panel" style="margin-top: 20px;">
             <h2 style="color: #d4af37; margin-bottom: 15px;">⚡ Formation Power Rankings</h2>
-            <p style="opacity: 0.9; margin-bottom: 15px; font-size: 0.9em;">Based on Ghana's player pool strength and tactical suitability</p>
+            <p style="opacity: 0.9; margin-bottom: 15px; font-size: 0.9em;">Based on Ghana's player pool strength</p>
             <div id="formationRankings" style="display: grid; gap: 10px;"></div>
         </div>
     </div>
-
     <div class="player-modal" id="playerModal">
         <div class="modal-content">
             <h2>Select Player</h2>
@@ -470,947 +136,49 @@
             <button class="close-modal" onclick="closeModal()">Close</button>
         </div>
     </div>
-
     <div class="player-modal" id="worldCupModal">
         <div class="modal-content" style="max-width: 800px;">
-            <h2>🏆 Build Your 2026 World Cup Squad (25 Players)</h2>
-            <p style="text-align: center; margin-bottom: 20px; opacity: 0.9;">
-                Select exactly 25 players for the World Cup. Recommended: 3 GK, 7-8 DEF, 6-7 MID, 7-8 ATT
-            </p>
+            <h2>🏆 Build Your 2026 World Cup Squad (26 Players)</h2>
+            <p style="text-align: center; margin-bottom: 20px; opacity: 0.9;">Select exactly 26 players. Recommended: 3 GK, 8-9 DEF, 7-8 MID, 7-8 ATT</p>
             <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
-                <div style="font-size: 1.5em; color: #fcd116; font-weight: bold;" id="wcSquadCount">0 / 25 Selected</div>
+                <div style="font-size: 1.5em; color: #fcd116; font-weight: bold;" id="wcSquadCount">0 / 26 Selected</div>
             </div>
             <div id="wcPlayerList" style="max-height: 50vh; overflow-y: auto;"></div>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="saveWorldCupSquad()" style="flex: 1; background: linear-gradient(135deg, #006b3f 0%, #004d2d 100%);">
-                    ✓ Save & Use Squad
-                </button>
-                <button onclick="autoSelectWorldCup()" style="flex: 1;">
-                    ⚡ Auto-Select Best 25
-                </button>
-                <button class="close-modal" onclick="closeWorldCupModal()" style="flex: 1;">
-                    Cancel
-                </button>
+                <button onclick="saveWorldCupSquad()" style="flex: 1; background: linear-gradient(135deg, #006b3f 0%, #004d2d 100%);">✓ Save & Use Squad</button>
+                <button onclick="autoSelectWorldCup()" style="flex: 1;">⚡ Auto-Select Best 26</button>
+                <button class="close-modal" onclick="closeWorldCupModal()" style="flex: 1;">Cancel</button>
             </div>
         </div>
     </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
     <script>
-        const players = {
-            GK: [
-                {name: 'Ati-Zigi', fullName: 'Lawrence Ati-Zigi', club: 'St. Gallen', rating: 78, age: 27, caps: 16, form: 8, versatility: 1},
-                {name: 'Nurudeen', fullName: 'Abdul Manaf Nurudeen', club: 'KAS Eupen', rating: 75, age: 25, caps: 5, form: 7, versatility: 1},
-                {name: 'Asare', fullName: 'Benjamin Asare', club: 'Hearts of Oak', rating: 72, age: 24, caps: 2, form: 8, versatility: 1},
-                {name: 'Anang', fullName: 'Joseph Anang', club: "St Patrick's", rating: 73, age: 23, caps: 1, form: 7, versatility: 1},
-                {name: 'Wollacott', fullName: 'Joseph Wollacott', club: 'Charlton Athletic', rating: 74, age: 28, caps: 8, form: 7, versatility: 1}
-            ],
-            DEF: [
-                {name: 'Salisu', fullName: 'Mohammed Salisu', club: 'Monaco', rating: 82, age: 25, caps: 18, form: 9, versatility: 7, positions: ['CB', 'LB']},
-                {name: 'Djiku', fullName: 'Alexander Djiku', club: 'Fenerbahce', rating: 81, age: 29, caps: 35, form: 8, versatility: 7, positions: ['CB', 'RB']},
-                {name: 'Lamptey', fullName: 'Tariq Lamptey', club: 'Brighton', rating: 80, age: 23, caps: 12, form: 8, versatility: 6, positions: ['RB', 'RW']},
-                {name: 'Seidu', fullName: 'Alidu Seidu', club: 'Stade Rennes', rating: 78, age: 24, caps: 20, form: 8, versatility: 7, positions: ['RB', 'CB']},
-                {name: 'Mensah', fullName: 'Gideon Mensah', club: 'AJ Auxerre', rating: 76, age: 26, caps: 15, form: 7, versatility: 5, positions: ['LB']},
-                {name: 'Kohn', fullName: 'Derrick Kohn', club: 'Galatasaray', rating: 77, age: 25, caps: 8, form: 8, versatility: 6, positions: ['LB', 'LWB']},
-                {name: 'Ambrosius', fullName: 'Stephan Ambrosius', club: 'St. Gallen', rating: 77, age: 25, caps: 8, form: 7, versatility: 6, positions: ['CB']},
-                {name: 'Adjei', fullName: 'Nathaniel Adjei', club: 'FC Lorient', rating: 75, age: 24, caps: 3, form: 7, versatility: 5, positions: ['CB']},
-                {name: 'Simpson', fullName: 'Razak Simpson', club: 'Ashanti Gold', rating: 73, age: 23, caps: 4, form: 8, versatility: 6, positions: ['RB', 'CB']},
-                {name: 'Mumin', fullName: 'Abdul Mumin', club: 'Rayo Vallecano', rating: 76, age: 26, caps: 12, form: 7, versatility: 6, positions: ['CB']},
-                {name: 'Opoku J.', fullName: 'Jerome Opoku', club: 'Istanbul Basaksehir', rating: 75, age: 25, caps: 9, form: 7, versatility: 6, positions: ['CB']},
-                {name: 'Adjetey', fullName: 'Jonas Adjetey', club: 'FC Basel', rating: 74, age: 24, caps: 6, form: 7, versatility: 6, positions: ['CB']},
-                {name: 'Annan', fullName: 'Ebenezer Annan', club: 'FK Novi Pazar', rating: 73, age: 23, caps: 4, form: 7, versatility: 5, positions: ['CB']},
-                {name: 'Afful', fullName: 'Isaac Afful', club: 'Samartex', rating: 71, age: 22, caps: 2, form: 7, versatility: 5, positions: ['RB']},
-                {name: 'Schindler', fullName: 'Kingsley Schindler', club: 'Hannover 96', rating: 74, age: 31, caps: 8, form: 7, versatility: 6, positions: ['RB', 'RW']}
-            ],
-            MID: [
-                {name: 'Partey', fullName: 'Thomas Partey', club: 'Arsenal', rating: 85, age: 31, caps: 54, form: 8, versatility: 7, positions: ['DM', 'CM']},
-                {name: 'Kudus', fullName: 'Mohammed Kudus', club: 'West Ham', rating: 83, age: 24, caps: 28, form: 9, versatility: 9, positions: ['AM', 'RW', 'ST', 'CM']},
-                {name: 'Ashimeru', fullName: 'Majeed Ashimeru', club: 'Anderlecht', rating: 77, age: 27, caps: 22, form: 7, versatility: 6, positions: ['CM', 'DM']},
-                {name: 'E. Owusu', fullName: 'Elisha Owusu', club: 'AJ Auxerre', rating: 76, age: 27, caps: 18, form: 7, versatility: 6, positions: ['DM', 'CM']},
-                {name: 'Samed', fullName: 'Salis Abdul Samed', club: 'RC Lens', rating: 78, age: 24, caps: 15, form: 8, versatility: 6, positions: ['DM', 'CM']},
-                {name: 'Sulemana I.', fullName: 'Ibrahim Sulemana', club: 'Atalanta', rating: 76, age: 21, caps: 6, form: 7, versatility: 6, positions: ['CM']},
-                {name: 'Sibo', fullName: 'Kwasi Sibo', club: 'Hearts of Oak', rating: 74, age: 22, caps: 5, form: 8, versatility: 6, positions: ['CM', 'DM']},
-                {name: 'Diomande', fullName: 'Mohamed Diomande', club: 'Rangers', rating: 74, age: 22, caps: 3, form: 8, versatility: 7, positions: ['CM', 'DM']},
-                {name: 'Mamudu', fullName: 'Kamaradini Mamudu', club: 'Medeama SC', rating: 71, age: 22, caps: 3, form: 7, versatility: 6, positions: ['CM']},
-                {name: 'Francis', fullName: 'Abu Francis', club: 'Cercle Brugge', rating: 75, age: 22, caps: 8, form: 7, versatility: 6, positions: ['CM', 'AM']},
-                {name: 'Addo E.', fullName: 'Edmund Addo', club: 'Sheriff Tiraspol', rating: 74, age: 24, caps: 11, form: 7, versatility: 5, positions: ['DM']},
-                {name: 'Antwi', fullName: 'Emmanuel Antwi', club: 'FK Pribram', rating: 72, age: 23, caps: 3, form: 7, versatility: 6, positions: ['CM']},
-                {name: 'Baidoo', fullName: 'Michael Baidoo', club: 'Elfsborg', rating: 73, age: 25, caps: 4, form: 7, versatility: 6, positions: ['CM', 'AM']},
-                {name: 'P. Owusu', fullName: 'Prince Owusu', club: 'Medeama SC', rating: 71, age: 20, caps: 2, form: 8, versatility: 6, positions: ['CM']}
-            ],
-            VERSATILE: [
-                {name: 'Yirenkyi', fullName: 'Caleb Yirenkyi', club: 'Nordsjaelland', rating: 72, age: 19, caps: 2, form: 8, versatility: 8, positions: ['CM', 'AM', 'RB', 'RW']}
-            ],
-            ATT: [
-                {name: 'J. Ayew', fullName: 'Jordan Ayew', club: 'Leicester', rating: 80, age: 33, caps: 114, form: 8, versatility: 8, positions: ['ST', 'RW', 'LW']},
-                {name: 'I. Williams', fullName: 'Inaki Williams', club: 'Athletic Bilbao', rating: 82, age: 30, caps: 20, form: 9, versatility: 7, positions: ['ST', 'RW']},
-                {name: 'Semenyo', fullName: 'Antoine Semenyo', club: 'Bournemouth', rating: 81, age: 25, caps: 14, form: 9, versatility: 7, positions: ['ST', 'RW']},
-                {name: 'Thomas-Asante', fullName: 'Brandon Thomas-Asante', club: 'Coventry City', rating: 78, age: 26, caps: 7, form: 9, versatility: 6, positions: ['ST', 'RW']},
-                {name: 'Fatawu', fullName: 'Abdul Fatawu Issahaku', club: 'Leicester', rating: 79, age: 20, caps: 20, form: 8, versatility: 7, positions: ['RW', 'LW']},
-                {name: 'Sulemana K.', fullName: 'Kamaldeen Sulemana', club: 'Southampton', rating: 78, age: 22, caps: 15, form: 7, versatility: 8, positions: ['LW', 'RW', 'ST']},
-                {name: 'Nuamah', fullName: 'Ernest Nuamah', club: 'Lyon', rating: 77, age: 21, caps: 10, form: 8, versatility: 7, positions: ['RW', 'LW']},
-                {name: 'Paintsil', fullName: 'Joseph Paintsil', club: 'LA Galaxy', rating: 77, age: 27, caps: 10, form: 8, versatility: 7, positions: ['RW', 'LW']},
-                {name: 'Ibrahim Osman', fullName: 'Ibrahim Osman', club: 'Feyenoord', rating: 75, age: 19, caps: 5, form: 8, versatility: 7, positions: ['RW', 'LW', 'AM']},
-                {name: 'Adu Kwabena', fullName: 'Prince Kwabena Adu', club: 'Viktoria Plzen', rating: 75, age: 22, caps: 2, form: 8, versatility: 7, positions: ['ST', 'RW', 'LW']},
-                {name: 'Afriyie', fullName: 'Jerry Afriyie', club: 'RAAL La Louviere', rating: 73, age: 20, caps: 3, form: 8, versatility: 6, positions: ['ST']},
-                {name: 'Afena-Gyan', fullName: 'Felix Afena-Gyan', club: 'Juventus NG', rating: 73, age: 21, caps: 5, form: 7, versatility: 6, positions: ['ST']},
-                {name: 'Opoku', fullName: 'Kwame Opoku', club: 'Asante Kotoko', rating: 72, age: 23, caps: 2, form: 7, versatility: 5, positions: ['ST']},
-                {name: 'Fuseini', fullName: 'Mohammed Fuseini', club: 'Union SG', rating: 71, age: 22, caps: 1, form: 7, versatility: 6, positions: ['LW', 'ST']},
-                {name: 'Nkrumah', fullName: 'Kelvin Nkrumah', club: 'Medeama SC', rating: 70, age: 21, caps: 1, form: 8, versatility: 6, positions: ['LW', 'RW']},
-                {name: 'Bonsu Baah', fullName: 'Christopher Bonsu Baah', club: 'Al-Qadsiah', rating: 74, age: 22, caps: 6, form: 8, versatility: 7, positions: ['RW', 'LW']},
-                {name: 'Owusu P.O.', fullName: 'Prince Osei Owusu', club: 'CF Montreal', rating: 75, age: 28, caps: 1, form: 8, versatility: 6, positions: ['ST']}
-            ]
-        };
-
-        let currentSquadMode = 'full';
-        let worldCupSquad = [];
-
-        const formations = {
-            '4-3-3': {
-                lines: [
-                    {positions: ['GK'], y: 95},
-                    {positions: ['LB', 'CB', 'CB', 'RB'], y: 75},
-                    {positions: ['CM', 'CM', 'CM'], y: 50},
-                    {positions: ['LW', 'ST', 'RW'], y: 20}
-                ]
-            },
-            '4-2-3-1': {
-                lines: [
-                    {positions: ['GK'], y: 95},
-                    {positions: ['LB', 'CB', 'CB', 'RB'], y: 75},
-                    {positions: ['DM', 'DM'], y: 60},
-                    {positions: ['LW', 'AM', 'RW'], y: 38},
-                    {positions: ['ST'], y: 15}
-                ]
-            },
-            '4-4-2': {
-                lines: [
-                    {positions: ['GK'], y: 95},
-                    {positions: ['LB', 'CB', 'CB', 'RB'], y: 75},
-                    {positions: ['LM', 'CM', 'CM', 'RM'], y: 50},
-                    {positions: ['ST', 'ST'], y: 20}
-                ]
-            },
-            '3-5-2': {
-                lines: [
-                    {positions: ['GK'], y: 95},
-                    {positions: ['CB', 'CB', 'CB'], y: 75},
-                    {positions: ['LWB', 'CM', 'DM', 'CM', 'RWB'], y: 50},
-                    {positions: ['ST', 'ST'], y: 20}
-                ]
-            },
-            '4-1-4-1': {
-                lines: [
-                    {positions: ['GK'], y: 95},
-                    {positions: ['LB', 'CB', 'CB', 'RB'], y: 75},
-                    {positions: ['DM'], y: 62},
-                    {positions: ['LM', 'CM', 'CM', 'RM'], y: 42},
-                    {positions: ['ST'], y: 15}
-                ]
-            },
-            '3-4-3': {
-                lines: [
-                    {positions: ['GK'], y: 95},
-                    {positions: ['CB', 'CB', 'CB'], y: 75},
-                    {positions: ['LM', 'CM', 'CM', 'RM'], y: 50},
-                    {positions: ['LW', 'ST', 'RW'], y: 20}
-                ]
-            },
-            '5-3-2': {
-                lines: [
-                    {positions: ['GK'], y: 95},
-                    {positions: ['LWB', 'CB', 'CB', 'CB', 'RWB'], y: 75},
-                    {positions: ['CM', 'DM', 'CM'], y: 50},
-                    {positions: ['ST', 'ST'], y: 20}
-                ]
-            },
-            '4-4-2-diamond': {
-                lines: [
-                    {positions: ['GK'], y: 95},
-                    {positions: ['LB', 'CB', 'CB', 'RB'], y: 75},
-                    {positions: ['DM'], y: 62},
-                    {positions: ['CM', 'CM'], y: 50},
-                    {positions: ['AM'], y: 32},
-                    {positions: ['ST', 'ST'], y: 15}
-                ]
-            }
-        };
-
-        let selectedLineup = {};
-        let currentSlot = null;
-
-        function renderFormation(formationName) {
-            const pitch = document.getElementById('pitch');
-            pitch.innerHTML = '';
-            selectedLineup = {};
-            
-            const formation = formations[formationName];
-            
-            formation.lines.forEach((line, lineIndex) => {
-                const lineDiv = document.createElement('div');
-                lineDiv.className = 'formation-line';
-                lineDiv.style.top = line.y + '%';
-                
-                line.positions.forEach((position, posIndex) => {
-                    const slot = document.createElement('div');
-                    slot.className = 'player-slot';
-                    const slotId = `${position}-${lineIndex}-${posIndex}`;
-                    slot.id = slotId;
-                    slot.onclick = () => openPlayerSelection(slotId, position);
-                    
-                    const nameDiv = document.createElement('div');
-                    nameDiv.className = 'player-name';
-                    nameDiv.textContent = position;
-                    
-                    slot.appendChild(nameDiv);
-                    lineDiv.appendChild(slot);
-                });
-                
-                pitch.appendChild(lineDiv);
-            });
-            
-            updateStats();
-        }
-
-        function openPlayerSelection(slotId, position) {
-            currentSlot = {id: slotId, position: position};
-            const modal = document.getElementById('playerModal');
-            const playerList = document.getElementById('playerList');
-            playerList.innerHTML = '';
-            
-            const availablePlayers = getPlayersForPosition(position);
-            
-            availablePlayers.forEach(player => {
-                const item = document.createElement('div');
-                item.className = 'player-item';
-                item.onclick = () => selectPlayer(player);
-                
-                item.innerHTML = `
-                    <div class="player-info">
-                        <strong>${player.fullName}</strong>
-                        <small>${player.club} | ${player.age}y | ${player.caps} caps</small>
-                    </div>
-                    <div class="player-rating" style="position: static; width: 40px; height: 40px; font-size: 1.1em;">
-                        ${player.rating}
-                    </div>
-                `;
-                
-                playerList.appendChild(item);
-            });
-            
-            modal.style.display = 'flex';
-        }
-
-        function getPlayersForPosition(position) {
-            let positionMap = {
-                'GK': ['GK'],
-                'CB': ['DEF'],
-                'LB': ['DEF'],
-                'RB': ['DEF', 'VERSATILE'],
-                'LWB': ['DEF'],
-                'RWB': ['DEF'],
-                'DM': ['MID'],
-                'CM': ['MID', 'VERSATILE'],
-                'AM': ['MID', 'VERSATILE'],
-                'LM': ['MID'],
-                'RM': ['MID', 'VERSATILE'],
-                'LW': ['ATT'],
-                'RW': ['ATT', 'VERSATILE'],
-                'ST': ['ATT']
-            };
-            
-            let category = positionMap[position];
-            let allPlayers = [];
-            
-            category.forEach(cat => {
-                if (players[cat]) {
-                    allPlayers = allPlayers.concat(players[cat]);
-                }
-            });
-            
-            // Filter by World Cup squad if mode is active
-            if (currentSquadMode === 'worldcup') {
-                allPlayers = allPlayers.filter(p => worldCupSquad.includes(p.fullName));
-            }
-            
-            return allPlayers.filter(p => {
-                if (position === 'GK') return true;
-                if (!p.positions) return true;
-                
-                const posMap = {
-                    'CB': ['CB'], 'LB': ['LB'], 'RB': ['RB'],
-                    'LWB': ['LB', 'LWB'], 'RWB': ['RB', 'RWB'],
-                    'DM': ['DM'], 'CM': ['CM', 'DM'], 'AM': ['AM', 'CM'],
-                    'LM': ['LW', 'LM', 'CM'], 'RM': ['RW', 'RM', 'CM'],
-                    'LW': ['LW', 'RW'], 'RW': ['RW', 'LW'], 'ST': ['ST']
-                };
-                
-                return posMap[position]?.some(p1 => p.positions.includes(p1)) || p.versatility >= 7;
-            }).sort((a, b) => b.rating - a.rating);
-        }
-
-        function openWorldCupBuilder() {
-            const modal = document.getElementById('worldCupModal');
-            const playerListContainer = document.getElementById('wcPlayerList');
-            playerListContainer.innerHTML = '';
-            
-            const categories = [
-                { name: 'Goalkeepers', key: 'GK', players: players.GK },
-                { name: 'Defenders', key: 'DEF', players: players.DEF },
-                { name: 'Midfielders', key: 'MID', players: players.MID.concat(players.VERSATILE) },
-                { name: 'Attackers', key: 'ATT', players: players.ATT }
-            ];
-            
-            categories.forEach(category => {
-                const categoryDiv = document.createElement('div');
-                categoryDiv.style.cssText = 'margin-bottom: 20px;';
-                
-                const header = document.createElement('h3');
-                header.style.cssText = 'color: #d4af37; margin-bottom: 10px; font-size: 1.1em;';
-                header.textContent = category.name;
-                categoryDiv.appendChild(header);
-                
-                category.players.forEach(player => {
-                    const playerDiv = document.createElement('div');
-                    const isSelected = worldCupSquad.includes(player.fullName);
-                    
-                    playerDiv.style.cssText = `
-                        background: ${isSelected ? 'rgba(0, 107, 63, 0.3)' : 'rgba(255,255,255,0.05)'};
-                        padding: 12px;
-                        border-radius: 8px;
-                        margin-bottom: 8px;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        border: ${isSelected ? '2px solid #fcd116' : '2px solid transparent'};
-                    `;
-                    
-                    playerDiv.onmouseover = () => {
-                        if (!isSelected) playerDiv.style.background = 'rgba(212, 175, 55, 0.2)';
-                    };
-                    playerDiv.onmouseout = () => {
-                        if (!isSelected) playerDiv.style.background = 'rgba(255,255,255,0.05)';
-                    };
-                    
-                    playerDiv.onclick = () => toggleWorldCupPlayer(player.fullName, playerDiv);
-                    
-                    playerDiv.innerHTML = `
-                        <div>
-                            <span style="color: ${isSelected ? '#fcd116' : '#d4af37'}; font-weight: bold; font-size: 1.05em;">
-                                ${isSelected ? '✓ ' : ''}${player.fullName}
-                            </span>
-                            <span style="color: #aaa; font-size: 0.9em; margin-left: 10px;">${player.club}</span>
-                        </div>
-                        <div style="display: flex; gap: 15px; align-items: center;">
-                            <span style="color: #aaa; font-size: 0.85em;">${player.age}y | ${player.caps} caps</span>
-                            <div style="background: #000; color: #fcd116; padding: 6px 12px; border-radius: 5px; font-weight: bold;">
-                                ${player.rating}
-                            </div>
-                        </div>
-                    `;
-                    
-                    categoryDiv.appendChild(playerDiv);
-                });
-                
-                playerListContainer.appendChild(categoryDiv);
-            });
-            
-            updateWCSquadCount();
-            modal.style.display = 'flex';
-        }
-
-        function toggleWorldCupPlayer(fullName, element) {
-            const index = worldCupSquad.indexOf(fullName);
-            
-            if (index > -1) {
-                worldCupSquad.splice(index, 1);
-                element.style.background = 'rgba(255,255,255,0.05)';
-                element.style.border = '2px solid transparent';
-                element.querySelector('span').textContent = element.querySelector('span').textContent.replace('✓ ', '');
-                element.querySelector('span').style.color = '#d4af37';
-            } else {
-                if (worldCupSquad.length >= 25) {
-                    alert('Maximum 25 players allowed in World Cup squad!');
-                    return;
-                }
-                worldCupSquad.push(fullName);
-                element.style.background = 'rgba(0, 107, 63, 0.3)';
-                element.style.border = '2px solid #fcd116';
-                element.querySelector('span').textContent = '✓ ' + element.querySelector('span').textContent;
-                element.querySelector('span').style.color = '#fcd116';
-            }
-            
-            updateWCSquadCount();
-        }
-
-        function updateWCSquadCount() {
-            const countEl = document.getElementById('wcSquadCount');
-            const count = worldCupSquad.length;
-            countEl.textContent = `${count} / 25 Selected`;
-            
-            if (count === 25) {
-                countEl.style.color = '#00ff00';
-            } else if (count > 25) {
-                countEl.style.color = '#ff4444';
-            } else {
-                countEl.style.color = '#fcd116';
-            }
-        }
-
-        function autoSelectWorldCup() {
-            worldCupSquad = [];
-            
-            // Select top 3 GKs
-            players.GK.sort((a, b) => b.rating - a.rating).slice(0, 3).forEach(p => worldCupSquad.push(p.fullName));
-            
-            // Select top 7 defenders
-            players.DEF.sort((a, b) => b.rating - a.rating).slice(0, 7).forEach(p => worldCupSquad.push(p.fullName));
-            
-            // Select top 7 midfielders (including versatile)
-            const allMids = players.MID.concat(players.VERSATILE).sort((a, b) => b.rating - a.rating);
-            allMids.slice(0, 7).forEach(p => worldCupSquad.push(p.fullName));
-            
-            // Select top 8 attackers
-            players.ATT.sort((a, b) => b.rating - a.rating).slice(0, 8).forEach(p => worldCupSquad.push(p.fullName));
-            
-            openWorldCupBuilder();
-        }
-
-        function saveWorldCupSquad() {
-            if (worldCupSquad.length !== 25) {
-                alert(`Please select exactly 25 players. Currently selected: ${worldCupSquad.length}`);
-                return;
-            }
-            
-            currentSquadMode = 'worldcup';
-            document.getElementById('squadMode').value = 'worldcup';
-            updateSquadModeDisplay();
-            closeWorldCupModal();
-            renderFormation(document.getElementById('formationSelect').value);
-            displayWorldCupSquad();
-        }
-
-        function closeWorldCupModal() {
-            document.getElementById('worldCupModal').style.display = 'none';
-        }
-
-        function selectPlayer(player) {
-            if (!currentSlot) return;
-            
-            selectedLineup[currentSlot.id] = player;
-            
-            const slot = document.getElementById(currentSlot.id);
-            slot.classList.add('selected');
-            
-            const nameDiv = slot.querySelector('.player-name');
-            nameDiv.textContent = player.name;
-            
-            let ratingDiv = slot.querySelector('.player-rating');
-            if (!ratingDiv) {
-                ratingDiv = document.createElement('div');
-                ratingDiv.className = 'player-rating';
-                slot.appendChild(ratingDiv);
-            }
-            ratingDiv.textContent = player.rating;
-            
-            closeModal();
-            updateStats();
-        }
-
-        function closeModal() {
-            document.getElementById('playerModal').style.display = 'none';
-            currentSlot = null;
-        }
-
-        function autoSelectPlayers() {
-            const criteria = document.getElementById('autoSelectCriteria').value;
-            const slots = document.querySelectorAll('.player-slot');
-            
-            const preferredPlayers = {
-                'CB': ['Mohammed Salisu', 'Alexander Djiku'],
-                'LB': ['Derrick Kohn'],
-                'LWB': ['Derrick Kohn'],
-                'RB': ['Caleb Yirenkyi'],
-                'RWB': ['Caleb Yirenkyi']
-            };
-            
-            const positionExclusions = {
-                'LB': ['Mohammed Salisu', 'Alexander Djiku'],
-                'LWB': ['Mohammed Salisu', 'Alexander Djiku'],
-                'RB': ['Mohammed Salisu', 'Alexander Djiku'],
-                'RWB': ['Mohammed Salisu', 'Alexander Djiku']
-            };
-            
-            slots.forEach(slot => {
-                const position = slot.querySelector('.player-name').textContent;
-                if (!['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'DM', 'CM', 'AM', 'LM', 'RM', 'LW', 'RW', 'ST'].includes(position)) {
-                    return;
-                }
-                
-                const availablePlayers = getPlayersForPosition(position);
-                const usedPlayers = Object.values(selectedLineup).map(p => p.fullName);
-                let available = availablePlayers.filter(p => !usedPlayers.includes(p.fullName));
-                
-                if (positionExclusions[position]) {
-                    available = available.filter(p => !positionExclusions[position].includes(p.fullName));
-                }
-                
-                if (available.length === 0) return;
-                
-                let bestPlayer;
-                
-                if (preferredPlayers[position]) {
-                    const preferredList = preferredPlayers[position];
-                    for (let preferredName of preferredList) {
-                        const preferred = available.find(p => p.fullName === preferredName);
-                        if (preferred) {
-                            bestPlayer = preferred;
-                            break;
-                        }
-                    }
-                }
-                
-                if (!bestPlayer) {
-                    switch(criteria) {
-                        case 'form':
-                            bestPlayer = available.sort((a, b) => b.form - a.form)[0];
-                            break;
-                        case 'experience':
-                            bestPlayer = available.sort((a, b) => b.caps - a.caps)[0];
-                            break;
-                        case 'versatility':
-                            bestPlayer = available.sort((a, b) => b.versatility - a.versatility)[0];
-                            break;
-                        default:
-                            bestPlayer = available[0];
-                    }
-                }
-                
-                selectedLineup[slot.id] = bestPlayer;
-                slot.classList.add('selected');
-                
-                const nameDiv = slot.querySelector('.player-name');
-                nameDiv.textContent = bestPlayer.name;
-                
-                let ratingDiv = slot.querySelector('.player-rating');
-                if (!ratingDiv) {
-                    ratingDiv = document.createElement('div');
-                    ratingDiv.className = 'player-rating';
-                    slot.appendChild(ratingDiv);
-                }
-                ratingDiv.textContent = bestPlayer.rating;
-            });
-            
-            updateStats();
-        }
-
-        function updateStats() {
-            const lineup = Object.values(selectedLineup);
-            
-            if (lineup.length === 0) {
-                document.getElementById('avgRating').textContent = '0';
-                document.getElementById('avgAge').textContent = '0';
-                document.getElementById('totalCaps').textContent = '0';
-                document.getElementById('attackScore').textContent = '0';
-                document.getElementById('defenseScore').textContent = '0';
-                return;
-            }
-            
-            const avgRating = (lineup.reduce((sum, p) => sum + p.rating, 0) / lineup.length).toFixed(1);
-            const avgAge = (lineup.reduce((sum, p) => sum + p.age, 0) / lineup.length).toFixed(1);
-            const totalCaps = lineup.reduce((sum, p) => sum + p.caps, 0);
-            
-            const attackers = lineup.filter(p => players.ATT.includes(p));
-            const defenders = lineup.filter(p => players.DEF.includes(p));
-            
-            const attackScore = attackers.length > 0 
-                ? (attackers.reduce((sum, p) => sum + p.rating, 0) / attackers.length).toFixed(0)
-                : 0;
-            const defenseScore = defenders.length > 0
-                ? (defenders.reduce((sum, p) => sum + p.rating, 0) / defenders.length).toFixed(0)
-                : 0;
-            
-            document.getElementById('avgRating').textContent = avgRating;
-            document.getElementById('avgAge').textContent = avgAge;
-            document.getElementById('totalCaps').textContent = totalCaps;
-            document.getElementById('attackScore').textContent = attackScore;
-            document.getElementById('defenseScore').textContent = defenseScore;
-        }
-
-        async function exportAsImage() {
-            const pitchContainer = document.querySelector('.pitch-container');
-            
-            try {
-                const canvas = await html2canvas(pitchContainer, {
-                    backgroundColor: '#2d5a3d',
-                    scale: 2,
-                    logging: false
-                });
-                
-                const link = document.createElement('a');
-                link.download = `ghana-blackstars-lineup-${new Date().getTime()}.jpg`;
-                link.href = canvas.toDataURL('image/jpeg', 0.95);
-                link.click();
-            } catch (error) {
-                alert('Export failed. Please try again.');
-            }
-        }
-
-        async function exportAsPDF() {
-            const pitchContainer = document.querySelector('.pitch-container');
-            
-            try {
-                const canvas = await html2canvas(pitchContainer, {
-                    backgroundColor: '#2d5a3d',
-                    scale: 2,
-                    logging: false
-                });
-                
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-                
-                const imgWidth = 190;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
-                pdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, imgHeight);
-                
-                const formation = document.getElementById('formationSelect').value;
-                pdf.text(`Ghana Black Stars - ${formation}`, 105, imgHeight + 20, { align: 'center' });
-                
-                pdf.save(`ghana-blackstars-lineup-${new Date().getTime()}.pdf`);
-            } catch (error) {
-                alert('Export failed. Please try again.');
-            }
-        }
-
-        document.getElementById('formationSelect').addEventListener('change', (e) => {
-            renderFormation(e.target.value);
-        });
-
-        document.getElementById('colorTheme').addEventListener('change', (e) => {
-            applyColorTheme(e.target.value);
-        });
-
-        document.getElementById('squadMode').addEventListener('change', (e) => {
-            if (e.target.value === 'worldcup' && worldCupSquad.length === 0) {
-                alert('Please build your World Cup squad first using the "Build World Cup Squad" button!');
-                e.target.value = 'full';
-                return;
-            }
-            currentSquadMode = e.target.value;
-            renderFormation(document.getElementById('formationSelect').value);
-            updateSquadModeDisplay();
-        });
-
-        function updateSquadModeDisplay() {
-            const header = document.querySelector('header p');
-            const squadModeSelect = document.getElementById('squadMode');
-            
-            if (currentSquadMode === 'worldcup') {
-                header.textContent = `Tactical Lineup Builder - 2026 World Cup Squad (${worldCupSquad.length}/25 Players)`;
-                header.style.color = '#fcd116';
-                squadModeSelect.options[1].text = `World Cup Squad (${worldCupSquad.length}/25 selected)`;
-            } else {
-                header.textContent = 'Tactical Lineup Builder';
-                header.style.color = '#fff';
-                squadModeSelect.options[1].text = `World Cup Squad (${worldCupSquad.length}/25 selected)`;
-            }
-        }
-
-        function applyColorTheme(theme) {
-            const themes = {
-                classic: {
-                    unselected: 'linear-gradient(135deg, #d4af37 0%, #f4d03f 100%)',
-                    selected: 'linear-gradient(135deg, #ce1126 0%, #ff4444 100%)',
-                    unselectedText: '#000',
-                    selectedText: '#fff',
-                    border: '#1a472a',
-                    selectedBorder: '#fff'
-                },
-                red: {
-                    unselected: 'linear-gradient(135deg, #fff 0%, #f0f0f0 100%)',
-                    selected: 'linear-gradient(135deg, #ce1126 0%, #8b0000 100%)',
-                    unselectedText: '#000',
-                    selectedText: '#fff',
-                    border: '#ce1126',
-                    selectedBorder: '#fff'
-                },
-                green: {
-                    unselected: 'linear-gradient(135deg, #d4af37 0%, #b8941e 100%)',
-                    selected: 'linear-gradient(135deg, #006b3f 0%, #004d2d 100%)',
-                    unselectedText: '#000',
-                    selectedText: '#fcd116',
-                    border: '#006b3f',
-                    selectedBorder: '#fcd116'
-                },
-                black: {
-                    unselected: 'linear-gradient(135deg, #d4af37 0%, #f4d03f 100%)',
-                    selected: 'linear-gradient(135deg, #1a1a1a 0%, #000 100%)',
-                    unselectedText: '#000',
-                    selectedText: '#d4af37',
-                    border: '#000',
-                    selectedBorder: '#d4af37'
-                },
-                blue: {
-                    unselected: 'linear-gradient(135deg, #fff 0%, #e8e8e8 100%)',
-                    selected: 'linear-gradient(135deg, #0066cc 0%, #003d7a 100%)',
-                    unselectedText: '#000',
-                    selectedText: '#fff',
-                    border: '#0066cc',
-                    selectedBorder: '#fff'
-                }
-            };
-
-            const selectedTheme = themes[theme];
-            const style = document.createElement('style');
-            style.id = 'dynamic-theme';
-            
-            const existingStyle = document.getElementById('dynamic-theme');
-            if (existingStyle) existingStyle.remove();
-            
-            style.textContent = `
-                .player-slot {
-                    background: ${selectedTheme.unselected} !important;
-                    border-color: ${selectedTheme.border} !important;
-                }
-                .player-slot .player-name {
-                    color: ${selectedTheme.unselectedText} !important;
-                }
-                .player-slot.selected {
-                    background: ${selectedTheme.selected} !important;
-                    border-color: ${selectedTheme.selectedBorder} !important;
-                }
-                .player-slot.selected .player-name {
-                    color: ${selectedTheme.selectedText} !important;
-                }
-            `;
-            
-            document.head.appendChild(style);
-        }
-
-        function calculateFormationPower() {
-            const formationScores = [];
-            
-            for (let formationName in formations) {
-                const formation = formations[formationName];
-                let totalPower = 0;
-                let positionCount = 0;
-                let attackPower = 0;
-                let defensePower = 0;
-                let midPower = 0;
-                let depthScore = 0;
-                let versatilityBonus = 0;
-                
-                formation.lines.forEach(line => {
-                    line.positions.forEach(pos => {
-                        positionCount++;
-                        const bestPlayers = getPlayersForPosition(pos).slice(0, 3);
-                        
-                        if (bestPlayers.length > 0) {
-                            const topPlayer = bestPlayers[0];
-                            totalPower += topPlayer.rating;
-                            
-                            if (['ST', 'LW', 'RW'].includes(pos)) {
-                                attackPower += topPlayer.rating;
-                            } else if (['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(pos)) {
-                                defensePower += topPlayer.rating;
-                            } else {
-                                midPower += topPlayer.rating;
-                            }
-                            
-                            if (bestPlayers.length >= 2) {
-                                depthScore += (bestPlayers[1].rating * 0.3);
-                            }
-                            if (bestPlayers.length >= 3) {
-                                depthScore += (bestPlayers[2].rating * 0.15);
-                            }
-                            
-                            if (topPlayer.versatility >= 7) {
-                                versatilityBonus += 2;
-                            }
-                        }
-                    });
-                });
-                
-                const avgRating = totalPower / positionCount;
-                const balanceScore = Math.min(attackPower, defensePower, midPower) / 10;
-                const finalScore = avgRating + (depthScore / positionCount) + balanceScore + versatilityBonus;
-                
-                let tacticalBonus = 0;
-                
-                if (['4-3-3', '4-2-3-1', '3-4-3'].includes(formationName)) {
-                    tacticalBonus += 2;
-                }
-                
-                if (['4-3-3', '4-2-3-1', '4-4-2'].includes(formationName)) {
-                    tacticalBonus += 1.5;
-                }
-                
-                if (['4-2-3-1', '4-1-4-1', '4-3-3'].includes(formationName)) {
-                    tacticalBonus += 1;
-                }
-                
-                formationScores.push({
-                    name: formationName,
-                    score: finalScore + tacticalBonus,
-                    avgRating: avgRating.toFixed(1),
-                    attack: (attackPower / Math.max(1, formation.lines.flatMap(l => l.positions.filter(p => ['ST','LW','RW'].includes(p))).length)).toFixed(0),
-                    defense: (defensePower / Math.max(1, formation.lines.flatMap(l => l.positions.filter(p => ['CB','LB','RB','LWB','RWB'].includes(p))).length)).toFixed(0),
-                    depth: depthScore.toFixed(1),
-                    versatility: versatilityBonus.toFixed(0)
-                });
-            }
-            
-            formationScores.sort((a, b) => b.score - a.score);
-            displayFormationRankings(formationScores);
-        }
-        
-        function displayFormationRankings(rankings) {
-            const container = document.getElementById('formationRankings');
-            container.innerHTML = '';
-            
-            rankings.forEach((formation, index) => {
-                const rankDiv = document.createElement('div');
-                rankDiv.style.cssText = `
-                    background: rgba(255,255,255,0.1);
-                    padding: 15px;
-                    border-radius: 10px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    transition: all 0.3s ease;
-                    cursor: pointer;
-                    border-left: 4px solid ${index === 0 ? '#d4af37' : index === 1 ? '#c0c0c0' : index === 2 ? '#cd7f32' : 'rgba(255,255,255,0.3)'};
-                `;
-                
-                rankDiv.onmouseover = () => rankDiv.style.background = 'rgba(212, 175, 55, 0.2)';
-                rankDiv.onmouseout = () => rankDiv.style.background = 'rgba(255,255,255,0.1)';
-                rankDiv.onclick = () => {
-                    document.getElementById('formationSelect').value = formation.name;
-                    renderFormation(formation.name);
-                    window.scrollTo({top: 0, behavior: 'smooth'});
-                };
-                
-                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-                
-                rankDiv.innerHTML = `
-                    <div style="flex: 1;">
-                        <div style="font-size: 1.2em; font-weight: bold; color: #d4af37; margin-bottom: 5px;">
-                            ${medal} ${formation.name}
-                        </div>
-                        <div style="font-size: 0.85em; opacity: 0.8;">
-                            Power Score: ${formation.score.toFixed(1)} | 
-                            Avg Rating: ${formation.avgRating} | 
-                            Attack: ${formation.attack} | 
-                            Defense: ${formation.defense}
-                        </div>
-                    </div>
-                    <div style="font-size: 1.5em; font-weight: bold; color: #fcd116;">
-                        ${formation.score.toFixed(1)}
-                    </div>
-                `;
-                
-                container.appendChild(rankDiv);
-            });
-        }
-
-        renderFormation('4-3-3');
-        calculateFormationPower();
-        displayWorldCupSquad();
-
-        function displayWorldCupSquad() {
-            const container = document.getElementById('worldCupSquad');
-            container.innerHTML = '';
-            
-            if (worldCupSquad.length === 0) {
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 30px; opacity: 0.6;">
-                        <p>No World Cup squad selected yet.</p>
-                        <p style="margin-top: 10px;">Use the "Build World Cup Squad" button above to create your 25-man roster.</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            const allPlayers = [].concat(players.GK, players.DEF, players.MID, players.VERSATILE, players.ATT);
-            const selectedPlayers = allPlayers.filter(p => worldCupSquad.includes(p.fullName));
-            
-            const positions = [
-                { name: 'Goalkeepers', players: selectedPlayers.filter(p => players.GK.includes(p)) },
-                { name: 'Defenders', players: selectedPlayers.filter(p => players.DEF.includes(p)) },
-                { name: 'Midfielders', players: selectedPlayers.filter(p => players.MID.includes(p) || players.VERSATILE.includes(p)) },
-                { name: 'Attackers', players: selectedPlayers.filter(p => players.ATT.includes(p)) }
-            ];
-            
-            positions.forEach((category) => {
-                if (category.players.length > 0) {
-                    const posDiv = document.createElement('div');
-                    posDiv.style.cssText = `
-                        background: rgba(255,255,255,0.05);
-                        padding: 15px;
-                        border-radius: 10px;
-                    `;
-                    
-                    const title = document.createElement('h3');
-                    title.style.cssText = `
-                        color: #fcd116;
-                        font-size: 1em;
-                        margin-bottom: 10px;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                    `;
-                    title.textContent = `${category.name} (${category.players.length})`;
-                    posDiv.appendChild(title);
-                    
-                    category.players.forEach(player => {
-                        const playerDiv = document.createElement('div');
-                        playerDiv.style.cssText = `
-                            padding: 8px 0;
-                            border-bottom: 1px solid rgba(255,255,255,0.1);
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                        `;
-                        playerDiv.innerHTML = `
-                            <div>
-                                <span style="color: #d4af37; font-weight: bold;">${player.name}</span>
-                                <span style="color: #aaa; font-size: 0.85em; margin-left: 8px;">${player.club}</span>
-                            </div>
-                            <div style="background: #000; color: #fcd116; padding: 4px 10px; border-radius: 5px; font-weight: bold; font-size: 0.9em;">
-                                ${player.rating}
-                            </div>
-                        `;
-                        posDiv.appendChild(playerDiv);
-                    });
-                    
-                    container.appendChild(posDiv);
-                }
-            });
-            
-            const countDiv = document.createElement('div');
-            countDiv.style.cssText = `
-                grid-column: 1 / -1;
-                text-align: center;
-                padding: 20px;
-                background: rgba(212, 175, 55, 0.1);
-                border-radius: 10px;
-                font-size: 1.2em;
-                font-weight: bold;
-                color: #fcd116;
-                margin-top: 10px;
-            `;
-            countDiv.innerHTML = `Total Squad: ${worldCupSquad.length} / 25 Players`;
-            container.appendChild(countDiv);
-        }
+const players={GK:[{name:'Ati-Zigi',fullName:'Lawrence Ati-Zigi',club:'St. Gallen',rating:78,age:28,caps:18,form:8,versatility:1},{name:'Asare',fullName:'Benjamin Asare',club:'Hearts of Oak',rating:76,age:25,caps:8,form:9,versatility:1},{name:'Nurudeen',fullName:'Abdul Manaf Nurudeen',club:'KAS Eupen',rating:74,age:26,caps:6,form:7,versatility:1},{name:'Anang',fullName:'Joseph Anang',club:"St Patrick's",rating:74,age:24,caps:3,form:7,versatility:1},{name:'Wollacott',fullName:'Joseph Wollacott',club:'Hibernian',rating:73,age:29,caps:9,form:7,versatility:1}],DEF:[{name:'Salisu',fullName:'Mohammed Salisu',club:'Monaco',rating:82,age:26,caps:22,form:8,versatility:7,positions:['CB','LB']},{name:'Djiku',fullName:'Alexander Djiku',club:'Spartak Moscow',rating:81,age:31,caps:37,form:8,versatility:7,positions:['CB','RB']},{name:'Lamptey',fullName:'Tariq Lamptey',club:'Brighton',rating:80,age:24,caps:15,form:8,versatility:6,positions:['RB','RW']},{name:'Seidu',fullName:'Alidu Seidu',club:'Stade Rennes',rating:78,age:25,caps:22,form:8,versatility:7,positions:['RB','CB']},{name:'Kohn',fullName:'Derrick Kohn',club:'Union Berlin',rating:77,age:26,caps:10,form:8,versatility:6,positions:['LB','LWB']},{name:'Mensah',fullName:'Gideon Mensah',club:'AJ Auxerre',rating:76,age:27,caps:18,form:7,versatility:5,positions:['LB']},{name:'Ambrosius',fullName:'Stephan Ambrosius',club:'St. Gallen',rating:77,age:26,caps:10,form:7,versatility:6,positions:['CB']},{name:'Mumin',fullName:'Abdul Mumin',club:'Rayo Vallecano',rating:76,age:27,caps:15,form:7,versatility:6,positions:['CB']},{name:'Adjei',fullName:'Nathaniel Adjei',club:'FC Lorient',rating:75,age:25,caps:5,form:7,versatility:5,positions:['CB']},{name:'Opoku J.',fullName:'Jerome Opoku',club:'Istanbul Basaksehir',rating:75,age:26,caps:11,form:7,versatility:6,positions:['CB']},{name:'Annan',fullName:'Ebenezer Annan',club:'AS Saint-Etienne',rating:74,age:24,caps:7,form:7,versatility:5,positions:['CB']},{name:'Simpson',fullName:'Razak Simpson',club:'Nations FC',rating:73,age:24,caps:6,form:8,versatility:6,positions:['RB','CB']},{name:'Adjetey',fullName:'Jonas Adjetey',club:'FC Basel',rating:74,age:25,caps:7,form:7,versatility:6,positions:['CB']},{name:'Afful',fullName:'Isaac Afful',club:'Samartex',rating:71,age:23,caps:3,form:7,versatility:5,positions:['RB']},{name:'Schindler',fullName:'Kingsley Schindler',club:'Hannover 96',rating:73,age:32,caps:9,form:6,versatility:6,positions:['RB','RW']}],MID:[{name:'Partey',fullName:'Thomas Partey',club:'Arsenal',rating:84,age:32,caps:58,form:8,versatility:7,positions:['DM','CM']},{name:'Kudus',fullName:'Mohammed Kudus',club:'West Ham',rating:84,age:25,caps:32,form:9,versatility:9,positions:['AM','RW','ST','CM']},{name:'Ashimeru',fullName:'Majeed Ashimeru',club:'Anderlecht',rating:77,age:28,caps:24,form:7,versatility:6,positions:['CM','DM']},{name:'Samed',fullName:'Salis Abdul Samed',club:'RC Lens',rating:78,age:25,caps:17,form:8,versatility:6,positions:['DM','CM']},{name:'E. Owusu',fullName:'Elisha Owusu',club:'AJ Auxerre',rating:76,age:28,caps:20,form:7,versatility:6,positions:['DM','CM']},{name:'Sulemana I.',fullName:'Ibrahim Sulemana',club:'Atalanta',rating:76,age:22,caps:8,form:7,versatility:6,positions:['CM']},{name:'Diomande',fullName:'Mohamed Diomande',club:'Rangers',rating:74,age:23,caps:5,form:8,versatility:7,positions:['CM','DM']},{name:'Sibo',fullName:'Kwasi Sibo',club:'Hearts of Oak',rating:73,age:23,caps:6,form:8,versatility:6,positions:['CM','DM']},{name:'Francis',fullName:'Abu Francis',club:'Cercle Brugge',rating:75,age:23,caps:10,form:7,versatility:6,positions:['CM','AM']},{name:'Addo E.',fullName:'Edmund Addo',club:'Sheriff Tiraspol',rating:73,age:25,caps:12,form:7,versatility:5,positions:['DM']},{name:'Mamudu',fullName:'Kamaradini Mamudu',club:'Medeama SC',rating:72,age:23,caps:5,form:7,versatility:6,positions:['CM']},{name:'Baidoo',fullName:'Michael Baidoo',club:'Elfsborg',rating:73,age:26,caps:5,form:7,versatility:6,positions:['CM','AM']},{name:'Antwi',fullName:'Emmanuel Antwi',club:'FK Pribram',rating:71,age:24,caps:4,form:7,versatility:6,positions:['CM']},{name:'P. Owusu',fullName:'Prince Owusu',club:'Medeama SC',rating:70,age:21,caps:3,form:8,versatility:6,positions:['CM']}],VERSATILE:[{name:'Yirenkyi',fullName:'Caleb Yirenkyi',club:'Nordsjaelland',rating:73,age:20,caps:4,form:8,versatility:8,positions:['CM','AM','RB','RW']}],ATT:[{name:'I. Williams',fullName:'Inaki Williams',club:'Athletic Bilbao',rating:82,age:31,caps:24,form:9,versatility:7,positions:['ST','RW']},{name:'Semenyo',fullName:'Antoine Semenyo',club:'Bournemouth',rating:81,age:26,caps:18,form:9,versatility:7,positions:['ST','RW']},{name:'J. Ayew',fullName:'Jordan Ayew',club:'Leicester',rating:79,age:34,caps:118,form:8,versatility:8,positions:['ST','RW','LW']},{name:'Fatawu',fullName:'Abdul Fatawu Issahaku',club:'Leicester',rating:79,age:21,caps:23,form:8,versatility:7,positions:['RW','LW']},{name:'Thomas-Asante',fullName:'Brandon Thomas-Asante',club:'Coventry City',rating:78,age:27,caps:9,form:9,versatility:6,positions:['ST','RW']},{name:'Sulemana K.',fullName:'Kamaldeen Sulemana',club:'Southampton',rating:78,age:23,caps:18,form:7,versatility:8,positions:['LW','RW','ST']},{name:'Nuamah',fullName:'Ernest Nuamah',club:'Lyon',rating:77,age:22,caps:12,form:8,versatility:7,positions:['RW','LW']},{name:'Paintsil',fullName:'Joseph Paintsil',club:'LA Galaxy',rating:77,age:28,caps:12,form:8,versatility:7,positions:['RW','LW']},{name:'Bonsu Baah',fullName:'Christopher Bonsu Baah',club:'KRC Genk',rating:75,age:23,caps:8,form:8,versatility:7,positions:['RW','LW']},{name:'Ibrahim Osman',fullName:'Ibrahim Osman',club:'Feyenoord',rating:75,age:20,caps:7,form:8,versatility:7,positions:['RW','LW','AM']},{name:'Adu Kwabena',fullName:'Prince Kwabena Adu',club:'Viktoria Plzen',rating:75,age:22,caps:2,form:8,versatility:7,positions:['ST','RW','LW']},{name:'Afriyie',fullName:'Jerry Afriyie',club:'RAAL La Louviere',rating:73,age:20,caps:3,form:8,versatility:6,positions:['ST']},{name:'Afena-Gyan',fullName:'Felix Afena-Gyan',club:'Cremonese',rating:73,age:21,caps:5,form:7,versatility:6,positions:['ST']},{name:'Opoku',fullName:'Kwame Opoku',club:'Asante Kotoko',rating:72,age:23,caps:2,form:7,versatility:5,positions:['ST']},{name:'Fuseini',fullName:'Mohammed Fuseini',club:'Union SG',rating:71,age:22,caps:1,form:7,versatility:6,positions:['LW','ST']},{name:'Nkrumah',fullName:'Kelvin Nkrumah',club:'Medeama SC',rating:70,age:21,caps:1,form:8,versatility:6,positions:['LW','RW']},{name:'Owusu P.O.',fullName:'Prince Osei Owusu',club:'CF Montreal',rating:75,age:28,caps:1,form:8,versatility:6,positions:['ST']}]};
+let currentSquadMode='full';let worldCupSquad=[];
+const formations={'4-3-3':{lines:[{positions:['GK'],y:95},{positions:['LB','CB','CB','RB'],y:75},{positions:['CM','CM','CM'],y:50},{positions:['LW','ST','RW'],y:20}]},'4-2-3-1':{lines:[{positions:['GK'],y:95},{positions:['LB','CB','CB','RB'],y:75},{positions:['DM','DM'],y:60},{positions:['LW','AM','RW'],y:38},{positions:['ST'],y:15}]},'4-4-2':{lines:[{positions:['GK'],y:95},{positions:['LB','CB','CB','RB'],y:75},{positions:['LM','CM','CM','RM'],y:50},{positions:['ST','ST'],y:20}]},'3-5-2':{lines:[{positions:['GK'],y:95},{positions:['CB','CB','CB'],y:75},{positions:['LWB','CM','DM','CM','RWB'],y:50},{positions:['ST','ST'],y:20}]},'4-1-4-1':{lines:[{positions:['GK'],y:95},{positions:['LB','CB','CB','RB'],y:75},{positions:['DM'],y:62},{positions:['LM','CM','CM','RM'],y:42},{positions:['ST'],y:15}]},'3-4-3':{lines:[{positions:['GK'],y:95},{positions:['CB','CB','CB'],y:75},{positions:['LM','CM','CM','RM'],y:50},{positions:['LW','ST','RW'],y:20}]},'5-3-2':{lines:[{positions:['GK'],y:95},{positions:['LWB','CB','CB','CB','RWB'],y:75},{positions:['CM','DM','CM'],y:50},{positions:['ST','ST'],y:20}]},'4-4-2-diamond':{lines:[{positions:['GK'],y:95},{positions:['LB','CB','CB','RB'],y:75},{positions:['DM'],y:62},{positions:['CM','CM'],y:50},{positions:['AM'],y:32},{positions:['ST','ST'],y:15}]}};
+let selectedLineup={};let currentSlot=null;
+function renderFormation(f){const p=document.getElementById('pitch');p.innerHTML='';selectedLineup={};const fm=formations[f];fm.lines.forEach((l,li)=>{const ld=document.createElement('div');ld.className='formation-line';ld.style.top=l.y+'%';l.positions.forEach((pos,pi)=>{const s=document.createElement('div');s.className='player-slot';const sid=`${pos}-${li}-${pi}`;s.id=sid;s.onclick=()=>openPlayerSelection(sid,pos);const nd=document.createElement('div');nd.className='player-name';nd.textContent=pos;s.appendChild(nd);ld.appendChild(s);});p.appendChild(ld);});updateStats();}
+function openPlayerSelection(sid,pos){currentSlot={id:sid,position:pos};const m=document.getElementById('playerModal');const pl=document.getElementById('playerList');pl.innerHTML='';const ap=getPlayersForPosition(pos);ap.forEach(p=>{const i=document.createElement('div');i.className='player-item';i.onclick=()=>selectPlayer(p);i.innerHTML=`<div class="player-info"><strong>${p.fullName}</strong><small>${p.club} | ${p.age}y | ${p.caps} caps</small></div><div class="player-rating" style="position:static;width:40px;height:40px;font-size:1.1em;">${p.rating}</div>`;pl.appendChild(i);});m.style.display='flex';}
+function getPlayersForPosition(pos){let pm={'GK':['GK'],'CB':['DEF'],'LB':['DEF'],'RB':['DEF','VERSATILE'],'LWB':['DEF'],'RWB':['DEF'],'DM':['MID'],'CM':['MID','VERSATILE'],'AM':['MID','VERSATILE'],'LM':['MID'],'RM':['MID','VERSATILE'],'LW':['ATT'],'RW':['ATT','VERSATILE'],'ST':['ATT']};let cat=pm[pos];let all=[];cat.forEach(c=>{if(players[c])all=all.concat(players[c]);});if(currentSquadMode==='worldcup')all=all.filter(p=>worldCupSquad.includes(p.fullName));return all.filter(p=>{if(pos==='GK')return true;if(!p.positions)return true;const pmap={'CB':['CB'],'LB':['LB'],'RB':['RB'],'LWB':['LB','LWB'],'RWB':['RB','RWB'],'DM':['DM'],'CM':['CM','DM'],'AM':['AM','CM'],'LM':['LW','LM','CM'],'RM':['RW','RM','CM'],'LW':['LW','RW'],'RW':['RW','LW'],'ST':['ST']};return pmap[pos]?.some(p1=>p.positions.includes(p1))||p.versatility>=7;}).sort((a,b)=>b.rating-a.rating);}
+function selectPlayer(p){if(!currentSlot)return;selectedLineup[currentSlot.id]=p;const s=document.getElementById(currentSlot.id);s.classList.add('selected');const nd=s.querySelector('.player-name');nd.textContent=p.name;let rd=s.querySelector('.player-rating');if(!rd){rd=document.createElement('div');rd.className='player-rating';s.appendChild(rd);}rd.textContent=p.rating;closeModal();updateStats();}
+function closeModal(){document.getElementById('playerModal').style.display='none';currentSlot=null;}
+function autoSelectPlayers(){const c=document.getElementById('autoSelectCriteria').value;const slots=document.querySelectorAll('.player-slot');const pref={'CB':['Mohammed Salisu','Alexander Djiku'],'LB':['Derrick Kohn'],'LWB':['Derrick Kohn'],'RB':['Caleb Yirenkyi'],'RWB':['Caleb Yirenkyi']};const exc={'LB':['Mohammed Salisu','Alexander Djiku'],'LWB':['Mohammed Salisu','Alexander Djiku'],'RB':['Mohammed Salisu','Alexander Djiku'],'RWB':['Mohammed Salisu','Alexander Djiku']};slots.forEach(s=>{const pos=s.querySelector('.player-name').textContent;if(!['GK','CB','LB','RB','LWB','RWB','DM','CM','AM','LM','RM','LW','RW','ST'].includes(pos))return;const ap=getPlayersForPosition(pos);const used=Object.values(selectedLineup).map(p=>p.fullName);let avail=ap.filter(p=>!used.includes(p.fullName));if(exc[pos])avail=avail.filter(p=>!exc[pos].includes(p.fullName));if(avail.length===0)return;let best;if(pref[pos]){const pl=pref[pos];for(let pn of pl){const pr=avail.find(p=>p.fullName===pn);if(pr){best=pr;break;}}}if(!best){switch(c){case 'form':best=avail.sort((a,b)=>b.form-a.form)[0];break;case 'experience':best=avail.sort((a,b)=>b.caps-a.caps)[0];break;case 'versatility':best=avail.sort((a,b)=>b.versatility-a.versatility)[0];break;default:best=avail[0];}}selectedLineup[s.id]=best;s.classList.add('selected');const nd=s.querySelector('.player-name');nd.textContent=best.name;let rd=s.querySelector('.player-rating');if(!rd){rd=document.createElement('div');rd.className='player-rating';s.appendChild(rd);}rd.textContent=best.rating;});updateStats();}
+function updateStats(){const lu=Object.values(selectedLineup);if(lu.length===0){document.getElementById('avgRating').textContent='0';document.getElementById('avgAge').textContent='0';document.getElementById('totalCaps').textContent='0';document.getElementById('attackScore').textContent='0';document.getElementById('defenseScore').textContent='0';return;}const ar=(lu.reduce((s,p)=>s+p.rating,0)/lu.length).toFixed(1);const aa=(lu.reduce((s,p)=>s+p.age,0)/lu.length).toFixed(1);const tc=lu.reduce((s,p)=>s+p.caps,0);const att=lu.filter(p=>players.ATT.includes(p));const def=lu.filter(p=>players.DEF.includes(p));const ats=att.length>0?(att.reduce((s,p)=>s+p.rating,0)/att.length).toFixed(0):0;const ds=def.length>0?(def.reduce((s,p)=>s+p.rating,0)/def.length).toFixed(0):0;document.getElementById('avgRating').textContent=ar;document.getElementById('avgAge').textContent=aa;document.getElementById('totalCaps').textContent=tc;document.getElementById('attackScore').textContent=ats;document.getElementById('defenseScore').textContent=ds;}
+async function exportAsImage(){const pc=document.querySelector('.pitch-container');try{const c=await html2canvas(pc,{backgroundColor:'#2d5a3d',scale:2,logging:false});const l=document.createElement('a');l.download=`ghana-blackstars-lineup-${new Date().getTime()}.jpg`;l.href=c.toDataURL('image/jpeg',0.95);l.click();}catch(e){alert('Export failed. Please try again.');}}
+async function exportAsPDF(){const pc=document.querySelector('.pitch-container');try{const c=await html2canvas(pc,{backgroundColor:'#2d5a3d',scale:2,logging:false});const id=c.toDataURL('image/jpeg',0.95);const {jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});const iw=190;const ih=(c.height*iw)/c.width;pdf.addImage(id,'JPEG',10,10,iw,ih);const fm=document.getElementById('formationSelect').value;pdf.text(`Ghana Black Stars - ${fm}`,105,ih+20,{align:'center'});pdf.save(`ghana-blackstars-lineup-${new Date().getTime()}.pdf`);}catch(e){alert('Export failed. Please try again.');}}
+function openWorldCupBuilder(){const m=document.getElementById('worldCupModal');const plc=document.getElementById('wcPlayerList');plc.innerHTML='';const cats=[{name:'Goalkeepers',key:'GK',players:players.GK},{name:'Defenders',key:'DEF',players:players.DEF},{name:'Midfielders',key:'MID',players:players.MID.concat(players.VERSATILE)},{name:'Attackers',key:'ATT',players:players.ATT}];cats.forEach(cat=>{const cd=document.createElement('div');cd.style.cssText='margin-bottom:20px;';const h=document.createElement('h3');h.style.cssText='color:#d4af37;margin-bottom:10px;font-size:1.1em;';h.textContent=cat.name;cd.appendChild(h);cat.players.forEach(p=>{const pd=document.createElement('div');const isSel=worldCupSquad.includes(p.fullName);pd.style.cssText=`background:${isSel?'rgba(0,107,63,0.3)':'rgba(255,255,255,0.05)'};padding:12px;border-radius:8px;margin-bottom:8px;cursor:pointer;transition:all 0.3s ease;display:flex;justify-content:space-between;align-items:center;border:${isSel?'2px solid #fcd116':'2px solid transparent'};`;pd.onmouseover=()=>{if(!isSel)pd.style.background='rgba(212,175,55,0.2)';};pd.onmouseout=()=>{if(!isSel)pd.style.background='rgba(255,255,255,0.05)';};pd.onclick=()=>toggleWorldCupPlayer(p.fullName,pd);pd.innerHTML=`<div><span style="color:${isSel?'#fcd116':'#d4af37'};font-weight:bold;font-size:1.05em;">${isSel?'✓ ':''}${p.fullName}</span><span style="color:#aaa;font-size:0.9em;margin-left:10px;">${p.club}</span></div><div style="display:flex;gap:15px;align-items:center;"><span style="color:#aaa;font-size:0.85em;">${p.age}y | ${p.caps} caps</span><div style="background:#000;color:#fcd116;padding:6px 12px;border-radius:5px;font-weight:bold;">${p.rating}</div></div>`;cd.appendChild(pd);});plc.appendChild(cd);});updateWCSquadCount();m.style.display='flex';}
+function toggleWorldCupPlayer(fn,el){const i=worldCupSquad.indexOf(fn);if(i>-1){worldCupSquad.splice(i,1);el.style.background='rgba(255,255,255,0.05)';el.style.border='2px solid transparent';el.querySelector('span').textContent=el.querySelector('span').textContent.replace('✓ ','');el.querySelector('span').style.color='#d4af37';}else{if(worldCupSquad.length>=26){alert('Maximum 26 players allowed in World Cup squad!');return;}worldCupSquad.push(fn);el.style.background='rgba(0,107,63,0.3)';el.style.border='2px solid #fcd116';el.querySelector('span').textContent='✓ '+el.querySelector('span').textContent;el.querySelector('span').style.color='#fcd116';}updateWCSquadCount();}
+function updateWCSquadCount(){const ce=document.getElementById('wcSquadCount');const c=worldCupSquad.length;ce.textContent=`${c} / 26 Selected`;if(c===26)ce.style.color='#00ff00';else if(c>26)ce.style.color='#ff4444';else ce.style.color='#fcd116';}
+function autoSelectWorldCup(){worldCupSquad=[];players.GK.sort((a,b)=>b.rating-a.rating).slice(0,3).forEach(p=>worldCupSquad.push(p.fullName));players.DEF.sort((a,b)=>b.rating-a.rating).slice(0,8).forEach(p=>worldCupSquad.push(p.fullName));const am=players.MID.concat(players.VERSATILE).sort((a,b)=>b.rating-a.rating);am.slice(0,7).forEach(p=>worldCupSquad.push(p.fullName));players.ATT.sort((a,b)=>b.rating-a.rating).slice(0,8).forEach(p=>worldCupSquad.push(p.fullName));openWorldCupBuilder();}
+function saveWorldCupSquad(){if(worldCupSquad.length!==26){alert(`Please select exactly 26 players. Currently selected: ${worldCupSquad.length}`);return;}currentSquadMode='worldcup';document.getElementById('squadMode').value='worldcup';updateSquadModeDisplay();closeWorldCupModal();renderFormation(document.getElementById('formationSelect').value);displayWorldCupSquad();}
+function closeWorldCupModal(){document.getElementById('worldCupModal').style.display='none';}
+function updateSquadModeDisplay(){const h=document.querySelector('header p');const sms=document.getElementById('squadMode');if(currentSquadMode==='worldcup'){h.textContent=`Tactical Lineup Builder - 2026 World Cup Squad (${worldCupSquad.length}/26 Players)`;h.style.color='#fcd116';sms.options[1].text=`World Cup Squad (${worldCupSquad.length}/26 selected)`;}else{h.textContent='Tactical Lineup Builder - World Cup Bound';h.style.color='#fff';sms.options[1].text=`World Cup Squad (${worldCupSquad.length}/26 selected)`;}}
+function applyColorTheme(t){const ths={classic:{unselected:'linear-gradient(135deg, #d4af37 0%, #f4d03f 100%)',selected:'linear-gradient(135deg, #ce1126 0%, #ff4444 100%)',unselectedText:'#000',selectedText:'#fff',border:'#1a472a',selectedBorder:'#fff'},red:{unselected:'linear-gradient(135deg, #fff 0%, #f0f0f0 100%)',selected:'linear-gradient(135deg, #ce1126 0%, #8b0000 100%)',unselectedText:'#000',selectedText:'#fff',border:'#ce1126',selectedBorder:'#fff'},green:{unselected:'linear-gradient(135deg, #d4af37 0%, #b8941e 100%)',selected:'linear-gradient(135deg, #006b3f 0%, #004d2d 100%)',unselectedText:'#000',selectedText:'#fcd116',border:'#006b3f',selectedBorder:'#fcd116'},black:{unselected:'linear-gradient(135deg, #d4af37 0%, #f4d03f 100%)',selected:'linear-gradient(135deg, #1a1a1a 0%, #000 100%)',unselectedText:'#000',selectedText:'#d4af37',border:'#000',selectedBorder:'#d4af37'},blue:{unselected:'linear-gradient(135deg, #fff 0%, #e8e8e8 100%)',selected:'linear-gradient(135deg, #0066cc 0%, #003d7a 100%)',unselectedText:'#000',selectedText:'#fff',border:'#0066cc',selectedBorder:'#fff'}};const st=ths[t];const s=document.createElement('style');s.id='dynamic-theme';const es=document.getElementById('dynamic-theme');if(es)es.remove();s.textContent=`.player-slot{background:${st.unselected}!important;border-color:${st.border}!important;}.player-slot .player-name{color:${st.unselectedText}!important;}.player-slot.selected{background:${st.selected}!important;border-color:${st.selectedBorder}!important;}.player-slot.selected .player-name{color:${st.selectedText}!important;}`;document.head.appendChild(s);}
+function calculateFormationPower(){const fs=[];for(let fn in formations){const fm=formations[fn];let tp=0;let pc=0;let ap=0;let dp=0;let mp=0;let ds=0;let vb=0;fm.lines.forEach(l=>{l.positions.forEach(pos=>{pc++;const bp=getPlayersForPosition(pos).slice(0,3);if(bp.length>0){const tpl=bp[0];tp+=tpl.rating;if(['ST','LW','RW'].includes(pos))ap+=tpl.rating;else if(['CB','LB','RB','LWB','RWB'].includes(pos))dp+=tpl.rating;else mp+=tpl.rating;if(bp.length>=2)ds+=(bp[1].rating*0.3);if(bp.length>=3)ds+=(bp[2].rating*0.15);if(tpl.versatility>=7)vb+=2;}});});const ar=tp/pc;const bs=Math.min(ap,dp,mp)/10;const fsc=ar+(ds/pc)+bs+vb;let tb=0;if(['4-3-3','4-2-3-1','3-4-3'].includes(fn))tb+=2;if(['4-3-3','4-2-3-1','4-4-2'].includes(fn))tb+=1.5;if(['4-2-3-1','4-1-4-1','4-3-3'].includes(fn))tb+=1;fs.push({name:fn,score:fsc+tb,avgRating:ar.toFixed(1),attack:(ap/Math.max(1,fm.lines.flatMap(l=>l.positions.filter(p=>['ST','LW','RW'].includes(p))).length)).toFixed(0),defense:(dp/Math.max(1,fm.lines.flatMap(l=>l.positions.filter(p=>['CB','LB','RB','LWB','RWB'].includes(p))).length)).toFixed(0),depth:ds.toFixed(1),versatility:vb.toFixed(0)});}fs.sort((a,b)=>b.score-a.score);displayFormationRankings(fs);}
+function displayFormationRankings(rnks){const c=document.getElementById('formationRankings');c.innerHTML='';rnks.forEach((f,i)=>{const rd=document.createElement('div');rd.style.cssText=`background:rgba(255,255,255,0.1);padding:15px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;transition:all 0.3s ease;cursor:pointer;border-left:4px solid ${i===0?'#d4af37':i===1?'#c0c0c0':i===2?'#cd7f32':'rgba(255,255,255,0.3)'};`;rd.onmouseover=()=>rd.style.background='rgba(212,175,55,0.2)';rd.onmouseout=()=>rd.style.background='rgba(255,255,255,0.1)';rd.onclick=()=>{document.getElementById('formationSelect').value=f.name;renderFormation(f.name);window.scrollTo({top:0,behavior:'smooth'});};const md=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`;rd.innerHTML=`<div style="flex:1;"><div style="font-size:1.2em;font-weight:bold;color:#d4af37;margin-bottom:5px;">${md} ${f.name}</div><div style="font-size:0.85em;opacity:0.8;">Power Score: ${f.score.toFixed(1)} | Avg Rating: ${f.avgRating} | Attack: ${f.attack} | Defense: ${f.defense}</div></div><div style="font-size:1.5em;font-weight:bold;color:#fcd116;">${f.score.toFixed(1)}</div>`;c.appendChild(rd);});}
+function displayWorldCupSquad(){const c=document.getElementById('worldCupSquad');c.innerHTML='';if(worldCupSquad.length===0){c.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:30px;opacity:0.6;"><p>No World Cup squad selected yet.</p><p style="margin-top:10px;">Use the "Build World Cup Squad" button above to create your 26-man roster.</p></div>`;return;}const ap=[].concat(players.GK,players.DEF,players.MID,players.VERSATILE,players.ATT);const sp=ap.filter(p=>worldCupSquad.includes(p.fullName));const poss=[{name:'Goalkeepers',players:sp.filter(p=>players.GK.includes(p))},{name:'Defenders',players:sp.filter(p=>players.DEF.includes(p))},{name:'Midfielders',players:sp.filter(p=>players.MID.includes(p)||players.VERSATILE.includes(p))},{name:'Attackers',players:sp.filter(p=>players.ATT.includes(p))}];poss.forEach(cat=>{if(cat.players.length>0){const pd=document.createElement('div');pd.style.cssText='background:rgba(255,255,255,0.05);padding:15px;border-radius:10px;';const ti=document.createElement('h3');ti.style.cssText='color:#fcd116;font-size:1em;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;';ti.textContent=`${cat.name} (${cat.players.length})`;pd.appendChild(ti);cat.players.forEach(p=>{const pld=document.createElement('div');pld.style.cssText='padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;';pld.innerHTML=`<div><span style="color:#d4af37;font-weight:bold;">${p.name}</span><span style="color:#aaa;font-size:0.85em;margin-left:8px;">${p.club}</span></div><div style="background:#000;color:#fcd116;padding:4px 10px;border-radius:5px;font-weight:bold;font-size:0.9em;">${p.rating}</div>`;pd.appendChild(pld);});c.appendChild(pd);}});const cd=document.createElement('div');cd.style.cssText='grid-column:1/-1;text-align:center;padding:20px;background:rgba(212,175,55,0.1);border-radius:10px;font-size:1.2em;font-weight:bold;color:#fcd116;margin-top:10px;';cd.innerHTML=`Total Squad: ${worldCupSquad.length} / 26 Players`;c.appendChild(cd);}
+document.getElementById('formationSelect').addEventListener('change',e=>renderFormation(e.target.value));document.getElementById('colorTheme').addEventListener('change',e=>applyColorTheme(e.target.value));document.getElementById('squadMode').addEventListener('change',e=>{if(e.target.value==='worldcup'&&worldCupSquad.length===0){alert('Please build your World Cup squad first using the "Build World Cup Squad" button!');e.target.value='full';return;}currentSquadMode=e.target.value;renderFormation(document.getElementById('formationSelect').value);updateSquadModeDisplay();});renderFormation('4-3-3');calculateFormationPower();displayWorldCupSquad();
     </script>
 </body>
 </html>
