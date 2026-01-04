@@ -545,7 +545,7 @@ def main():
             st.session_state.api_keys['openrouter'] = api_key
         
         if api_key:
-            st.success("")
+            pass
         else:
             st.warning("⚠️ Add API key for AI features")
         
