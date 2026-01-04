@@ -12,7 +12,7 @@ import time
 
 # Page Configuration
 st.set_page_config(
-    page_title="Ghana Black Stars AI Builder",
+    page_title="Black Stars Analysis",
     page_icon="🇬🇭",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -339,8 +339,8 @@ def call_openrouter_api(messages, model, api_key):
     headers = {
         'Authorization': f'Bearer {api_key}',
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://github.com/rkarikari/blackstars-ai',
-        'X-Title': 'Ghana Black Stars AI Builder'
+        'HTTP-Referer': 'https://github.com/rkarikari/stem/blackstars.html',
+        'X-Title': 'Ghana Black Stars'
     }
     
     payload = {
@@ -480,7 +480,7 @@ def main():
     # Header
     st.markdown("""
     <div style='text-align: center; padding: 2rem 0;'>
-        <h1 style='font-size: 3rem; margin-bottom: 0.5rem;'>🇬🇭 GHANA BLACK STARS AI BUILDER</h1>
+        <h1 style='font-size: 3rem; margin-bottom: 0.5rem;'>🇬🇭 BLACK STARS </h1>
         <p style='font-size: 1.2rem; color: #fcd116;'>2026 World Cup • AI-Powered Tactical Analysis</p>
     </div>
     """, unsafe_allow_html=True)
@@ -762,7 +762,7 @@ Be specific, tactical, and actionable."""
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center; color: #d4af37; font-size: 0.85rem; padding: 1rem 0;'>
-        <p>🇬🇭 <strong>Ghana Black Stars AI Builder</strong> • Powered by OpenRouter AI</p>
+        <p>🇬🇭 <strong> BlackStars Analysis </strong> • RNK RadioSport</p>
         <p style='font-size: 0.75rem; color: #aaa;'>Build winning formations for the 2026 World Cup journey</p>
     </div>
     """, unsafe_allow_html=True)
