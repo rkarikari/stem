@@ -9,6 +9,15 @@ import json
 import requests
 from datetime import datetime
 import time
+from io import BytesIO
+from reportlab.lib.pagesizes import A4, letter
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.pdfgen import canvas
+import base64
 
 # Page Configuration
 st.set_page_config(
@@ -531,6 +540,211 @@ def calculate_formation_rankings():
     rankings.sort(key=lambda x: x['score'], reverse=True)
     return rankings
 
+def create_pdf_export(formation, lineup, stats, ai_analysis=None, rankings=None):
+    """Create comprehensive PDF export of lineup and analysis"""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    story = []
+    
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#d4af37'),
+        spaceAfter=30,
+        alignment=TA_CENTER
+    )
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=16,
+        textColor=colors.HexColor('#fcd116'),
+        spaceAfter=12
+    )
+    normal_style = styles['Normal']
+    
+    # Title
+    story.append(Paragraph("🇬🇭 GHANA BLACK STARS 2026", title_style))
+    story.append(Paragraph(f"Tactical Lineup Report - {formation}", heading_style))
+    story.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y at %H:%M')}", normal_style))
+    story.append(Spacer(1, 0.3*inch))
+    
+    # Team Statistics
+    story.append(Paragraph("📊 Team Statistics", heading_style))
+    stats_data = [
+        ['Metric', 'Value'],
+        ['Average Rating', f"{stats['avg_rating']}"],
+        ['Average Age', f"{stats['avg_age']} years"],
+        ['Total Caps', f"{stats['total_caps']}"],
+        ['Chemistry', f"{stats['chemistry']}%"],
+        ['Attack Power', f"{stats['attack']}"],
+        ['Defense Power', f"{stats['defense']}"]
+    ]
+    stats_table = Table(stats_data, colWidths=[3*inch, 2*inch])
+    stats_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d4af37')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f5f5f5')),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    story.append(stats_table)
+    story.append(Spacer(1, 0.3*inch))
+    
+    # Formation Lineup
+    story.append(Paragraph(f"⚽ Starting XI - {formation}", heading_style))
+    formation_data = FORMATIONS[formation]
+    
+    for line_idx, line in enumerate(formation_data):
+        story.append(Paragraph(f"<b>{line['label']}</b>", normal_style))
+        
+        line_players = []
+        slot_counter = 0
+        
+        for pos_idx, position in enumerate(line['positions']):
+            slot_id = f"{position}_{line_idx}_{pos_idx}_{slot_counter}"
+            player = lineup.get(slot_id)
+            
+            if player:
+                line_players.append([
+                    position,
+                    player['fullName'],
+                    player['club'],
+                    f"{player['rating']}",
+                    f"{player['age']}y",
+                    f"{player['caps']} caps"
+                ])
+            else:
+                line_players.append([position, 'Not Selected', '-', '-', '-', '-'])
+            
+            slot_counter += 1
+        
+        if line_players:
+            player_table = Table(line_players, colWidths=[0.8*inch, 1.8*inch, 1.5*inch, 0.6*inch, 0.6*inch, 0.8*inch])
+            player_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), colors.white),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            story.append(player_table)
+            story.append(Spacer(1, 0.15*inch))
+    
+    # Formation Rankings
+    if rankings:
+        story.append(PageBreak())
+        story.append(Paragraph("⚡ Formation Power Rankings", heading_style))
+        
+        rankings_data = [['Rank', 'Formation', 'Score', 'Avg Rating', 'Attack', 'Defense']]
+        for idx, rank in enumerate(rankings[:10]):
+            medal = "🥇" if idx == 0 else "🥈" if idx == 1 else "🥉" if idx == 2 else str(idx + 1)
+            rankings_data.append([
+                medal,
+                rank['name'],
+                str(rank['score']),
+                str(rank['avg_rating']),
+                str(rank['attack']),
+                str(rank['defense'])
+            ])
+        
+        rankings_table = Table(rankings_data, colWidths=[0.6*inch, 1.8*inch, 0.8*inch, 1*inch, 0.8*inch, 0.8*inch])
+        rankings_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d4af37')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ]))
+        story.append(rankings_table)
+        story.append(Spacer(1, 0.3*inch))
+    
+    # AI Analysis
+    if ai_analysis:
+        story.append(PageBreak())
+        story.append(Paragraph("🧠 AI Tactical Analysis", heading_style))
+        
+        # Split analysis into paragraphs
+        analysis_paragraphs = ai_analysis.split('\n\n')
+        for para in analysis_paragraphs:
+            if para.strip():
+                story.append(Paragraph(para.strip().replace('\n', '<br/>'), normal_style))
+                story.append(Spacer(1, 0.15*inch))
+    
+    # Footer
+    story.append(Spacer(1, 0.5*inch))
+    footer_style = ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.grey,
+        alignment=TA_CENTER
+    )
+    story.append(Paragraph("Ghana Black Stars - 2026 World Cup Analysis", footer_style))
+    story.append(Paragraph("Generated by RNK RadioSport Tactical Analysis System", footer_style))
+    
+    # Build PDF
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+def create_simple_text_export(formation, lineup, stats, ai_analysis=None):
+    """Create simple text export as fallback"""
+    export_text = f"""
+🇬🇭 GHANA BLACK STARS 2026 - TACTICAL LINEUP REPORT
+{'='*70}
+
+Formation: {formation}
+Generated: {datetime.now().strftime('%B %d, %Y at %H:%M')}
+
+TEAM STATISTICS
+{'='*70}
+Average Rating: {stats['avg_rating']}
+Average Age: {stats['avg_age']} years
+Total Caps: {stats['total_caps']}
+Chemistry: {stats['chemistry']}%
+Attack Power: {stats['attack']}
+Defense Power: {stats['defense']}
+
+STARTING XI
+{'='*70}
+"""
+    
+    formation_data = FORMATIONS[formation]
+    slot_counter = 0
+    
+    for line_idx, line in enumerate(formation_data):
+        export_text += f"\n{line['label']}\n{'-'*70}\n"
+        
+        for pos_idx, position in enumerate(line['positions']):
+            slot_id = f"{position}_{line_idx}_{pos_idx}_{slot_counter}"
+            slot_counter += 1
+            player = lineup.get(slot_id)
+            
+            if player:
+                export_text += f"{position:8} | {player['fullName']:25} | {player['club']:20} | {player['rating']} | {player['age']}y | {player['caps']} caps\n"
+            else:
+                export_text += f"{position:8} | Not Selected\n"
+    
+    if ai_analysis:
+        export_text += f"\n\nAI TACTICAL ANALYSIS\n{'='*70}\n{ai_analysis}\n"
+    
+    export_text += f"\n\n{'='*70}\n"
+    export_text += "Ghana Black Stars - 2026 World Cup Analysis\n"
+    export_text += "Generated by RNK RadioSport Tactical Analysis System\n"
+    
+    return export_text
+
 def main():
     # Header
     st.markdown("""
@@ -664,6 +878,97 @@ def main():
             
             st.session_state.lineup = lineup
             st.rerun()
+        
+        st.markdown("---")
+        
+        # Export Options
+        st.markdown("### 📄 Export Options")
+        
+        export_disabled = len(st.session_state.lineup) == 0
+        
+        if st.button("📄 Export PDF Report", use_container_width=True, disabled=export_disabled):
+            if not export_disabled:
+                try:
+                    rankings = calculate_formation_rankings()
+                    pdf_buffer = create_pdf_export(
+                        formation,
+                        st.session_state.lineup,
+                        stats,
+                        st.session_state.ai_analysis,
+                        rankings
+                    )
+                    
+                    st.download_button(
+                        label="⬇️ Download PDF Report",
+                        data=pdf_buffer,
+                        file_name=f"blackstars_lineup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                    st.success("✅ PDF Report generated!")
+                except Exception as e:
+                    st.error(f"PDF generation failed: {str(e)}")
+                    # Fallback to text export
+                    text_export = create_simple_text_export(
+                        formation,
+                        st.session_state.lineup,
+                        stats,
+                        st.session_state.ai_analysis
+                    )
+                    st.download_button(
+                        label="⬇️ Download Text Report (Fallback)",
+                        data=text_export,
+                        file_name=f"blackstars_lineup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                        mime="text/plain",
+                        use_container_width=True
+                    )
+        
+        if st.button("📝 Export Text Report", use_container_width=True, disabled=export_disabled):
+            if not export_disabled:
+                text_export = create_simple_text_export(
+                    formation,
+                    st.session_state.lineup,
+                    stats,
+                    st.session_state.ai_analysis
+                )
+                
+                st.download_button(
+                    label="⬇️ Download Text Report",
+                    data=text_export,
+                    file_name=f"blackstars_lineup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                    mime="text/plain",
+                    use_container_width=True
+                )
+                st.success("✅ Text Report ready!")
+        
+        if st.button("📊 Export JSON Data", use_container_width=True, disabled=export_disabled):
+            if not export_disabled:
+                export_data = {
+                    'formation': formation,
+                    'generated': datetime.now().isoformat(),
+                    'statistics': stats,
+                    'lineup': {k: {
+                        'position': k.split('_')[0],
+                        'player': v
+                    } for k, v in st.session_state.lineup.items()},
+                    'ai_analysis': st.session_state.ai_analysis,
+                    'squad_mode': st.session_state.squad_mode,
+                    'world_cup_squad': st.session_state.world_cup_squad
+                }
+                
+                json_str = json.dumps(export_data, indent=2)
+                
+                st.download_button(
+                    label="⬇️ Download JSON Data",
+                    data=json_str,
+                    file_name=f"blackstars_lineup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    mime="application/json",
+                    use_container_width=True
+                )
+                st.success("✅ JSON Data ready!")
+        
+        if export_disabled:
+            st.info("ℹ️ Add players to lineup to enable export")
         
         st.markdown("---")
         
