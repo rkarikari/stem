@@ -543,7 +543,7 @@ def calculate_formation_rankings():
 def create_pdf_export(formation, lineup, stats, ai_analysis=None, rankings=None):
     """Create comprehensive PDF export of lineup and analysis"""
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
     story = []
     
     # Styles
@@ -554,25 +554,35 @@ def create_pdf_export(formation, lineup, stats, ai_analysis=None, rankings=None)
         fontSize=24,
         textColor=colors.HexColor('#d4af37'),
         spaceAfter=30,
-        alignment=TA_CENTER
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
     )
     heading_style = ParagraphStyle(
         'CustomHeading',
         parent=styles['Heading2'],
         fontSize=16,
         textColor=colors.HexColor('#fcd116'),
-        spaceAfter=12
+        spaceAfter=12,
+        fontName='Helvetica-Bold'
+    )
+    subheading_style = ParagraphStyle(
+        'SubHeading',
+        parent=styles['Heading3'],
+        fontSize=12,
+        textColor=colors.HexColor('#d4af37'),
+        spaceAfter=8,
+        fontName='Helvetica-Bold'
     )
     normal_style = styles['Normal']
     
     # Title
-    story.append(Paragraph("🇬🇭 GHANA BLACK STARS 2026", title_style))
+    story.append(Paragraph("GHANA BLACK STARS 2026", title_style))
     story.append(Paragraph(f"Tactical Lineup Report - {formation}", heading_style))
     story.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y at %H:%M')}", normal_style))
     story.append(Spacer(1, 0.3*inch))
     
     # Team Statistics
-    story.append(Paragraph("📊 Team Statistics", heading_style))
+    story.append(Paragraph("Team Statistics", heading_style))
     stats_data = [
         ['Metric', 'Value'],
         ['Average Rating', f"{stats['avg_rating']}"],
@@ -590,24 +600,33 @@ def create_pdf_export(formation, lineup, stats, ai_analysis=None, rankings=None)
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, 0), 12),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('TOPPADDING', (0, 0), (-1, 0), 8),
         ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f5f5f5')),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTSIZE', (0, 1), (-1, -1), 11),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
     ]))
     story.append(stats_table)
-    story.append(Spacer(1, 0.3*inch))
+    story.append(Spacer(1, 0.4*inch))
     
     # Formation Lineup
-    story.append(Paragraph(f"⚽ Starting XI - {formation}", heading_style))
+    story.append(Paragraph(f"Starting XI Formation: {formation}", heading_style))
+    story.append(Spacer(1, 0.2*inch))
+    
     formation_data = FORMATIONS[formation]
+    slot_counter = 0
     
     for line_idx, line in enumerate(formation_data):
-        story.append(Paragraph(f"<b>{line['label']}</b>", normal_style))
+        # Line label
+        story.append(Paragraph(f"{line['label']}", subheading_style))
         
+        # Collect all players in this line
         line_players = []
-        slot_counter = 0
         
         for pos_idx, position in enumerate(line['positions']):
             slot_id = f"{position}_{line_idx}_{pos_idx}_{slot_counter}"
+            slot_counter += 1
             player = lineup.get(slot_id)
             
             if player:
@@ -615,37 +634,105 @@ def create_pdf_export(formation, lineup, stats, ai_analysis=None, rankings=None)
                     position,
                     player['fullName'],
                     player['club'],
-                    f"{player['rating']}",
+                    str(player['rating']),
                     f"{player['age']}y",
-                    f"{player['caps']} caps"
+                    f"{player['caps']} caps",
+                    f"Form: {player['form']}/10"
                 ])
             else:
-                line_players.append([position, 'Not Selected', '-', '-', '-', '-'])
-            
-            slot_counter += 1
+                line_players.append([
+                    position,
+                    'Not Selected',
+                    '-',
+                    '-',
+                    '-',
+                    '-',
+                    '-'
+                ])
         
+        # Create table for this line
         if line_players:
-            player_table = Table(line_players, colWidths=[0.8*inch, 1.8*inch, 1.5*inch, 0.6*inch, 0.6*inch, 0.8*inch])
+            player_table = Table(
+                line_players, 
+                colWidths=[0.7*inch, 1.6*inch, 1.4*inch, 0.6*inch, 0.5*inch, 0.7*inch, 0.8*inch]
+            )
             player_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, -1), colors.white),
                 ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('ALIGN', (0, 0), (0, -1), 'CENTER'),  # Position column centered
+                ('ALIGN', (1, 0), (-1, -1), 'LEFT'),   # Other columns left-aligned
                 ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
                 ('FONTSIZE', (0, 0), (-1, -1), 9),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('TOPPADDING', (0, 0), (-1, -1), 5),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                ('LEFTPADDING', (0, 0), (-1, -1), 4),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 4),
             ]))
             story.append(player_table)
-            story.append(Spacer(1, 0.15*inch))
+            story.append(Spacer(1, 0.2*inch))
+    
+    # Complete Squad List (if lineup has players)
+    if lineup:
+        story.append(PageBreak())
+        story.append(Paragraph("Complete Squad Details", heading_style))
+        story.append(Spacer(1, 0.2*inch))
+        
+        # Get all unique players in lineup
+        all_lineup_players = list(lineup.values())
+        all_lineup_players.sort(key=lambda x: x['rating'], reverse=True)
+        
+        squad_data = [['#', 'Player Name', 'Club', 'Position', 'Rating', 'Age', 'Caps', 'Form']]
+        
+        slot_counter = 0
+        for line_idx, line in enumerate(formation_data):
+            for pos_idx, position in enumerate(line['positions']):
+                slot_id = f"{position}_{line_idx}_{pos_idx}_{slot_counter}"
+                slot_counter += 1
+                player = lineup.get(slot_id)
+                
+                if player:
+                    squad_data.append([
+                        str(len(squad_data)),
+                        player['fullName'],
+                        player['club'],
+                        position,
+                        str(player['rating']),
+                        str(player['age']),
+                        str(player['caps']),
+                        f"{player['form']}/10"
+                    ])
+        
+        squad_table = Table(
+            squad_data,
+            colWidths=[0.4*inch, 1.6*inch, 1.3*inch, 0.8*inch, 0.6*inch, 0.5*inch, 0.5*inch, 0.6*inch]
+        )
+        squad_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a472a')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#fcd116')),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9f9f9')])
+        ]))
+        story.append(squad_table)
+        story.append(Spacer(1, 0.3*inch))
     
     # Formation Rankings
     if rankings:
         story.append(PageBreak())
-        story.append(Paragraph("⚡ Formation Power Rankings", heading_style))
+        story.append(Paragraph("Formation Power Rankings", heading_style))
+        story.append(Spacer(1, 0.2*inch))
         
         rankings_data = [['Rank', 'Formation', 'Score', 'Avg Rating', 'Attack', 'Defense']]
         for idx, rank in enumerate(rankings[:10]):
-            medal = "🥇" if idx == 0 else "🥈" if idx == 1 else "🥉" if idx == 2 else str(idx + 1)
+            medal = "1st" if idx == 0 else "2nd" if idx == 1 else "3rd" if idx == 2 else f"{idx + 1}th"
             rankings_data.append([
                 medal,
                 rank['name'],
@@ -655,7 +742,7 @@ def create_pdf_export(formation, lineup, stats, ai_analysis=None, rankings=None)
                 str(rank['defense'])
             ])
         
-        rankings_table = Table(rankings_data, colWidths=[0.6*inch, 1.8*inch, 0.8*inch, 1*inch, 0.8*inch, 0.8*inch])
+        rankings_table = Table(rankings_data, colWidths=[0.7*inch, 1.8*inch, 0.8*inch, 1*inch, 0.8*inch, 0.8*inch])
         rankings_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d4af37')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
@@ -665,21 +752,37 @@ def create_pdf_export(formation, lineup, stats, ai_analysis=None, rankings=None)
             ('BACKGROUND', (0, 1), (-1, -1), colors.white),
             ('GRID', (0, 0), (-1, -1), 1, colors.grey),
             ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9f9f9')])
         ]))
         story.append(rankings_table)
         story.append(Spacer(1, 0.3*inch))
     
     # AI Analysis
-    if ai_analysis:
+    if ai_analysis and ai_analysis.strip():
         story.append(PageBreak())
-        story.append(Paragraph("🧠 AI Tactical Analysis", heading_style))
+        story.append(Paragraph("AI Tactical Analysis", heading_style))
+        story.append(Spacer(1, 0.2*inch))
         
-        # Split analysis into paragraphs
-        analysis_paragraphs = ai_analysis.split('\n\n')
+        # Split analysis into paragraphs and format properly
+        analysis_paragraphs = ai_analysis.split('\n')
         for para in analysis_paragraphs:
             if para.strip():
-                story.append(Paragraph(para.strip().replace('\n', '<br/>'), normal_style))
-                story.append(Spacer(1, 0.15*inch))
+                # Handle bold markdown-style formatting
+                para_cleaned = para.strip().replace('**', '<b>').replace('**', '</b>')
+                # Handle numbered lists
+                if para_cleaned and (para_cleaned[0].isdigit() or para_cleaned.startswith('-') or para_cleaned.startswith('•')):
+                    para_style = ParagraphStyle(
+                        'ListItem',
+                        parent=normal_style,
+                        leftIndent=20,
+                        spaceAfter=8
+                    )
+                    story.append(Paragraph(para_cleaned, para_style))
+                else:
+                    story.append(Paragraph(para_cleaned, normal_style))
+                story.append(Spacer(1, 0.1*inch))
     
     # Footer
     story.append(Spacer(1, 0.5*inch))
@@ -690,8 +793,8 @@ def create_pdf_export(formation, lineup, stats, ai_analysis=None, rankings=None)
         textColor=colors.grey,
         alignment=TA_CENTER
     )
-    story.append(Paragraph("Ghana Black Stars - 2026 World Cup Analysis", footer_style))
-    story.append(Paragraph("Generated by RNK RadioSport Tactical Analysis System", footer_style))
+    story.append(Paragraph("Ghana Black Stars - 2026 World Cup Tactical Analysis", footer_style))
+    story.append(Paragraph("Generated by RNK RadioSport Analysis System", footer_style))
     
     # Build PDF
     doc.build(story)
