@@ -2,11 +2,11 @@ streamlit
 requests
 PyPDF2
 matplotlib
+reportlab
 numpy
 pandas
 seaborn
 Pillow
 plotly
-reportlab
 
 
