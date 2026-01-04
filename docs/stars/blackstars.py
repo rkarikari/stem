@@ -889,11 +889,12 @@ def main():
         if st.button("📄 Export PDF Report", use_container_width=True, disabled=export_disabled):
             if not export_disabled:
                 try:
+                    current_stats = calculate_stats(st.session_state.lineup)
                     rankings = calculate_formation_rankings()
                     pdf_buffer = create_pdf_export(
                         formation,
                         st.session_state.lineup,
-                        stats,
+                        current_stats,
                         st.session_state.ai_analysis,
                         rankings
                     )
@@ -909,10 +910,11 @@ def main():
                 except Exception as e:
                     st.error(f"PDF generation failed: {str(e)}")
                     # Fallback to text export
+                    current_stats = calculate_stats(st.session_state.lineup)
                     text_export = create_simple_text_export(
                         formation,
                         st.session_state.lineup,
-                        stats,
+                        current_stats,
                         st.session_state.ai_analysis
                     )
                     st.download_button(
@@ -925,10 +927,11 @@ def main():
         
         if st.button("📝 Export Text Report", use_container_width=True, disabled=export_disabled):
             if not export_disabled:
+                current_stats = calculate_stats(st.session_state.lineup)
                 text_export = create_simple_text_export(
                     formation,
                     st.session_state.lineup,
-                    stats,
+                    current_stats,
                     st.session_state.ai_analysis
                 )
                 
@@ -943,10 +946,11 @@ def main():
         
         if st.button("📊 Export JSON Data", use_container_width=True, disabled=export_disabled):
             if not export_disabled:
+                current_stats = calculate_stats(st.session_state.lineup)
                 export_data = {
                     'formation': formation,
                     'generated': datetime.now().isoformat(),
-                    'statistics': stats,
+                    'statistics': current_stats,
                     'lineup': {k: {
                         'position': k.split('_')[0],
                         'player': v
