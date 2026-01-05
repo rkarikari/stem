@@ -1402,25 +1402,26 @@ def render_lineup_builder_tab():
             if not api_key:
                 st.error("⚠️ API key required for AI optimization")
             else:
+                # Step 1: Determine best formation
+                rankings = calculate_formation_rankings()
+                best_formation = rankings[0]['name']
+                
+                # Step 2: Update session state formation FIRST
+                st.session_state.selected_formation = best_formation
+                
+                # Step 3: Clear existing lineup to avoid conflicts
+                st.session_state.lineup = {}
+                
+                # Step 4: Build lineup with the new formation
                 with st.spinner("🤖 AI creating World Cup winning team..."):
-                    # Step 1: Determine best formation
-                    rankings = calculate_formation_rankings()
-                    best_formation = rankings[0]['name']
-                    
-                    # Step 2: Update session state formation FIRST
-                    st.session_state.selected_formation = best_formation
-                    
-                    # Step 3: Clear existing lineup to avoid conflicts
-                    st.session_state.lineup = {}
-                    
-                    # Step 4: Build lineup with the new formation
                     best_lineup, analysis = create_ultimate_team(api_key, st.session_state.selected_model, best_formation)
                     
                     # Step 5: Apply lineup and analysis
                     st.session_state.lineup = best_lineup
                     st.session_state.ai_analysis = analysis
-                    
+                
                 st.success(f"✅ Ultimate team created with {best_formation}!")
+                time.sleep(0.5)  # Brief pause to show success message
                 st.rerun()
         
         if st.button("🔄 Clear Lineup", use_container_width=True):
