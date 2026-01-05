@@ -491,7 +491,90 @@ def calculate_stats(lineup):
         'defense': defense
     }
 
-def auto_select_best_xi(formation):
+def create_ultimate_team(api_key, model):
+    """Create the ultimate World Cup winning team with AI optimization"""
+    
+    # Step 1: Determine best formation
+    rankings = calculate_formation_rankings()
+    best_formation = rankings[0]['name']
+    
+    # Step 2: Auto-select best XI
+    best_lineup = auto_select_best_xi(best_formation)
+    
+    # Step 3: Get current stats
+    stats = calculate_stats(best_lineup)
+    
+    # Step 4: Get AI analysis and recommendations
+    context = f"""Formation: {best_formation}
+
+Players Selected:
+"""
+    
+    formation_data = FORMATIONS[best_formation]
+    slot_counter = 0
+    
+    for line_idx, line in enumerate(formation_data):
+        context += f"\n{line['label']}:\n"
+        for pos_idx, position in enumerate(line['positions']):
+            slot_id = f"{position}_{line_idx}_{pos_idx}_{slot_counter}"
+            slot_counter += 1
+            player = best_lineup.get(slot_id)
+            
+            if player:
+                context += f"  - {position}: {player['fullName']} ({player['club']}) - Rating: {player['rating']}, Age: {player['age']}, Form: {player['form']}/10\n"
+    
+    context += f"""
+
+Team Statistics:
+- Average Rating: {stats['avg_rating']}
+- Average Age: {stats['avg_age']} years
+- Total Caps: {stats['total_caps']}
+- Chemistry: {stats['chemistry']}%
+- Attack Power: {stats['attack']}
+- Defense Power: {stats['defense']}
+"""
+    
+    prompt = f"""You are building Ghana's ultimate World Cup winning team. Analyze this lineup:
+
+{context}
+
+Provide a comprehensive analysis with:
+
+1. **Formation Analysis**: Why this formation is optimal for Ghana's playing style and player strengths.
+
+2. **Tactical Strengths**: 3-4 key advantages this lineup provides.
+
+3. **Tactical Adjustments**: Specific in-game tactical tweaks to maximize performance.
+
+4. **Substitution Strategy**: 
+   - **If Winning (Protecting Lead)**: Which 3 substitutions to make and when
+   - **If Drawing (Need Goal)**: Which 3 attacking substitutions to make
+   - **If Losing (Desperate)**: Ultra-attacking formation and substitution changes
+   - Include specific player names from the full squad
+
+5. **World Cup Optimization**: 
+   - Tournament rotation strategy to manage fitness
+   - How to adapt tactics against different opponent styles (possession-based, counter-attacking, physical)
+   - Set-piece strategies (corners, free-kicks)
+   - Penalty shootout preparation
+
+6. **Fine-Tuning Recommendations**: 
+   - 2-3 specific training focuses
+   - Player partnerships to develop
+   - Alternative formation options for different game scenarios
+
+Be specific with player names, tactical instructions, and match situations."""
+    
+    try:
+        messages = [{"role": "user", "content": prompt}]
+        response = call_openrouter_api(messages, model, api_key)
+        data = response.json()
+        analysis = data['choices'][0]['message']['content']
+        
+        return best_formation, best_lineup, analysis
+    
+    except Exception as e:
+        return best_formation, best_lineup, f"Error generating analysis: {str(e)}"
     """Auto-select best XI for formation"""
     lineup = {}
     formation_data = FORMATIONS[formation]
@@ -1299,6 +1382,18 @@ def render_lineup_builder_tab():
         
         # Quick Actions
         st.markdown("### 🎯 Quick Actions")
+        
+        if st.button("🏆 Build Ultimate Team", use_container_width=True, type="primary"):
+            if not api_key:
+                st.error("⚠️ API key required for AI optimization")
+            else:
+                with st.spinner("🤖 AI creating World Cup winning team..."):
+                    best_formation, best_lineup, analysis = create_ultimate_team(api_key, st.session_state.selected_model)
+                    st.session_state.selected_formation = best_formation
+                    st.session_state.lineup = best_lineup
+                    st.session_state.ai_analysis = analysis
+                st.success(f"✅ Ultimate team created with {best_formation}!")
+                st.rerun()
         
         if st.button("🔄 Clear Lineup", use_container_width=True):
             st.session_state.lineup = {}
