@@ -1160,7 +1160,7 @@ def render_chat_analysis_tab():
         
         if st.session_state.lineup:
             stats = calculate_stats(st.session_state.lineup)
-            formation = st.session_state.get('selected_formation', '4-3-3 (Attacking)')
+            formation = st.session_state.get('selected_formation', '3-4-3 (Ultra Attack)')
             
             st.markdown(f"""
             <div style='background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;'>
@@ -1285,7 +1285,7 @@ def render_lineup_builder_tab():
     
     # Store formation in session state
     if 'selected_formation' not in st.session_state:
-        st.session_state.selected_formation = '4-3-3 (Attacking)'
+        st.session_state.selected_formation = '3-4-3 (Ultra Attack)'
     
     # Sidebar
     with st.sidebar:
