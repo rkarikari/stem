@@ -495,6 +495,71 @@ def calculate_stats(lineup):
         'defense': defense
     }
 
+def auto_select_best_xi(formation):
+    """Auto-select best XI for formation"""
+    lineup = {}
+    formation_data = FORMATIONS[formation]
+    slot_counter = 0
+    used_players = set()
+    
+    for line_idx, line in enumerate(formation_data):
+        for pos_idx, pos in enumerate(line['positions']):
+            slot_id = f"{pos}_{line_idx}_{pos_idx}_{slot_counter}"
+            slot_counter += 1
+            available = get_players_for_position(pos, formation)
+            
+            for player in available:
+                if player['fullName'] not in used_players:
+                    lineup[slot_id] = player
+                    used_players.add(player['fullName'])
+                    break
+    
+    return lineup
+
+def calculate_formation_rankings():
+    """Calculate power rankings for all formations"""
+    rankings = []
+    
+    for formation_name in FORMATIONS.keys():
+        formation = FORMATIONS[formation_name]
+        total_power = 0
+        position_count = 0
+        attack_power = 0
+        defense_power = 0
+        mid_power = 0
+        
+        for line in formation:
+            for pos in line['positions']:
+                position_count += 1
+                available = get_players_for_position(pos, formation_name)
+                
+                if available:
+                    top_player = available[0]
+                    total_power += top_player['rating']
+                    
+                    if pos in ['ST', 'LST', 'RST', 'LW', 'RW']:
+                        attack_power += top_player['rating']
+                    elif pos in ['CB', 'LCB', 'RCB', 'LB', 'RB', 'LWB', 'RWB']:
+                        defense_power += top_player['rating']
+                    else:
+                        mid_power += top_player['rating']
+        
+        avg_rating = total_power / position_count if position_count > 0 else 0
+        balance = min(attack_power, defense_power, mid_power) / 10 if all([attack_power, defense_power, mid_power]) else 0
+        
+        score = avg_rating + balance
+        
+        rankings.append({
+            'name': formation_name,
+            'score': round(score, 1),
+            'avg_rating': round(avg_rating, 1),
+            'attack': round(attack_power / max(1, len([p for l in formation for p in l['positions'] if p in ['ST', 'LST', 'RST', 'LW', 'RW']])), 0),
+            'defense': round(defense_power / max(1, len([p for l in formation for p in l['positions'] if p in ['CB', 'LCB', 'RCB', 'LB', 'RB', 'LWB', 'RWB']])), 0)
+        })
+    
+    rankings.sort(key=lambda x: x['score'], reverse=True)
+    return rankings
+
 def create_ultimate_team(api_key, model):
     """Create the ultimate World Cup winning team with AI optimization"""
     
@@ -579,69 +644,6 @@ Be specific with player names, tactical instructions, and match situations."""
     
     except Exception as e:
         return best_formation, best_lineup, f"Error generating analysis: {str(e)}"
-    """Auto-select best XI for formation"""
-    lineup = {}
-    formation_data = FORMATIONS[formation]
-    slot_counter = 0
-    used_players = set()
-    
-    for line_idx, line in enumerate(formation_data):
-        for pos_idx, pos in enumerate(line['positions']):
-            slot_id = f"{pos}_{line_idx}_{pos_idx}_{slot_counter}"
-            slot_counter += 1
-            available = get_players_for_position(pos, formation)
-            
-            for player in available:
-                if player['fullName'] not in used_players:
-                    lineup[slot_id] = player
-                    used_players.add(player['fullName'])
-                    break
-    
-    return lineup
-
-def calculate_formation_rankings():
-    """Calculate power rankings for all formations"""
-    rankings = []
-    
-    for formation_name in FORMATIONS.keys():
-        formation = FORMATIONS[formation_name]
-        total_power = 0
-        position_count = 0
-        attack_power = 0
-        defense_power = 0
-        mid_power = 0
-        
-        for line in formation:
-            for pos in line['positions']:
-                position_count += 1
-                available = get_players_for_position(pos, formation_name)
-                
-                if available:
-                    top_player = available[0]
-                    total_power += top_player['rating']
-                    
-                    if pos in ['ST', 'LST', 'RST', 'LW', 'RW']:
-                        attack_power += top_player['rating']
-                    elif pos in ['CB', 'LCB', 'RCB', 'LB', 'RB', 'LWB', 'RWB']:
-                        defense_power += top_player['rating']
-                    else:
-                        mid_power += top_player['rating']
-        
-        avg_rating = total_power / position_count if position_count > 0 else 0
-        balance = min(attack_power, defense_power, mid_power) / 10 if all([attack_power, defense_power, mid_power]) else 0
-        
-        score = avg_rating + balance
-        
-        rankings.append({
-            'name': formation_name,
-            'score': round(score, 1),
-            'avg_rating': round(avg_rating, 1),
-            'attack': round(attack_power / max(1, len([p for l in formation for p in l['positions'] if p in ['ST', 'LST', 'RST', 'LW', 'RW']])), 0),
-            'defense': round(defense_power / max(1, len([p for l in formation for p in l['positions'] if p in ['CB', 'LCB', 'RCB', 'LB', 'RB', 'LWB', 'RWB']])), 0)
-        })
-    
-    rankings.sort(key=lambda x: x['score'], reverse=True)
-    return rankings
 
 def create_pdf_export(formation, lineup, stats, ai_analysis=None, rankings=None):
     """Create comprehensive PDF export of lineup and analysis"""
@@ -1278,8 +1280,6 @@ def render_formation_rankings_tab():
         if idx < len(rankings) - 1:
             st.markdown("---")
 
-def render_lineup_builder_tab():
-    """Render the main lineup builder tab"""
 def render_lineup_builder_tab():
     """Render the main lineup builder tab"""
     
