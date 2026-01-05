@@ -499,10 +499,25 @@ def create_ultimate_team(api_key, model, formation):
     """Create the ultimate World Cup winning team with AI optimization"""
     
     # Auto-select best XI for the given formation
-    best_lineup = auto_select_best_xi(formation)
+    lineup = {}
+    formation_data = FORMATIONS[formation]
+    slot_counter = 0
+    used_players = set()
+    
+    for line_idx, line in enumerate(formation_data):
+        for pos_idx, pos in enumerate(line['positions']):
+            slot_id = f"{pos}_{line_idx}_{pos_idx}_{slot_counter}"
+            slot_counter += 1
+            available = get_players_for_position(pos, formation)
+            
+            for player in available:
+                if player['fullName'] not in used_players:
+                    lineup[slot_id] = player
+                    used_players.add(player['fullName'])
+                    break
     
     # Get current stats
-    stats = calculate_stats(best_lineup)
+    stats = calculate_stats(lineup)
     
     # Get AI analysis and recommendations
     context = f"""Formation: {formation}
@@ -518,7 +533,7 @@ Players Selected:
         for pos_idx, position in enumerate(line['positions']):
             slot_id = f"{position}_{line_idx}_{pos_idx}_{slot_counter}"
             slot_counter += 1
-            player = best_lineup.get(slot_id)
+            player = lineup.get(slot_id)
             
             if player:
                 context += f"  - {position}: {player['fullName']} ({player['club']}) - Rating: {player['rating']}, Age: {player['age']}, Form: {player['form']}/10\n"
