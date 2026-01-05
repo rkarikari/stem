@@ -129,6 +129,10 @@ if 'world_cup_squad' not in st.session_state:
     st.session_state.world_cup_squad = []
 if 'squad_mode' not in st.session_state:
     st.session_state.squad_mode = 'full'
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
+if 'current_tab' not in st.session_state:
+    st.session_state.current_tab = 'Lineup Builder'
 
 # Complete Player Database - All 64 Players
 PLAYERS = {
@@ -143,6 +147,7 @@ PLAYERS = {
         {'name': 'Salisu', 'fullName': 'Mohammed Salisu', 'club': 'Monaco', 'rating': 82, 'age': 26, 'caps': 22, 'form': 8, 'versatility': 7, 'positions': ['CB', 'LB']},
         {'name': 'Djiku', 'fullName': 'Alexander Djiku', 'club': 'Spartak Moscow', 'rating': 81, 'age': 31, 'caps': 37, 'form': 8, 'versatility': 7, 'positions': ['CB', 'RB']},
         {'name': 'Lamptey', 'fullName': 'Tariq Lamptey', 'club': 'Brighton', 'rating': 80, 'age': 24, 'caps': 15, 'form': 8, 'versatility': 6, 'positions': ['RB', 'RW']},
+        {'name': 'Aidoo', 'fullName': 'Joseph Aidoo', 'club': 'Celta Vigo', 'rating': 79, 'age': 29, 'caps': 45, 'form': 8, 'versatility': 6, 'positions': ['CB']},
         {'name': 'Seidu', 'fullName': 'Alidu Seidu', 'club': 'Stade Rennes', 'rating': 78, 'age': 25, 'caps': 22, 'form': 8, 'versatility': 7, 'positions': ['RB', 'CB']},
         {'name': 'Kohn', 'fullName': 'Derrick Kohn', 'club': 'Union Berlin', 'rating': 77, 'age': 26, 'caps': 10, 'form': 8, 'versatility': 6, 'positions': ['LB', 'LWB']},
         {'name': 'Mensah', 'fullName': 'Gideon Mensah', 'club': 'AJ Auxerre', 'rating': 76, 'age': 27, 'caps': 18, 'form': 7, 'versatility': 5, 'positions': ['LB']},
@@ -220,6 +225,12 @@ FORMATIONS = {
     '3-5-2 (Defensive)': [
         {'positions': ['LST', 'RST'], 'label': 'STRIKERS'},
         {'positions': ['LWB', 'LCM', 'CM', 'RCM', 'RWB'], 'label': 'MIDFIELD'},
+        {'positions': ['LCB', 'CB', 'RCB'], 'label': 'DEFENSE'},
+        {'positions': ['GK'], 'label': 'GOALKEEPER'}
+    ],
+    '3-5-2 (Offensive)': [
+        {'positions': ['LST', 'RST'], 'label': 'STRIKERS'},
+        {'positions': ['LWB', 'CAM', 'CM', 'CAM2', 'RWB'], 'label': 'ATTACKING MIDFIELD'},
         {'positions': ['LCB', 'CB', 'RCB'], 'label': 'DEFENSE'},
         {'positions': ['GK'], 'label': 'GOALKEEPER'}
     ],
@@ -407,16 +418,20 @@ def get_all_players():
         all_players.extend(category)
     return all_players
 
-def get_players_for_position(position):
-    """Get suitable players for a position - Enhanced mapping"""
+def get_players_for_position(position, formation=None):
+    """Get suitable players for a position - Enhanced mapping with formation-specific rules"""
+    # Check if this is 3-5-2 Offensive formation
+    is_352_offensive = formation == '3-5-2 (Offensive)' if formation else st.session_state.get('selected_formation') == '3-5-2 (Offensive)'
+    
     position_map = {
         'GK': ['GK'],
         'CB': ['DEF', 'VERSATILE'], 'LCB': ['DEF'], 'RCB': ['DEF'],
         'LB': ['DEF'], 'RB': ['DEF', 'VERSATILE'],
-        'LWB': ['DEF'], 'RWB': ['DEF', 'VERSATILE'],
+        'LWB': ['MID', 'ATT', 'VERSATILE'] if is_352_offensive else ['DEF'],
+        'RWB': ['MID', 'ATT', 'VERSATILE'] if is_352_offensive else ['DEF', 'VERSATILE'],
         'CDM': ['MID'], 'LDM': ['MID'], 'RDM': ['MID'],
         'CM': ['MID', 'VERSATILE'], 'LCM': ['MID', 'VERSATILE'], 'RCM': ['MID', 'VERSATILE'],
-        'CAM': ['MID', 'VERSATILE'], 'LCAM': ['MID'], 'RCAM': ['MID'],
+        'CAM': ['MID', 'VERSATILE'], 'CAM2': ['MID', 'VERSATILE'], 'LCAM': ['MID'], 'RCAM': ['MID'],
         'LM': ['MID', 'ATT', 'VERSATILE'], 'RM': ['MID', 'ATT', 'VERSATILE'],
         'LW': ['ATT'], 'RW': ['ATT', 'VERSATILE'],
         'ST': ['ATT'], 'LST': ['ATT'], 'RST': ['ATT']
@@ -486,7 +501,7 @@ def auto_select_best_xi(formation):
         for pos_idx, pos in enumerate(line['positions']):
             slot_id = f"{pos}_{line_idx}_{pos_idx}_{slot_counter}"
             slot_counter += 1
-            available = get_players_for_position(pos)
+            available = get_players_for_position(pos, formation)
             
             for player in available:
                 if player['fullName'] not in used_players:
@@ -511,7 +526,7 @@ def calculate_formation_rankings():
         for line in formation:
             for pos in line['positions']:
                 position_count += 1
-                available = get_players_for_position(pos)
+                available = get_players_for_position(pos, formation_name)
                 
                 if available:
                     top_player = available[0]
@@ -576,7 +591,7 @@ def create_pdf_export(formation, lineup, stats, ai_analysis=None, rankings=None)
     normal_style = styles['Normal']
     
     # Title
-    story.append(Paragraph("GHANA BLACK STARS 2026", title_style))
+    story.append(Paragraph("GHANA BLACK STARS", title_style))
     story.append(Paragraph(f"Tactical Lineup Report - {formation}", heading_style))
     story.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y at %H:%M')}", normal_style))
     story.append(Spacer(1, 0.3*inch))
@@ -793,7 +808,7 @@ def create_pdf_export(formation, lineup, stats, ai_analysis=None, rankings=None)
         textColor=colors.grey,
         alignment=TA_CENTER
     )
-    story.append(Paragraph("Ghana Black Stars - 2026 World Cup Tactical Analysis", footer_style))
+    story.append(Paragraph("Ghana Black Stars - Tactical Analysis", footer_style))
     story.append(Paragraph("Generated by RNK RadioSport Analysis System", footer_style))
     
     # Build PDF
@@ -804,7 +819,7 @@ def create_pdf_export(formation, lineup, stats, ai_analysis=None, rankings=None)
 def create_simple_text_export(formation, lineup, stats, ai_analysis=None):
     """Create simple text export as fallback"""
     export_text = f"""
-🇬🇭 GHANA BLACK STARS 2026 - TACTICAL LINEUP REPORT
+GHANA BLACK STARS - TACTICAL LINEUP REPORT
 {'='*70}
 
 Formation: {formation}
@@ -843,19 +858,342 @@ STARTING XI
         export_text += f"\n\nAI TACTICAL ANALYSIS\n{'='*70}\n{ai_analysis}\n"
     
     export_text += f"\n\n{'='*70}\n"
-    export_text += "Ghana Black Stars - 2026 World Cup Analysis\n"
-    export_text += "Generated by RNK RadioSport Tactical Analysis System\n"
+    export_text += "Ghana Black Stars - Tactical Analysis\n"
+    export_text += "Generated by RNK RadioSport Analysis System\n"
     
     return export_text
+
+def get_formation_context():
+    """Get context about current formation and lineup for chat"""
+    if not st.session_state.lineup:
+        return "No lineup selected yet."
+    
+    stats = calculate_stats(st.session_state.lineup)
+    formation = st.session_state.get('selected_formation', '4-3-3 (Attacking)')
+    
+    context = f"""Current Ghana Black Stars Setup:
+Formation: {formation}
+Players in lineup: {len(st.session_state.lineup)}/11
+
+Team Statistics:
+- Average Rating: {stats['avg_rating']}
+- Average Age: {stats['avg_age']} years
+- Total Caps: {stats['total_caps']}
+- Chemistry: {stats['chemistry']}%
+- Attack Power: {stats['attack']}
+- Defense Power: {stats['defense']}
+
+Selected Players:
+"""
+    
+    formation_data = FORMATIONS[formation]
+    slot_counter = 0
+    
+    for line_idx, line in enumerate(formation_data):
+        context += f"\n{line['label']}:\n"
+        for pos_idx, position in enumerate(line['positions']):
+            slot_id = f"{position}_{line_idx}_{pos_idx}_{slot_counter}"
+            slot_counter += 1
+            player = st.session_state.lineup.get(slot_id)
+            
+            if player:
+                context += f"  - {position}: {player['fullName']} ({player['club']}) - Rating: {player['rating']}, Age: {player['age']}, Caps: {player['caps']}, Form: {player['form']}/10\n"
+            else:
+                context += f"  - {position}: Empty\n"
+    
+    return context
+
+def chat_with_ai(user_message, api_key, model):
+    """Chat with AI about formations and tactics"""
+    context = get_formation_context()
+    
+    # Build conversation history
+    messages = [
+        {
+            "role": "system",
+            "content": """You are an expert football tactical analyst specializing in the Ghana Black Stars national team. 
+You provide insightful analysis on formations, player selections, tactical strategies, and match preparation. 
+You consider player chemistry, formation strengths/weaknesses, opposition tactics, and World Cup readiness.
+Be specific, analytical, and provide actionable recommendations. Reference specific players when relevant."""
+        },
+        {
+            "role": "user",
+            "content": f"Here's the current Ghana Black Stars lineup context:\n\n{context}"
+        }
+    ]
+    
+    # Add chat history (last 6 messages to stay within token limits)
+    for msg in st.session_state.chat_history[-6:]:
+        messages.append(msg)
+    
+    # Add current user message
+    messages.append({"role": "user", "content": user_message})
+    
+    try:
+        response = call_openrouter_api(messages, model, api_key)
+        data = response.json()
+        assistant_message = data['choices'][0]['message']['content']
+        
+        # Add to chat history
+        st.session_state.chat_history.append({"role": "user", "content": user_message})
+        st.session_state.chat_history.append({"role": "assistant", "content": assistant_message})
+        
+        return assistant_message
+    
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 def main():
     # Header
     st.markdown("""
     <div style='text-align: center; padding: 2rem 0;'>
-        <h1 style='font-size: 3rem; margin-bottom: 0.5rem;'>🇬🇭 BLACK STARS </h1>
-        <p style='font-size: 1.2rem; color: #fcd116;'>2026 World Cup • AI-Powered Tactical Analysis</p>
+        <h1 style='font-size: 3rem; margin-bottom: 0.5rem;'>BLACKSTARS</h1>
+        <p style='font-size: 1.2rem; color: #fcd116;'>• Tactical Analysis •</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Create Tabs
+    tab1, tab2, tab3 = st.tabs(["⚽ Lineup Builder", "💬 Chat Analysis", "📊 Formation Rankings"])
+    
+    # TAB 1: LINEUP BUILDER
+    with tab1:
+        render_lineup_builder_tab()
+    
+    # TAB 2: CHAT ANALYSIS
+    with tab2:
+        render_chat_analysis_tab()
+    
+    # TAB 3: FORMATION RANKINGS
+    with tab3:
+        render_formation_rankings_tab()
+    
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style='text-align: center; color: #d4af37; font-size: 0.85rem; padding: 1rem 0;'>
+        <p><strong>RNK RadioSport</strong></p>
+        <p style='font-size: 0.75rem; color: #aaa;'>Build winning formations</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_chat_analysis_tab():
+    """Render the interactive chat analysis tab"""
+    st.markdown("## 💬 Interactive Tactical Chat")
+    st.markdown("Ask questions about formations, player selections, tactics, and get AI-powered insights!")
+    
+    # Sidebar for chat tab
+    with st.sidebar:
+        st.markdown("### 💬 Chat Settings")
+        
+        # API Key check
+        api_key = get_load_balanced_api_key('openrouter')
+        
+        if not api_key:
+            api_key = st.text_input(
+                "🔑 OpenRouter API Key",
+                type="password",
+                value=st.session_state.api_keys.get('openrouter', ''),
+                help="Required for chat feature",
+                key="chat_api_key"
+            )
+            st.session_state.api_keys['openrouter'] = api_key
+        
+        if api_key:
+            pass
+        else:
+            st.warning("⚠️ Add API key to chat")
+        
+        st.markdown("---")
+        
+        # Quick questions
+        st.markdown("### 🎯 Quick Questions")
+        
+        quick_questions = [
+            "What are the strengths of this formation?",
+            "Which players should I change?",
+            "How does this lineup compare to top teams?",
+            "What tactics should we use?",
+            "Who are the key players in this formation?",
+            "What's our attacking strategy?",
+            "How's our defensive setup?",
+            "Suggest improvements for midfield control"
+        ]
+        
+        for question in quick_questions:
+            if st.button(question, key=f"quick_{question[:20]}", use_container_width=True):
+                st.session_state.chat_input = question
+                st.rerun()
+        
+        st.markdown("---")
+        
+        if st.button("🔄 Clear Chat History", use_container_width=True):
+            st.session_state.chat_history = []
+            st.success("Chat cleared!")
+            st.rerun()
+    
+    # Main chat area
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        # Display chat history
+        st.markdown("### 💭 Conversation")
+        
+        if not st.session_state.chat_history:
+            st.info("👋 Start a conversation! Ask me anything about your Ghana Black Stars lineup, formations, tactics, or player selections.")
+        else:
+            for idx, message in enumerate(st.session_state.chat_history):
+                if message['role'] == 'user':
+                    st.markdown(f"""
+                    <div style='background: rgba(212, 175, 55, 0.2); padding: 1rem; border-radius: 10px; margin: 0.5rem 0; border-left: 4px solid #d4af37;'>
+                        <strong>You:</strong><br>{message['content']}
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div style='background: rgba(0, 107, 63, 0.2); padding: 1rem; border-radius: 10px; margin: 0.5rem 0; border-left: 4px solid #006b3f;'>
+                        <strong>AI Analyst:</strong><br>{message['content']}
+                    </div>
+                    """, unsafe_allow_html=True)
+    
+    with col2:
+        # Current context display
+        st.markdown("### 📋 Current Context")
+        
+        if st.session_state.lineup:
+            stats = calculate_stats(st.session_state.lineup)
+            formation = st.session_state.get('selected_formation', '4-3-3 (Attacking)')
+            
+            st.markdown(f"""
+            <div style='background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;'>
+                <strong>Formation:</strong> {formation}<br>
+                <strong>Players:</strong> {len(st.session_state.lineup)}/11<br>
+                <strong>Rating:</strong> {stats['avg_rating']}<br>
+                <strong>Chemistry:</strong> {stats['chemistry']}%<br>
+                <strong>Attack:</strong> {stats['attack']}<br>
+                <strong>Defense:</strong> {stats['defense']}
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.info("No lineup selected. Go to Lineup Builder tab to create one!")
+    
+    # Chat input at bottom
+    st.markdown("---")
+    
+    # Check if there's a quick question to process
+    if 'chat_input' in st.session_state and st.session_state.chat_input:
+        user_input = st.session_state.chat_input
+        del st.session_state.chat_input
+    else:
+        user_input = st.text_input(
+            "💬 Ask about tactics, formations, players...",
+            placeholder="e.g., 'What are the weaknesses of this formation?' or 'Should I play more defensively?'",
+            key="chat_text_input"
+        )
+    
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        send_clicked = st.button("📤 Send Message", type="primary", use_container_width=True)
+    
+    with col2:
+        export_chat = st.button("💾 Export Chat", use_container_width=True)
+    
+    if send_clicked and user_input:
+        if not api_key:
+            st.error("⚠️ Please add your API key in the sidebar")
+        elif not st.session_state.lineup:
+            st.warning("⚠️ Please create a lineup first in the Lineup Builder tab")
+        else:
+            with st.spinner("🤔 AI is thinking..."):
+                model = st.session_state.selected_model
+                response = chat_with_ai(user_input, api_key, model)
+                st.rerun()
+    
+    if export_chat and st.session_state.chat_history:
+        chat_export = f"""GHANA BLACK STARS - TACTICAL CHAT ANALYSIS
+Generated: {datetime.now().strftime('%B %d, %Y at %H:%M')}
+{'='*70}
+
+{get_formation_context()}
+
+{'='*70}
+CONVERSATION HISTORY
+{'='*70}
+
+"""
+        for msg in st.session_state.chat_history:
+            role = "YOU" if msg['role'] == 'user' else "AI ANALYST"
+            chat_export += f"\n{role}:\n{msg['content']}\n\n{'-'*70}\n"
+        
+        st.download_button(
+            label="⬇️ Download Chat Transcript",
+            data=chat_export,
+            file_name=f"blackstars_chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+            mime="text/plain",
+            use_container_width=True
+        )
+
+def render_formation_rankings_tab():
+    """Render formation rankings tab"""
+    st.markdown("## ⚡ Formation Power Rankings")
+    st.markdown("AI-powered analysis based on player strengths and tactical effectiveness")
+    
+    rankings = calculate_formation_rankings()
+    
+    # Top 3 with medals
+    st.markdown("### 🏆 Top 3 Formations")
+    
+    cols = st.columns(3)
+    medals = ["🥇", "🥈", "🥉"]
+    
+    for idx, (col, medal) in enumerate(zip(cols, medals)):
+        if idx < len(rankings):
+            rank = rankings[idx]
+            with col:
+                st.markdown(f"""
+                <div style='background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(252, 209, 22, 0.3)); 
+                            padding: 1.5rem; border-radius: 15px; text-align: center; border: 2px solid #d4af37;'>
+                    <div style='font-size: 3rem;'>{medal}</div>
+                    <div style='font-size: 1.3rem; font-weight: bold; color: #fcd116; margin: 0.5rem 0;'>{rank['name']}</div>
+                    <div style='font-size: 2rem; font-weight: bold; color: #d4af37;'>{rank['score']}</div>
+                    <div style='font-size: 0.9rem; color: #ccc; margin-top: 0.5rem;'>
+                        ATT: {rank['attack']} | DEF: {rank['defense']}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Complete rankings table
+    st.markdown("### 📊 Complete Rankings")
+    
+    for idx, rank in enumerate(rankings):
+        medal = "🥇" if idx == 0 else "🥈" if idx == 1 else "🥉" if idx == 2 else f"{idx + 1}."
+        
+        col1, col2, col3, col4, col5 = st.columns([1, 3, 1, 1, 1])
+        
+        with col1:
+            st.markdown(f"### {medal}")
+        with col2:
+            st.markdown(f"**{rank['name']}**")
+        with col3:
+            st.metric("Score", rank['score'])
+        with col4:
+            st.metric("ATT", rank['attack'])
+        with col5:
+            st.metric("DEF", rank['defense'])
+        
+        if idx < len(rankings) - 1:
+            st.markdown("---")
+
+def render_lineup_builder_tab():
+    """Render the main lineup builder tab"""
+def render_lineup_builder_tab():
+    """Render the main lineup builder tab"""
+    
+    # Store formation in session state
+    if 'selected_formation' not in st.session_state:
+        st.session_state.selected_formation = '4-3-3 (Attacking)'
     
     # Sidebar
     with st.sidebar:
@@ -925,9 +1263,14 @@ def main():
         formation = st.selectbox(
             "Choose Formation", 
             list(FORMATIONS.keys()), 
-            index=0,
-            label_visibility="collapsed"
+            index=list(FORMATIONS.keys()).index(st.session_state.selected_formation) if st.session_state.selected_formation in FORMATIONS.keys() else 0,
+            label_visibility="collapsed",
+            key="formation_select"
         )
+        
+        # Update session state when formation changes
+        if formation != st.session_state.selected_formation:
+            st.session_state.selected_formation = formation
         
         st.markdown("---")
         
@@ -970,7 +1313,7 @@ def main():
                 for pos_idx, pos in enumerate(line['positions']):
                     slot_id = f"{pos}_{line_idx}_{pos_idx}_{slot_counter}"
                     slot_counter += 1
-                    available = get_players_for_position(pos)
+                    available = get_players_for_position(pos, formation)
                     filtered = [p for p in available if p['fullName'] not in used_players]
                     
                     if filtered:
@@ -1198,7 +1541,7 @@ Be specific, tactical, and actionable."""
                 
                 with col1:
                     if st.checkbox(
-                        "",
+                        f"Select {player['fullName']}",
                         value=is_selected,
                         key=f"wc_{player['fullName']}",
                         label_visibility="collapsed"
@@ -1272,7 +1615,7 @@ Be specific, tactical, and actionable."""
                         """, unsafe_allow_html=True)
                         
                         with st.expander(f"➕ Select {position}", expanded=False):
-                            available = get_players_for_position(position)
+                            available = get_players_for_position(position, formation)
                             
                             for player_idx, player_option in enumerate(available[:15]):
                                 btn_key = f"select_{slot_id}_{player_idx}"
@@ -1295,27 +1638,6 @@ Be specific, tactical, and actionable."""
     else:
         st.info("🎯 Start building your lineup using the Auto-Fill button in the sidebar")
     
-    # Formation Rankings
-    st.markdown("---")
-    st.markdown("## ⚡ Formation Rankings")
-    st.markdown("AI-powered analysis based on player strengths")
-    
-    rankings = calculate_formation_rankings()
-    
-    for idx, rank in enumerate(rankings[:8]):
-        medal = "🥇" if idx == 0 else "🥈" if idx == 1 else "🥉" if idx == 2 else f"{idx + 1}."
-        
-        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
-        
-        with col1:
-            st.markdown(f"**{medal} {rank['name']}**")
-        with col2:
-            st.markdown(f"Score: **{rank['score']}**")
-        with col3:
-            st.markdown(f"ATT: {rank['attack']}")
-        with col4:
-            st.markdown(f"DEF: {rank['defense']}")
-    
     # AI Analysis Display
     if st.session_state.ai_analysis:
         st.markdown("---")
@@ -1332,15 +1654,6 @@ Be specific, tactical, and actionable."""
         if st.button("🔄 Clear Analysis", use_container_width=True):
             st.session_state.ai_analysis = None
             st.rerun()
-    
-    # Footer
-    st.markdown("---")
-    st.markdown("""
-    <div style='text-align: center; color: #d4af37; font-size: 0.85rem; padding: 1rem 0;'>
-        <p>🇬🇭 <strong>BlackStars Analysis</strong> • RNK RadioSport</p>
-        <p style='font-size: 0.75rem; color: #aaa;'>Build winning formations for the 2026 World Cup journey</p>
-    </div>
-    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
