@@ -1,7 +1,7 @@
 """
 Ghana Black Stars AI Lineup Builder - Streamlit Version with OpenRouter AI Integration
 Author: RNK RadioSport
-Version: 2.0.1 - Complete Features & Full Player Database
+Version: 2.0.0 - Complete Features & Full Player Database
 """
 
 import streamlit as st
