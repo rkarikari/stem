@@ -208,6 +208,12 @@ PLAYERS = {
 
 # Complete Formation Database - All 12 Formations from HTML
 FORMATIONS = {
+    '3-4-3 (Ultra Attack)': [
+        {'positions': ['LW', 'ST', 'RW'], 'label': 'ATTACK'},
+        {'positions': ['LM', 'LCM', 'RCM', 'RM'], 'label': 'MIDFIELD'},
+        {'positions': ['LCB', 'CB', 'RCB'], 'label': 'DEFENSE'},
+        {'positions': ['GK'], 'label': 'GOALKEEPER'}
+    ],
     '4-3-3 (Attacking)': [
         {'positions': ['LW', 'ST', 'RW'], 'label': 'ATTACK'},
         {'positions': ['LCM', 'CM', 'RCM'], 'label': 'MIDFIELD'},
@@ -244,12 +250,6 @@ FORMATIONS = {
         {'positions': ['LM', 'LCM', 'RCM', 'RM'], 'label': 'MIDFIELD'},
         {'positions': ['CDM'], 'label': 'DEFENSIVE MID'},
         {'positions': ['LB', 'LCB', 'RCB', 'RB'], 'label': 'DEFENSE'},
-        {'positions': ['GK'], 'label': 'GOALKEEPER'}
-    ],
-    '3-4-3 (Ultra Attack)': [
-        {'positions': ['LW', 'ST', 'RW'], 'label': 'ATTACK'},
-        {'positions': ['LM', 'LCM', 'RCM', 'RM'], 'label': 'MIDFIELD'},
-        {'positions': ['LCB', 'CB', 'RCB'], 'label': 'DEFENSE'},
         {'positions': ['GK'], 'label': 'GOALKEEPER'}
     ],
     '5-3-2 (Counter)': [
