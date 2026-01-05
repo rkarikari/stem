@@ -21,10 +21,14 @@ import base64
 
 # Page Configuration
 st.set_page_config(
-    page_title="Black Stars Analysis",
-    page_icon="🇬🇭",
+    page_title=" Tactical Analysis ",
+    page_icon="🏆",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Report a Bug': "https://github.com/rkarikari/stem",
+        'About': "Copyright © RNK, 2025 RadioSport. All rights reserved."
+    }
 )
 
 # Custom CSS
