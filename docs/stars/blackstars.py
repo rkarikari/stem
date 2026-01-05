@@ -187,6 +187,7 @@ PLAYERS = {
         {'name': 'Fatawu', 'fullName': 'Abdul Fatawu Issahaku', 'club': 'Leicester', 'rating': 79, 'age': 21, 'caps': 23, 'form': 8, 'versatility': 7, 'positions': ['RW', 'LW']},
         {'name': 'Thomas-Asante', 'fullName': 'Brandon Thomas-Asante', 'club': 'Coventry City', 'rating': 78, 'age': 27, 'caps': 9, 'form': 9, 'versatility': 6, 'positions': ['ST', 'RW']},
         {'name': 'Sulemana K.', 'fullName': 'Kamaldeen Sulemana', 'club': 'Southampton', 'rating': 78, 'age': 23, 'caps': 18, 'form': 7, 'versatility': 8, 'positions': ['LW', 'RW', 'ST']},
+        {'name': 'Bukari', 'fullName': 'Osman Bukari', 'club': 'Austin FC', 'rating': 77, 'age': 26, 'caps': 16, 'form': 8, 'versatility': 7, 'positions': ['RW', 'LW']},
         {'name': 'Nuamah', 'fullName': 'Ernest Nuamah', 'club': 'Lyon', 'rating': 77, 'age': 22, 'caps': 12, 'form': 8, 'versatility': 7, 'positions': ['RW', 'LW']},
         {'name': 'Paintsil', 'fullName': 'Joseph Paintsil', 'club': 'LA Galaxy', 'rating': 77, 'age': 28, 'caps': 12, 'form': 8, 'versatility': 7, 'positions': ['RW', 'LW']},
         {'name': 'Bonsu Baah', 'fullName': 'Christopher Bonsu Baah', 'club': 'KRC Genk', 'rating': 75, 'age': 23, 'caps': 8, 'form': 8, 'versatility': 7, 'positions': ['RW', 'LW']},
@@ -1019,10 +1020,19 @@ def render_chat_analysis_tab():
             "Suggest improvements for midfield control"
         ]
         
-        for question in quick_questions:
-            if st.button(question, key=f"quick_{question[:20]}", use_container_width=True):
-                st.session_state.chat_input = question
-                st.rerun()
+        with st.expander("💡 Suggested Questions", expanded=False):
+            for question in quick_questions:
+                if st.button(question, key=f"quick_{hash(question)}", use_container_width=True):
+                    if not api_key:
+                        st.error("⚠️ Please add your API key first")
+                    elif not st.session_state.lineup:
+                        st.warning("⚠️ Please create a lineup first in the Lineup Builder tab")
+                    else:
+                        # Add to chat history and trigger response
+                        with st.spinner("🤔 AI is thinking..."):
+                            model = st.session_state.selected_model
+                            response = chat_with_ai(question, api_key, model)
+                        st.rerun()
         
         st.markdown("---")
         
@@ -1079,16 +1089,11 @@ def render_chat_analysis_tab():
     # Chat input at bottom
     st.markdown("---")
     
-    # Check if there's a quick question to process
-    if 'chat_input' in st.session_state and st.session_state.chat_input:
-        user_input = st.session_state.chat_input
-        del st.session_state.chat_input
-    else:
-        user_input = st.text_input(
-            "💬 Ask about tactics, formations, players...",
-            placeholder="e.g., 'What are the weaknesses of this formation?' or 'Should I play more defensively?'",
-            key="chat_text_input"
-        )
+    user_input = st.text_input(
+        "💬 Ask about tactics, formations, players...",
+        placeholder="e.g., 'What are the weaknesses of this formation?' or 'Should I play more defensively?'",
+        key="chat_text_input"
+    )
     
     col1, col2 = st.columns([3, 1])
     
