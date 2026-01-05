@@ -959,7 +959,7 @@ def get_formation_context():
         return "No lineup selected yet."
     
     stats = calculate_stats(st.session_state.lineup)
-    formation = st.session_state.get('selected_formation', '4-3-3 (Attacking)')
+    formation = st.session_state.get('selected_formation', '3-4-3 (Ultra Attack)')
     
     context = f"""Current Ghana Black Stars Setup:
 Formation: {formation}
