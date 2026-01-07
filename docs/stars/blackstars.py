@@ -192,21 +192,21 @@ def calculate_formation_rankings():
 		L=J/G if G>0 else 0;N=min(A,B,H)/10 if all([A,B,H])else 0;O=L+N;D.append({_G:E,_A2:round(O,1),_i:round(L,1),_d:round(A/max(1,len([A for B in F for A in B[_A]if A in[_M,_k,_l,_P,_L]])),0),_e:round(B/max(1,len([A for B in F for A in B[_A]if A in[_N,_U,_V,_Y,_S,_o,_t]])),0)})
 	D.sort(key=lambda x:x[_A2],reverse=_K);return D
 def create_ultimate_team(api_key,model):
-	'Create the ultimate World Cup winning team with AI optimization';I=calculate_formation_rankings();C=I[0][_G];D=auto_select_best_xi(C);A=calculate_stats(D);E=f"Formation: {C}\n\nPlayers Selected:\n";J=FORMATIONS[C];F=0
+	'Create the ultimate World Cup winning team with AI optimization';I=calculate_formation_rankings();A=I[0][_G];D=auto_select_best_xi(A);B=calculate_stats(D);E=f"Formation: {A}\n\nPlayers Selected:\n";J=FORMATIONS[A];F=0
 	for(K,G)in enumerate(J):
 		E+=f"\n{G[_E]}:\n"
 		for(L,H)in enumerate(G[_A]):
-			M=f"{H}_{K}_{L}_{F}";F+=1;B=D.get(M)
-			if B:E+=f"  - {H}: {B[_B]} ({B[_D]}) - Rating: {B[_C]}, Age: {B[_F]}, Form: {B[_I]}/10\n"
+			M=f"{H}_{K}_{L}_{F}";F+=1;C=D.get(M)
+			if C:E+=f"  - {H}: {C[_B]} ({C[_D]}) - Rating: {C[_C]}, Age: {C[_F]}, Form: {C[_I]}/10\n"
 	E+=f"""
 
 Team Statistics:
-- Average Rating: {A[_i]}
-- Average Age: {A[_p]} years
-- Total Caps: {A[_u]}
-- Chemistry: {A[_m]}%
-- Attack Power: {A[_d]}
-- Defense Power: {A[_e]}
+- Average Rating: {B[_i]}
+- Average Age: {B[_p]} years
+- Total Caps: {B[_u]}
+- Chemistry: {B[_m]}%
+- Attack Power: {B[_d]}
+- Defense Power: {B[_e]}
 """;N=f"""You are building Ghana's ultimate World Cup winning team. Analyze this lineup:
 
 {E}
@@ -237,8 +237,8 @@ Provide a comprehensive analysis with:
    - Alternative formation options for different game scenarios
 
 Be specific with player names, tactical instructions, and match situations."""
-	try:O=[{_n:_v,_b:N}];P=call_openrouter_api(O,model,api_key);Q=P.json();R=Q[_AH][0][_AI][_b];return C,D,R
-	except Exception as S:return C,D,f"Error generating analysis: {str(S)}"
+	try:O=[{_n:_v,_b:N}];P=call_openrouter_api(O,model,api_key);Q=P.json();R=Q[_AH][0][_AI][_b];st.session_state.selected_formation=A;return A,D,R
+	except Exception as S:st.session_state.selected_formation=A;return A,D,f"Error generating analysis: {str(S)}"
 def create_pdf_export(formation,lineup,stats,ai_analysis=_w,rankings=_w):
 	'Create comprehensive PDF export of lineup and analysis';s='#f9f9f9';r='ROWBACKGROUNDS';q='Normal';p='#fcd116';g=rankings;Z=ai_analysis;Y=formation;X='GRID';W='FONTNAME';V='CENTER';U='TEXTCOLOR';T='#d4af37';P=lineup;O='TOPPADDING';N='BOTTOMPADDING';M='ALIGN';I='Helvetica-Bold';E=stats;D='FONTSIZE';C='BACKGROUND';a=BytesIO();t=SimpleDocTemplate(a,pagesize=A4,rightMargin=30,leftMargin=30,topMargin=30,bottomMargin=30);A=[];J=getSampleStyleSheet();u=ParagraphStyle('CustomTitle',parent=J['Heading1'],fontSize=24,textColor=colors.HexColor(T),spaceAfter=30,alignment=TA_CENTER,fontName=I);F=ParagraphStyle('CustomHeading',parent=J['Heading2'],fontSize=16,textColor=colors.HexColor(p),spaceAfter=12,fontName=I);v=ParagraphStyle('SubHeading',parent=J['Heading3'],fontSize=12,textColor=colors.HexColor(T),spaceAfter=8,fontName=I);b=J[q];A.append(Paragraph('GHANA BLACK STARS',u));A.append(Paragraph(f"Tactical Lineup Report - {Y}",F));A.append(Paragraph(f"Generated: {datetime.now().strftime(_AJ)}",b));A.append(Spacer(1,.3*inch));A.append(Paragraph('Team Statistics',F));w=[['Metric','Value'],['Average Rating',f"{E[_i]}"],['Average Age',f"{E[_p]} years"],['Total Caps',f"{E[_u]}"],['Chemistry',f"{E[_m]}%"],['Attack Power',f"{E[_d]}"],['Defense Power',f"{E[_e]}"]];h=Table(w,colWidths=[3*inch,2*inch]);h.setStyle(TableStyle([(C,(0,0),(-1,0),colors.HexColor(T)),(U,(0,0),(-1,0),colors.black),(M,(0,0),(-1,-1),V),(W,(0,0),(-1,0),I),(D,(0,0),(-1,0),12),(N,(0,0),(-1,0),12),(O,(0,0),(-1,0),8),(C,(0,1),(-1,-1),colors.HexColor('#f5f5f5')),(X,(0,0),(-1,-1),1,colors.black),(D,(0,1),(-1,-1),11),(O,(0,1),(-1,-1),6),(N,(0,1),(-1,-1),6)]));A.append(h);A.append(Spacer(1,.4*inch));A.append(Paragraph(f"Starting XI Formation: {Y}",F));A.append(Spacer(1,.2*inch));i=FORMATIONS[Y];K=0
 	for(c,Q)in enumerate(i):
@@ -450,7 +450,7 @@ def render_lineup_builder_tab():
 		st.markdown(_T);C=get_load_balanced_api_key(_c)
 		if not C:C=st.text_input(_AU,type='password',value=st.session_state.api_keys.get(_c,''),help='Get free key at https://openrouter.ai/keys');st.session_state.api_keys[_c]=C
 		if not C:st.warning('⚠️ Add API key for AI features')
-		st.markdown(_T);st.markdown('### 📊 Formation Strategy');B=st.selectbox('Choose Formation',list(FORMATIONS.keys()),index=list(FORMATIONS.keys()).index(st.session_state.selected_formation)if st.session_state.selected_formation in FORMATIONS.keys()else 0,label_visibility=i,key='formation_select')
+		st.markdown(_T);st.markdown('### 📊 Formation Strategy');B=st.selectbox('Choose Formation',list(FORMATIONS.keys()),index=list(FORMATIONS.keys()).index(st.session_state.selected_formation)if st.session_state.selected_formation in FORMATIONS.keys()else 0,label_visibility=i)
 		if B!=st.session_state.selected_formation:st.session_state.selected_formation=B
 		st.markdown(_T);st.markdown('### 🏆 Squad Mode');a=st.selectbox('Squad Selection',[_A4,_AG],format_func=lambda x:f"Full Player Pool (64)"if x==_A4 else f"World Cup Squad ({len(st.session_state.world_cup_squad)}/26)",index=0 if st.session_state.squad_mode==_A4 else 1)
 		if a!=st.session_state.squad_mode:st.session_state.squad_mode=a;st.rerun()
