@@ -1,7 +1,7 @@
-'\nGhana Black Stars AI Lineup Builder - Streamlit Version with OpenRouter AI Integration\nAuthor: RNK RadioSport\nVersion: 2.1.0 - Complete Features & Full Player Database\n'
+'\nGhana Black Stars AI Lineup Builder - Streamlit Version with OpenRouter AI Integration\nAuthor: RNK RadioSport\nVersion: 2.1.1 - Complete Features & Full Player Database\n'
 _AV='🔑 OpenRouter API Key'
 _AU='Ibrahim Osman'
-_AT='Leicester'
+_AT='Leicester City'
 _AS='AJ Auxerre'
 _AR='Hearts of Oak'
 _AQ='St. Gallen'
@@ -37,12 +37,12 @@ _x='LM'
 _w=None
 _v='user'
 _u='total_caps'
-_t='RWB'
-_s='DM'
-_r='='
-_q='-'
-_p='avg_age'
-_o='LWB'
+_t='DM'
+_s='='
+_r='-'
+_q='avg_age'
+_p='LWB'
+_o='RWB'
 _n='role'
 _m='chemistry'
 _l='RST'
@@ -95,7 +95,7 @@ from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
 from reportlab.lib.enums import TA_CENTER,TA_LEFT
 from reportlab.pdfgen import canvas
 import base64
-st.set_page_config(page_title='Tactical Analysis',page_icon='🏆',layout='wide',initial_sidebar_state='expanded',menu_items={'Report a Bug':'https://github.com/rkarikari/stem','About':'Copyright © RNK, 2026 RadioSport. All rights reserved.\n\nVersion 2.1.0\n\nFeatures:\n• Complete Player Database  \n• AI Analysis  \n• Formation Rankings  \n• Interactive Chat\n'})
+st.set_page_config(page_title='Tactical Analysis',page_icon='🏆',layout='wide',initial_sidebar_state='expanded',menu_items={'Report a Bug':'https://github.com/rkarikari/stem','About':'Copyright © RNK, 2026 RadioSport. All rights reserved.\n\nVersion 2.1.1\n\nFeatures:\n• Complete Player Database  \n• AI Analysis  \n• Formation Rankings  \n• Interactive Chat\n'})
 st.markdown('\n<style>\n    .main {\n        background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%);\n    }\n    .stButton>button {\n        width: 100%;\n        background: linear-gradient(135deg, #d4af37 0%, #fcd116 100%);\n        color: #1a472a;\n        font-weight: bold;\n        border: none;\n        padding: 0.5rem 1rem;\n        border-radius: 0.5rem;\n        transition: all 0.3s;\n    }\n    .stButton>button:hover {\n        transform: translateY(-2px);\n        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.5);\n    }\n    .player-card {\n        background: rgba(255, 255, 255, 0.1);\n        backdrop-filter: blur(20px);\n        border-radius: 12px;\n        padding: 1rem;\n        border: 1px solid rgba(255, 255, 255, 0.2);\n        margin: 0.5rem 0;\n        transition: all 0.3s;\n    }\n    .player-card:hover {\n        transform: translateX(5px);\n        border-color: #d4af37;\n    }\n    .ai-analysis-box {\n        background: linear-gradient(135deg, rgba(26, 71, 42, 0.95), rgba(13, 40, 24, 0.95));\n        border: 3px solid #fcd116;\n        border-radius: 15px;\n        padding: 2rem;\n        margin: 1rem 0;\n        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);\n    }\n    h1, h2, h3 {\n        color: #fcd116;\n    }\n    .stSelectbox label, .stTextInput label {\n        color: #d4af37 !important;\n        font-weight: bold;\n    }\n    .pitch-container {\n        background: linear-gradient(180deg, #2d5016 0%, #1a472a 50%, #2d5016 100%);\n        padding: 2rem 1rem;\n        border-radius: 15px;\n        border: 3px solid #fcd116;\n        min-height: 600px;\n    }\n    .formation-line {\n        display: flex;\n        justify-content: center;\n        align-items: center;\n        gap: 1rem;\n        margin: 2rem 0;\n        flex-wrap: wrap;\n    }\n    .position-slot {\n        display: flex;\n        flex-direction: column;\n        align-items: center;\n        min-width: 120px;\n    }\n    .line-label {\n        text-align: center;\n        color: #fcd116;\n        font-weight: bold;\n        font-size: 0.9rem;\n        margin: 0.5rem 0;\n        text-transform: uppercase;\n        letter-spacing: 1px;\n    }\n</style>\n',unsafe_allow_html=_K)
 OPENROUTER_API_URL='https://openrouter.ai/api/v1/chat/completions'
 OPENROUTER_MODELS_URL='https://openrouter.ai/api/v1/models'
@@ -113,8 +113,8 @@ if _AO not in st.session_state:st.session_state.world_cup_squad=[]
 if _AP not in st.session_state:st.session_state.squad_mode=_A4
 if'chat_history'not in st.session_state:st.session_state.chat_history=[]
 if'current_tab'not in st.session_state:st.session_state.current_tab='Lineup Builder'
-PLAYERS={_Q:[{_G:'Ati-Zigi',_B:'Lawrence Ati-Zigi',_D:_AQ,_C:78,_F:28,_H:18,_I:8,_J:1},{_G:'Asare',_B:'Benjamin Asare',_D:_AR,_C:76,_F:25,_H:8,_I:9,_J:1},{_G:'Nurudeen',_B:'Abdul Manaf Nurudeen',_D:'KAS Eupen',_C:74,_F:26,_H:6,_I:7,_J:1},{_G:'Anang',_B:'Joseph Anang',_D:"St Patrick's",_C:74,_F:24,_H:3,_I:7,_J:1},{_G:'Wollacott',_B:'Joseph Wollacott',_D:'Hibernian',_C:73,_F:29,_H:9,_I:7,_J:1}],_f:[{_G:'Salisu',_B:'Mohammed Salisu',_D:'Monaco',_C:82,_F:26,_H:22,_I:8,_J:7,_A:[_N,_Y]},{_G:'Djiku',_B:'Alexander Djiku',_D:'Spartak Moscow',_C:81,_F:31,_H:37,_I:8,_J:7,_A:[_N,_S]},{_G:'Lamptey',_B:'Tariq Lamptey',_D:'Brighton',_C:80,_F:24,_H:15,_I:8,_J:6,_A:[_S,_L]},{_G:'Aidoo',_B:'Joseph Aidoo',_D:'Celta Vigo',_C:79,_F:29,_H:45,_I:8,_J:6,_A:[_N]},{_G:'Seidu',_B:'Alidu Seidu',_D:'Stade Rennes',_C:78,_F:25,_H:22,_I:8,_J:7,_A:[_S,_N]},{_G:'Kohn',_B:'Derrick Kohn',_D:'Union Berlin',_C:77,_F:26,_H:10,_I:8,_J:6,_A:[_Y,_o]},{_G:'Mensah',_B:'Gideon Mensah',_D:_AS,_C:76,_F:27,_H:18,_I:7,_J:5,_A:[_Y]},{_G:'Ambrosius',_B:'Stephan Ambrosius',_D:_AQ,_C:77,_F:26,_H:10,_I:7,_J:6,_A:[_N]},{_G:'Mumin',_B:'Abdul Mumin',_D:'Rayo Vallecano',_C:76,_F:27,_H:15,_I:7,_J:6,_A:[_N]},{_G:'Adjei',_B:'Nathaniel Adjei',_D:'FC Lorient',_C:75,_F:25,_H:5,_I:7,_J:5,_A:[_N]},{_G:'Opoku J.',_B:'Jerome Opoku',_D:'Istanbul Basaksehir',_C:75,_F:26,_H:11,_I:7,_J:6,_A:[_N]},{_G:'Annan',_B:'Ebenezer Annan',_D:'AS Saint-Etienne',_C:74,_F:24,_H:7,_I:7,_J:5,_A:[_N]},{_G:'Simpson',_B:'Razak Simpson',_D:'Nations FC',_C:73,_F:24,_H:6,_I:8,_J:6,_A:[_S,_N]},{_G:'Adjetey',_B:'Jonas Adjetey',_D:'FC Basel',_C:74,_F:25,_H:7,_I:7,_J:6,_A:[_N]},{_G:'Afful',_B:'Isaac Afful',_D:'Samartex',_C:71,_F:23,_H:3,_I:7,_J:5,_A:[_S]},{_G:'Schindler',_B:'Kingsley Schindler',_D:'Hannover 96',_C:73,_F:32,_H:9,_I:6,_J:6,_A:[_S,_L]}],_R:[{_G:'Partey',_B:'Thomas Partey',_D:'Arsenal',_C:84,_F:32,_H:58,_I:8,_J:7,_A:[_s,_O]},{_G:'Kudus',_B:'Mohammed Kudus',_D:'West Ham',_C:84,_F:25,_H:32,_I:9,_J:9,_A:['AM',_L,_M,_O]},{_G:'Ashimeru',_B:'Majeed Ashimeru',_D:'Anderlecht',_C:77,_F:28,_H:24,_I:7,_J:6,_A:[_O,_s]},{_G:'Samed',_B:'Salis Abdul Samed',_D:'RC Lens',_C:78,_F:25,_H:17,_I:8,_J:6,_A:[_s,_O]},{_G:'E. Owusu',_B:'Elisha Owusu',_D:_AS,_C:76,_F:28,_H:20,_I:7,_J:6,_A:[_s,_O]},{_G:'Sulemana I.',_B:'Ibrahim Sulemana',_D:'Atalanta',_C:76,_F:22,_H:8,_I:7,_J:6,_A:[_O]},{_G:'Diomande',_B:'Mohamed Diomande',_D:'Rangers',_C:74,_F:23,_H:5,_I:8,_J:7,_A:[_O,_s]},{_G:'Sibo',_B:'Kwasi Sibo',_D:_AR,_C:73,_F:23,_H:6,_I:8,_J:6,_A:[_O,_s]},{_G:'Francis',_B:'Abu Francis',_D:'Cercle Brugge',_C:75,_F:23,_H:10,_I:7,_J:6,_A:[_O,'AM']},{_G:'Addo E.',_B:'Edmund Addo',_D:'Sheriff Tiraspol',_C:73,_F:25,_H:12,_I:7,_J:5,_A:[_s]},{_G:'Mamudu',_B:'Kamaradini Mamudu',_D:_AC,_C:72,_F:23,_H:5,_I:7,_J:6,_A:[_O]},{_G:'Baidoo',_B:'Michael Baidoo',_D:'Elfsborg',_C:73,_F:26,_H:5,_I:7,_J:6,_A:[_O,'AM']},{_G:'Antwi',_B:'Emmanuel Antwi',_D:'FK Pribram',_C:71,_F:24,_H:4,_I:7,_J:6,_A:[_O]},{_G:'P. Owusu',_B:'Prince Owusu',_D:_AC,_C:70,_F:21,_H:3,_I:8,_J:6,_A:[_O]}],_W:[{_G:'Yirenkyi',_B:'Caleb Yirenkyi',_D:'Nordsjaelland',_C:73,_F:20,_H:4,_I:8,_J:8,_A:[_O,'AM',_S,_L]}],_X:[{_G:'I. Williams',_B:'Inaki Williams',_D:'Athletic Bilbao',_C:82,_F:31,_H:24,_I:9,_J:7,_A:[_M,_L]},{_G:'Semenyo',_B:'Antoine Semenyo',_D:'Bournemouth',_C:81,_F:26,_H:18,_I:9,_J:7,_A:[_M,_L]},{_G:'J. Ayew',_B:'Jordan Ayew',_D:_AT,_C:79,_F:34,_H:118,_I:8,_J:8,_A:[_M,_L,_P]},{_G:'Fatawu',_B:'Abdul Fatawu Issahaku',_D:_AT,_C:79,_F:21,_H:23,_I:8,_J:7,_A:[_L,_P]},{_G:'Thomas-Asante',_B:'Brandon Thomas-Asante',_D:'Coventry City',_C:78,_F:27,_H:9,_I:9,_J:6,_A:[_M,_L]},{_G:'Sulemana K.',_B:'Kamaldeen Sulemana',_D:'Southampton',_C:78,_F:23,_H:18,_I:7,_J:8,_A:[_P,_L,_M]},{_G:'Bukari',_B:'Osman Bukari',_D:'Austin FC',_C:77,_F:26,_H:16,_I:8,_J:7,_A:[_L,_P]},{_G:'Nuamah',_B:'Ernest Nuamah',_D:'Lyon',_C:77,_F:22,_H:12,_I:8,_J:7,_A:[_L,_P]},{_G:'Paintsil',_B:'Joseph Paintsil',_D:'LA Galaxy',_C:77,_F:28,_H:12,_I:8,_J:7,_A:[_L,_P]},{_G:'Bonsu Baah',_B:'Christopher Bonsu Baah',_D:'KRC Genk',_C:75,_F:23,_H:8,_I:8,_J:7,_A:[_L,_P]},{_G:_AU,_B:_AU,_D:'Feyenoord',_C:75,_F:20,_H:7,_I:8,_J:7,_A:[_L,_P,'AM']},{_G:'Adu Kwabena',_B:'Prince Kwabena Adu',_D:'Viktoria Plzen',_C:75,_F:22,_H:2,_I:8,_J:7,_A:[_M,_L,_P]},{_G:'Afriyie',_B:'Jerry Afriyie',_D:'RAAL La Louviere',_C:73,_F:20,_H:3,_I:8,_J:6,_A:[_M]},{_G:'Afena-Gyan',_B:'Felix Afena-Gyan',_D:'Cremonese',_C:73,_F:21,_H:5,_I:7,_J:6,_A:[_M]},{_G:'Opoku',_B:'Kwame Opoku',_D:'Asante Kotoko',_C:72,_F:23,_H:2,_I:7,_J:5,_A:[_M]},{_G:'Fuseini',_B:'Mohammed Fuseini',_D:'Union SG',_C:71,_F:22,_H:1,_I:7,_J:6,_A:[_P,_M]},{_G:'Nkrumah',_B:'Kelvin Nkrumah',_D:_AC,_C:70,_F:21,_H:1,_I:8,_J:6,_A:[_P,_L]},{_G:'Owusu P.O.',_B:'Prince Osei Owusu',_D:'CF Montreal',_C:75,_F:28,_H:1,_I:8,_J:6,_A:[_M]}]}
-FORMATIONS={_A5:[{_A:[_P,_M,_L],_E:_AE},{_A:[_x,_g,_h,_y],_E:_j},{_A:[_U,_N,_V],_E:_Z},{_A:[_Q],_E:_a}],'4-3-3 (Attacking)':[{_A:[_P,_M,_L],_E:_AE},{_A:[_g,_O,_h],_E:_j},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}],'4-2-3-1 (Balanced)':[{_A:[_M],_E:_A6},{_A:[_P,_z,_L],_E:_A7},{_A:['LDM','RDM'],_E:_A8},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}],'4-4-2 (Classic)':[{_A:[_k,_l],_E:_A0},{_A:[_x,_g,_h,_y],_E:_j},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}],'3-5-2 (Defensive)':[{_A:[_k,_l],_E:_A0},{_A:[_o,_g,_O,_h,_t],_E:_j},{_A:[_U,_N,_V],_E:_Z},{_A:[_Q],_E:_a}],_AD:[{_A:[_k,_l],_E:_A0},{_A:[_o,_z,_O,'CAM2',_t],_E:'ATTACKING MIDFIELD'},{_A:[_U,_N,_V],_E:_Z},{_A:[_Q],_E:_a}],'4-1-4-1 (Possession)':[{_A:[_M],_E:_A6},{_A:[_x,_g,_h,_y],_E:_j},{_A:['CDM'],_E:_A8},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}],'5-3-2 (Counter)':[{_A:[_k,_l],_E:_A0},{_A:[_g,_O,_h],_E:_j},{_A:[_o,_U,_N,_V,_t],_E:_Z},{_A:[_Q],_E:_a}],'4-4-2 Diamond':[{_A:[_k,_l],_E:_A0},{_A:[_z],_E:_A7},{_A:[_g,_h],_E:'CENTRAL MID'},{_A:['CDM'],_E:_A8},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}],'3-4-1-2':[{_A:[_k,_l],_E:_A0},{_A:[_z],_E:_A7},{_A:[_x,_g,_h,_y],_E:_j},{_A:[_U,_N,_V],_E:_Z},{_A:[_Q],_E:_a}],'5-4-1':[{_A:[_M],_E:_A6},{_A:[_x,_g,_h,_y],_E:_j},{_A:[_o,_U,_N,_V,_t],_E:_Z},{_A:[_Q],_E:_a}],'4-3-3 (Defensive)':[{_A:[_P,_M,_L],_E:_AE},{_A:[_g,'CDM',_h],_E:_j},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}],'4-2-3-1 (Narrow)':[{_A:[_M],_E:_A6},{_A:['LCAM',_z,'RCAM'],_E:_A7},{_A:['LDM','RDM'],_E:_A8},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}]}
+PLAYERS={_Q:[{_G:'Ati-Zigi',_B:'Lawrence Ati-Zigi',_D:_AQ,_C:78,_F:28,_H:18,_I:8,_J:1},{_G:'Asare',_B:'Benjamin Asare',_D:_AR,_C:76,_F:25,_H:8,_I:9,_J:1},{_G:'Nurudeen',_B:'Abdul Manaf Nurudeen',_D:'KAS Eupen',_C:74,_F:26,_H:6,_I:7,_J:1},{_G:'Anang',_B:'Joseph Anang',_D:"St Patrick's",_C:74,_F:24,_H:3,_I:7,_J:1},{_G:'Wollacott',_B:'Joseph Wollacott',_D:'Hibernian',_C:73,_F:29,_H:9,_I:7,_J:1}],_f:[{_G:'Salisu',_B:'Mohammed Salisu Abdul Karim',_D:'Monaco',_C:82,_F:26,_H:22,_I:8,_J:7,_A:[_N,_Y]},{_G:'Djiku',_B:'Alexander Djiku',_D:'Spartak Moscow',_C:81,_F:31,_H:37,_I:8,_J:7,_A:[_N,_S]},{_G:'Lamptey',_B:'Tariq Lamptey',_D:'Fiorentina',_C:80,_F:25,_H:11,_I:8,_J:6,_A:[_S,_o]},{_G:'Aidoo',_B:'Joseph Aidoo',_D:'Celta Vigo',_C:79,_F:29,_H:45,_I:8,_J:6,_A:[_N]},{_G:'Seidu',_B:'Alidu Seidu',_D:'Stade Rennes',_C:78,_F:25,_H:22,_I:8,_J:7,_A:[_S,_N]},{_G:'Kohn',_B:'Derrick Kohn',_D:'Union Berlin',_C:77,_F:26,_H:10,_I:8,_J:6,_A:[_Y,_p]},{_G:'Mensah',_B:'Gideon Mensah',_D:_AS,_C:76,_F:27,_H:18,_I:7,_J:5,_A:[_Y]},{_G:'Ambrosius',_B:'Stephan Ambrosius',_D:_AQ,_C:77,_F:26,_H:10,_I:7,_J:6,_A:[_N]},{_G:'Mumin',_B:'Abdul Mumin',_D:'Rayo Vallecano',_C:76,_F:27,_H:15,_I:7,_J:6,_A:[_N]},{_G:'Adjei',_B:'Nathaniel Adjei',_D:'FC Lorient',_C:75,_F:25,_H:5,_I:7,_J:5,_A:[_N]},{_G:'Opoku J.',_B:'Jerome Opoku',_D:'Istanbul Basaksehir',_C:75,_F:26,_H:11,_I:7,_J:6,_A:[_N]},{_G:'Annan',_B:'Ebenezer Annan',_D:'AS Saint-Etienne',_C:74,_F:24,_H:7,_I:7,_J:5,_A:[_N]},{_G:'Simpson',_B:'Razak Simpson',_D:'Nations FC',_C:73,_F:24,_H:6,_I:8,_J:6,_A:[_S,_N]},{_G:'Adjetey',_B:'Jonas Adjetey',_D:'FC Basel',_C:74,_F:25,_H:7,_I:7,_J:6,_A:[_N]},{_G:'Afful',_B:'Isaac Afful',_D:'Samartex',_C:71,_F:23,_H:3,_I:7,_J:5,_A:[_S]},{_G:'Schindler',_B:'Kingsley Schindler',_D:'Hannover 96',_C:73,_F:32,_H:9,_I:6,_J:6,_A:[_S,_L]}],_R:[{_G:'Partey',_B:'Thomas Partey',_D:'Arsenal',_C:84,_F:32,_H:58,_I:8,_J:7,_A:[_t,_O]},{_G:'Kudus',_B:'Mohammed Kudus',_D:'West Ham United',_C:84,_F:25,_H:32,_I:9,_J:9,_A:['AM',_L,_M,_O]},{_G:'Ashimeru',_B:'Majeed Ashimeru',_D:'Anderlecht',_C:77,_F:28,_H:24,_I:7,_J:6,_A:[_O,_t]},{_G:'Samed',_B:'Salis Abdul Samed',_D:'RC Lens',_C:78,_F:25,_H:17,_I:8,_J:6,_A:[_t,_O]},{_G:'E. Owusu',_B:'Elisha Owusu',_D:_AS,_C:76,_F:28,_H:20,_I:7,_J:6,_A:[_t,_O]},{_G:'Sulemana I.',_B:'Ibrahim Sulemana Kakari',_D:'Bologna (loan)',_C:76,_F:22,_H:6,_I:7,_J:6,_A:[_O]},{_G:'Diomande',_B:'Mohamed Diomande',_D:'Rangers',_C:74,_F:23,_H:5,_I:8,_J:7,_A:[_O,_t]},{_G:'Sibo',_B:'Kwasi Sibo',_D:_AR,_C:73,_F:23,_H:6,_I:8,_J:6,_A:[_O,_t]},{_G:'Francis',_B:'Abu Francis',_D:'FC Zürich',_C:75,_F:23,_H:10,_I:7,_J:6,_A:[_O,'AM']},{_G:'Addo E.',_B:'Edmund Addo',_D:'Sheriff Tiraspol',_C:73,_F:25,_H:12,_I:7,_J:5,_A:[_t]},{_G:'Mamudu',_B:'Kamaradini Mamudu',_D:_AC,_C:72,_F:23,_H:5,_I:7,_J:6,_A:[_O]},{_G:'Baidoo',_B:'Michael Baidoo',_D:'Elfsborg',_C:73,_F:26,_H:5,_I:7,_J:6,_A:[_O,'AM']},{_G:'Antwi',_B:'Emmanuel Antwi',_D:'FK Pribram',_C:71,_F:24,_H:4,_I:7,_J:6,_A:[_O]},{_G:'P. Owusu',_B:'Prince Owusu',_D:_AC,_C:70,_F:21,_H:3,_I:8,_J:6,_A:[_O]}],_W:[{_G:'Yirenkyi',_B:'Caleb Yirenkyi',_D:'Nordsjaelland',_C:73,_F:20,_H:4,_I:8,_J:8,_A:[_O,'AM',_S,_L]}],_X:[{_G:'I. Williams',_B:'Inaki Williams',_D:'Athletic Bilbao',_C:82,_F:31,_H:24,_I:9,_J:7,_A:[_M,_L]},{_G:'Semenyo',_B:'Antoine Serlom Semenyo',_D:'Manchester City',_C:83,_F:26,_H:32,_I:9,_J:8,_A:[_M,_L,_P]},{_G:'J. Ayew',_B:'Jordan Ayew',_D:_AT,_C:79,_F:34,_H:118,_I:8,_J:8,_A:[_M,_L,_P]},{_G:'Fatawu',_B:'Abdul Fatawu Issahaku',_D:_AT,_C:79,_F:21,_H:25,_I:8,_J:7,_A:[_L,_P]},{_G:'Thomas-Asante',_B:'Brandon Thomas-Asante',_D:'Coventry City',_C:78,_F:27,_H:9,_I:9,_J:6,_A:[_M,_L]},{_G:'Sulemana K.',_B:'Kamaldeen Sulemana',_D:'Atalanta',_C:80,_F:23,_H:25,_I:7,_J:7,_A:[_P,_L,_M]},{_G:'Bukari',_B:'Osman Bukari',_D:'Widzew Łódź',_C:77,_F:27,_H:18,_I:8,_J:7,_A:[_L,_P]},{_G:'Nuamah',_B:'Ernest Nuamah',_D:'Lyon',_C:77,_F:22,_H:18,_I:8,_J:7,_A:[_L,_P]},{_G:'Paintsil',_B:'Joseph Paintsil',_D:'LA Galaxy',_C:77,_F:28,_H:12,_I:8,_J:7,_A:[_L,_P]},{_G:'Bonsu Baah',_B:'Christopher Bonsu Baah',_D:'KRC Genk',_C:75,_F:23,_H:8,_I:8,_J:7,_A:[_L,_P]},{_G:_AU,_B:_AU,_D:'Auxerre',_C:75,_F:20,_H:3,_I:8,_J:7,_A:[_L,_P,'AM']},{_G:'Adu Kwabena',_B:'Prince Kwabena Adu',_D:'Viktoria Plzen',_C:75,_F:22,_H:2,_I:8,_J:7,_A:[_M,_L,_P]},{_G:'Afriyie',_B:'Jerry Afriyie',_D:'RAAL La Louviere',_C:73,_F:20,_H:3,_I:8,_J:6,_A:[_M]},{_G:'Afena-Gyan',_B:'Felix Afena-Gyan',_D:'Cremonese',_C:73,_F:21,_H:5,_I:7,_J:6,_A:[_M]},{_G:'Opoku',_B:'Kwame Opoku',_D:'Asante Kotoko',_C:72,_F:23,_H:2,_I:7,_J:5,_A:[_M]},{_G:'Fuseini',_B:'Mohammed Fuseini',_D:'Union SG',_C:71,_F:22,_H:1,_I:7,_J:6,_A:[_P,_M]},{_G:'Nkrumah',_B:'Kelvin Nkrumah',_D:_AC,_C:70,_F:21,_H:1,_I:8,_J:6,_A:[_P,_L]},{_G:'Owusu P.O.',_B:'Prince Osei Owusu',_D:'CF Montreal',_C:75,_F:28,_H:1,_I:8,_J:6,_A:[_M]}]}
+FORMATIONS={_A5:[{_A:[_P,_M,_L],_E:_AE},{_A:[_x,_g,_h,_y],_E:_j},{_A:[_U,_N,_V],_E:_Z},{_A:[_Q],_E:_a}],'4-3-3 (Attacking)':[{_A:[_P,_M,_L],_E:_AE},{_A:[_g,_O,_h],_E:_j},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}],'4-2-3-1 (Balanced)':[{_A:[_M],_E:_A6},{_A:[_P,_z,_L],_E:_A7},{_A:['LDM','RDM'],_E:_A8},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}],'4-4-2 (Classic)':[{_A:[_k,_l],_E:_A0},{_A:[_x,_g,_h,_y],_E:_j},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}],'3-5-2 (Defensive)':[{_A:[_k,_l],_E:_A0},{_A:[_p,_g,_O,_h,_o],_E:_j},{_A:[_U,_N,_V],_E:_Z},{_A:[_Q],_E:_a}],_AD:[{_A:[_k,_l],_E:_A0},{_A:[_p,_z,_O,'CAM2',_o],_E:'ATTACKING MIDFIELD'},{_A:[_U,_N,_V],_E:_Z},{_A:[_Q],_E:_a}],'4-1-4-1 (Possession)':[{_A:[_M],_E:_A6},{_A:[_x,_g,_h,_y],_E:_j},{_A:['CDM'],_E:_A8},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}],'5-3-2 (Counter)':[{_A:[_k,_l],_E:_A0},{_A:[_g,_O,_h],_E:_j},{_A:[_p,_U,_N,_V,_o],_E:_Z},{_A:[_Q],_E:_a}],'4-4-2 Diamond':[{_A:[_k,_l],_E:_A0},{_A:[_z],_E:_A7},{_A:[_g,_h],_E:'CENTRAL MID'},{_A:['CDM'],_E:_A8},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}],'3-4-1-2':[{_A:[_k,_l],_E:_A0},{_A:[_z],_E:_A7},{_A:[_x,_g,_h,_y],_E:_j},{_A:[_U,_N,_V],_E:_Z},{_A:[_Q],_E:_a}],'5-4-1':[{_A:[_M],_E:_A6},{_A:[_x,_g,_h,_y],_E:_j},{_A:[_p,_U,_N,_V,_o],_E:_Z},{_A:[_Q],_E:_a}],'4-3-3 (Defensive)':[{_A:[_P,_M,_L],_E:_AE},{_A:[_g,'CDM',_h],_E:_j},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}],'4-2-3-1 (Narrow)':[{_A:[_M],_E:_A6},{_A:['LCAM',_z,'RCAM'],_E:_A7},{_A:['LDM','RDM'],_E:_A8},{_A:[_Y,_U,_V,_S],_E:_Z},{_A:[_Q],_E:_a}]}
 @st.cache_data(ttl=3600)
 def get_free_openrouter_models():
 	'Dynamically load OpenRouter free models'
@@ -162,7 +162,7 @@ def get_all_players():
 	for B in PLAYERS.values():A.extend(B)
 	return A
 def get_players_for_position(position,formation=_w):
-	'Get suitable players for a position - Enhanced mapping with formation-specific rules';D=formation;E=D==_AD if D else st.session_state.get(_AA)==_AD;H={_Q:[_Q],_N:[_f,_W],_U:[_f],_V:[_f],_Y:[_f],_S:[_f,_W],_o:[_R,_X,_W]if E else[_f],_t:[_R,_X,_W]if E else[_f,_W],'CDM':[_R],'LDM':[_R],'RDM':[_R],_O:[_R,_W],_g:[_R,_W],_h:[_R,_W],_z:[_R,_W],'CAM2':[_R,_W],'LCAM':[_R],'RCAM':[_R],_x:[_R,_X,_W],_y:[_R,_X,_W],_P:[_X],_L:[_X,_W],_M:[_X],_k:[_X],_l:[_X]};I=H.get(position,[_R]);A=[]
+	'Get suitable players for a position - Enhanced mapping with formation-specific rules';D=formation;E=D==_AD if D else st.session_state.get(_AA)==_AD;H={_Q:[_Q],_N:[_f,_W],_U:[_f],_V:[_f],_Y:[_f],_S:[_f,_W],_p:[_R,_X,_W]if E else[_f],_o:[_R,_X,_W]if E else[_f,_W],'CDM':[_R],'LDM':[_R],'RDM':[_R],_O:[_R,_W],_g:[_R,_W],_h:[_R,_W],_z:[_R,_W],'CAM2':[_R,_W],'LCAM':[_R],'RCAM':[_R],_x:[_R,_X,_W],_y:[_R,_X,_W],_P:[_X],_L:[_X,_W],_M:[_X],_k:[_X],_l:[_X]};I=H.get(position,[_R]);A=[]
 	for F in I:
 		if F in PLAYERS:A.extend(PLAYERS[F])
 	if st.session_state.squad_mode==_AG:A=[A for A in A if A[_B]in st.session_state.world_cup_squad]
@@ -172,8 +172,8 @@ def get_players_for_position(position,formation=_w):
 	B.sort(key=lambda x:x[_C],reverse=_K);return B
 def calculate_stats(lineup):
 	'Calculate team statistics';D=lineup
-	if not D:return{_i:0,_p:0,_u:0,_m:0,_d:0,_e:0}
-	A=list(D.values());E=round(sum(A[_C]for A in A)/len(A),1);F=round(sum(A[_F]for A in A)/len(A),1);G=sum(A[_H]for A in A);H=sum(A[_I]for A in A)/len(A);I=sum(A.get(_J,5)for A in A)/len(A);J=min(100,round(H*8+I*4+(20 if len(A)>=11 else 0)));B=[B for C in[_X]for B in PLAYERS[C]if B in A];C=[B for C in[_f]for B in PLAYERS[C]if B in A];K=round(sum(A[_C]for A in B)/len(B))if B else 0;L=round(sum(A[_C]for A in C)/len(C))if C else 0;return{_i:E,_p:F,_u:G,_m:J,_d:K,_e:L}
+	if not D:return{_i:0,_q:0,_u:0,_m:0,_d:0,_e:0}
+	A=list(D.values());E=round(sum(A[_C]for A in A)/len(A),1);F=round(sum(A[_F]for A in A)/len(A),1);G=sum(A[_H]for A in A);H=sum(A[_I]for A in A)/len(A);I=sum(A.get(_J,5)for A in A)/len(A);J=min(100,round(H*8+I*4+(20 if len(A)>=11 else 0)));B=[B for C in[_X]for B in PLAYERS[C]if B in A];C=[B for C in[_f]for B in PLAYERS[C]if B in A];K=round(sum(A[_C]for A in B)/len(B))if B else 0;L=round(sum(A[_C]for A in C)/len(C))if C else 0;return{_i:E,_q:F,_u:G,_m:J,_d:K,_e:L}
 def auto_select_best_xi(formation):
 	'Auto-select best XI for formation';B=formation;C={};G=FORMATIONS[B];D=0;E=set()
 	for(H,I)in enumerate(G):
@@ -192,9 +192,9 @@ def calculate_formation_rankings():
 				if K:
 					C=K[0];J+=C[_C]
 					if I in[_M,_k,_l,_P,_L]:A+=C[_C]
-					elif I in[_N,_U,_V,_Y,_S,_o,_t]:B+=C[_C]
+					elif I in[_N,_U,_V,_Y,_S,_p,_o]:B+=C[_C]
 					else:H+=C[_C]
-		L=J/G if G>0 else 0;N=min(A,B,H)/10 if all([A,B,H])else 0;O=L+N;D.append({_G:E,_A2:round(O,1),_i:round(L,1),_d:round(A/max(1,len([A for B in F for A in B[_A]if A in[_M,_k,_l,_P,_L]])),0),_e:round(B/max(1,len([A for B in F for A in B[_A]if A in[_N,_U,_V,_Y,_S,_o,_t]])),0)})
+		L=J/G if G>0 else 0;N=min(A,B,H)/10 if all([A,B,H])else 0;O=L+N;D.append({_G:E,_A2:round(O,1),_i:round(L,1),_d:round(A/max(1,len([A for B in F for A in B[_A]if A in[_M,_k,_l,_P,_L]])),0),_e:round(B/max(1,len([A for B in F for A in B[_A]if A in[_N,_U,_V,_Y,_S,_p,_o]])),0)})
 	D.sort(key=lambda x:x[_A2],reverse=_K);return D
 def create_ultimate_team(api_key,model):
 	'Create the ultimate World Cup winning team with AI optimization';I=calculate_formation_rankings();A=I[0][_G];D=auto_select_best_xi(A);B=calculate_stats(D);E=f"Formation: {A}\n\nPlayers Selected:\n";J=FORMATIONS[A];F=0
@@ -207,7 +207,7 @@ def create_ultimate_team(api_key,model):
 
 Team Statistics:
 - Average Rating: {B[_i]}
-- Average Age: {B[_p]} years
+- Average Age: {B[_q]} years
 - Total Caps: {B[_u]}
 - Chemistry: {B[_m]}%
 - Attack Power: {B[_d]}
@@ -245,13 +245,13 @@ Be specific with player names, tactical instructions, and match situations."""
 	try:O=[{_n:_v,_b:N}];P=call_openrouter_api(O,model,api_key);Q=P.json();R=Q[_AH][0][_AI][_b];st.session_state.selected_formation=A;return A,D,R
 	except Exception as S:st.session_state.selected_formation=A;return A,D,f"Error generating analysis: {str(S)}"
 def create_pdf_export(formation,lineup,stats,ai_analysis=_w,rankings=_w):
-	'Create comprehensive PDF export of lineup and analysis';s='#f9f9f9';r='ROWBACKGROUNDS';q='Normal';p='#fcd116';g=rankings;Z=ai_analysis;Y=formation;X='GRID';W='FONTNAME';V='CENTER';U='TEXTCOLOR';T='#d4af37';P=lineup;O='TOPPADDING';N='BOTTOMPADDING';M='ALIGN';I='Helvetica-Bold';E=stats;D='FONTSIZE';C='BACKGROUND';a=BytesIO();t=SimpleDocTemplate(a,pagesize=A4,rightMargin=30,leftMargin=30,topMargin=30,bottomMargin=30);A=[];J=getSampleStyleSheet();u=ParagraphStyle('CustomTitle',parent=J['Heading1'],fontSize=24,textColor=colors.HexColor(T),spaceAfter=30,alignment=TA_CENTER,fontName=I);F=ParagraphStyle('CustomHeading',parent=J['Heading2'],fontSize=16,textColor=colors.HexColor(p),spaceAfter=12,fontName=I);v=ParagraphStyle('SubHeading',parent=J['Heading3'],fontSize=12,textColor=colors.HexColor(T),spaceAfter=8,fontName=I);b=J[q];A.append(Paragraph('GHANA BLACK STARS',u));A.append(Paragraph(f"Tactical Lineup Report - {Y}",F));A.append(Paragraph(f"Generated: {datetime.now().strftime(_AJ)}",b));A.append(Spacer(1,.3*inch));A.append(Paragraph('Team Statistics',F));w=[['Metric','Value'],['Average Rating',f"{E[_i]}"],['Average Age',f"{E[_p]} years"],['Total Caps',f"{E[_u]}"],['Chemistry',f"{E[_m]}%"],['Attack Power',f"{E[_d]}"],['Defense Power',f"{E[_e]}"]];h=Table(w,colWidths=[3*inch,2*inch]);h.setStyle(TableStyle([(C,(0,0),(-1,0),colors.HexColor(T)),(U,(0,0),(-1,0),colors.black),(M,(0,0),(-1,-1),V),(W,(0,0),(-1,0),I),(D,(0,0),(-1,0),12),(N,(0,0),(-1,0),12),(O,(0,0),(-1,0),8),(C,(0,1),(-1,-1),colors.HexColor('#f5f5f5')),(X,(0,0),(-1,-1),1,colors.black),(D,(0,1),(-1,-1),11),(O,(0,1),(-1,-1),6),(N,(0,1),(-1,-1),6)]));A.append(h);A.append(Spacer(1,.4*inch));A.append(Paragraph(f"Starting XI Formation: {Y}",F));A.append(Spacer(1,.2*inch));i=FORMATIONS[Y];K=0
+	'Create comprehensive PDF export of lineup and analysis';s='#f9f9f9';r='ROWBACKGROUNDS';q='Normal';p='#fcd116';g=rankings;Z=ai_analysis;Y=formation;X='GRID';W='FONTNAME';V='CENTER';U='TEXTCOLOR';T='#d4af37';P=lineup;O='TOPPADDING';N='BOTTOMPADDING';M='ALIGN';I='Helvetica-Bold';E=stats;D='FONTSIZE';C='BACKGROUND';a=BytesIO();t=SimpleDocTemplate(a,pagesize=A4,rightMargin=30,leftMargin=30,topMargin=30,bottomMargin=30);A=[];J=getSampleStyleSheet();u=ParagraphStyle('CustomTitle',parent=J['Heading1'],fontSize=24,textColor=colors.HexColor(T),spaceAfter=30,alignment=TA_CENTER,fontName=I);F=ParagraphStyle('CustomHeading',parent=J['Heading2'],fontSize=16,textColor=colors.HexColor(p),spaceAfter=12,fontName=I);v=ParagraphStyle('SubHeading',parent=J['Heading3'],fontSize=12,textColor=colors.HexColor(T),spaceAfter=8,fontName=I);b=J[q];A.append(Paragraph('GHANA BLACK STARS',u));A.append(Paragraph(f"Tactical Lineup Report - {Y}",F));A.append(Paragraph(f"Generated: {datetime.now().strftime(_AJ)}",b));A.append(Spacer(1,.3*inch));A.append(Paragraph('Team Statistics',F));w=[['Metric','Value'],['Average Rating',f"{E[_i]}"],['Average Age',f"{E[_q]} years"],['Total Caps',f"{E[_u]}"],['Chemistry',f"{E[_m]}%"],['Attack Power',f"{E[_d]}"],['Defense Power',f"{E[_e]}"]];h=Table(w,colWidths=[3*inch,2*inch]);h.setStyle(TableStyle([(C,(0,0),(-1,0),colors.HexColor(T)),(U,(0,0),(-1,0),colors.black),(M,(0,0),(-1,-1),V),(W,(0,0),(-1,0),I),(D,(0,0),(-1,0),12),(N,(0,0),(-1,0),12),(O,(0,0),(-1,0),8),(C,(0,1),(-1,-1),colors.HexColor('#f5f5f5')),(X,(0,0),(-1,-1),1,colors.black),(D,(0,1),(-1,-1),11),(O,(0,1),(-1,-1),6),(N,(0,1),(-1,-1),6)]));A.append(h);A.append(Spacer(1,.4*inch));A.append(Paragraph(f"Starting XI Formation: {Y}",F));A.append(Spacer(1,.2*inch));i=FORMATIONS[Y];K=0
 	for(c,Q)in enumerate(i):
 		A.append(Paragraph(f"{Q[_E]}",v));R=[]
 		for(d,G)in enumerate(Q[_A]):
 			e=f"{G}_{c}_{d}_{K}";K+=1;B=P.get(e)
 			if B:R.append([G,B[_B],B[_D],str(B[_C]),f"{B[_F]}y",f"{B[_H]} caps",f"Form: {B[_I]}/10"])
-			else:R.append([G,'Not Selected',_q,_q,_q,_q,_q])
+			else:R.append([G,'Not Selected',_r,_r,_r,_r,_r])
 		if R:j=Table(R,colWidths=[.7*inch,1.6*inch,1.4*inch,.6*inch,.5*inch,.7*inch,.8*inch]);j.setStyle(TableStyle([(C,(0,0),(-1,-1),colors.white),(U,(0,0),(-1,-1),colors.black),(M,(0,0),(0,-1),V),(M,(1,0),(-1,-1),'LEFT'),(W,(0,0),(-1,-1),'Helvetica'),(D,(0,0),(-1,-1),9),(X,(0,0),(-1,-1),.5,colors.grey),('VALIGN',(0,0),(-1,-1),'MIDDLE'),(O,(0,0),(-1,-1),5),(N,(0,0),(-1,-1),5),('LEFTPADDING',(0,0),(-1,-1),4),('RIGHTPADDING',(0,0),(-1,-1),4)]));A.append(j);A.append(Spacer(1,.2*inch))
 	if P:
 		A.append(PageBreak());A.append(Paragraph('Complete Squad Details',F));A.append(Spacer(1,.2*inch));x=list(P.values());x.sort(key=lambda x:x[_C],reverse=_K);f=[['#','Player Name','Club','Position','Rating','Age','Caps','Form']];K=0
@@ -269,32 +269,32 @@ def create_pdf_export(formation,lineup,stats,ai_analysis=_w,rankings=_w):
 		for n in z:
 			if n.strip():
 				H=n.strip().replace('**','<b>').replace('**','</b>')
-				if H and(H[0].isdigit()or H.startswith(_q)or H.startswith('•')):A0=ParagraphStyle('ListItem',parent=b,leftIndent=20,spaceAfter=8);A.append(Paragraph(H,A0))
+				if H and(H[0].isdigit()or H.startswith(_r)or H.startswith('•')):A0=ParagraphStyle('ListItem',parent=b,leftIndent=20,spaceAfter=8);A.append(Paragraph(H,A0))
 				else:A.append(Paragraph(H,b))
 				A.append(Spacer(1,.1*inch))
 	A.append(Spacer(1,.5*inch));o=ParagraphStyle('Footer',parent=J[q],fontSize=9,textColor=colors.grey,alignment=TA_CENTER);A.append(Paragraph('Ghana Black Stars - Tactical Analysis',o));A.append(Paragraph('Generated by RNK RadioSport Analysis System',o));t.build(A);a.seek(0);return a
 def create_simple_text_export(formation,lineup,stats,ai_analysis=_w):
 	'Create simple text export as fallback';F=ai_analysis;E=formation;B=stats;A=f"""
 GHANA BLACK STARS - TACTICAL LINEUP REPORT
-{_r*70}
+{_s*70}
 
 Formation: {E}
 Generated: {datetime.now().strftime(_AJ)}
 
 TEAM STATISTICS
-{_r*70}
+{_s*70}
 Average Rating: {B[_i]}
-Average Age: {B[_p]} years
+Average Age: {B[_q]} years
 Total Caps: {B[_u]}
 Chemistry: {B[_m]}%
 Attack Power: {B[_d]}
 Defense Power: {B[_e]}
 
 STARTING XI
-{_r*70}
+{_s*70}
 """;I=FORMATIONS[E];G=0
 	for(J,H)in enumerate(I):
-		A+=f"\n{H[_E]}\n{_q*70}\n"
+		A+=f"\n{H[_E]}\n{_r*70}\n"
 		for(K,D)in enumerate(H[_A]):
 			L=f"{D}_{J}_{K}_{G}";G+=1;C=lineup.get(L)
 			if C:A+=f"{D:8} | {C[_B]:25} | {C[_D]:20} | {C[_C]} | {C[_F]}y | {C[_H]} caps\n"
@@ -302,10 +302,10 @@ STARTING XI
 	if F:A+=f"""
 
 AI TACTICAL ANALYSIS
-{_r*70}
+{_s*70}
 {F}
 """
-	A+=f"\n\n{_r*70}\n";A+='Ghana Black Stars - Tactical Analysis\n';A+='Generated by RNK RadioSport Analysis System\n';return A
+	A+=f"\n\n{_s*70}\n";A+='Ghana Black Stars - Tactical Analysis\n';A+='Generated by RNK RadioSport Analysis System\n';return A
 def get_formation_context():
 	'Get context about current formation and lineup for chat'
 	if not st.session_state.lineup:return'No lineup selected yet.'
@@ -315,7 +315,7 @@ Players in lineup: {len(st.session_state.lineup)}/11
 
 Team Statistics:
 - Average Rating: {B[_i]}
-- Average Age: {B[_p]} years
+- Average Age: {B[_q]} years
 - Total Caps: {B[_u]}
 - Chemistry: {B[_m]}%
 - Attack Power: {B[_d]}
@@ -397,20 +397,20 @@ def render_chat_analysis_tab():
 	if Q and st.session_state.chat_history:
 		I=f"""GHANA BLACK STARS - TACTICAL CHAT ANALYSIS
 Generated: {datetime.now().strftime(_AJ)}
-{_r*70}
+{_s*70}
 
 {get_formation_context()}
 
-{_r*70}
+{_s*70}
 CONVERSATION HISTORY
-{_r*70}
+{_s*70}
 
 """
 		for J in st.session_state.chat_history:R='YOU'if J[_n]==_v else'AI ANALYST';I+=f"""
 {R}:
 {J[_b]}
 
-{_q*70}
+{_r*70}
 """
 		st.download_button(label='⬇️ Download Chat Transcript',data=I,file_name=f"blackstars_chat_{datetime.now().strftime(_A3)}.txt",mime=_AL,use_container_width=_K)
 def render_formation_rankings_tab():
@@ -491,7 +491,7 @@ def render_lineup_builder_tab():
 			if not H:I=calculate_stats(st.session_state.lineup);o={'formation':B,'generated':datetime.now().isoformat(),'statistics':I,'lineup':{A:{'position':A.split('_')[0],'player':B}for(A,B)in st.session_state.lineup.items()},_AN:st.session_state.ai_analysis,_AP:st.session_state.squad_mode,_AO:st.session_state.world_cup_squad};p=json.dumps(o,indent=2);st.download_button(label='⬇️ Download JSON Data',data=p,file_name=f"blackstars_lineup_{datetime.now().strftime(_A3)}.json",mime=_AF,use_container_width=_K);st.success('✅ JSON Data ready!')
 		if H:st.info('ℹ️ Add players to lineup to enable export')
 		st.markdown(_T);F=calculate_stats(st.session_state.lineup);st.markdown('### 📊 Team Statistics');D,E=st.columns(2)
-		with D:st.metric('⭐ Avg Rating',f"{F[_i]}");st.metric('👥 Avg Age',f"{F[_p]}");st.metric('🎖️ Total Caps',f"{F[_u]}")
+		with D:st.metric('⭐ Avg Rating',f"{F[_i]}");st.metric('👥 Avg Age',f"{F[_q]}");st.metric('🎖️ Total Caps',f"{F[_u]}")
 		with E:st.metric('⚡ Chemistry',f"{F[_m]}%");st.metric('⚔️ Attack',f"{F[_d]}");st.metric('🛡️ Defense',f"{F[_e]}")
 		st.markdown(_T);st.markdown('### 🧠 AI Analysis');q=len(st.session_state.lineup)>=11 and C
 		if st.button('🤖 Analyze Lineup',type=_AK,disabled=not q,use_container_width=_K):
@@ -499,7 +499,7 @@ def render_lineup_builder_tab():
 				r=list(st.session_state.lineup.values());s=f"""Analyze this Ghana Black Stars lineup for 2026 World Cup qualifiers:
 
 Formation: {B}
-Team Statistics: Rating {F[_i]}, Age {F[_p]}, Chemistry {F[_m]}%
+Team Statistics: Rating {F[_i]}, Age {F[_q]}, Chemistry {F[_m]}%
 
 Players:
 {chr(10).join([f"- {A[_B]} ({A[_D]}) - Position: {list(st.session_state.lineup.keys())[list(st.session_state.lineup.values()).index(A)].split('_')[0]}, Rating: {A[_C]}, Form: {A[_I]}/10"for A in r])}
