@@ -677,9 +677,28 @@ else:
         import base64, json as _json
 
         # Build per-level data payload for the JS meter
+        # OSC_SAMPLES: downsample to ~2000 points for oscilloscope (real audio samples)
+        # BAR_BINS: 60 RMS windows for bargraph (real per-window RMS)
+        OSC_PTS  = 2000
+        BAR_BINS = 60
         _level_data = []
         for _n in res['levels']:
             _row = next(r for r in res['table'] if r['Level']==f'S{_n}')
+            _seg  = res['rf_segs'][_n]
+            # --- Real oscilloscope samples ---
+            _ds = max(1, len(_seg) // OSC_PTS)
+            _osc_raw = _seg[::_ds][:OSC_PTS]
+            _osc = [round(float(v), 5) for v in _osc_raw]   # list of float in [-1,1]
+            # --- Real RMS bargraph windows ---
+            _wsize = max(1, len(_seg) // BAR_BINS)
+            _rms_bins = []
+            for _i in range(BAR_BINS):
+                _chunk = _seg[_i*_wsize : min((_i+1)*_wsize, len(_seg))]
+                if len(_chunk) > 0:
+                    _rms_bins.append(round(float(np.sqrt(np.mean(_chunk**2))), 5))
+                else:
+                    _rms_bins.append(0.0)
+            # Normalise RMS bins to 0-1 against global max across ALL levels for fair comparison
             _wav_b64 = base64.b64encode(res['seg_wavs'][_n]).decode()
             _level_data.append({
                 'level': _n,
@@ -688,9 +707,17 @@ else:
                 'agc':   _row['AGC Scale'],
                 'noise': _row['Out Noise'],
                 'outsig':_row['Out Signal'],
+                'osc':   _osc,          # real downsampled audio waveform
+                'rms':   _rms_bins,     # real per-window RMS values (raw, not normalised)
                 'wav':   _wav_b64,
                 'color': SC.get(_n, '#546e7a'),
             })
+
+        # Normalise rms across all levels so bargraph is comparable
+        _all_rms = [v for d in _level_data for v in d['rms']]
+        _global_max = max(_all_rms) if _all_rms else 1.0
+        for _d in _level_data:
+            _d['rms_norm'] = [round(v/_global_max, 5) for v in _d['rms']]
 
         _ld_json = _json.dumps(_level_data)
 
@@ -1137,40 +1164,22 @@ function drawMeter(val,peak,col){
   mx.fillText(d.snr+' dB',CX,CY-R*.10);
 }
 
-// ── Web Audio API — live analyser hooked to the audio element ──
+// ── Oscilloscope — real audio samples, scrolling playhead ──
 const oc=document.getElementById('osc-canvas');
 const ox=oc.getContext('2d');
 const OW=oc.width,OH=oc.height;
-const bc=document.getElementById('bar-canvas');
-const bx=bc.getContext('2d');
-const BW=bc.width,BH=bc.height;
-
-let audioCtx=null, analyserOsc=null, analyserBar=null, oscBuf=null, barBuf=null;
-
-function initAudio(){
-  if(audioCtx) return;
-  const ap=document.getElementById('audio-player');
-  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  const src=audioCtx.createMediaElementSource(ap);
-  analyserOsc=audioCtx.createAnalyser();
-  analyserOsc.fftSize=2048;
-  analyserOsc.smoothingTimeConstant=0.0;
-  analyserBar=audioCtx.createAnalyser();
-  analyserBar.fftSize=256;
-  analyserBar.smoothingTimeConstant=0.8;
-  src.connect(analyserOsc);
-  analyserOsc.connect(analyserBar);
-  analyserBar.connect(audioCtx.destination);
-  oscBuf=new Float32Array(analyserOsc.fftSize);
-  barBuf=new Uint8Array(analyserBar.frequencyBinCount);
-}
-
-document.getElementById('audio-player').addEventListener('play', ()=>{
-  initAudio();
-  if(audioCtx.state==='suspended') audioCtx.resume();
-});
+// oscPlayhead: index into current level's osc array, advances each tick
+let oscPlayhead=0;
+// oscWindow: the visible window of samples (OW wide)
+const OSC_WIN=OW;
 
 function drawOsc(col){
+  const d=LEVELS.find(x=>x.level===currentLevel);
+  if(!d||!d.osc||d.osc.length===0)return;
+  const samples=d.osc;
+  const N=samples.length;
+  // Advance playhead (wraps around so oscilloscope scrolls continuously)
+  oscPlayhead=(oscPlayhead+2)%N;
   ox.clearRect(0,0,OW,OH);
   // Grid
   ox.strokeStyle='#1e2d3d'; ox.lineWidth=1;
@@ -1178,18 +1187,17 @@ function drawOsc(col){
   for(let i=1;i<8;i++){const x=OW*i/8;ox.beginPath();ox.moveTo(x,0);ox.lineTo(x,OH);ox.stroke();}
   ox.strokeStyle='#2a3a4a';
   ox.beginPath();ox.moveTo(0,OH/2);ox.lineTo(OW,OH/2);ox.stroke();
-  const ap=document.getElementById('audio-player');
-  if(!analyserOsc||ap.paused){
-    // Flat line when not playing
-    ox.strokeStyle='#1e2d3d'; ox.lineWidth=1.5;
-    ox.beginPath();ox.moveTo(0,OH/2);ox.lineTo(OW,OH/2);ox.stroke();
-    return;
-  }
-  analyserOsc.getFloatTimeDomainData(oscBuf);
-  const step=OW/(oscBuf.length-1);
+  // Plot OSC_WIN samples starting from playhead (wrap-around)
+  // We map OSC_WIN samples across the full canvas width
+  const visN=Math.min(OSC_WIN, N);
+  const step=OW/(visN-1);
   ox.beginPath();
-  for(let i=0;i<oscBuf.length;i++){
-    const sv=Math.max(-1,Math.min(1,oscBuf[i]));
+  for(let i=0;i<visN;i++){
+    const si=(oscPlayhead+i)%N;
+    const sample=samples[si];
+    // Add mild noise if noise mode on
+    const nz=noiseActive?(Math.random()-.5)*.04:0;
+    const sv=Math.max(-1,Math.min(1,sample+nz));
     const x=i*step;
     const y=OH/2 - sv*(OH*.46);
     if(i===0)ox.moveTo(x,y);else ox.lineTo(x,y);
@@ -1198,39 +1206,47 @@ function drawOsc(col){
   gr.addColorStop(0,'#1e2d3d'); gr.addColorStop(0.3,col+'99'); gr.addColorStop(1,col);
   ox.strokeStyle=gr; ox.lineWidth=1.8;
   ox.shadowColor=col; ox.shadowBlur=7; ox.stroke(); ox.shadowBlur=0;
+  // Playhead cursor line
+  ox.strokeStyle='#4fc3f730'; ox.lineWidth=1;
+  ox.beginPath(); ox.moveTo(OW-2,0); ox.lineTo(OW-2,OH); ox.stroke();
 }
 
+// ── Bargraph — real RMS windows from audio ──
+const bc=document.getElementById('bar-canvas');
+const bx=bc.getContext('2d');
+const BW=bc.width,BH=bc.height;
+
 function drawBar(col){
+  const d=LEVELS.find(x=>x.level===currentLevel);
+  if(!d||!d.rms_norm||d.rms_norm.length===0)return;
+  const bins=d.rms_norm;
+  const N=bins.length;
   bx.clearRect(0,0,BW,BH);
+  // Reference lines
   bx.strokeStyle='#1e2d3d'; bx.lineWidth=1;
   [.25,.5,.75].forEach(frac=>{
     bx.beginPath();bx.moveTo(0,BH*(1-frac));bx.lineTo(BW,BH*(1-frac));bx.stroke();
   });
-  const ap=document.getElementById('audio-player');
-  if(!analyserBar||ap.paused){
-    bx.font='10px Share Tech Mono,monospace'; bx.fillStyle='#546e7a'; bx.textAlign='left';
-    bx.fillText('100%',4,12); bx.fillText('50%',4,BH/2+4); bx.fillText('0%',4,BH-2);
-    return;
-  }
-  analyserBar.getByteFrequencyData(barBuf);
-  const N=barBuf.length;
   const bw=BW/N-1;
-  let peak=0;
-  for(let i=0;i<N;i++){
-    const v=barBuf[i]/255;
-    if(v>peak)peak=v;
-    const bh=Math.max(2,v*(BH*.92));
+  let peakBin=0;
+  bins.forEach((v,i)=>{
+    const bh=Math.max(2, v*(BH*.92));
     const x=i*(BW/N)+.5;
     const y=BH-bh;
-    const hue=v<.33?'#26c6da':v<.66?'#7e57c2':'#ef5350';
+    if(v>peakBin)peakBin=v;
+    // Colour by normalised level
+    const bc2=v<.33?'#26c6da':v<.66?'#7e57c2':'#ef5350';
+    // Gradient bar
     const bg=bx.createLinearGradient(x,y,x,BH);
-    bg.addColorStop(0,hue+'ff'); bg.addColorStop(1,hue+'44');
+    bg.addColorStop(0,bc2+'ff');bg.addColorStop(1,bc2+'44');
     bx.fillStyle=bg;
     bx.fillRect(x,y,Math.max(bw,1),bh);
-  }
-  const pH=peak*(BH*.92);
+  });
+  // Peak line
+  const pH=peakBin*(BH*.92);
   bx.strokeStyle=col; bx.lineWidth=2;
   bx.beginPath();bx.moveTo(0,BH-pH);bx.lineTo(BW,BH-pH);bx.stroke();
+  // Y-axis labels
   bx.font='10px Share Tech Mono,monospace'; bx.fillStyle='#546e7a'; bx.textAlign='left';
   bx.fillText('100%',4,12); bx.fillText('50%',4,BH/2+4); bx.fillText('0%',4,BH-2);
 }
