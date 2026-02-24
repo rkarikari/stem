@@ -204,13 +204,13 @@ def detect_tts():
             except Exception as ex: py3_msg=str(ex)
     else:
         py3_msg="Disabled on macOS"
-    # ── gTTS — ffmpeg-free MP3 decode via audioread ───────────────────
+    # ── gTTS — ffmpeg-free MP3 decode via miniaudio ───────────────────
     try:
         from gtts import gTTS
-        import audioread  # noqa — just verify importable
+        import miniaudio  # noqa — pure-Python MP3 decoder, no ffmpeg needed
         try:
             import requests; requests.head('https://www.google.com', timeout=4)
-            gt_ok=True; gt_msg="Online + audioread (no ffmpeg needed)"
+            gt_ok=True; gt_msg="Online + miniaudio (no ffmpeg needed)"
         except: gt_msg="No internet"
     except ImportError as ex: gt_msg=f"Missing: {ex}"
     return py3_ok, gt_ok, py3_msg, gt_msg
@@ -241,22 +241,17 @@ def _pyttsx3_to_array(text, sr, timeout=10):
     raise RuntimeError("pyttsx3 returned no audio")
 
 def _gtts_to_array(text, sr, timeout=10):
-    """Download MP3 from gTTS and decode with audioread — no ffmpeg required."""
+    """Download MP3 from gTTS and decode with miniaudio — pure Python, no ffmpeg required."""
     from gtts import gTTS
-    import audioread
+    import miniaudio
     with tempfile.TemporaryDirectory() as d:
         mp3 = os.path.join(d, "tts.mp3")
         gTTS(text, lang='en', tld='co.uk', timeout=timeout).save(mp3)
-        frames = []
-        with audioread.audio_open(mp3) as f:
-            native_sr = f.samplerate
-            n_ch = f.channels
-            for block in f:
-                raw = np.frombuffer(block, dtype=np.int16).astype(np.float64) / 32767.0
-                frames.append(raw)
-    data = np.concatenate(frames) if frames else np.zeros(1)
-    if n_ch > 1: data = data.reshape(-1, n_ch).mean(axis=1)
-    return _normalize_audio(data, native_sr, sr)
+        decoded = miniaudio.mp3_read_file_f32(mp3)
+    data = np.array(decoded.samples, dtype=np.float64)
+    if decoded.nchannels > 1:
+        data = data.reshape(-1, decoded.nchannels).mean(axis=1)
+    return _normalize_audio(data, decoded.sample_rate, sr)
 
 def tts_to_array(text, sr, py3_ok, gt_ok):
     if py3_ok:
