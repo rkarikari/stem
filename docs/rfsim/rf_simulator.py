@@ -287,18 +287,17 @@ def simulate(params, cb=None):
     raw=tts_to_array(text,sr,py3_ok,gt_ok)
     pk=np.max(np.abs(raw))
     if pk>0: raw/=pk
-    needed=int(sr*duration)
+    # Use the actual TTS duration — never truncate the speech
     silence=np.zeros(int(sr*0.4))
-    chunk=np.concatenate([raw,silence])
-    repeats=math.ceil(needed/len(chunk))
-    signal_voice=np.tile(chunk,repeats)[:needed].astype(np.float64)
+    signal_voice=np.concatenate([raw,silence]).astype(np.float64)
+    duration=len(signal_voice)/sr  # override duration to match full speech length
 
     rf_segs={}; agc_scales={}; table=[]
     spectra={}
 
     for idx,n in enumerate(levels):
         if cb: cb(0.1+0.6*idx/len(levels), f"Processing S{n}…")
-        nsamp=int(sr*duration)
+        nsamp=len(signal_voice)  # match noise length to full TTS length
         noise=np.random.normal(0,noise_rms,nsamp)
         noise=apply_bandpass(noise,sr,band_low,band_high)
 
@@ -500,9 +499,9 @@ with st.sidebar:
     py3_ok,gt_ok,py3_msg,gt_msg=detect_tts()
     p_b="badge-ok" if py3_ok else "badge-warn"
     g_b="badge-ok" if gt_ok  else "badge-warn"
-    st.markdown(f'<div style="font-size:0.72rem;line-height:1.9">'
-                f'<span class="{p_b}">pyttsx3</span> {"Active" if py3_ok else "Unavailable"}&nbsp;&nbsp;'
-                f'<span class="{g_b}">gTTS</span> {"Active" if gt_ok else "Unavailable"}&nbsp;&nbsp;'
+    st.markdown(f'<div style="font-size:0.72rem;line-height:2.2">'
+                f'<span class="{p_b}">pyttsx3</span> {"Active" if py3_ok else "Unavailable"}<br>'
+                f'<span class="{g_b}">gTTS</span> {"Active" if gt_ok else "Unavailable"}<br>'
                 f'<span class="badge-ok">formant</span> Fallback</div>',
                 unsafe_allow_html=True)
     st.markdown("---")
