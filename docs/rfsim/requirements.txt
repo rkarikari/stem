@@ -7,3 +7,4 @@ gtts==2.5.1
 pydub>=0.25.1
 requests>=2.31.0
 pyttsx3
+imageio-ffmpeg
