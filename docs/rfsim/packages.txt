@@ -1,2 +1,8 @@
 espeak-ng
 ffmpeg
+ffmpeg
+ffmpeg-free
+libsndfile1
+libasound2-dev
+portaudio19-dev
+libavcodec-extra
