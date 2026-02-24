@@ -19,12 +19,19 @@ from plotly.subplots import make_subplots
 import pandas as pd
 
 # ── Page config ───────────────────────────────────────────────────────────────
-st.set_page_config(
-    page_title="RF S-Meter Simulator",
-    page_icon="📡",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+def initialize_ui():
+    st.set_page_config(
+        page_title="RF S-Meter Simulator",
+        page_icon="🧟",
+        layout="wide",
+        initial_sidebar_state="expanded",
+        menu_items={
+            'Report a Bug': "https://github.com/rkarikari/stem",
+            'About': "Copyright \u00a9 RNK, 2026 RadioSport. All rights reserved."
+        }
+    )
+
+initialize_ui()
 
 # ── CSS theme ─────────────────────────────────────────────────────────────────
 st.markdown("""
