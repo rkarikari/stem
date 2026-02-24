@@ -161,35 +161,64 @@ def _make_announcement_formant(n, sr):
 
 # ── TTS detection ─────────────────────────────────────────────────────────────
 
+def _normalize_audio(data, fs, sr):
+    from scipy.signal import resample as rs
+    if fs != sr: data = rs(data, int(len(data) * sr / fs))
+    if data.dtype == np.int16:   data = data.astype(np.float64) / 32767.0
+    elif data.dtype == np.int32: data = data.astype(np.float64) / 2147483647.0
+    else:                        data = data.astype(np.float64)
+    if data.ndim == 2: data = data.mean(axis=1)
+    return data
+
+def _espeak_to_array(text, sr):
+    """Render via espeak CLI directly — no pyttsx3 needed."""
+    import subprocess, shutil
+    from scipy.io import wavfile
+    esp = shutil.which("espeak-ng") or shutil.which("espeak")
+    if not esp: raise RuntimeError("espeak/espeak-ng not found")
+    with tempfile.TemporaryDirectory() as d:
+        wp = os.path.join(d, "tts.wav")
+        subprocess.run([esp, "-s", "155", "-v", "en-gb", "-w", wp, text],
+                       check=True, capture_output=True)
+        fs, data = wavfile.read(wp)
+    return _normalize_audio(data, fs, sr)
+
 @st.cache_resource
 def detect_tts():
     py3_ok=False; py3_msg=""
     gt_ok=False;  gt_msg=""
-    if sys.platform!='darwin':
-        try:
-            import pyttsx3
-            e=pyttsx3.init(); vs=e.getProperty('voices')
-            mv=next((v for v in vs if 'male' in v.name.lower() and 'female' not in v.name.lower()),next(iter(vs),None))
-            py3_ok=True; py3_msg=mv.name if mv else "default"
-        except Exception as ex: py3_msg=str(ex)
-    else: py3_msg="Disabled on macOS"
+    # ── espeak / pyttsx3 ──────────────────────────────────────────────
+    if sys.platform != 'darwin':
+        import shutil
+        if shutil.which("espeak-ng") or shutil.which("espeak"):
+            try:
+                _espeak_to_array("test", 22050)
+                py3_ok=True; py3_msg="espeak-ng (direct CLI)"
+            except Exception as ex: py3_msg=f"espeak error: {ex}"
+        else:
+            try:
+                import pyttsx3
+                e=pyttsx3.init(); vs=e.getProperty('voices')
+                mv=next((v for v in vs if 'male' in v.name.lower() and 'female' not in v.name.lower()),next(iter(vs),None))
+                py3_ok=True; py3_msg=mv.name if mv else "default"
+            except Exception as ex: py3_msg=str(ex)
+    else:
+        py3_msg="Disabled on macOS"
+    # ── gTTS — ffmpeg-free MP3 decode via audioread ───────────────────
     try:
         from gtts import gTTS
-        from pydub.utils import which
-        if which("ffmpeg") or which("avconv"):
-            try:
-                import requests; requests.head('https://www.google.com',timeout=4)
-                gt_ok=True; gt_msg="Online + ffmpeg"
-            except: gt_msg="No internet"
-        else: gt_msg="ffmpeg not found"
-    except ImportError: gt_msg="gTTS not installed"
+        import audioread  # noqa — just verify importable
+        try:
+            import requests; requests.head('https://www.google.com', timeout=4)
+            gt_ok=True; gt_msg="Online + audioread (no ffmpeg needed)"
+        except: gt_msg="No internet"
+    except ImportError as ex: gt_msg=f"Missing: {ex}"
     return py3_ok, gt_ok, py3_msg, gt_msg
 
 def _pyttsx3_proc(text, sr, q):
     try:
         import pyttsx3
         from scipy.io import wavfile
-        from scipy.signal import resample as rs
         e=pyttsx3.init(); vs=e.getProperty('voices')
         mv=next((v for v in vs if 'male' in v.name.lower() and 'female' not in v.name.lower()),next(iter(vs),None))
         if mv: e.setProperty('voice',mv.id)
@@ -197,12 +226,7 @@ def _pyttsx3_proc(text, sr, q):
         with tempfile.TemporaryDirectory() as d:
             wp=os.path.join(d,"tts.wav"); e.save_to_file(text,wp); e.runAndWait()
             fs,data=wavfile.read(wp)
-        if fs!=sr: data=rs(data,int(len(data)*sr/fs))
-        if data.dtype==np.int16: data=data.astype(np.float64)/32767.0
-        elif data.dtype==np.int32: data=data.astype(np.float64)/2147483647.0
-        else: data=data.astype(np.float64)
-        if data.ndim==2: data=data.mean(axis=1)
-        q.put(data)
+        q.put(_normalize_audio(data, fs, sr))
     except Exception as ex: q.put(ex)
 
 def _pyttsx3_to_array(text, sr, timeout=10):
@@ -217,23 +241,29 @@ def _pyttsx3_to_array(text, sr, timeout=10):
     raise RuntimeError("pyttsx3 returned no audio")
 
 def _gtts_to_array(text, sr, timeout=10):
-    from gtts import gTTS; from pydub import AudioSegment
+    """Download MP3 from gTTS and decode with audioread — no ffmpeg required."""
+    from gtts import gTTS
+    import audioread
     with tempfile.TemporaryDirectory() as d:
-        mp3=os.path.join(d,"tts.mp3"); wav=os.path.join(d,"tts.wav")
-        gTTS(text,lang='en',tld='co.uk',timeout=timeout).save(mp3)
-        audio=AudioSegment.from_mp3(mp3,parameters=["-nostdin"])
-        audio.export(wav,format="wav",parameters=["-nostdin"])
-        from scipy.io import wavfile; fs,data=wavfile.read(wav)
-    from scipy.signal import resample as rs
-    if fs!=sr: data=rs(data,int(len(data)*sr/fs))
-    if data.dtype==np.int16: data=data.astype(np.float64)/32767.0
-    elif data.dtype==np.int32: data=data.astype(np.float64)/2147483647.0
-    else: data=data.astype(np.float64)
-    if data.ndim==2: data=data.mean(axis=1)
-    return data
+        mp3 = os.path.join(d, "tts.mp3")
+        gTTS(text, lang='en', tld='co.uk', timeout=timeout).save(mp3)
+        frames = []
+        with audioread.audio_open(mp3) as f:
+            native_sr = f.samplerate
+            n_ch = f.channels
+            for block in f:
+                raw = np.frombuffer(block, dtype=np.int16).astype(np.float64) / 32767.0
+                frames.append(raw)
+    data = np.concatenate(frames) if frames else np.zeros(1)
+    if n_ch > 1: data = data.reshape(-1, n_ch).mean(axis=1)
+    return _normalize_audio(data, native_sr, sr)
 
 def tts_to_array(text, sr, py3_ok, gt_ok):
     if py3_ok:
+        # Try espeak CLI first (most reliable on Linux/cloud)
+        try: return _espeak_to_array(text, sr)
+        except: pass
+        # Fallback to pyttsx3
         try: return _pyttsx3_to_array(text, sr)
         except: pass
     if gt_ok:
