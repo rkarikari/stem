@@ -359,38 +359,76 @@ def simulate(params, cb=None):
         sbuf=io.BytesIO(); wavfile.write(sbuf,sr,seg_int); sbuf.seek(0)
         seg_wavs[n]=sbuf.read()
 
-    # ── Digital versions — simulate codec quantisation + packet loss per S-level ──
+    # ── Digital versions — accurate cliff-effect model ──────────────────────────
+    # Digital radio (DMR/P25) encodes ONLY the clean voice source, never RF noise.
+    # Behaviour is binary around a SNR threshold (~18-20 dB, approx S4):
+    #   ABOVE cliff (S4-S9): clean decode — voice only, zero noise, full fidelity
+    #   AT cliff   (S3-S4):  marginal — intermittent frame errors, robotic artefacts
+    #   BELOW cliff (S0-S2): link failure — bad AMBE/IMBE frames → silence or glitches
+    # S0 is pure noise floor — no voice was ever transmitted, digital output = silence
     if cb: cb(0.96,"Encoding digital variants…")
-    dig_wavs={}
+    # The clean normalised voice (pre-noise, pre-RF) is signal_voice
+    voice_clean = signal_voice.copy()
+    pk = np.max(np.abs(voice_clean))
+    if pk > 0: voice_clean /= pk
+
+    dig_wavs = {}
+    FRAME = int(sr * 0.020)   # 20 ms codec frame (DMR/AMBE standard frame size)
+
     for n in levels:
-        seg=rf_segs[n].copy()
-        # Bit depth reduction: S0=4-bit, S1-S3=8-bit, S4-S6=12-bit, S7-S9=16-bit
-        if   n==0: bits=4
-        elif n<=3: bits=8
-        elif n<=6: bits=12
-        else:      bits=16
-        levels_q=2**bits
-        seg_q=np.round(seg*(levels_q/2))/(levels_q/2)
-        seg_q=np.clip(seg_q,-0.98,0.98)
-        # Packet loss / dropout: higher loss at lower S-levels
-        dropout_rate={0:0.25,1:0.18,2:0.12,3:0.08,4:0.05,5:0.03,6:0.02,7:0.01,8:0.005,9:0.0}
-        rate=dropout_rate.get(n,0.0)
-        if rate>0:
-            block=int(sr*0.02)  # 20ms blocks
-            nblocks=len(seg_q)//block
-            mask=np.ones(len(seg_q))
-            for b in range(nblocks):
-                if np.random.rand()<rate:
-                    mask[b*block:(b+1)*block]=0
-            seg_q*=mask
-        # Jitter / timing noise at low levels
-        if n<=4:
-            jitter_samp=int(sr*0.002)
-            shift=np.random.randint(-jitter_samp,jitter_samp+1)
-            seg_q=np.roll(seg_q,shift)
-        seg_int=(seg_q*32767).astype(np.int16)
-        dbuf=io.BytesIO(); wavfile.write(dbuf,sr,seg_int); dbuf.seek(0)
-        dig_wavs[n]=dbuf.read()
+        nsamp = len(voice_clean)
+
+        # ── S0: no transmission — pure silence ─────────────────────────────────
+        if n == 0:
+            seg_out = np.zeros(nsamp)
+
+        # ── S1-S2: below cliff — link failed ────────────────────────────────────
+        # Decoder receives corrupted frames: mostly silence with occasional
+        # burst of garbled samples (bad IMBE frame substitution)
+        elif n <= 2:
+            seg_out = np.zeros(nsamp)
+            ber = {1: 0.85, 2: 0.60}[n]   # frame error rate at this SNR
+            nframes = nsamp // FRAME
+            for f in range(nframes):
+                if np.random.rand() > ber:
+                    # Occasional partially-decoded frame — garbled, clipped artifact
+                    garble = np.random.choice([-1.0, 0.0, 1.0], size=FRAME)
+                    seg_out[f*FRAME:(f+1)*FRAME] = garble * 0.3
+            # No voice content — decoder cannot reconstruct it
+
+        # ── S3: at the cliff edge — marginal link ────────────────────────────────
+        # Some frames decode correctly, others are dropped or garbled
+        elif n == 3:
+            seg_out = np.zeros(nsamp)
+            ber = 0.35   # ~35% frame error rate at cliff edge
+            nframes = nsamp // FRAME
+            for f in range(nframes):
+                s = f * FRAME; e = min(s + FRAME, nsamp)
+                if np.random.rand() > ber:
+                    # Good frame — clean voice
+                    seg_out[s:e] = voice_clean[s:e]
+                # Bad frame — silence (frame concealment / mute)
+
+        # ── S4: just above cliff — stable but stressed ───────────────────────────
+        # Link is reliable; occasional very brief dropout, no noise at all
+        elif n == 4:
+            seg_out = voice_clean.copy()
+            ber = 0.04
+            nframes = nsamp // FRAME
+            for f in range(nframes):
+                if np.random.rand() < ber:
+                    s = f * FRAME; e = min(s + FRAME, nsamp)
+                    seg_out[s:e] = 0.0   # single lost frame → silence
+
+        # ── S5-S9: above cliff — clean stable link ───────────────────────────────
+        # Full decode, no noise, no dropout — this is the key digital advantage
+        else:
+            seg_out = voice_clean.copy()
+
+        seg_out = np.clip(seg_out, -0.98, 0.98)
+        seg_int = (seg_out * 32767).astype(np.int16)
+        dbuf = io.BytesIO(); wavfile.write(dbuf, sr, seg_int); dbuf.seek(0)
+        dig_wavs[n] = dbuf.read()
 
     if cb: cb(1.0,"Done")
     return {'wav_bytes':buf.read(),'full_audio':full,'sr':sr,
@@ -1294,16 +1332,26 @@ requestAnimationFrame(tick);
     with t5:
         import streamlit.components.v1 as _comp2
         import base64 as _b64, json as _json2
-        _bit_map={0:4,1:8,2:8,3:8,4:12,5:12,6:12,7:16,8:16,9:16}
-        _drop_map={0:'25%',1:'18%',2:'12%',3:'8%',4:'5%',5:'3%',6:'2%',7:'1%',8:'0.5%',9:'0%'}
+        _status_map={
+            0:'NO LINK · SILENCE',
+            1:'LINK FAILURE · GARBLED',
+            2:'LINK FAILURE · GARBLED',
+            3:'CLIFF EDGE · MARGINAL',
+            4:'ABOVE CLIFF · STABLE',
+            5:'CLEAN DECODE',
+            6:'CLEAN DECODE',
+            7:'CLEAN DECODE',
+            8:'CLEAN DECODE',
+            9:'CLEAN DECODE',
+        }
         _dig_data=[]
         for _n in res['levels']:
             _row=next(r for r in res['table'] if r['Level']==f'S{_n}')
             _dig_data.append({
                 'level':_n,
                 'snr':_row['SNR (dB)'],
-                'bits':_bit_map.get(_n,16),
-                'dropout':_drop_map.get(_n,'0%'),
+                'status':_status_map.get(_n,'CLEAN DECODE'),
+                'stable': _n >= 4,
                 'wav':_b64.b64encode(res['dig_wavs'][_n]).decode(),
                 'wav_ana':_b64.b64encode(res['seg_wavs'][_n]).decode(),
                 'color':SC.get(_n,'#546e7a'),
@@ -1372,9 +1420,9 @@ function attachAudio(el,d,t){
     document.getElementById('slot-'+d.level).classList.add('active');
     const lbl=t==='dig'?'DIGITAL':'ANALOGUE';
     const snrTxt=d.level===0?'NOISE FLOOR':'SNR '+d.snr+' dB';
-    document.getElementById('osc-title').textContent='OSCILLOSCOPE — S'+d.level+' '+lbl+' ('+d.bits+'-BIT)';
+    document.getElementById('osc-title').textContent='OSCILLOSCOPE — S'+d.level+' '+lbl+' · '+d.status;
     document.getElementById('bar-title').textContent='FREQUENCY POWER — S'+d.level+' '+lbl;
-    document.getElementById('osc-info').textContent='S'+d.level+' | '+snrTxt+' | '+d.bits+'-bit quantisation | Packet dropout: '+d.dropout;
+    document.getElementById('osc-info').textContent='S'+d.level+' | '+snrTxt+' | '+d.status+(t==='dig'?' | NO RF NOISE IN DIGITAL DECODE':'');
     document.getElementById('bar-info').textContent='Live FFT | 256 bins | S'+d.level+' '+lbl;
   });
   el.addEventListener('pause',()=>{activeAudio=null;});
@@ -1392,9 +1440,9 @@ function buildGrid(){
     s.innerHTML=
       '<div class="slot-hdr">'+
         '<span class="slot-lvl" style="color:'+d.color+'">S'+d.level+'</span>'+
-        '<span style="font-size:0.5rem;color:#546e7a;">'+d.bits+'-bit</span>'+
+        '<span style="font-size:0.48rem;color:'+(d.stable?'#26c6da':'#ef5350')+';">'+d.status+'</span>'+
       '</div>'+
-      '<div class="slot-meta">'+snrTxt+'<br>DROPOUT '+d.dropout+'</div>'+
+      '<div class="slot-meta">'+snrTxt+'</div>'+
       '<div class="slot-badges">'+
         (showDig?'<span class="badge badge-dig">DIGITAL</span>':'')+
         (showAna?'<span class="badge badge-ana">ANALOGUE</span>':'')+
