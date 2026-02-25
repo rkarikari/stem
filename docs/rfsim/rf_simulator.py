@@ -406,58 +406,57 @@ def simulate(params, cb=None):
         return sig_out
 
     def codec_degraded_strong(sig, sr_in):
-        """S8-S9: Analogue FM is clearly superior here.
-        Strong FM: full bandwidth (300-5000 Hz), 75us pre-emphasis warmth,
-        natural transients, wide dynamic range, unquantised.
-        Digital AMBE at these levels exposes the codec ceiling hard:
-          - Narrowband 300-2800 Hz (telephone quality) vs FM 300-5000 Hz
-          - Aggressive per-frame AGC crushes all dynamic variation to flat level
-          - Metallic buzz added to simulate vocoder pitch quantisation artefacts
-          - Hard clipping of transients the codec cannot represent
-          - Slight periodic modulation (codec frame boundary artefact at 50 Hz)
-        The difference must be clearly audible — like comparing a phone call to
-        a high-fidelity broadcast."""
-        from scipy.signal import resample_poly, butter, lfilter, iirnotch
+        """S8-S9: realistic AMBE vocoder ceiling — analogue FM wins on fidelity.
+
+        What actually happens with AMBE/IMBE at strong signal levels:
+          1. Bandwidth hard-limited to 300-3400 Hz (8 kHz sample rate, narrowband)
+             Analogue wideband FM reaches 300-5000 Hz — the missing highs are
+             clearly audible as a duller, more telephone-like quality.
+          2. Per-frame dynamic compression (20 ms frames, 2400 bps codec)
+             The vocoder encodes loudness as a coarse parameter — fine amplitude
+             variation within a frame is lost. Soft consonants and natural breath
+             are flattened. Analogue FM preserves full 16-bit dynamic range.
+          3. Soft low-frequency roll-off below 400 Hz
+             AMBE applies a mild high-pass characteristic; analogue FM passes
+             chest resonance and room warmth that digital strips.
+        No artificial buzzes or clipping — just the real codec constraints."""
+        from scipy.signal import resample_poly, butter, lfilter
         from math import gcd
 
         g = gcd(sr_in, 8000)
         down, up = sr_in // g, 8000 // g
 
-        # Step 1: downsample to 8 kHz AMBE sample rate
+        # Downsample to 8 kHz — hard bandwidth ceiling at 4 kHz
         sig_8k = resample_poly(sig, up, down)
         n8 = len(sig_8k)
-        frame_8k = int(8000 * 0.020)  # 20 ms frames
+        frame_8k = int(8000 * 0.020)  # 20 ms AMBE frame
 
         out_8k = sig_8k.copy()
 
-        # Step 2: brutal per-frame AGC — destroy all dynamic range
-        # Every frame is normalised to the same fixed RMS regardless of content
-        # This is what makes strong-signal digital sound flat and lifeless
+        # Per-frame dynamic compression — vocoder AGC within each 20 ms frame.
+        # Fine amplitude detail within a frame is quantised to a coarse gain step.
+        # Result: natural dynamics (whisper vs normal vs loud) are partially lost.
+        target_rms = 0.30
         for i in range(0, n8 - frame_8k, frame_8k):
             chunk = out_8k[i:i+frame_8k]
             rms = np.sqrt(np.mean(chunk**2)) + 1e-9
-            out_8k[i:i+frame_8k] = chunk * (0.22 / rms)  # flatten everything
+            gain = target_rms / rms
+            # Codec gain is coarse — quantise to nearest 1.5 dB step
+            gain_db = 20 * np.log10(gain)
+            gain_db_q = round(gain_db / 1.5) * 1.5
+            gain_q = 10 ** (gain_db_q / 20)
+            out_8k[i:i+frame_8k] = chunk * min(gain_q, 4.0)
 
-        # Step 3: hard clip — codec cannot represent transients beyond its range
-        out_8k = np.clip(out_8k, -0.55, 0.55)
-
-        # Step 4: AMBE pitch quantisation buzz — vocoder encodes pitch in discrete
-        # steps, producing a slight metallic periodicity on voiced sounds
-        t8 = np.arange(n8) / 8000.0
-        buzz = 0.035 * np.sin(2 * np.pi * 120 * t8)   # 120 Hz pitch harmonic artefact
-        buzz += 0.020 * np.sin(2 * np.pi * 240 * t8)
-        out_8k += buzz
-
-        # Step 5: codec frame-boundary artefact — 50 Hz modulation (1/20ms)
-        frame_mod = 1.0 + 0.04 * np.sin(2 * np.pi * 50 * t8)
-        out_8k *= frame_mod
-
-        # Step 6: very narrow bandpass — AMBE at 8 kHz gives 300-2800 Hz max
-        # (wideband FM goes to 5000 Hz — the missing 2200 Hz is clearly audible)
-        b, a = butter(6, [300/4000, 2800/4000], btype='band')
+        # Narrowband bandpass: 300-3400 Hz — telephone quality
+        # Analogue FM: 300-5000 Hz — the 1600 Hz of missing highs is audible
+        b, a = butter(4, [300/4000, 3400/4000], btype='band')
         out_8k = lfilter(b, a, out_8k)
 
-        # Step 7: resample back to original sr
+        # Soft low-frequency attenuation below 400 Hz (AMBE high-pass character)
+        b2, a2 = butter(2, 400/4000, btype='high')
+        out_8k = lfilter(b2, a2, out_8k)
+
+        # Resample back to original sr
         sig_out = resample_poly(out_8k, down, up)
         if len(sig_out) > len(sig): sig_out = sig_out[:len(sig)]
         elif len(sig_out) < len(sig): sig_out = np.pad(sig_out, (0, len(sig)-len(sig_out)))
