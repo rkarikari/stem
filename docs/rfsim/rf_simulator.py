@@ -359,71 +359,133 @@ def simulate(params, cb=None):
         sbuf=io.BytesIO(); wavfile.write(sbuf,sr,seg_int); sbuf.seek(0)
         seg_wavs[n]=sbuf.read()
 
-    # ── Digital versions — accurate cliff-effect model ──────────────────────────
-    # Digital radio (DMR/P25) encodes ONLY the clean voice source, never RF noise.
-    # Behaviour is binary around a SNR threshold (~18-20 dB, approx S4):
-    #   ABOVE cliff (S4-S9): clean decode — voice only, zero noise, full fidelity
-    #   AT cliff   (S3-S4):  marginal — intermittent frame errors, robotic artefacts
-    #   BELOW cliff (S0-S2): link failure — bad AMBE/IMBE frames → silence or glitches
-    # S0 is pure noise floor — no voice was ever transmitted, digital output = silence
+    # ── Digital versions — cliff effect + AMBE codec character ─────────────────
+    #
+    # Research basis (DMR/P25 AMBE+2 vocoder):
+    #   - Codec operates at 2–9.6 kbps, 8 kHz sample rate → 4 kHz audio bandwidth
+    #   - 20 ms frames; lost frames concealed with prior frame or muted
+    #   - Cliff effect threshold ≈ S4 (~18–20 dB SNR)
+    #   - BELOW cliff (S0–S3): link failure — silence, garbled frames, no noise
+    #   - ABOVE cliff (S4–S7): digital WINS — clean decode vs noisy analogue FM
+    #   - S8–S9: analogue WINS — strong FM has wider dynamic range, warmer timbre,
+    #     no codec compression. Digital sounds flat/constrained by comparison.
+    #
     if cb: cb(0.96,"Encoding digital variants…")
-    # The clean normalised voice (pre-noise, pre-RF) is signal_voice
+
     voice_clean = signal_voice.copy()
     pk = np.max(np.abs(voice_clean))
     if pk > 0: voice_clean /= pk
 
+    def ambe_codec(sig, sr_in):
+        """Simulate AMBE+2 vocoder character: 8 kHz resample → 4 kHz bandwidth cap,
+        mild frame-level smoothing (vocoder averaging), slight dynamic compression."""
+        from scipy.signal import resample_poly, butter, lfilter
+        from math import gcd
+        # Resample to 8 kHz (AMBE sample rate) and back — kills everything above 4 kHz
+        g = gcd(sr_in, 8000)
+        down, up = sr_in // g, 8000 // g
+        sig_8k = resample_poly(sig, up, down)
+        # Frame-level RMS normalisation (vocoder AGC per 20 ms frame)
+        frame_8k = int(8000 * 0.020)
+        out_8k = sig_8k.copy()
+        for i in range(0, len(sig_8k) - frame_8k, frame_8k):
+            chunk = sig_8k[i:i+frame_8k]
+            rms = np.sqrt(np.mean(chunk**2)) + 1e-9
+            # Vocoder compresses dynamic range — target normalised RMS ~0.35
+            out_8k[i:i+frame_8k] = chunk * min(0.35 / rms, 3.0)
+        # Mild bandpass matching AMBE: 300–3400 Hz (narrowband telephone quality)
+        b, a = butter(4, [300/(4000), 3400/(4000)], btype='band')
+        out_8k = lfilter(b, a, out_8k)
+        # Resample back to original sr
+        sig_out = resample_poly(out_8k, down, up)
+        # Match length
+        if len(sig_out) > len(sig): sig_out = sig_out[:len(sig)]
+        elif len(sig_out) < len(sig): sig_out = np.pad(sig_out, (0, len(sig)-len(sig_out)))
+        pk2 = np.max(np.abs(sig_out))
+        if pk2 > 0: sig_out /= pk2
+        return sig_out
+
+    def codec_degraded_strong(sig, sr_in):
+        """S8–S9: AMBE codec applied to a strong signal — analogue FM wins here.
+        The codec's dynamic compression flattens the natural warmth and transients
+        that wideband FM preserves. More constrained, slightly artificial timbre."""
+        from scipy.signal import resample_poly, butter, lfilter
+        from math import gcd
+        # Same codec path but also apply slight pre-emphasis reduction
+        # (analogue FM uses pre-emphasis 75µs which gives natural treble lift;
+        # digital codec strips this and applies its own EQ — sounds less natural)
+        g = gcd(sr_in, 8000)
+        down, up = sr_in // g, 8000 // g
+        sig_8k = resample_poly(sig, up, down)
+        # Harder dynamic compression at strong levels — codec is more aggressive
+        frame_8k = int(8000 * 0.020)
+        out_8k = sig_8k.copy()
+        for i in range(0, len(sig_8k) - frame_8k, frame_8k):
+            chunk = sig_8k[i:i+frame_8k]
+            rms = np.sqrt(np.mean(chunk**2)) + 1e-9
+            # Tighter target — less dynamic range preserved
+            out_8k[i:i+frame_8k] = chunk * min(0.28 / rms, 2.5)
+        # Narrower bandwidth — codec strips low frequencies and some highs
+        b, a = butter(4, [350/(4000), 3000/(4000)], btype='band')
+        out_8k = lfilter(b, a, out_8k)
+        sig_out = resample_poly(out_8k, down, up)
+        if len(sig_out) > len(sig): sig_out = sig_out[:len(sig)]
+        elif len(sig_out) < len(sig): sig_out = np.pad(sig_out, (0, len(sig)-len(sig_out)))
+        pk2 = np.max(np.abs(sig_out))
+        if pk2 > 0: sig_out /= pk2
+        return sig_out
+
     dig_wavs = {}
-    FRAME = int(sr * 0.020)   # 20 ms codec frame (DMR/AMBE standard frame size)
+    FRAME = int(sr * 0.020)   # 20 ms AMBE frame
 
     for n in levels:
         nsamp = len(voice_clean)
 
-        # ── S0: no transmission — pure silence ─────────────────────────────────
+        # ── S0: silence — nothing transmitted ──────────────────────────────────
         if n == 0:
             seg_out = np.zeros(nsamp)
 
-        # ── S1-S2: below cliff — link failed ────────────────────────────────────
-        # Decoder receives corrupted frames: mostly silence with occasional
-        # burst of garbled samples (bad IMBE frame substitution)
+        # ── S1–S2: below cliff — link failed ────────────────────────────────────
+        # Decoder receives bad IMBE frames: mostly silence, rare garbled bursts
         elif n <= 2:
             seg_out = np.zeros(nsamp)
-            ber = {1: 0.85, 2: 0.60}[n]   # frame error rate at this SNR
+            ber = {1: 0.88, 2: 0.65}[n]
             nframes = nsamp // FRAME
             for f in range(nframes):
                 if np.random.rand() > ber:
-                    # Occasional partially-decoded frame — garbled, clipped artifact
                     garble = np.random.choice([-1.0, 0.0, 1.0], size=FRAME)
-                    seg_out[f*FRAME:(f+1)*FRAME] = garble * 0.3
-            # No voice content — decoder cannot reconstruct it
+                    seg_out[f*FRAME:(f+1)*FRAME] = garble * 0.25
 
-        # ── S3: at the cliff edge — marginal link ────────────────────────────────
-        # Some frames decode correctly, others are dropped or garbled
+        # ── S3: cliff edge — marginal, choppy ───────────────────────────────────
         elif n == 3:
             seg_out = np.zeros(nsamp)
-            ber = 0.35   # ~35% frame error rate at cliff edge
+            ber = 0.38
             nframes = nsamp // FRAME
             for f in range(nframes):
                 s = f * FRAME; e = min(s + FRAME, nsamp)
                 if np.random.rand() > ber:
-                    # Good frame — clean voice
-                    seg_out[s:e] = voice_clean[s:e]
-                # Bad frame — silence (frame concealment / mute)
+                    seg_out[s:e] = voice_clean[s:e]  # clean frame decode
 
-        # ── S4: just above cliff — stable but stressed ───────────────────────────
-        # Link is reliable; occasional very brief dropout, no noise at all
+        # ── S4: just above cliff — stable link, rare dropout ────────────────────
         elif n == 4:
-            seg_out = voice_clean.copy()
-            ber = 0.04
+            coded = ambe_codec(voice_clean, sr)
+            seg_out = coded.copy()
             nframes = nsamp // FRAME
             for f in range(nframes):
-                if np.random.rand() < ber:
+                if np.random.rand() < 0.04:
                     s = f * FRAME; e = min(s + FRAME, nsamp)
-                    seg_out[s:e] = 0.0   # single lost frame → silence
+                    seg_out[s:e] = 0.0
 
-        # ── S5-S9: above cliff — clean stable link ───────────────────────────────
-        # Full decode, no noise, no dropout — this is the key digital advantage
+        # ── S5–S7: digital clearly wins — clean codec, analogue is noisy ────────
+        # AMBE codec gives clear, noise-free decode. Analogue FM is still hissy.
+        elif n <= 7:
+            seg_out = ambe_codec(voice_clean, sr)
+
+        # ── S8–S9: analogue wins — strong FM has more warmth and dynamic range ──
+        # Digital codec compresses dynamics and narrows bandwidth. At this SNR
+        # the analogue signal is virtually noise-free AND more natural-sounding.
         else:
-            seg_out = voice_clean.copy()
+            seg_out = codec_degraded_strong(voice_clean, sr)
 
         seg_out = np.clip(seg_out, -0.98, 0.98)
         seg_int = (seg_out * 32767).astype(np.int16)
@@ -1338,11 +1400,16 @@ requestAnimationFrame(tick);
             2:'LINK FAILURE · GARBLED',
             3:'CLIFF EDGE · MARGINAL',
             4:'ABOVE CLIFF · STABLE',
-            5:'CLEAN DECODE',
-            6:'CLEAN DECODE',
-            7:'CLEAN DECODE',
-            8:'CLEAN DECODE',
-            9:'CLEAN DECODE',
+            5:'DIGITAL WINS · CLEAN',
+            6:'DIGITAL WINS · CLEAN',
+            7:'DIGITAL WINS · CLEAN',
+            8:'ANALOGUE WINS · CODEC COMPRESSED',
+            9:'ANALOGUE WINS · CODEC COMPRESSED',
+        }
+        _winner_map={
+            0:'—', 1:'—', 2:'—', 3:'—',
+            4:'DIGITAL', 5:'DIGITAL', 6:'DIGITAL', 7:'DIGITAL',
+            8:'ANALOGUE', 9:'ANALOGUE',
         }
         _dig_data=[]
         for _n in res['levels']:
@@ -1351,6 +1418,7 @@ requestAnimationFrame(tick);
                 'level':_n,
                 'snr':_row['SNR (dB)'],
                 'status':_status_map.get(_n,'CLEAN DECODE'),
+                'winner':_winner_map.get(_n,'—'),
                 'stable': _n >= 4,
                 'wav':_b64.b64encode(res['dig_wavs'][_n]).decode(),
                 'wav_ana':_b64.b64encode(res['seg_wavs'][_n]).decode(),
@@ -1440,9 +1508,10 @@ function buildGrid(){
     s.innerHTML=
       '<div class="slot-hdr">'+
         '<span class="slot-lvl" style="color:'+d.color+'">S'+d.level+'</span>'+
-        '<span style="font-size:0.48rem;color:'+(d.stable?'#26c6da':'#ef5350')+';">'+d.status+'</span>'+
+        '<span style="font-size:0.46rem;color:'+(d.winner==='ANALOGUE'?'#ce93d8':d.winner==='DIGITAL'?'#26c6da':'#ef5350')+';">'
+          +(d.winner!=='—'?'▶ '+d.winner:d.stable?'STABLE':'FAIL')+'</span>'+
       '</div>'+
-      '<div class="slot-meta">'+snrTxt+'</div>'+
+      '<div class="slot-meta" style="font-size:0.48rem;">'+snrTxt+'<br><span style="color:#546e7a80;">'+d.status+'</span></div>'+
       '<div class="slot-badges">'+
         (showDig?'<span class="badge badge-dig">DIGITAL</span>':'')+
         (showAna?'<span class="badge badge-ana">ANALOGUE</span>':'')+
