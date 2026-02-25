@@ -632,11 +632,13 @@ with st.sidebar:
     py3_ok,gt_ok,py3_msg,gt_msg=detect_tts()
     p_b="badge-ok" if py3_ok else "badge-warn"
     g_b="badge-ok" if gt_ok  else "badge-warn"
-    st.markdown(f'<div style="font-size:0.72rem;line-height:2.2">'
-                f'<span class="{p_b}">pyttsx3</span> {"Active" if py3_ok else "Unavailable"}<br>'
-                f'<span class="{g_b}">gTTS</span> {"Active" if gt_ok else "Unavailable"}<br>'
-                f'<span class="badge-ok">formant</span> Fallback</div>',
-                unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="font-size:0.70rem;">'
+        f'<div style="margin-bottom:0.45rem;"><span class="{p_b}">pyttsx3</span>&nbsp; {"Active" if py3_ok else "Unavailable"}</div>'
+        f'<div style="margin-bottom:0.45rem;"><span class="{g_b}">gTTS</span>&nbsp; {"Active" if gt_ok else "Unavailable"}</div>'
+        f'<div><span class="badge-ok">formant</span>&nbsp; Fallback</div>'
+        f'</div>',
+        unsafe_allow_html=True)
     st.markdown("---")
 
     with st.expander("🎙 SIGNAL TEXT", expanded=False):
@@ -669,6 +671,7 @@ with st.sidebar:
 
     st.markdown("---")
     run_btn=st.button("▶  GENERATE SIMULATION",use_container_width=True)
+    _sidebar_status=st.empty()
 
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 
@@ -696,7 +699,7 @@ if run_btn:
             result=simulate(params,cb=cb)
         pb.empty(); st_txt.empty()
         st.session_state.result=result
-        st.success("✔ Simulation complete — download WAV below or explore charts.")
+        _sidebar_status.success("Simulation complete.")
 
 res=st.session_state.result
 
@@ -1279,10 +1282,13 @@ const BW=bc.width,BH=bc.height;
 
 let audioCtx=null, analyserOsc=null, analyserBar=null, oscBuf=null, barBuf=null;
 
+// Track elements already connected — createMediaElementSource can only be called once per element
+const _connectedEls=new WeakMap();
 function initAudio(){
-  if(audioCtx) return;
   const ap=document.getElementById('audio-player');
-  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  if(_connectedEls.has(ap)) return; // already wired up — analyser still live
   const src=audioCtx.createMediaElementSource(ap);
   analyserOsc=audioCtx.createAnalyser();
   analyserOsc.fftSize=2048;
@@ -1295,6 +1301,7 @@ function initAudio(){
   analyserBar.connect(audioCtx.destination);
   oscBuf=new Float32Array(analyserOsc.fftSize);
   barBuf=new Uint8Array(analyserBar.frequencyBinCount);
+  _connectedEls.set(ap, true);
 }
 
 document.getElementById('audio-player').addEventListener('play', ()=>{
@@ -1462,15 +1469,24 @@ let currentMode='dig';
 const oc=document.getElementById('osc-c'),ox=oc.getContext('2d'),OW=oc.width,OH=oc.height;
 const bc=document.getElementById('bar-c'),bx=bc.getContext('2d'),BW=bc.width,BH=bc.height;
 
+// WeakMap tracks elements already passed to createMediaElementSource (one-time-only per element)
+const _srcMap=new WeakMap();
+
 function initAudio(el){
   if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
   if(audioCtx.state==='suspended') audioCtx.resume();
-  const src=audioCtx.createMediaElementSource(el);
+  // Always create fresh analysers so switching between elements works correctly
   analyserOsc=audioCtx.createAnalyser(); analyserOsc.fftSize=2048; analyserOsc.smoothingTimeConstant=0.0;
   analyserBar=audioCtx.createAnalyser(); analyserBar.fftSize=512;  analyserBar.smoothingTimeConstant=0.75;
-  src.connect(analyserOsc); analyserOsc.connect(analyserBar); analyserBar.connect(audioCtx.destination);
   oscBuf=new Float32Array(analyserOsc.fftSize);
   barBuf=new Uint8Array(analyserBar.frequencyBinCount);
+  // Re-use existing source node if element was already connected, else create one
+  let src=_srcMap.get(el);
+  if(!src){
+    src=audioCtx.createMediaElementSource(el);
+    _srcMap.set(el,src);
+  }
+  src.connect(analyserOsc); analyserOsc.connect(analyserBar); analyserBar.connect(audioCtx.destination);
 }
 
 function setMode(m){
