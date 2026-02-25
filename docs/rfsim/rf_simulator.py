@@ -632,11 +632,13 @@ with st.sidebar:
     py3_ok,gt_ok,py3_msg,gt_msg=detect_tts()
     p_b="badge-ok" if py3_ok else "badge-warn"
     g_b="badge-ok" if gt_ok  else "badge-warn"
-    st.markdown(f'<div style="font-size:0.72rem;line-height:2.2">'
-                f'<span class="{p_b}">pyttsx3</span> {"Active" if py3_ok else "Unavailable"}<br>'
-                f'<span class="{g_b}">gTTS</span> {"Active" if gt_ok else "Unavailable"}<br>'
-                f'<span class="badge-ok">formant</span> Fallback</div>',
-                unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="font-size:0.70rem;">'
+        f'<div style="margin-bottom:0.45rem;"><span class="{p_b}">pyttsx3</span>&nbsp; {"Active" if py3_ok else "Unavailable"}</div>'
+        f'<div style="margin-bottom:0.45rem;"><span class="{g_b}">gTTS</span>&nbsp; {"Active" if gt_ok else "Unavailable"}</div>'
+        f'<div><span class="badge-ok">formant</span>&nbsp; Fallback</div>'
+        f'</div>',
+        unsafe_allow_html=True)
     st.markdown("---")
 
     with st.expander("🎙 SIGNAL TEXT", expanded=False):
@@ -696,7 +698,7 @@ if run_btn:
             result=simulate(params,cb=cb)
         pb.empty(); st_txt.empty()
         st.session_state.result=result
-        st.success("✔ Simulation complete — download WAV below or explore charts.")
+        st.success("Simulation complete.")
 
 res=st.session_state.result
 
