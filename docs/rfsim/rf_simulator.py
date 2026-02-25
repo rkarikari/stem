@@ -671,6 +671,7 @@ with st.sidebar:
 
     st.markdown("---")
     run_btn=st.button("▶  GENERATE SIMULATION",use_container_width=True)
+    _sidebar_status=st.empty()
 
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 
@@ -698,7 +699,7 @@ if run_btn:
             result=simulate(params,cb=cb)
         pb.empty(); st_txt.empty()
         st.session_state.result=result
-        st.success("Simulation complete.")
+        _sidebar_status.success("Simulation complete.")
 
 res=st.session_state.result
 
