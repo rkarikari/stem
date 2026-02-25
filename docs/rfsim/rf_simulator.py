@@ -1279,10 +1279,13 @@ const BW=bc.width,BH=bc.height;
 
 let audioCtx=null, analyserOsc=null, analyserBar=null, oscBuf=null, barBuf=null;
 
+// Track elements already connected — createMediaElementSource can only be called once per element
+const _connectedEls=new WeakMap();
 function initAudio(){
-  if(audioCtx) return;
   const ap=document.getElementById('audio-player');
-  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  if(_connectedEls.has(ap)) return; // already wired up — analyser still live
   const src=audioCtx.createMediaElementSource(ap);
   analyserOsc=audioCtx.createAnalyser();
   analyserOsc.fftSize=2048;
@@ -1295,6 +1298,7 @@ function initAudio(){
   analyserBar.connect(audioCtx.destination);
   oscBuf=new Float32Array(analyserOsc.fftSize);
   barBuf=new Uint8Array(analyserBar.frequencyBinCount);
+  _connectedEls.set(ap, true);
 }
 
 document.getElementById('audio-player').addEventListener('play', ()=>{
@@ -1462,15 +1466,24 @@ let currentMode='dig';
 const oc=document.getElementById('osc-c'),ox=oc.getContext('2d'),OW=oc.width,OH=oc.height;
 const bc=document.getElementById('bar-c'),bx=bc.getContext('2d'),BW=bc.width,BH=bc.height;
 
+// WeakMap tracks elements already passed to createMediaElementSource (one-time-only per element)
+const _srcMap=new WeakMap();
+
 function initAudio(el){
   if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
   if(audioCtx.state==='suspended') audioCtx.resume();
-  const src=audioCtx.createMediaElementSource(el);
+  // Always create fresh analysers so switching between elements works correctly
   analyserOsc=audioCtx.createAnalyser(); analyserOsc.fftSize=2048; analyserOsc.smoothingTimeConstant=0.0;
   analyserBar=audioCtx.createAnalyser(); analyserBar.fftSize=512;  analyserBar.smoothingTimeConstant=0.75;
-  src.connect(analyserOsc); analyserOsc.connect(analyserBar); analyserBar.connect(audioCtx.destination);
   oscBuf=new Float32Array(analyserOsc.fftSize);
   barBuf=new Uint8Array(analyserBar.frequencyBinCount);
+  // Re-use existing source node if element was already connected, else create one
+  let src=_srcMap.get(el);
+  if(!src){
+    src=audioCtx.createMediaElementSource(el);
+    _srcMap.set(el,src);
+  }
+  src.connect(analyserOsc); analyserOsc.connect(analyserBar); analyserBar.connect(audioCtx.destination);
 }
 
 function setMode(m){
