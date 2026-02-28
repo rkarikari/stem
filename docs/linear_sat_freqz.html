@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Linear Satellite Frequency Pairs</title>
+<title>Linear Satellite Transponder — Frequency Pairs</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
   :root {
     --green: #00ff88;
-    --green-dim: #00cc66;
-    --green-glow: rgba(0,255,136,0.15);
     --amber: #ffaa00;
     --cyan: #00e5ff;
+    --red: #ff4466;
     --bg: #050a06;
     --bg2: #0a110b;
+    --bg3: #06110a;
     --border: #1a3320;
     --text: #a0ffcc;
     --text-dim: #4a8860;
@@ -31,70 +31,86 @@
     overflow-x: hidden;
   }
 
-  /* Scanline overlay */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.08) 2px,
-      rgba(0,0,0,0.08) 4px
-    );
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
     pointer-events: none;
     z-index: 100;
   }
-
-  /* CRT vignette */
   body::after {
     content: '';
     position: fixed;
     inset: 0;
-    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.65) 100%);
     pointer-events: none;
     z-index: 99;
   }
 
-  .header {
-    text-align: center;
-    margin-bottom: 2.5rem;
-    animation: fadeIn 0.8s ease;
-  }
-
+  .header { text-align: center; margin-bottom: 2rem; animation: fadeIn 0.8s ease; }
   .header h1 {
     font-family: 'Orbitron', monospace;
-    font-size: clamp(1.2rem, 3vw, 2rem);
+    font-size: clamp(1.1rem, 2.5vw, 1.8rem);
     font-weight: 900;
     color: var(--green);
-    text-shadow: 0 0 20px var(--green), 0 0 40px rgba(0,255,136,0.4);
+    text-shadow: 0 0 20px var(--green), 0 0 40px rgba(0,255,136,0.35);
     letter-spacing: 0.15em;
     text-transform: uppercase;
   }
-
   .header .subtitle {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--text-dim);
-    letter-spacing: 0.3em;
+    letter-spacing: 0.28em;
     margin-top: 0.4rem;
     text-transform: uppercase;
   }
-
   .divider {
     border: none;
     border-top: 1px solid var(--border);
-    margin: 0.6rem auto;
-    width: 60%;
-    box-shadow: 0 0 8px var(--green-glow);
+    margin: 0.55rem auto;
+    width: 55%;
+    box-shadow: 0 0 8px rgba(0,255,136,0.1);
   }
+
+  .legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.2rem 2rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 1.5rem;
-    max-width: 1300px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 1.4rem;
+    max-width: 1200px;
     margin: 0 auto;
+  }
+
+  /* Explicit placement — max 2 columns
+     Col 1            Col 2
+     RS-44  r1c1      AO-7   r1c2
+     JO-97  r2c1      FO-29  r2c2 spanning rows 2–3
+     AO-73  r3c1
+  */
+  #card-rs44 { grid-column: 1; grid-row: 1; }
+  #card-ao7  { grid-column: 2; grid-row: 1; }
+  #card-jo97 { grid-column: 1; grid-row: 2; }
+  #card-ao73 { grid-column: 1; grid-row: 3; }
+  #card-fo29 { grid-column: 2; grid-row: 2 / 4; }
+
+  @media (max-width: 760px) {
+    .grid { grid-template-columns: 1fr; }
+    #card-rs44, #card-ao7, #card-jo97, #card-ao73, #card-fo29 {
+      grid-column: 1 !important; grid-row: auto !important;
+    }
   }
 
   .sat-card {
@@ -102,149 +118,125 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     overflow: hidden;
-    box-shadow: 0 0 20px rgba(0,255,136,0.05), inset 0 0 30px rgba(0,0,0,0.3);
-    animation: slideUp 0.6s ease both;
+    box-shadow: 0 0 18px rgba(0,255,136,0.04), inset 0 0 28px rgba(0,0,0,0.22);
+    animation: slideUp 0.55s ease both;
   }
 
-  .sat-card:nth-child(2) { animation-delay: 0.1s; }
-  .sat-card:nth-child(3) { animation-delay: 0.2s; }
-
+  /* ── Card Header ── */
   .card-header {
-    padding: 0.9rem 1.2rem;
+    padding: 0.75rem 1.1rem;
     border-bottom: 1px solid var(--border);
     background: linear-gradient(90deg, rgba(0,255,136,0.07) 0%, transparent 100%);
     display: flex;
-    align-items: baseline;
-    gap: 0.8rem;
+    align-items: center;
+    gap: 0.7rem;
   }
-
   .sat-name {
     font-family: 'Orbitron', monospace;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     color: var(--green);
-    text-shadow: 0 0 12px rgba(0,255,136,0.6);
+    text-shadow: 0 0 10px rgba(0,255,136,0.55);
   }
+  .sat-meta { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.16em; margin-top: 0.15rem; }
+  .card-header-right { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+  .magic-num { font-size: 0.58rem; color: var(--amber); opacity: 0.65; white-space: nowrap; }
 
-  .sat-meta {
-    font-size: 0.65rem;
-    color: var(--text-dim);
-    letter-spacing: 0.2em;
+  .tag {
+    display: inline-block;
+    font-size: 0.5rem;
+    padding: 0.1rem 0.38rem;
+    border-radius: 2px;
+    letter-spacing: 0.12em;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    white-space: nowrap;
   }
+  .tag-inv   { background: rgba(0,255,136,0.1);  border: 1px solid rgba(0,255,136,0.3);  color: var(--green); }
+  .tag-noninv{ background: rgba(0,229,255,0.1);  border: 1px solid rgba(0,229,255,0.3);  color: var(--cyan); }
 
-  .magic-num {
-    margin-left: auto;
-    font-size: 0.65rem;
-    color: var(--amber);
-    opacity: 0.7;
-  }
-
+  /* ── Transponder info ── */
   .transponder-info {
-    padding: 0.5rem 1.2rem;
+    padding: 0.38rem 1.1rem;
     border-bottom: 1px solid var(--border);
     display: flex;
-    gap: 1.5rem;
-    font-size: 0.68rem;
-    color: var(--text-dim);
-  }
-
-  .transponder-info span { color: var(--cyan); }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  thead tr {
-    background: rgba(0,255,136,0.04);
-    border-bottom: 1px solid var(--border);
-  }
-
-  th {
-    padding: 0.55rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.4rem;
     font-size: 0.62rem;
-    letter-spacing: 0.25em;
+    color: var(--text-dim);
+    background: rgba(0,0,0,0.14);
+  }
+  .transponder-info .up-val { color: var(--cyan); }
+  .transponder-info .dn-val { color: var(--green); }
+  .transponder-info span    { color: var(--text); }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: rgba(0,255,136,0.04); border-bottom: 1px solid var(--border); }
+  th {
+    padding: 0.48rem 0.85rem;
+    font-size: 0.57rem;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--text-dim);
     text-align: right;
   }
-
   th:first-child { text-align: left; }
-
   td {
-    padding: 0.48rem 1rem;
-    font-size: 0.85rem;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.83rem;
     text-align: right;
-    border-bottom: 1px solid rgba(26,51,32,0.5);
-    transition: background 0.15s;
+    border-bottom: 1px solid rgba(26,51,32,0.4);
+    transition: background 0.1s;
   }
-
-  td:first-child { text-align: left; color: var(--text-dim); font-size: 0.72rem; }
-
-  tr.seed-row td {
-    background: rgba(0,255,136,0.06);
-    color: var(--green);
-  }
-
+  td:first-child { text-align: left; color: var(--text-dim); font-size: 0.66rem; }
+  tr.seed-row td  { background: rgba(0,255,136,0.062); }
   tr.seed-row td:first-child { color: var(--amber); }
-
-  tr:hover td {
-    background: rgba(0,255,136,0.04);
-    color: var(--green);
-  }
-
+  tr.seed-row .freq-up, tr.seed-row .freq-dn { color: var(--green); text-shadow: 0 0 7px rgba(0,255,136,0.45); }
+  tr:hover td { background: rgba(0,255,136,0.035); }
+  tr.seed-row:hover td { background: rgba(0,255,136,0.09); }
   .freq-up { color: var(--cyan); }
   .freq-dn { color: var(--text); }
 
-  tr.seed-row .freq-up,
-  tr.seed-row .freq-dn { color: var(--green); text-shadow: 0 0 8px rgba(0,255,136,0.5); }
-
   .badge {
     display: inline-block;
-    font-size: 0.55rem;
-    padding: 0.1rem 0.35rem;
-    background: rgba(255,170,0,0.15);
+    font-size: 0.5rem;
+    padding: 0.07rem 0.28rem;
+    background: rgba(255,170,0,0.12);
     border: 1px solid rgba(255,170,0,0.3);
     color: var(--amber);
     border-radius: 2px;
     vertical-align: middle;
-    margin-left: 0.3rem;
+    margin-left: 0.28rem;
     letter-spacing: 0.1em;
   }
+  .badge-ctr {
+    background: rgba(0,229,255,0.08);
+    border-color: rgba(0,229,255,0.28);
+    color: var(--cyan);
+  }
 
+  /* ── Passband bars ── */
+  .passband-section { border-top: 1px solid var(--border); background: rgba(0,0,0,0.16); }
   .passband-bar {
-    padding: 0.45rem 1.2rem;
-    background: rgba(0,0,0,0.2);
+    padding: 0.36rem 1.1rem;
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    font-size: 0.62rem;
+    gap: 0.5rem;
+    font-size: 0.57rem;
     color: var(--text-dim);
-    border-top: 1px solid var(--border);
   }
+  .passband-bar + .passband-bar { border-top: 1px solid rgba(26,51,32,0.38); }
+  .pb-label { font-family: 'Orbitron', monospace; font-size: 0.54rem; font-weight: 700; min-width: 1.5rem; text-align: center; }
+  .pb-dn { color: var(--green); }
+  .pb-up { color: var(--cyan); }
+  .pb-edge { min-width: 4.2rem; text-align: center; font-size: 0.56rem; }
+  .pb-bw   { margin-left: auto; font-size: 0.53rem; opacity: 0.55; white-space: nowrap; }
 
-  .pb-label { font-family: 'Orbitron', monospace; font-size: 0.6rem; font-weight: 700; min-width: 1.8rem; }
-  .dn-col { color: var(--green); }
-  .up-col { color: var(--cyan); }
-  .pb-edge { min-width: 4.5rem; text-align: center; }
-  .pb-bw { margin-left: auto; color: var(--text-dim); font-size: 0.58rem; }
-
-  .bar-track {
-    flex: 1;
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    position: relative;
-    overflow: visible;
-  }
-
-  .bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, rgba(0,200,100,0.3), var(--green));
-    border-radius: 2px;
-    box-shadow: 0 0 6px var(--green);
-  }
-
+  .bar-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; position: relative; overflow: visible; }
+  .bar-fill  { height: 100%; border-radius: 2px; width: 100%; }
+  .bar-fill-dn { background: linear-gradient(90deg, rgba(0,200,100,0.22), var(--green)); box-shadow: 0 0 5px rgba(0,255,136,0.35); }
+  .bar-fill-up { background: linear-gradient(90deg, rgba(0,180,200,0.18), var(--cyan)); box-shadow: 0 0 5px rgba(0,229,255,0.3); }
   .bar-seed {
     position: absolute;
     top: 50%;
@@ -255,31 +247,84 @@
     box-shadow: 0 0 4px var(--amber);
   }
 
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-  .note {
-    text-align: center;
-    font-size: 0.62rem;
-    color: var(--text-dim);
-    margin-top: 2rem;
-    letter-spacing: 0.15em;
+  /* ── Seed Editor ── */
+  .seed-btn {
+    background: none;
+    border: 1px solid rgba(255,170,0,0.28);
+    color: var(--amber);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.53rem;
+    padding: 0.16rem 0.48rem;
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: all 0.14s;
+    opacity: 0.65;
+    white-space: nowrap;
   }
+  .seed-btn:hover { background: rgba(255,170,0,0.1); opacity: 1; }
 
+  .seed-editor {
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease, padding 0.25s ease;
+    border-top: 0px solid var(--border);
+    background: rgba(255,170,0,0.025);
+  }
+  .seed-editor.open {
+    max-height: 200px;
+    padding: 0.7rem 1.1rem 0.8rem;
+    border-top: 1px solid rgba(255,170,0,0.12);
+  }
+  .seed-editor-row  { display: flex; gap: 0.8rem; }
+  .seed-editor-field { flex: 1; }
+  .seed-editor label { font-size: 0.58rem; color: var(--text-dim); letter-spacing: 0.12em; display: block; margin-bottom: 0.22rem; }
+  .seed-editor input {
+    background: var(--bg3);
+    border: 1px solid rgba(255,170,0,0.22);
+    color: var(--amber);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    padding: 0.28rem 0.45rem;
+    width: 100%;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.13s;
+  }
+  .seed-editor input:focus { border-color: rgba(255,170,0,0.65); }
+  .seed-editor-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; align-items: center; }
+  .seed-apply {
+    background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.32);
+    color: var(--green); font-family: 'Share Tech Mono', monospace; font-size: 0.58rem;
+    padding: 0.27rem 0.75rem; border-radius: 2px; cursor: pointer; letter-spacing: 0.1em;
+    transition: all 0.13s;
+  }
+  .seed-apply:hover { background: rgba(0,255,136,0.2); }
+  .seed-cancel {
+    background: none; border: 1px solid rgba(74,136,96,0.28);
+    color: var(--text-dim); font-family: 'Share Tech Mono', monospace; font-size: 0.58rem;
+    padding: 0.27rem 0.75rem; border-radius: 2px; cursor: pointer; letter-spacing: 0.1em;
+    transition: all 0.13s;
+  }
+  .seed-cancel:hover { border-color: var(--text-dim); color: var(--text); }
+  .seed-reset {
+    background: none; border: 1px solid rgba(255,68,102,0.22);
+    color: rgba(255,68,102,0.45); font-family: 'Share Tech Mono', monospace; font-size: 0.58rem;
+    padding: 0.27rem 0.65rem; border-radius: 2px; cursor: pointer; letter-spacing: 0.1em;
+    margin-left: auto; transition: all 0.13s;
+  }
+  .seed-reset:hover { border-color: rgba(255,68,102,0.55); color: var(--red); }
+  .seed-status { font-size: 0.55rem; color: var(--text-dim); margin-top: 0.3rem; min-height: 0.85rem; }
+
+  /* ── Footer ── */
+  .note { text-align: center; font-size: 0.58rem; color: var(--text-dim); margin-top: 2rem; letter-spacing: 0.12em; }
+
+  /* ── Animations ── */
   .blink { animation: blink 1.2s step-end infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-
-  .legend {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    margin-bottom: 1.5rem;
-    font-size: 0.65rem;
-    letter-spacing: 0.15em;
-  }
-
-  .legend-item { display: flex; align-items: center; gap: 0.4rem; }
-  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  @keyframes blink   { 50% { opacity: 0; } }
+  @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
@@ -287,148 +332,325 @@
 <div class="header">
   <h1>Linear Transponder &mdash; Frequency Pairs</h1>
   <hr class="divider">
-  <div class="subtitle">Inverting Transponder &nbsp;|&nbsp; Passband Reference &nbsp;|&nbsp; <span class="blink">&#9646;</span> LSB/USB</div>
+  <div class="subtitle">Inverting &amp; Non-Inverting &nbsp;|&nbsp; 5 kHz Grid &nbsp;|&nbsp; <span class="blink">&#9646;</span> LSB / USB</div>
 </div>
 
 <div class="legend">
   <div class="legend-item"><div class="legend-dot" style="background:#00e5ff"></div> Uplink (LSB)</div>
   <div class="legend-item"><div class="legend-dot" style="background:#00ff88"></div> Downlink (USB)</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#ffaa00"></div> Seed Pair</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ffaa00"></div> Seed pair</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(0,229,255,0.4)"></div> <span style="color:#00e5ff;font-size:0.6rem">INV</span>&nbsp;Inverting</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(0,229,255,0.15)"></div> <span style="color:#4a8860;font-size:0.6rem">NON</span>&nbsp;Non-Inverting</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(0,229,255,0.6)"></div> <span style="color:#00e5ff;font-size:0.6rem">CTR</span>&nbsp;Center (default)</div>
 </div>
 
-<div class="grid" id="tables"></div>
-
-<div class="note">All frequencies in MHz &nbsp;·&nbsp; Inverting transponder: f<sub>dn</sub> = Magic &minus; f<sub>up</sub> &nbsp;·&nbsp; Uplink LSB · Downlink USB · Doppler not applied</div>
+<div class="grid" id="satGrid"></div>
+<div class="note" id="footNote"></div>
 
 <script>
-// Seed pairs — magic = up + dn is the inverting transponder constant
-// Passband defined on BOTH axes. Downlink is the stepping reference.
-const satellites = [
+// ════════════════════════════════════════════════════════════════
+//  SATELLITE DATABASE
+//  inverting : true  → dn = magic − up   (magic = up_seed + dn_seed, constant)
+//  inverting : false → dn = up + offset  (offset = dn_seed − up_seed, constant)
+//  seedDefault: null → center of passband used automatically
+// ════════════════════════════════════════════════════════════════
+const SAT_DEFS = [
   {
-    name: "RS-44",
-    aka: "DOSAAF-85",
-    mode: "Mode V/U",
-    bw: "60 kHz",
-    seed: { up: 145.964996, dn: 435.637864 },
-    dnHi: 435.670, dnLo: 435.610,   // USB downlink passband
+    id: 'rs44',
+    name: 'RS-44',
+    aka: 'DOSAAF-85',
+    mode: 'Mode V/U',
+    inverting: true,
+    bw: '60 kHz',
     upLo: 145.935, upHi: 145.995,   // LSB uplink passband
-    upLabel: "145 MHz LSB", dnLabel: "435 MHz USB",
-    desc: "Inverting · LSB up · USB down"
+    dnLo: 435.610, dnHi: 435.670,   // USB downlink passband
+    upMode: 'LSB', dnMode: 'USB',
+    seedDefault: { up: 145.964996, dn: 435.637864 }
   },
   {
-    name: "AO-7",
-    aka: "AMSAT-OSCAR 7",
-    mode: "Mode B",
-    bw: "50 kHz",
-    seed: { up: 432.150000, dn: 145.950861 },
-    dnHi: 145.975, dnLo: 145.925,
+    id: 'ao7',
+    name: 'AO-7',
+    aka: 'AMSAT-OSCAR 7',
+    mode: 'Mode B',
+    inverting: true,
+    bw: '50 kHz',
     upLo: 432.125, upHi: 432.175,
-    upLabel: "432 MHz LSB", dnLabel: "145 MHz USB",
-    desc: "Inverting · LSB up · USB down"
+    dnLo: 145.925, dnHi: 145.975,
+    upMode: 'LSB', dnMode: 'USB',
+    seedDefault: { up: 432.150000, dn: 145.950861 }
   },
   {
-    name: "JO-97",
-    aka: "JY1Sat",
-    mode: "Mode V/U",
-    bw: "20 kHz",
-    seed: { up: 435.109880, dn: 145.865060 },
-    dnHi: 145.875, dnLo: 145.855,
+    id: 'jo97',
+    name: 'JO-97',
+    aka: 'JY1Sat',
+    mode: 'Mode V/U',
+    inverting: true,
+    bw: '20 kHz',
     upLo: 435.100, upHi: 435.120,
-    upLabel: "435 MHz LSB", dnLabel: "145 MHz USB",
-    desc: "Inverting · LSB up · USB down"
+    dnLo: 145.855, dnHi: 145.875,
+    upMode: 'LSB', dnMode: 'USB',
+    seedDefault: { up: 435.109880, dn: 145.865060 }
+  },
+  {
+    id: 'ao73',
+    name: 'AO-73',
+    aka: 'FUNcube-1',
+    mode: 'Mode U/V',
+    inverting: true,
+    bw: '20 kHz',
+    // Uplink: 435.150–435.130 LSB (high→low), Downlink: 145.950–145.970 USB
+    upLo: 435.130, upHi: 435.150,
+    dnLo: 145.950, dnHi: 145.970,
+    upMode: 'LSB', dnMode: 'USB',
+    seedDefault: { up: 435.148260, dn: 145.959200 }
+  },
+  {
+    id: 'fo29',
+    name: 'FO-29',
+    aka: 'JAS-2 / Fuji-OSCAR-29',
+    mode: 'Mode V/U (J)',
+    inverting: true,
+    bw: '100 kHz',
+    upLo: 145.900, upHi: 146.000,
+    dnLo: 435.800, dnHi: 435.900,
+    upMode: 'LSB', dnMode: 'USB',
+    seedDefault: null   // no seed provided → center: up=145.950, dn=435.850
   }
 ];
 
-function fmt(f)  { return f.toFixed(6); }
-function fmt3(f) { return f.toFixed(3); }
-function clamp(v,lo,hi) { return Math.min(Math.max(v,lo),hi); }
+const STEP = 0.005; // 5 kHz
 
-function buildPassbandBars(sat) {
-  const seedPctDn = clamp((sat.seed.dn - sat.dnLo) / (sat.dnHi - sat.dnLo) * 100, 0, 100);
-  // Uplink bar: upLo on left, upHi on right
-  const seedPctUp = clamp((sat.seed.up - sat.upLo) / (sat.upHi - sat.upLo) * 100, 0, 100);
-  return `
-    <div class="passband-bar">
-      <span class="pb-label dn-col">DN</span>
-      <span class="pb-edge">${fmt3(sat.dnLo)}</span>
-      <div class="bar-track">
-        <div class="bar-fill" style="background:linear-gradient(90deg,rgba(0,200,100,0.25),var(--green));width:100%"></div>
-        <div class="bar-seed" style="left:${seedPctDn.toFixed(1)}%"></div>
-      </div>
-      <span class="pb-edge">${fmt3(sat.dnHi)}</span>
-      <span class="pb-bw">USB · ${sat.bw}</span>
-    </div>
-    <div class="passband-bar">
-      <span class="pb-label up-col">UP</span>
-      <span class="pb-edge">${fmt3(sat.upLo)}</span>
-      <div class="bar-track">
-        <div class="bar-fill" style="background:linear-gradient(90deg,rgba(0,200,220,0.2),var(--cyan));width:100%"></div>
-        <div class="bar-seed" style="left:${seedPctUp.toFixed(1)}%;background:var(--amber);box-shadow:0 0 4px var(--amber)"></div>
-      </div>
-      <span class="pb-edge">${fmt3(sat.upHi)}</span>
-      <span class="pb-bw">LSB · ${sat.bw}</span>
-    </div>`;
+// ── Number utilities ─────────────────────────────────────────────
+const R6    = f => Math.round(f * 1e6) / 1e6;
+const R3    = f => Math.round(f * 1e3) / 1e3;
+const fmt   = f => f.toFixed(6);
+const f3    = f => f.toFixed(3);
+const clamp = (v,lo,hi) => Math.min(Math.max(v,lo),hi);
+
+function centerOf(sat) {
+  return { up: R6((sat.upLo + sat.upHi) / 2), dn: R6((sat.dnLo + sat.dnHi) / 2) };
 }
 
-const container = document.getElementById('tables');
+// ── Transponder formula ──────────────────────────────────────────
+// Given a seed pair and a downlink freq, compute the matching uplink
+function matchingUplink(sat, seed, dn) {
+  if (sat.inverting) {
+    const magic = R6(seed.up + seed.dn);
+    return R6(magic - dn);
+  } else {
+    const offset = R6(seed.dn - seed.up); // positive for dn > up
+    return R6(dn - offset);
+  }
+}
 
-satellites.forEach(sat => {
-  const magic = sat.seed.up + sat.seed.dn;
-  const STEP  = 0.005;
+function constantLabel(sat, seed) {
+  if (sat.inverting) {
+    return { sym: '∑', val: R6(seed.up + seed.dn) };
+  } else {
+    return { sym: 'Δ', val: R6(seed.dn - seed.up) };
+  }
+}
 
+// ── Live seeds state ─────────────────────────────────────────────
+const seeds = {};
+SAT_DEFS.forEach(s => {
+  seeds[s.id] = s.seedDefault ? { ...s.seedDefault } : centerOf(s);
+});
+
+// ── Build frequency table rows ───────────────────────────────────
+function buildRows(sat, seed) {
   const rows = [];
+  const ctr  = centerOf(sat);
+
+  // Step downlink from dnHi → dnLo at 5 kHz
   let dn = sat.dnHi;
   while (dn >= sat.dnLo - 1e-9) {
-    const dnR = Math.round(dn * 1e6) / 1e6;
-    const up  = Math.round((magic - dnR) * 1e6) / 1e6;
-    const offsetKHz = Math.round((dnR - sat.seed.dn) * 1e6) / 1e3;
-    const sign = offsetKHz >= 0 ? '+' : '';
-    rows.push({ up, dn: dnR, isSeed: false, offsetStr: `${sign}${offsetKHz.toFixed(1)} kHz` });
-    dn = Math.round((dn - STEP) * 1e6) / 1e6;
+    const dnR    = R6(dn);
+    const up     = matchingUplink(sat, seed, dnR);
+    const offKHz = R3((dnR - seed.dn) * 1000);
+    const sign   = offKHz >= 0 ? '+' : '';
+    rows.push({ up, dn: dnR, isSeed: false, offStr: `${sign}${offKHz.toFixed(1)} kHz` });
+    dn = R6(dn - STEP);
   }
 
-  let closestIdx = 0, closestDist = Infinity;
-  rows.forEach((r, i) => { const d = Math.abs(r.dn - sat.seed.dn); if (d < closestDist) { closestDist = d; closestIdx = i; } });
+  // Find grid row closest to seed
+  let bIdx = 0, bDist = Infinity;
+  rows.forEach((r, i) => { const d = Math.abs(r.dn - seed.dn); if (d < bDist) { bDist = d; bIdx = i; } });
 
-  if (closestDist < 0.0025) {
-    rows[closestIdx].isSeed = true;
+  const isDefaultCtr = !sat.seedDefault;
+
+  if (bDist < STEP / 2 + 1e-9) {
+    rows[bIdx].isSeed  = true;
+    rows[bIdx].isCtr   = isDefaultCtr;
+    rows[bIdx].offStr  = '0.0 kHz';
   } else {
-    rows.push({ up: sat.seed.up, dn: sat.seed.dn, isSeed: true, offsetStr: '0.0 kHz' });
+    // Seed falls between grid steps — insert exact pair
+    rows.push({ up: seed.up, dn: seed.dn, isSeed: true, isCtr: isDefaultCtr, offStr: '0.0 kHz' });
     rows.sort((a, b) => b.dn - a.dn);
   }
 
+  return rows;
+}
+
+// ── Render one card ──────────────────────────────────────────────
+function renderCard(sat, container) {
+  const seed = seeds[sat.id];
+  const mo   = constantLabel(sat, seed);
+  const rows = buildRows(sat, seed);
+
+  const seedPctDn = clamp((seed.dn - sat.dnLo) / (sat.dnHi - sat.dnLo) * 100, 0, 100);
+  const seedPctUp = clamp((seed.up - sat.upLo) / (sat.upHi - sat.upLo) * 100, 0, 100);
+
+  const tagCls  = sat.inverting ? 'tag-inv' : 'tag-noninv';
+  const tagText = sat.inverting ? 'INV' : 'NON';
+
+  // Uplink direction note (inverting: UP moves opposite to DN)
+  const upDir = sat.inverting ? '↓ as DN↑' : '↑ as DN↑';
+
+  const isDefaultCtr = !sat.seedDefault;
+
   const rowsHTML = rows.map(r => {
     const cls   = r.isSeed ? ' class="seed-row"' : '';
-    const badge = r.isSeed ? '<span class="badge">SEED</span>' : '';
-    return `<tr${cls}><td>${r.offsetStr}${badge}</td><td class="freq-up">${fmt(r.up)}</td><td class="freq-dn">${fmt(r.dn)}</td></tr>`;
+    const badge = r.isSeed
+      ? (r.isCtr ? '<span class="badge badge-ctr">CTR</span>' : '<span class="badge">SEED</span>')
+      : '';
+    return `<tr${cls}><td>${r.offStr}${badge}</td><td class="freq-up">${fmt(r.up)}</td><td class="freq-dn">${fmt(r.dn)}</td></tr>`;
   }).join('');
 
-  const card = document.createElement('div');
-  card.className = 'sat-card';
-  card.innerHTML = `
+  const seedLabel = isDefaultCtr
+    ? `Default center · up: ${fmt(seed.up)} · dn: ${fmt(seed.dn)}`
+    : `Seed · up: ${fmt(seed.up)} · dn: ${fmt(seed.dn)}`;
+
+  container.innerHTML = `
     <div class="card-header">
-      <div class="sat-name">${sat.name}</div>
-      <div class="sat-meta">${sat.aka} &nbsp;·&nbsp; ${sat.mode}</div>
-      <div class="magic-num">&#931;${magic.toFixed(6)}</div>
+      <div>
+        <div class="sat-name">${sat.name}</div>
+        <div class="sat-meta">${sat.aka} &nbsp;·&nbsp; ${sat.mode}</div>
+      </div>
+      <div class="card-header-right">
+        <span class="tag ${tagCls}">${tagText}</span>
+        <span class="magic-num">${mo.sym}${mo.val.toFixed(6)}</span>
+        <button class="seed-btn" onclick="toggleEditor('${sat.id}')">EDIT SEED</button>
+      </div>
     </div>
+
     <div class="transponder-info">
       <div>BW: <span>${sat.bw}</span></div>
-      <div>UP: <span>${sat.upLabel}</span></div>
-      <div>DN: <span>${sat.dnLabel}</span></div>
-      <div>${sat.desc}</div>
+      <div>UP: <span class="up-val">${f3(sat.upLo)}–${f3(sat.upHi)} ${sat.upMode}</span>&nbsp;<span style="opacity:0.5;font-size:0.58rem">${upDir}</span></div>
+      <div>DN: <span class="dn-val">${f3(sat.dnLo)}–${f3(sat.dnHi)} ${sat.dnMode}</span></div>
     </div>
+
     <table>
       <thead><tr>
         <th>Offset from Seed</th>
-        <th>Uplink LSB (MHz)</th>
-        <th>Downlink USB (MHz)</th>
+        <th>Uplink ${sat.upMode} (MHz)</th>
+        <th>Downlink ${sat.dnMode} (MHz)</th>
       </tr></thead>
       <tbody>${rowsHTML}</tbody>
     </table>
-    ${buildPassbandBars(sat)}
+
+    <div class="passband-section">
+      <div class="passband-bar">
+        <span class="pb-label pb-dn">DN</span>
+        <span class="pb-edge">${f3(sat.dnLo)}</span>
+        <div class="bar-track">
+          <div class="bar-fill bar-fill-dn"></div>
+          <div class="bar-seed" style="left:${seedPctDn.toFixed(1)}%"></div>
+        </div>
+        <span class="pb-edge">${f3(sat.dnHi)}</span>
+        <span class="pb-bw">${sat.dnMode} · ${sat.bw}</span>
+      </div>
+      <div class="passband-bar">
+        <span class="pb-label pb-up">UP</span>
+        <span class="pb-edge">${f3(sat.upLo)}</span>
+        <div class="bar-track">
+          <div class="bar-fill bar-fill-up"></div>
+          <div class="bar-seed" style="left:${seedPctUp.toFixed(1)}%"></div>
+        </div>
+        <span class="pb-edge">${f3(sat.upHi)}</span>
+        <span class="pb-bw">${sat.upMode} · ${sat.bw}</span>
+      </div>
+    </div>
+
+    <div class="seed-editor" id="editor-${sat.id}">
+      <div class="seed-editor-row">
+        <div class="seed-editor-field">
+          <label>Uplink ${sat.upMode} (MHz) — range ${f3(sat.upLo)}–${f3(sat.upHi)}</label>
+          <input type="number" step="0.000001" id="inp-up-${sat.id}" value="${fmt(seed.up)}">
+        </div>
+        <div class="seed-editor-field">
+          <label>Downlink ${sat.dnMode} (MHz) — range ${f3(sat.dnLo)}–${f3(sat.dnHi)}</label>
+          <input type="number" step="0.000001" id="inp-dn-${sat.id}" value="${fmt(seed.dn)}">
+        </div>
+      </div>
+      <div class="seed-editor-actions">
+        <button class="seed-apply"  onclick="applySeed('${sat.id}')">APPLY</button>
+        <button class="seed-cancel" onclick="toggleEditor('${sat.id}')">CANCEL</button>
+        <button class="seed-reset"  onclick="resetSeed('${sat.id}')">RESET TO DEFAULT</button>
+      </div>
+      <div class="seed-status" id="status-${sat.id}">${seedLabel}</div>
+    </div>
   `;
-  container.appendChild(card);
-});
+}
+
+// ── Editor controls ──────────────────────────────────────────────
+function toggleEditor(id) {
+  const el = document.getElementById(`editor-${id}`);
+  el.classList.toggle('open');
+  if (el.classList.contains('open')) {
+    const s = seeds[id];
+    document.getElementById(`inp-up-${id}`).value = fmt(s.up);
+    document.getElementById(`inp-dn-${id}`).value = fmt(s.dn);
+  }
+}
+
+function applySeed(id) {
+  const sat    = SAT_DEFS.find(s => s.id === id);
+  const upRaw  = parseFloat(document.getElementById(`inp-up-${id}`).value);
+  const dnRaw  = parseFloat(document.getElementById(`inp-dn-${id}`).value);
+  const status = document.getElementById(`status-${id}`);
+
+  if (isNaN(upRaw) || isNaN(dnRaw)) {
+    status.style.color = 'var(--red)'; status.textContent = '✗ Invalid frequency values'; return;
+  }
+  const tol = 0.001;
+  if (upRaw < sat.upLo - tol || upRaw > sat.upHi + tol) {
+    status.style.color = 'var(--red)';
+    status.textContent = `✗ Uplink ${upRaw.toFixed(6)} outside passband ${f3(sat.upLo)}–${f3(sat.upHi)}`; return;
+  }
+  if (dnRaw < sat.dnLo - tol || dnRaw > sat.dnHi + tol) {
+    status.style.color = 'var(--red)';
+    status.textContent = `✗ Downlink ${dnRaw.toFixed(6)} outside passband ${f3(sat.dnLo)}–${f3(sat.dnHi)}`; return;
+  }
+
+  seeds[id] = { up: R6(upRaw), dn: R6(dnRaw) };
+  renderCard(sat, document.getElementById(`card-${id}`));
+}
+
+function resetSeed(id) {
+  const sat = SAT_DEFS.find(s => s.id === id);
+  seeds[id] = sat.seedDefault ? { ...sat.seedDefault } : centerOf(sat);
+  renderCard(sat, document.getElementById(`card-${id}`));
+}
+
+// ── Initial full render ──────────────────────────────────────────
+(function renderAll() {
+  const grid = document.getElementById('satGrid');
+  SAT_DEFS.forEach((sat, i) => {
+    const card = document.createElement('div');
+    card.className = 'sat-card';
+    card.id = `card-${sat.id}`;
+    card.style.animationDelay = `${i * 0.08}s`;
+    grid.appendChild(card);
+    renderCard(sat, card);
+  });
+
+  document.getElementById('footNote').innerHTML =
+    `All frequencies in MHz &nbsp;·&nbsp; 5 kHz downlink grid &nbsp;·&nbsp; `+
+    `Inverting: f<sub>up</sub> = ∑ &minus; f<sub>dn</sub> &nbsp;·&nbsp; `+
+    `Non-inv: f<sub>up</sub> = f<sub>dn</sub> &minus; &Delta; &nbsp;·&nbsp; `+
+    `Doppler not applied`;
+})();
 </script>
 </body>
 </html>

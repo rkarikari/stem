@@ -87,10 +87,30 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
     gap: 1.4rem;
-    max-width: 1450px;
+    max-width: 1200px;
     margin: 0 auto;
+  }
+
+  /* Explicit placement — max 2 columns
+     Col 1            Col 2
+     RS-44  r1c1      AO-7   r1c2
+     JO-97  r2c1      FO-29  r2c2 spanning rows 2–3
+     AO-73  r3c1
+  */
+  #card-rs44 { grid-column: 1; grid-row: 1; }
+  #card-ao7  { grid-column: 2; grid-row: 1; }
+  #card-jo97 { grid-column: 1; grid-row: 2; }
+  #card-ao73 { grid-column: 1; grid-row: 3; }
+  #card-fo29 { grid-column: 2; grid-row: 2 / 4; }
+
+  @media (max-width: 760px) {
+    .grid { grid-template-columns: 1fr; }
+    #card-rs44, #card-ao7, #card-jo97, #card-ao73, #card-fo29 {
+      grid-column: 1 !important; grid-row: auto !important;
+    }
   }
 
   .sat-card {
