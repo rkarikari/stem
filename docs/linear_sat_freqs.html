@@ -273,7 +273,7 @@
     background: rgba(255,170,0,0.025);
   }
   .seed-editor.open {
-    max-height: 200px;
+    max-height: 340px;
     padding: 0.7rem 1.1rem 0.8rem;
     border-top: 1px solid rgba(255,170,0,0.12);
   }
@@ -315,7 +315,50 @@
     margin-left: auto; transition: all 0.13s;
   }
   .seed-reset:hover { border-color: rgba(255,68,102,0.55); color: var(--red); }
-  .seed-status { font-size: 0.55rem; color: var(--text-dim); margin-top: 0.3rem; min-height: 0.85rem; }
+  .badge-src-default { background: rgba(74,136,96,0.1);  border-color: rgba(74,136,96,0.3);  color: var(--text-dim); }
+  .badge-src-stored  { background: rgba(0,229,255,0.08); border-color: rgba(0,229,255,0.28); color: var(--cyan); }
+  .badge-src-edited  { background: rgba(255,170,0,0.12); border-color: rgba(255,170,0,0.3);  color: var(--amber); }
+
+  .seed-status {
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    margin-top: 0.3rem;
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+  .status-ts { opacity: 0.55; font-size: 0.52rem; }
+
+  .hist-panel {
+    margin-top: 0.6rem;
+    border-top: 1px solid rgba(26,51,32,0.5);
+    padding-top: 0.45rem;
+  }
+  .hist-header {
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.3rem;
+  }
+  .hist-body { max-height: 120px; overflow-y: auto; }
+  .hist-empty { font-size: 0.54rem; color: var(--text-dim); opacity: 0.5; padding: 0.2rem 0; }
+  .hist-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.56rem;
+    padding: 0.18rem 0;
+    border-bottom: 1px solid rgba(26,51,32,0.3);
+    color: var(--text-dim);
+  }
+  .hist-row:last-child { border-bottom: none; }
+  .hist-idx { color: var(--text-dim); opacity: 0.5; min-width: 1.4rem; }
+  .hist-ts  { opacity: 0.55; flex: 1; font-size: 0.53rem; }
+  .hist-up  { color: var(--cyan); }
+  .hist-sep { opacity: 0.4; }
+  .hist-dn  { color: var(--green); }
 
   /* ── Footer ── */
   .note { text-align: center; font-size: 0.58rem; color: var(--text-dim); margin-top: 2rem; letter-spacing: 0.12em; }
@@ -419,6 +462,7 @@ const SAT_DEFS = [
 ];
 
 const STEP = 0.005; // 5 kHz
+const LS_KEY = 'linsat_seeds_v1'; // localStorage key
 
 // ── Number utilities ─────────────────────────────────────────────
 const R6    = f => Math.round(f * 1e6) / 1e6;
@@ -431,38 +475,77 @@ function centerOf(sat) {
   return { up: R6((sat.upLo + sat.upHi) / 2), dn: R6((sat.dnLo + sat.dnHi) / 2) };
 }
 
+function fmtTS(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} `
+       + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+// ── localStorage helpers ─────────────────────────────────────────
+function lsLoad() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; }
+}
+function lsSave(store) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch(e) { console.warn('localStorage write failed', e); }
+}
+
+// ── Seed state: { up, dn, ts, source, history[] } ────────────────
+// source: 'default' | 'center' | 'stored' | 'edited'
+// history: array of { up, dn, ts } (newest first, max 10)
+const seedState = {};
+
+function initSeeds() {
+  const stored = lsLoad();
+  SAT_DEFS.forEach(sat => {
+    const def    = sat.seedDefault ? { ...sat.seedDefault } : centerOf(sat);
+    const src    = sat.seedDefault ? 'default' : 'center';
+    const saved  = stored[sat.id];
+    if (saved && saved.up != null && saved.dn != null) {
+      seedState[sat.id] = {
+        up: R6(saved.up), dn: R6(saved.dn),
+        ts: saved.ts || null,
+        source: 'stored',
+        history: saved.history || []
+      };
+    } else {
+      seedState[sat.id] = { up: def.up, dn: def.dn, ts: null, source: src, history: [] };
+    }
+  });
+}
+
+function persistSeed(id) {
+  const store = lsLoad();
+  const s = seedState[id];
+  store[id] = { up: s.up, dn: s.dn, ts: s.ts, history: s.history };
+  lsSave(store);
+}
+
+function clearPersistedSeed(id) {
+  const store = lsLoad();
+  delete store[id];
+  lsSave(store);
+}
+
 // ── Transponder formula ──────────────────────────────────────────
-// Given a seed pair and a downlink freq, compute the matching uplink
 function matchingUplink(sat, seed, dn) {
   if (sat.inverting) {
-    const magic = R6(seed.up + seed.dn);
-    return R6(magic - dn);
+    return R6(R6(seed.up + seed.dn) - dn);
   } else {
-    const offset = R6(seed.dn - seed.up); // positive for dn > up
-    return R6(dn - offset);
+    return R6(dn - R6(seed.dn - seed.up));
   }
 }
 
 function constantLabel(sat, seed) {
-  if (sat.inverting) {
-    return { sym: '∑', val: R6(seed.up + seed.dn) };
-  } else {
-    return { sym: 'Δ', val: R6(seed.dn - seed.up) };
-  }
+  return sat.inverting
+    ? { sym: '∑', val: R6(seed.up + seed.dn) }
+    : { sym: 'Δ', val: R6(seed.dn - seed.up) };
 }
-
-// ── Live seeds state ─────────────────────────────────────────────
-const seeds = {};
-SAT_DEFS.forEach(s => {
-  seeds[s.id] = s.seedDefault ? { ...s.seedDefault } : centerOf(s);
-});
 
 // ── Build frequency table rows ───────────────────────────────────
 function buildRows(sat, seed) {
   const rows = [];
-  const ctr  = centerOf(sat);
-
-  // Step downlink from dnHi → dnLo at 5 kHz
   let dn = sat.dnHi;
   while (dn >= sat.dnLo - 1e-9) {
     const dnR    = R6(dn);
@@ -472,29 +555,50 @@ function buildRows(sat, seed) {
     rows.push({ up, dn: dnR, isSeed: false, offStr: `${sign}${offKHz.toFixed(1)} kHz` });
     dn = R6(dn - STEP);
   }
-
-  // Find grid row closest to seed
   let bIdx = 0, bDist = Infinity;
   rows.forEach((r, i) => { const d = Math.abs(r.dn - seed.dn); if (d < bDist) { bDist = d; bIdx = i; } });
-
-  const isDefaultCtr = !sat.seedDefault;
-
+  const isCtr = seedState[sat.id].source === 'center';
   if (bDist < STEP / 2 + 1e-9) {
-    rows[bIdx].isSeed  = true;
-    rows[bIdx].isCtr   = isDefaultCtr;
-    rows[bIdx].offStr  = '0.0 kHz';
+    rows[bIdx].isSeed = true;
+    rows[bIdx].isCtr  = isCtr;
+    rows[bIdx].offStr = '0.0 kHz';
   } else {
-    // Seed falls between grid steps — insert exact pair
-    rows.push({ up: seed.up, dn: seed.dn, isSeed: true, isCtr: isDefaultCtr, offStr: '0.0 kHz' });
+    rows.push({ up: seed.up, dn: seed.dn, isSeed: true, isCtr, offStr: '0.0 kHz' });
     rows.sort((a, b) => b.dn - a.dn);
   }
-
   return rows;
+}
+
+// ── Source badge ─────────────────────────────────────────────────
+function sourceBadgeHTML(source) {
+  const map = {
+    default: ['badge-src-default', 'DEFAULT'],
+    center:  ['badge-ctr',         'CTR'],
+    stored:  ['badge-src-stored',  'STORED'],
+    edited:  ['badge-src-edited',  'EDITED'],
+  };
+  const [cls, lbl] = map[source] || ['badge', source.toUpperCase()];
+  return `<span class="badge ${cls}">${lbl}</span>`;
+}
+
+// ── History HTML ─────────────────────────────────────────────────
+function historyHTML(id) {
+  const h = seedState[id].history;
+  if (!h.length) return '<div class="hist-empty">No edit history yet</div>';
+  return h.map((e, i) => `
+    <div class="hist-row">
+      <span class="hist-idx">#${h.length - i}</span>
+      <span class="hist-ts">${fmtTS(e.ts)}</span>
+      <span class="hist-up">${fmt(e.up)}</span>
+      <span class="hist-sep">/</span>
+      <span class="hist-dn">${fmt(e.dn)}</span>
+    </div>`).join('');
 }
 
 // ── Render one card ──────────────────────────────────────────────
 function renderCard(sat, container) {
-  const seed = seeds[sat.id];
+  const s    = seedState[sat.id];
+  const seed = { up: s.up, dn: s.dn };
   const mo   = constantLabel(sat, seed);
   const rows = buildRows(sat, seed);
 
@@ -503,11 +607,7 @@ function renderCard(sat, container) {
 
   const tagCls  = sat.inverting ? 'tag-inv' : 'tag-noninv';
   const tagText = sat.inverting ? 'INV' : 'NON';
-
-  // Uplink direction note (inverting: UP moves opposite to DN)
-  const upDir = sat.inverting ? '↓ as DN↑' : '↑ as DN↑';
-
-  const isDefaultCtr = !sat.seedDefault;
+  const upDir   = sat.inverting ? '↓ as DN↑' : '↑ as DN↑';
 
   const rowsHTML = rows.map(r => {
     const cls   = r.isSeed ? ' class="seed-row"' : '';
@@ -517,9 +617,9 @@ function renderCard(sat, container) {
     return `<tr${cls}><td>${r.offStr}${badge}</td><td class="freq-up">${fmt(r.up)}</td><td class="freq-dn">${fmt(r.dn)}</td></tr>`;
   }).join('');
 
-  const seedLabel = isDefaultCtr
-    ? `Default center · up: ${fmt(seed.up)} · dn: ${fmt(seed.dn)}`
-    : `Seed · up: ${fmt(seed.up)} · dn: ${fmt(seed.dn)}`;
+  const tsLine = s.ts
+    ? `<span class="status-ts">saved ${fmtTS(s.ts)}</span>`
+    : `<span class="status-ts">not yet saved this session</span>`;
 
   container.innerHTML = `
     <div class="card-header">
@@ -529,6 +629,7 @@ function renderCard(sat, container) {
       </div>
       <div class="card-header-right">
         <span class="tag ${tagCls}">${tagText}</span>
+        ${sourceBadgeHTML(s.source)}
         <span class="magic-num">${mo.sym}${mo.val.toFixed(6)}</span>
         <button class="seed-btn" onclick="toggleEditor('${sat.id}')">EDIT SEED</button>
       </div>
@@ -584,11 +685,18 @@ function renderCard(sat, container) {
         </div>
       </div>
       <div class="seed-editor-actions">
-        <button class="seed-apply"  onclick="applySeed('${sat.id}')">APPLY</button>
+        <button class="seed-apply"  onclick="applySeed('${sat.id}')">APPLY &amp; SAVE</button>
         <button class="seed-cancel" onclick="toggleEditor('${sat.id}')">CANCEL</button>
         <button class="seed-reset"  onclick="resetSeed('${sat.id}')">RESET TO DEFAULT</button>
       </div>
-      <div class="seed-status" id="status-${sat.id}">${seedLabel}</div>
+      <div class="seed-status" id="status-${sat.id}">
+        <span>up: ${fmt(seed.up)} &nbsp;·&nbsp; dn: ${fmt(seed.dn)}</span>
+        ${tsLine}
+      </div>
+      <div class="hist-panel">
+        <div class="hist-header">Edit History</div>
+        <div class="hist-body" id="hist-${sat.id}">${historyHTML(sat.id)}</div>
+      </div>
     </div>
   `;
 }
@@ -598,7 +706,7 @@ function toggleEditor(id) {
   const el = document.getElementById(`editor-${id}`);
   el.classList.toggle('open');
   if (el.classList.contains('open')) {
-    const s = seeds[id];
+    const s = seedState[id];
     document.getElementById(`inp-up-${id}`).value = fmt(s.up);
     document.getElementById(`inp-dn-${id}`).value = fmt(s.dn);
   }
@@ -611,29 +719,50 @@ function applySeed(id) {
   const status = document.getElementById(`status-${id}`);
 
   if (isNaN(upRaw) || isNaN(dnRaw)) {
-    status.style.color = 'var(--red)'; status.textContent = '✗ Invalid frequency values'; return;
+    status.innerHTML = '<span style="color:var(--red)">✗ Invalid frequency values</span>'; return;
   }
   const tol = 0.001;
   if (upRaw < sat.upLo - tol || upRaw > sat.upHi + tol) {
-    status.style.color = 'var(--red)';
-    status.textContent = `✗ Uplink ${upRaw.toFixed(6)} outside passband ${f3(sat.upLo)}–${f3(sat.upHi)}`; return;
+    status.innerHTML = `<span style="color:var(--red)">✗ Uplink ${upRaw.toFixed(6)} outside ${f3(sat.upLo)}–${f3(sat.upHi)}</span>`; return;
   }
   if (dnRaw < sat.dnLo - tol || dnRaw > sat.dnHi + tol) {
-    status.style.color = 'var(--red)';
-    status.textContent = `✗ Downlink ${dnRaw.toFixed(6)} outside passband ${f3(sat.dnLo)}–${f3(sat.dnHi)}`; return;
+    status.innerHTML = `<span style="color:var(--red)">✗ Downlink ${dnRaw.toFixed(6)} outside ${f3(sat.dnLo)}–${f3(sat.dnHi)}</span>`; return;
   }
 
-  seeds[id] = { up: R6(upRaw), dn: R6(dnRaw) };
+  const ts  = new Date().toISOString();
+  const prev = { up: seedState[id].up, dn: seedState[id].dn, ts: seedState[id].ts };
+
+  // Push previous to history (keep last 10)
+  const hist = seedState[id].history;
+  if (prev.ts || seedState[id].source !== 'default') {
+    hist.unshift({ up: prev.up, dn: prev.dn, ts: prev.ts || ts });
+    if (hist.length > 10) hist.length = 10;
+  }
+
+  seedState[id] = { up: R6(upRaw), dn: R6(dnRaw), ts, source: 'edited', history: hist };
+  persistSeed(id);
   renderCard(sat, document.getElementById(`card-${id}`));
 }
 
 function resetSeed(id) {
   const sat = SAT_DEFS.find(s => s.id === id);
-  seeds[id] = sat.seedDefault ? { ...sat.seedDefault } : centerOf(sat);
+  const def = sat.seedDefault ? { ...sat.seedDefault } : centerOf(sat);
+  const src = sat.seedDefault ? 'default' : 'center';
+  // Push current to history before resetting
+  const s = seedState[id];
+  const hist = s.history;
+  if (s.source !== 'default' && s.source !== 'center') {
+    hist.unshift({ up: s.up, dn: s.dn, ts: s.ts || new Date().toISOString() });
+    if (hist.length > 10) hist.length = 10;
+  }
+  seedState[id] = { up: def.up, dn: def.dn, ts: null, source: src, history: hist };
+  clearPersistedSeed(id);
   renderCard(sat, document.getElementById(`card-${id}`));
 }
 
 // ── Initial full render ──────────────────────────────────────────
+initSeeds();
+
 (function renderAll() {
   const grid = document.getElementById('satGrid');
   SAT_DEFS.forEach((sat, i) => {
@@ -649,7 +778,7 @@ function resetSeed(id) {
     `All frequencies in MHz &nbsp;·&nbsp; 5 kHz downlink grid &nbsp;·&nbsp; `+
     `Inverting: f<sub>up</sub> = ∑ &minus; f<sub>dn</sub> &nbsp;·&nbsp; `+
     `Non-inv: f<sub>up</sub> = f<sub>dn</sub> &minus; &Delta; &nbsp;·&nbsp; `+
-    `Doppler not applied`;
+    `Seeds persisted in localStorage &nbsp;·&nbsp; Doppler not applied`;
 })();
 </script>
 </body>
