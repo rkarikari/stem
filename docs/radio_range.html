@@ -349,7 +349,7 @@ option{background:#0b1820;}
           
           <button class="btn btn-xs" onclick="setAlt('vhf',120)">120m</button>
         </div>
-        <div class="horizon-info" id="vhf-horizonInfo">📻 HT at mouth level — Hata ultra-urban: ~7.9 km (100W) at 1.5m AGL</div>
+        <div class="horizon-info" id="vhf-horizonInfo">📻 HT at mouth level — Hata ultra-urban: ~2.8 km (1W) at 1.5m AGL</div>
         <button class="terrain-compute-btn" id="vhf-computeBtn" onclick="computeTerrainCoverage('vhf')">
           ⛰ Compute Terrain Coverage (SRTM)
         </button>
@@ -367,13 +367,6 @@ option{background:#0b1820;}
       <!-- POWER LAYERS -->
       <div class="vu-sec">
         <div class="vu-sec-title" style="color:#90ff57;">Coverage Layers — click to toggle</div>
-        <div class="vu-item" id="vli-v100w" onclick="vuToggle('v100w')">
-          <div class="vu-dot" style="border-color:#007a2e;background:rgba(0,122,46,.35)"></div>
-          <div class="vu-info">
-            <div class="vu-pwr" style="color:#007a2e">100 W</div>
-            <div class="vu-range" id="vhf-r100w">Hata+terrain (ultra-urban): ~7.9 km</div>
-          </div>
-        </div>
         <div class="vu-item" id="vli-v10w" onclick="vuToggle('v10w')">
           <div class="vu-dot" style="border-color:#00b341;background:rgba(0,179,65,.30)"></div>
           <div class="vu-info">
@@ -438,7 +431,7 @@ option{background:#0b1820;}
           
           <button class="btn btn-xs" onclick="setAlt('uhf',120)">120m</button>
         </div>
-        <div class="horizon-info" id="uhf-horizonInfo">📻 HT at mouth level — Hata ultra-urban: ~4.1 km (100W) at 1.5m AGL</div>
+        <div class="horizon-info" id="uhf-horizonInfo">📻 HT at mouth level — Hata ultra-urban: ~1.4 km (1W) at 1.5m AGL</div>
         <button class="terrain-compute-btn" id="uhf-computeBtn" onclick="computeTerrainCoverage('uhf')">
           ⛰ Compute Terrain Coverage (SRTM)
         </button>
@@ -456,13 +449,6 @@ option{background:#0b1820;}
       <!-- POWER LAYERS -->
       <div class="vu-sec">
         <div class="vu-sec-title" style="color:#ff9eff;">Coverage Layers — click to toggle</div>
-        <div class="vu-item" id="vli-u100w" onclick="vuToggle('u100w')">
-          <div class="vu-dot" style="border-color:#7700cc;background:rgba(119,0,204,.35)"></div>
-          <div class="vu-info">
-            <div class="vu-pwr" style="color:#7700cc">100 W</div>
-            <div class="vu-range" id="uhf-r100w">Hata+terrain (ultra-urban): ~4.1 km</div>
-          </div>
-        </div>
         <div class="vu-item" id="vli-u10w" onclick="vuToggle('u10w')">
           <div class="vu-dot" style="border-color:#aa33ff;background:rgba(170,51,255,.28)"></div>
           <div class="vu-info">
@@ -987,9 +973,9 @@ function setAlt(band, val){
 
   const horizon = fullHorizon(h);
   const htLabel = h === HT_HEIGHT ? '📻 HT at mouth level — ' : '';
-  const r100 = vuPowersComputed(band).p100w;
+  const r10 = vuPowersComputed(band).p10w;
   document.getElementById(band+'-horizonInfo').textContent =
-    `${htLabel}Hata ${VU_ENV[band]}: ~${r100.toFixed(1)} km (100W) · geo horizon ~${horizon.toFixed(1)} km at ${display}m AGL`;
+    `${htLabel}Hata ${VU_ENV[band]}: ~${vuPowersComputed(band).p1w.toFixed(1)} km (1W) · 10W: ~${r10.toFixed(1)} km · geo horizon ~${horizon.toFixed(1)} km at ${display}m AGL`;
 
   // Update range labels using Hata engine (env+altitude aware)
   updateRangeLabels(band);
@@ -1118,15 +1104,14 @@ function updateEnvInfo(band){
   if(!e || !inf) return;
   const freqMHz = band==='vhf' ? 145 : 435;
   const altM    = VU_ALT[band];
-  const r100    = hataMaxRange(e.id, freqMHz, altM, 100);
+  const r10     = hataMaxRange(e.id, freqMHz, altM, 10);
   const r1      = hataMaxRange(e.id, freqMHz, altM, 1);
-  // dB penalty vs open for reference
   const dOpen   = hataLoss('open',   freqMHz, Math.max(altM,1.5), 1.5, 5);
   const dThis   = hataLoss(e.id,     freqMHz, Math.max(altM,1.5), 1.5, 5);
   const dbDiff  = (dThis - dOpen).toFixed(1);
   inf.innerHTML =
     `<strong>${e.label}</strong> · +${dbDiff} dB vs open · Hata model @${altM}m<br/>` +
-    `100W→~${r100.toFixed(1)} km &nbsp; 1W→~${r1.toFixed(1)} km<br/>` +
+    `10W→~${r10.toFixed(1)} km &nbsp; 1W→~${r1.toFixed(1)} km<br/>` +
     `${e.desc}<br/><span style="color:var(--accent2);font-size:.58rem;">e.g. ${e.example}</span>`;
 }
 
@@ -1145,13 +1130,13 @@ function vuPowersComputed(band){
   const altM    = VU_ALT[band];
   const horizon = fullHorizon(altM);
   const compute = (w) => Math.min(hataMaxRange(env, freqMHz, altM, w), horizon);
-  return { p100w: compute(100), p10w: compute(10), p5w: compute(5), p1w: compute(1) };
+  return { p10w: compute(10), p5w: compute(5), p1w: compute(1) };
 }
 
 function updateRangeLabels(band){
   const cfg    = VU_CFG[band];
   const altM   = VU_ALT[band];
-  const pkeys  = ['p100w','p10w','p5w','p1w'];
+  const pkeys  = ['p10w','p5w','p1w'];
   const powers = vuPowersComputed(band);
   pkeys.forEach((pk,i) => {
     const el = document.getElementById(cfg.rangeIds[i]);
@@ -1168,20 +1153,20 @@ function vuPowers(band){
 
 const VU_CFG = {
   vhf:{
-    rawPowers:{p100w:38, p10w:22, p5w:19, p1w:13},
-    powers:{p100w:38, p10w:22, p5w:19, p1w:13},
-    colors:{p100w:'#007a2e', p10w:'#00b341', p5w:'#39d353', p1w:'#90ff57'},
-    fop:   {p100w:.12,       p10w:.16,       p5w:.20,       p1w:.26},
-    ckeys: ['v100w','v10w','v5w','v1w'],
-    rangeIds: ['vhf-r100w','vhf-r10w','vhf-r5w','vhf-r1w'],
+    rawPowers:{p10w:22, p5w:19, p1w:13},
+    powers:{p10w:22, p5w:19, p1w:13},
+    colors:{p10w:'#00b341', p5w:'#39d353', p1w:'#90ff57'},
+    fop:   {p10w:.16,       p5w:.20,       p1w:.26},
+    ckeys: ['v10w','v5w','v1w'],
+    rangeIds: ['vhf-r10w','vhf-r5w','vhf-r1w'],
   },
   uhf:{
-    rawPowers:{p100w:22, p10w:13, p5w:11, p1w:8},
-    powers:{p100w:22, p10w:13, p5w:11, p1w:8},
-    colors:{p100w:'#7700cc', p10w:'#aa33ff', p5w:'#d966ff', p1w:'#ff9eff'},
-    fop:   {p100w:.14,       p10w:.18,       p5w:.22,       p1w:.28},
-    ckeys: ['u100w','u10w','u5w','u1w'],
-    rangeIds: ['uhf-r100w','uhf-r10w','uhf-r5w','uhf-r1w'],
+    rawPowers:{p10w:13, p5w:11, p1w:8},
+    powers:{p10w:13, p5w:11, p1w:8},
+    colors:{p10w:'#aa33ff', p5w:'#d966ff', p1w:'#ff9eff'},
+    fop:   {p10w:.18,       p5w:.22,       p1w:.28},
+    ckeys: ['u10w','u5w','u1w'],
+    rangeIds: ['uhf-r10w','uhf-r5w','uhf-r1w'],
   }
 };
 
@@ -1230,7 +1215,7 @@ async function computeTerrainCoverage(band){
 
   const txTotalH = txElev + altM;
   const horizon  = fullHorizon(altM);
-  const maxRange = Math.min(horizon, vuPowersComputed(band).p100w);
+  const maxRange = Math.min(horizon, vuPowersComputed(band).p10w);
 
   // Build all sample point locations
   const bearings = Array.from({length:NUM_RADIALS}, (_,i) => i*(360/NUM_RADIALS));
@@ -1267,7 +1252,7 @@ async function computeTerrainCoverage(band){
 
   // Update horizon info with actual TX elevation
   document.getElementById(band+'-horizonInfo').textContent =
-    `TX terrain: ${Math.round(txElev)}m · Ant: ${altM}m AGL → total ${Math.round(txTotalH)}m · Hata ${VU_ENV[band]} 100W: ~${vuPowersComputed(band).p100w.toFixed(1)} km`;
+    `TX terrain: ${Math.round(txElev)}m · Ant: ${altM}m AGL → total ${Math.round(txTotalH)}m · Hata ${VU_ENV[band]} 10W: ~${vuPowersComputed(band).p10w.toFixed(1)} km`;
 
   // Draw polygons
   drawVUPolys(band);
@@ -1285,7 +1270,7 @@ function drawVUPolys(band){
   const horizon= fullHorizon(altM);
   const cfg    = VU_CFG[band];
   const bearings = Array.from({length:NUM_RADIALS}, (_,i)=>i*(360/NUM_RADIALS));
-  const pkeys  = ['p100w','p10w','p5w','p1w'];
+  const pkeys  = ['p10w','p5w','p1w'];
 
   // Remove existing layers
   cfg.ckeys.forEach(ck=>{
@@ -1320,14 +1305,22 @@ function drawVUPolys(band){
       color:col, fillColor:col, weight:2,
       opacity:.85, fillOpacity:fo, smoothFactor:2
     });
-    const pLabel = pk==='p100w'?'100 W':pk==='p10w'?'10 W':pk==='p5w'?'5 W':'1 W';
+    const pLabel = pk==='p10w'?'10 W':pk==='p5w'?'5 W':'1 W';
     const htTag = altM === HT_HEIGHT ? ' 📻 HT' : '';
     poly.bindTooltip(`${band.toUpperCase()} ${pLabel}${htTag} · Hata+terrain · ${VU_ENV[band]} · ant ${altM}m AGL`,{className:'ltt',direction:'top'});
     poly.addTo(map);
     VU_POLYS[ck] = poly;
-    vuVisible[ck] = true;
     const li = document.getElementById('vli-'+ck);
-    if(li) li.classList.remove('off');
+    // Default: only show 1W layer
+    if(pk === 'p1w'){
+      vuVisible[ck] = true;
+      if(li) li.classList.remove('off');
+    } else {
+      // keep hCircle visible as reference ring but hide filled polygon
+      try{ map.removeLayer(poly); }catch(e){}
+      vuVisible[ck] = false;
+      if(li) li.classList.add('off');
+    }
   });
 
   // Update range labels via Hata engine
@@ -1394,7 +1387,7 @@ function showVUCircles(band){
   const altM=VU_ALT[band];
   const horizon=fullHorizon(altM);
   const bearings=Array.from({length:NUM_RADIALS},(_,i)=>i*(360/NUM_RADIALS));
-  const pkeys=['p100w','p10w','p5w','p1w'];
+  const pkeys=['p10w','p5w','p1w'];
 
   hideAllVU();
   const envPowers = vuPowersComputed(band);
@@ -1405,18 +1398,24 @@ function showVUCircles(band){
       radius:smoothMax*1000, color:cfg.colors[pk], fillColor:cfg.colors[pk],
       weight:2, opacity:.82, fillOpacity:cfg.fop[pk], dashArray:'7 4'
     });
-    const pwrLabel = pk==='p100w'?'100W':pk==='p10w'?'10W':pk==='p5w'?'5W':'1W';
+    const pwrLabel = pk==='p10w'?'10W':pk==='p5w'?'5W':'1W';
     const htTag2 = altM === HT_HEIGHT ? ' 📻 HT' : '';
     c.bindTooltip(`${band.toUpperCase()} ${pwrLabel}${htTag2} · env-adjusted · click ⛰ Compute for terrain`,{className:'ltt',direction:'top'});
-    c.addTo(map);
     VU_POLYS[ck]=c;
-    vuVisible[ck]=true;
     const li=document.getElementById('vli-'+ck);
-    if(li) li.classList.remove('off');
+    // Default: only show 1W layer
+    if(pk === 'p1w'){
+      c.addTo(map);
+      vuVisible[ck]=true;
+      if(li) li.classList.remove('off');
+    } else {
+      vuVisible[ck]=false;
+      if(li) li.classList.add('off');
+    }
   });
 
-  const largest=VU_POLYS[cfg.ckeys[0]];
-  if(largest) map.fitBounds(L.circle([S.lat,S.lon],{radius:Math.min(envPowers.p100w, horizon)*1000}).getBounds().pad(0.1));
+  const p1Circle=VU_POLYS[band==='vhf'?'v1w':'u1w'];
+  if(p1Circle) map.fitBounds(p1Circle.getBounds().pad(0.3));
 }
 
 // ── TX marker helper ─────────────────────────────────────────
