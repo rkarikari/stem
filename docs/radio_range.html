@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ham Radio Coverage — Accra, Ghana</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;700&display=swap');
+:root {
+  --bg:#060c0e; --panel:#0b181c; --border:#1a3a40; --accent:#00ffc3;
+  --dim:#4a8a80; --text:#b8d8d0;
+  /* HF 40m */
+  --h1w:#ff4444; --h5w:#ff9900; --h10w:#ffe033; --h100w:#00e5ff;
+  /* VHF 145 */
+  --v1w:#90ff57; --v5w:#39d353; --v10w:#00b341; --v100w:#007a2e;
+  /* UHF 435 */
+  --u1w:#ff9eff; --u5w:#d966ff; --u10w:#aa33ff; --u100w:#7700cc;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow:hidden;}
+.shell{display:flex;flex-direction:column;height:100vh;}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0;gap:16px;}
+.header-left{display:flex;flex-direction:column;gap:1px;}
+.header-title{font-family:'Share Tech Mono',monospace;font-size:1.15rem;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;}
+.header-sub{font-size:.78rem;color:var(--dim);letter-spacing:.04em;}
+.header-right{display:flex;gap:16px;font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--dim);flex-wrap:wrap;}
+.meta-block{display:flex;flex-direction:column;gap:2px;}
+.meta-label{color:var(--accent);font-size:.6rem;letter-spacing:.12em;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+.live-dot{display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;margin-right:6px;animation:blink 1.4s ease-in-out infinite;}
+
+/* MAP */
+.map-wrap{flex:1;position:relative;min-height:0;}
+#map{width:100%;height:100%;}
+.map-wrap::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);pointer-events:none;z-index:500;}
+
+/* LEGEND */
+.legend{position:absolute;top:14px;right:14px;z-index:1000;background:rgba(6,12,14,.94);border:1px solid var(--border);width:272px;backdrop-filter:blur(8px);}
+.legend::before{content:'';position:absolute;top:-1px;left:20px;width:40px;height:3px;background:var(--accent);}
+
+/* BAND TABS */
+.band-tabs{display:flex;border-bottom:1px solid var(--border);}
+.band-tab{flex:1;padding:8px 4px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.1em;cursor:pointer;border:none;background:transparent;color:var(--dim);transition:all .2s;text-transform:uppercase;}
+.band-tab:not(:last-child){border-right:1px solid var(--border);}
+.band-tab.active{color:var(--accent);background:rgba(0,255,195,.07);}
+.band-tab[data-band="hf"].active{color:var(--h100w);background:rgba(0,229,255,.06);}
+.band-tab[data-band="vhf"].active{color:var(--v1w);background:rgba(144,255,87,.06);}
+.band-tab[data-band="uhf"].active{color:var(--u1w);background:rgba(255,158,255,.06);}
+
+/* LEGEND BODY */
+.legend-body{padding:14px 16px;}
+.band-panel{display:none;}
+.band-panel.active{display:block;}
+
+.band-header{display:flex;align-items:baseline;gap:8px;margin-bottom:12px;}
+.band-freq{font-family:'Share Tech Mono',monospace;font-size:.95rem;font-weight:700;}
+.band-mode{font-size:.68rem;color:var(--dim);}
+
+.legend-item{display:flex;align-items:center;gap:10px;margin-bottom:9px;cursor:pointer;transition:opacity .2s;padding:4px 6px;border:1px solid transparent;border-radius:2px;}
+.legend-item:hover{background:rgba(255,255,255,.03);border-color:var(--border);}
+.legend-item.off{opacity:.28;}
+.swatch{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:2px solid;}
+.legend-info{flex:1;}
+.legend-power{font-family:'Share Tech Mono',monospace;font-size:.84rem;line-height:1;}
+.legend-range{font-size:.67rem;color:var(--dim);margin-top:1px;}
+.toggle-btn{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--dim);border:1px solid var(--border);padding:1px 5px;cursor:pointer;background:transparent;transition:all .2s;}
+.toggle-btn:hover{color:var(--accent);border-color:var(--accent);}
+
+.legend-divider{border:none;border-top:1px solid var(--border);margin:10px 0;}
+.legend-note{font-size:.64rem;color:var(--dim);line-height:1.55;}
+.legend-note strong{color:var(--text);}
+
+.show-all-btn{width:100%;margin-top:10px;padding:5px;font-family:'Share Tech Mono',monospace;font-size:.62rem;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;text-transform:uppercase;letter-spacing:.1em;transition:all .2s;}
+.show-all-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* FOOTER */
+footer{flex-shrink:0;background:var(--panel);border-top:1px solid var(--border);padding:5px 20px;display:flex;justify-content:space-between;align-items:center;font-family:'Share Tech Mono',monospace;font-size:.63rem;color:var(--dim);}
+
+/* Leaflet overrides */
+.leaflet-control-attribution{background:rgba(6,12,14,.75)!important;color:#4a8a80!important;font-size:9px!important;}
+.leaflet-control-attribution a{color:var(--dim)!important;}
+.leaflet-control-zoom a{background:var(--panel)!important;border-color:var(--border)!important;color:var(--accent)!important;}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<header>
+  <div class="header-left">
+    <div class="header-title"><span class="live-dot"></span>Ham Radio Coverage Planner</div>
+    <div class="header-sub">HF 40 m · VHF 2 m · UHF 70 cm — Accra, Ghana</div>
+  </div>
+  <div class="header-right">
+    <div class="meta-block"><span class="meta-label">HF Band</span><span>7.000–7.200 MHz</span></div>
+    <div class="meta-block"><span class="meta-label">VHF Band</span><span>144–146 MHz</span></div>
+    <div class="meta-block"><span class="meta-label">UHF Band</span><span>430–440 MHz</span></div>
+    <div class="meta-block"><span class="meta-label">TX Location</span><span>Accra 5.60°N 0.19°W</span></div>
+    <div class="meta-block"><span class="meta-label">Antenna</span><span>Inv-V (HF) · Yagi (VHF/UHF)</span></div>
+  </div>
+</header>
+
+<div class="map-wrap">
+  <div id="map"></div>
+
+  <div class="legend">
+    <!-- Band tabs -->
+    <div class="band-tabs">
+      <button class="band-tab active" data-band="hf"  onclick="switchBand('hf')">40 m HF</button>
+      <button class="band-tab"        data-band="vhf" onclick="switchBand('vhf')">2 m VHF</button>
+      <button class="band-tab"        data-band="uhf" onclick="switchBand('uhf')">70 cm UHF</button>
+    </div>
+
+    <!-- HF PANEL -->
+    <div class="band-body" id="panel-hf" style="display:block">
+      <div class="legend-body">
+        <div class="band-header">
+          <span class="band-freq" style="color:var(--h100w)">7.150 MHz SSB</span>
+          <span class="band-mode">Inverted-V · NVIS</span>
+        </div>
+        <div class="legend-item" id="li-h100w" onclick="toggle('h100w')">
+          <div class="swatch" style="border-color:var(--h100w);background:rgba(0,229,255,.25)"></div>
+          <div class="legend-info">
+            <div class="legend-power" style="color:var(--h100w)">100 W</div>
+            <div class="legend-range">~2 000 km — all W. Africa</div>
+          </div>
+        </div>
+        <div class="legend-item" id="li-h10w" onclick="toggle('h10w')">
+          <div class="swatch" style="border-color:var(--h10w);background:rgba(255,224,51,.20)"></div>
+          <div class="legend-info">
+            <div class="legend-power" style="color:var(--h10w)">10 W</div>
+            <div class="legend-range">~1 200 km — Ghana + neighbours</div>
+          </div>
+        </div>
+        <div class="legend-item" id="li-h5w" onclick="toggle('h5w')">
+          <div class="swatch" style="border-color:var(--h5w);background:rgba(255,153,0,.22)"></div>
+          <div class="legend-info">
+            <div class="legend-power" style="color:var(--h5w)">5 W</div>
+            <div class="legend-range">~800 km — border regions</div>
+          </div>
+        </div>
+        <div class="legend-item" id="li-h1w" onclick="toggle('h1w')">
+          <div class="swatch" style="border-color:var(--h1w);background:rgba(255,68,68,.25)"></div>
+          <div class="legend-info">
+            <div class="legend-power" style="color:var(--h1w)">1 W</div>
+            <div class="legend-range">~400 km — within Ghana</div>
+          </div>
+        </div>
+        <hr class="legend-divider"/>
+        <div class="legend-note">
+          <strong>Mode:</strong> NVIS via F-layer. Daytime, average ionosphere, RST 59 threshold. Equatorial D-layer absorption factored. Range ∝ √P.
+        </div>
+      </div>
+    </div>
+
+    <!-- VHF PANEL -->
+    <div class="band-body" id="panel-vhf" style="display:none">
+      <div class="legend-body">
+        <div class="band-header">
+          <span class="band-freq" style="color:var(--v1w)">145.500 MHz FM</span>
+          <span class="band-mode">Yagi / Vert · Line-of-Sight</span>
+        </div>
+        <div class="legend-item" id="li-v100w" onclick="toggle('v100w')">
+          <div class="swatch" style="border-color:var(--v100w);background:rgba(0,122,46,.30)"></div>
+          <div class="legend-info">
+            <div class="legend-power" style="color:var(--v100w)">100 W</div>
+            <div class="legend-range">~150 km — Greater Accra + Volta</div>
+          </div>
+        </div>
+        <div class="legend-item" id="li-v10w" onclick="toggle('v10w')">
+          <div class="swatch" style="border-color:var(--v10w);background:rgba(0,179,65,.25)"></div>
+          <div class="legend-info">
+            <div class="legend-power" style="color:var(--v10w)">10 W</div>
+            <div class="legend-range">~75 km — Metro + Cape Coast</div>
+          </div>
+        </div>
+        <div class="legend-item" id="li-v5w" onclick="toggle('v5w')">
+          <div class="swatch" style="border-color:var(--v5w);background:rgba(57,211,83,.22)"></div>
+          <div class="legend-info">
+            <div class="legend-power" style="color:var(--v5w)">5 W</div>
+            <div class="legend-range">~50 km — Accra metro area</div>
+          </div>
+        </div>
+        <div class="legend-item" id="li-v1w" onclick="toggle('v1w')">
+          <div class="swatch" style="border-color:var(--v1w);background:rgba(144,255,87,.20)"></div>
+          <div class="legend-info">
+            <div class="legend-power" style="color:var(--v1w)">1 W</div>
+            <div class="legend-range">~25 km — central Accra</div>
+          </div>
+        </div>
+        <hr class="legend-divider"/>
+        <div class="legend-note">
+          <strong>Mode:</strong> Line-of-sight / radio horizon. Antenna height ~10 m AGL. Yagi 7 dBd. Range ∝ √P. Troposcatter can extend 100 W range to ~300 km on good days.
+        </div>
+      </div>
+    </div>
+
+    <!-- UHF PANEL -->
+    <div class="band-body" id="panel-uhf" style="display:none">
+      <div class="legend-body">
+        <div class="band-header">
+          <span class="band-freq" style="color:var(--u1w)">435.000 MHz FM</span>
+          <span class="band-mode">Yagi · Strict Line-of-Sight</span>
+        </div>
+        <div class="legend-item" id="li-u100w" onclick="toggle('u100w')">
+          <div class="swatch" style="border-color:var(--u100w);background:rgba(119,0,204,.30)"></div>
+          <div class="legend-info">
+            <div class="legend-power" style="color:var(--u100w)">100 W</div>
+            <div class="legend-range">~80 km — Greater Accra region</div>
+          </div>
+        </div>
+        <div class="legend-item" id="li-u10w" onclick="toggle('u10w')">
+          <div class="swatch" style="border-color:var(--u10w);background:rgba(170,51,255,.25)"></div>
+          <div class="legend-info">
+            <div class="legend-power" style="color:var(--u10w)">10 W</div>
+            <div class="legend-range">~40 km — Tema to Kasoa</div>
+          </div>
+        </div>
+        <div class="legend-item" id="li-u5w" onclick="toggle('u5w')">
+          <div class="swatch" style="border-color:var(--u5w);background:rgba(217,102,255,.22)"></div>
+          <div class="legend-info">
+            <div class="legend-power" style="color:var(--u5w)">5 W</div>
+            <div class="legend-range">~28 km — Accra city limits</div>
+          </div>
+        </div>
+        <div class="legend-item" id="li-u1w" onclick="toggle('u1w')">
+          <div class="swatch" style="border-color:var(--u1w);background:rgba(255,158,255,.20)"></div>
+          <div class="legend-info">
+            <div class="legend-power" style="color:var(--u1w)">1 W</div>
+            <div class="legend-range">~13 km — local neighbourhoods</div>
+          </div>
+        </div>
+        <hr class="legend-divider"/>
+        <div class="legend-note">
+          <strong>Mode:</strong> Strict LOS. Free-space path loss at 435 MHz is 9.5 dB higher than 145 MHz. UHF is heavily attenuated by buildings and vegetation. Range ∝ √P.
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:0 16px 12px">
+      <button class="show-all-btn" onclick="showAllCurrentBand()">Show All Layers</button>
+    </div>
+  </div><!-- .legend -->
+</div><!-- .map-wrap -->
+
+<footer>
+  <span>⬡ CartoDB Dark Matter · 7 MHz NVIS model · VHF/UHF radio-horizon model</span>
+  <span id="footer-band">Band: HF 40 m | Click legend rows to toggle layers</span>
+  <span>⚠ Indicative only — actual range varies with terrain &amp; conditions</span>
+</footer>
+</div><!-- .shell -->
+
+<script>
+const ACCRA = [5.6037, -0.1870];
+
+/* ── MAP ─────────────────────────────────────────────────── */
+const map = L.map('map', { center: ACCRA, zoom: 7, zoomControl: true });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+  attribution:'&copy; OpenStreetMap contributors &copy; CARTO',
+  subdomains:'abcd', maxZoom:19
+}).addTo(map);
+
+/* ── CIRCLE DEFINITIONS ──────────────────────────────────── */
+// key: [radius_m, strokeColor, fillColor]
+const DEFS = {
+  // HF 40m
+  h100w: [2000000,'#00e5ff','#00e5ff', .07, '7 5'],
+  h10w:  [1200000,'#ffe033','#ffe033', .09, '7 5'],
+  h5w:   [ 800000,'#ff9900','#ff9900', .12, '7 5'],
+  h1w:   [ 400000,'#ff4444','#ff4444', .18, '7 5'],
+  // VHF 145
+  v100w: [ 150000,'#007a2e','#007a2e', .15, '5 3'],
+  v10w:  [  75000,'#00b341','#00b341', .18, '5 3'],
+  v5w:   [  50000,'#39d353','#39d353', .22, '5 3'],
+  v1w:   [  25000,'#90ff57','#90ff57', .28, '5 3'],
+  // UHF 435
+  u100w: [  80000,'#7700cc','#7700cc', .17, '4 3'],
+  u10w:  [  40000,'#aa33ff','#aa33ff', .20, '4 3'],
+  u5w:   [  28000,'#d966ff','#d966ff', .24, '4 3'],
+  u1w:   [  13000,'#ff9eff','#ff9eff', .30, '4 3'],
+};
+
+const circles = {};
+Object.entries(DEFS).forEach(([k,[r,col,fill,fo,da]])=>{
+  circles[k] = L.circle(ACCRA,{
+    radius:r, color:col, fillColor:fill,
+    weight:2, opacity:.88, fillOpacity:fo, dashArray:da
+  });
+});
+
+const TIPS = {
+  h100w:'HF 100 W · ~2 000 km · All of West Africa',
+  h10w: 'HF 10 W  · ~1 200 km · Ghana + all neighbours',
+  h5w:  'HF 5 W   · ~800 km   · Ghana + border regions',
+  h1w:  'HF 1 W   · ~400 km   · Mostly within Ghana',
+  v100w:'VHF 100 W · ~150 km  · Greater Accra & Volta',
+  v10w: 'VHF 10 W  · ~75 km   · Metro + Cape Coast corridor',
+  v5w:  'VHF 5 W   · ~50 km   · Accra metropolitan area',
+  v1w:  'VHF 1 W   · ~25 km   · Central Accra (LOS)',
+  u100w:'UHF 100 W · ~80 km   · Greater Accra region',
+  u10w: 'UHF 10 W  · ~40 km   · Tema–Accra–Kasoa axis',
+  u5w:  'UHF 5 W   · ~28 km   · Accra city limits',
+  u1w:  'UHF 1 W   · ~13 km   · Local neighbourhoods',
+};
+Object.entries(circles).forEach(([k,c])=>{
+  c.bindTooltip(TIPS[k],{permanent:false,direction:'top',className:'tt-dk'});
+});
+
+/* ── BANDS CONFIG ─────────────────────────────────────────── */
+const BANDS = {
+  hf:  { keys:['h100w','h10w','h5w','h1w'],  zoom:5,  label:'HF 40 m SSB' },
+  vhf: { keys:['v100w','v10w','v5w','v1w'],  zoom:9,  label:'VHF 145 MHz FM' },
+  uhf: { keys:['u100w','u10w','u5w','u1w'],  zoom:10, label:'UHF 435 MHz FM' },
+};
+
+let activeBand = 'hf';
+const visible = {};
+Object.keys(circles).forEach(k=>{ visible[k] = false; });
+
+function activateCircles(band){
+  // Remove all
+  Object.values(circles).forEach(c=>{ try{map.removeLayer(c);}catch(e){} });
+  // Add this band (largest first)
+  [...BANDS[band].keys].reverse().forEach(k=>{
+    circles[k].addTo(map);
+    visible[k] = true;
+    const li = document.getElementById('li-'+k);
+    if(li) li.classList.remove('off');
+  });
+}
+
+function switchBand(band){
+  activeBand = band;
+  // Panels
+  document.querySelectorAll('.band-body').forEach(p=>p.style.display='none');
+  document.getElementById('panel-'+band).style.display='block';
+  // Tabs
+  document.querySelectorAll('.band-tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.band===band);
+  });
+  // Footer
+  document.getElementById('footer-band').textContent='Band: '+BANDS[band].label;
+  // Circles
+  activateCircles(band);
+  // Zoom
+  const fitKey = BANDS[band].keys[0]; // largest circle
+  map.fitBounds(circles[fitKey].getBounds().pad(0.1));
+}
+
+function toggle(key){
+  const li = document.getElementById('li-'+key);
+  if(visible[key]){
+    map.removeLayer(circles[key]);
+    visible[key]=false;
+    li.classList.add('off');
+  } else {
+    circles[key].addTo(map);
+    visible[key]=true;
+    li.classList.remove('off');
+  }
+}
+
+function showAllCurrentBand(){
+  BANDS[activeBand].keys.forEach(k=>{
+    if(!visible[k]){
+      circles[k].addTo(map);
+      visible[k]=true;
+      const li=document.getElementById('li-'+k);
+      if(li) li.classList.remove('off');
+    }
+  });
+}
+
+/* ── TX MARKER ────────────────────────────────────────────── */
+const css=document.createElement('style');
+css.textContent=`
+@keyframes ripple{0%{transform:translate(-50%,-50%) scale(.4);opacity:.9;}100%{transform:translate(-50%,-50%) scale(2.8);opacity:0;}}
+.tt-dk{background:rgba(6,12,14,.93)!important;border:1px solid #1a3a40!important;color:#b8d8d0!important;
+  font-family:'Share Tech Mono',monospace!important;font-size:11px!important;padding:5px 10px!important;
+  border-radius:0!important;box-shadow:0 0 10px rgba(0,255,195,.15)!important;white-space:nowrap;}
+.tt-dk::before{display:none!important;}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#060c0e!important;border:1px solid #1a3a40!important;border-radius:0!important;color:#b8d8d0!important;}
+`;
+document.head.appendChild(css);
+
+const txIcon=L.divIcon({
+  className:'',
+  html:`<div style="position:relative;width:0;height:0">
+    <div style="position:absolute;transform:translate(-50%,-50%);width:44px;height:44px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out infinite;"></div>
+    <div style="position:absolute;transform:translate(-50%,-50%);width:44px;height:44px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out .7s infinite;"></div>
+    <div style="position:absolute;transform:translate(-50%,-50%);width:44px;height:44px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out 1.4s infinite;"></div>
+    <div style="position:absolute;transform:translate(-50%,-50%);width:11px;height:11px;background:#00ffc3;border-radius:50%;box-shadow:0 0 14px #00ffc3,0 0 28px #00ffc388;"></div>
+    <div style="position:absolute;left:8px;top:7px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#00ffc3;white-space:nowrap;text-shadow:0 0 8px #00ffc3;">TX · ACCRA</div>
+  </div>`,
+  iconSize:[0,0],iconAnchor:[0,0]
+});
+
+L.marker(ACCRA,{icon:txIcon,zIndexOffset:9000}).addTo(map).bindPopup(`
+  <div style="font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.75;">
+    <b style="color:#00ffc3">TX STATION — ACCRA, GHANA</b><br/>
+    Lat: 5.6037°N &nbsp; Lon: 0.1870°W<br/>
+    HF Antenna: Inverted-V, apex ~10 m AGL<br/>
+    VHF Antenna: 7-el Yagi, ~10 m AGL<br/>
+    UHF Antenna: 9-el Yagi, ~10 m AGL<br/>
+    Powers: 1 / 5 / 10 / 100 W per band
+  </div>`);
+
+/* ── INIT ─────────────────────────────────────────────────── */
+switchBand('hf');
+</script>
+</body>
+</html>
