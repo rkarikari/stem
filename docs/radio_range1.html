@@ -151,30 +151,6 @@ option{background:#0b1820;}
 
 .vu-foot{flex-shrink:0;padding:7px 14px;background:#080f12;border-top:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--dim);line-height:1.65;}
 
-/* ── ALTITUDE SLIDER ── */
-.alt-row{display:flex;align-items:baseline;gap:7px;margin-bottom:8px;}
-.alt-big{font-family:'Share Tech Mono',monospace;font-size:1.5rem;color:var(--accent);line-height:1;}
-.alt-unit{font-size:.68rem;color:var(--dim);margin-bottom:2px;}
-.alt-scale{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:.52rem;color:var(--dim);margin-top:3px;}
-.alt-presets{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
-.horizon-info{margin-top:8px;font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--accent2);line-height:1.5;background:rgba(0,255,195,.04);border:1px solid rgba(0,255,195,.15);padding:5px 8px;}
-
-/* ── TERRAIN COMPUTE ── */
-.terrain-compute-btn{width:100%;padding:7px;font-family:'Share Tech Mono',monospace;font-size:.68rem;background:rgba(0,255,195,.07);border:1px solid var(--accent2);color:var(--accent);cursor:pointer;text-transform:uppercase;letter-spacing:.1em;transition:all .2s;margin-top:10px;}
-.terrain-compute-btn:hover:not(:disabled){background:rgba(0,255,195,.13);border-color:var(--accent);}
-.terrain-compute-btn:disabled{opacity:.45;cursor:not-allowed;}
-.terrain-status{display:none;margin-top:7px;font-family:'Share Tech Mono',monospace;font-size:.63rem;color:var(--text2);line-height:1.55;padding:5px 8px;background:rgba(255,255,255,.03);border-left:2px solid var(--accent2);}
-
-/* ── TOPO TILE BUTTON ── */
-.topo-toggle-btn{width:100%;padding:5px;font-family:'Share Tech Mono',monospace;font-size:.62rem;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;text-transform:uppercase;letter-spacing:.08em;transition:all .2s;margin-top:6px;}
-.topo-toggle-btn:hover{border-color:var(--border2);color:var(--text);}
-.topo-toggle-btn.on{border-color:#6bcb77;color:#6bcb77;background:rgba(107,203,119,.07);}
-
-/* Legend note HL + dashed ring key */
-.ring-key{display:flex;align-items:center;gap:7px;font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--dim);margin-top:5px;}
-.rk-solid{width:22px;height:2px;background:currentColor;}
-.rk-dashed{width:22px;height:0;border-top:2px dashed currentColor;opacity:.5;}
-
 /* Map */
 .map-area{flex:1;position:relative;overflow:hidden;}
 #map{width:100%;height:100%;}
@@ -318,79 +294,53 @@ option{background:#0b1820;}
   <div id="vhf-panel" class="vhf-panel">
     <div class="vu-head">
       <div class="vu-title" style="color:#90ff57;">▲ VHF 2 m COVERAGE</div>
-      <div class="vu-sub">145.500 MHz FM · Terrain-Aware LOS Model</div>
+      <div class="vu-sub">145.500 MHz FM · Line-of-Sight / Radio Horizon</div>
     </div>
     <div class="vu-scroll">
-
-      <!-- ALTITUDE -->
-      <div class="vu-sec">
-        <div class="vu-sec-title" style="color:#90ff57;">TX Antenna / Site Elevation</div>
-        <div class="alt-row">
-          <div class="alt-big" id="vhf-altBig">10</div>
-          <div class="alt-unit">m AGL</div>
-        </div>
-        <input type="range" id="vhf-altSlider" min="10" max="400" value="10" step="5" oninput="setAlt('vhf',this.value)" style="width:100%;"/>
-        <div class="alt-scale"><span>10m</span><span>100m</span><span>200m</span><span>300m</span><span>400m</span></div>
-        <div class="alt-presets">
-          <button class="btn btn-xs" onclick="setAlt('vhf',10)">10m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',30)">30m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',50)">50m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',100)">100m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',200)">200m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',400)">400m</button>
-        </div>
-        <div class="horizon-info" id="vhf-horizonInfo">Smooth-earth radio horizon: ~19 km at 10m AGL</div>
-        <button class="terrain-compute-btn" id="vhf-computeBtn" onclick="computeTerrainCoverage('vhf')">
-          ⛰ Compute Terrain Coverage (SRTM)
-        </button>
-        <div class="terrain-status" id="vhf-status"></div>
-        <button class="topo-toggle-btn" id="vhf-topoBtn" onclick="toggleTopoTile('vhf')">⛰ Show Topo Map</button>
+      <div class="zoom-btns-vu">
+        <button class="zoom-btn-vu" onclick="vuZoom('vhf',9)">City</button>
+        <button class="zoom-btn-vu" onclick="vuZoom('vhf',8)">Region</button>
+        <button class="zoom-btn-vu" onclick="vuZoom('vhf',7)">Wide</button>
       </div>
-
-      <!-- POWER LAYERS -->
       <div class="vu-sec">
-        <div class="vu-sec-title" style="color:#90ff57;">Coverage Layers — click to toggle</div>
+        <div class="vu-sec-title" style="color:#90ff57;">Power Levels — click to toggle</div>
         <div class="vu-item" id="vli-v100w" onclick="vuToggle('v100w')">
           <div class="vu-dot" style="border-color:#007a2e;background:rgba(0,122,46,.35)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#007a2e">100 W</div>
-            <div class="vu-range" id="vhf-r100w">Max smooth-earth: ~150 km</div>
+            <div class="vu-range">~150 km — Greater Accra + Volta region</div>
           </div>
         </div>
         <div class="vu-item" id="vli-v10w" onclick="vuToggle('v10w')">
           <div class="vu-dot" style="border-color:#00b341;background:rgba(0,179,65,.30)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#00b341">10 W</div>
-            <div class="vu-range" id="vhf-r10w">Max smooth-earth: ~75 km</div>
+            <div class="vu-range">~75 km — Metro Accra + Cape Coast</div>
           </div>
         </div>
         <div class="vu-item" id="vli-v5w" onclick="vuToggle('v5w')">
           <div class="vu-dot" style="border-color:#39d353;background:rgba(57,211,83,.25)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#39d353">5 W</div>
-            <div class="vu-range" id="vhf-r5w">Max smooth-earth: ~50 km</div>
+            <div class="vu-range">~50 km — Accra metropolitan area</div>
           </div>
         </div>
         <div class="vu-item" id="vli-v1w" onclick="vuToggle('v1w')">
           <div class="vu-dot" style="border-color:#90ff57;background:rgba(144,255,87,.20)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#90ff57">1 W</div>
-            <div class="vu-range" id="vhf-r1w">Max smooth-earth: ~25 km</div>
+            <div class="vu-range">~25 km — central Accra (LOS)</div>
           </div>
         </div>
-        <div class="ring-key" style="margin-top:9px;">
-          <span class="rk-solid" style="color:#007a2e"></span><span>Terrain polygon</span>
-          <span class="rk-dashed" style="color:#007a2e;margin-left:8px;"></span><span>Smooth-earth limit</span>
-        </div>
       </div>
-
       <div class="vu-note">
-        <strong>Model:</strong> 36 radials × 22 elevation samples (SRTM 90m). Earth curvature (4/3 Re) included. LOS checked point-by-point. <strong>Solid polygon</strong> = terrain-blocked coverage. <strong>Dashed ring</strong> = smooth-earth power limit. Altitude slider recomputes polygon instantly from cached data.
+        <strong>Propagation mode:</strong> Line-of-sight / radio horizon. Antenna height ~10 m AGL, Yagi ~7 dBd assumed.<br/><br/>
+        Range scales as <strong>√P</strong>. Troposcatter can extend 100 W range to ~300 km on favourable days. Terrain and buildings will reduce range significantly in urban areas.
       </div>
     </div>
     <div class="vu-foot">
-      VHF 144–146 MHz · SRTM terrain model · Ant: 7-el Yagi<br/>
-      ⚠ 90m DEM resolution — fine urban obstacles not modelled
+      VHF 144–146 MHz · LOS model · Ant: 7-el Yagi ~10 m AGL<br/>
+      ⚠ Indicative only — terrain and obstructions greatly affect actual range
     </div>
   </div><!-- /vhf-panel -->
 
@@ -398,79 +348,53 @@ option{background:#0b1820;}
   <div id="uhf-panel" class="uhf-panel">
     <div class="vu-head">
       <div class="vu-title" style="color:#ff9eff;">◆ UHF 70 cm COVERAGE</div>
-      <div class="vu-sub">435.000 MHz FM · Terrain-Aware LOS Model</div>
+      <div class="vu-sub">435.000 MHz FM · Strict Line-of-Sight</div>
     </div>
     <div class="vu-scroll">
-
-      <!-- ALTITUDE -->
-      <div class="vu-sec">
-        <div class="vu-sec-title" style="color:#ff9eff;">TX Antenna / Site Elevation</div>
-        <div class="alt-row">
-          <div class="alt-big" id="uhf-altBig">10</div>
-          <div class="alt-unit">m AGL</div>
-        </div>
-        <input type="range" id="uhf-altSlider" min="10" max="400" value="10" step="5" oninput="setAlt('uhf',this.value)" style="width:100%;"/>
-        <div class="alt-scale"><span>10m</span><span>100m</span><span>200m</span><span>300m</span><span>400m</span></div>
-        <div class="alt-presets">
-          <button class="btn btn-xs" onclick="setAlt('uhf',10)">10m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',30)">30m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',50)">50m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',100)">100m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',200)">200m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',400)">400m</button>
-        </div>
-        <div class="horizon-info" id="uhf-horizonInfo">Smooth-earth radio horizon: ~19 km at 10m AGL</div>
-        <button class="terrain-compute-btn" id="uhf-computeBtn" onclick="computeTerrainCoverage('uhf')">
-          ⛰ Compute Terrain Coverage (SRTM)
-        </button>
-        <div class="terrain-status" id="uhf-status"></div>
-        <button class="topo-toggle-btn" id="uhf-topoBtn" onclick="toggleTopoTile('uhf')">⛰ Show Topo Map</button>
+      <div class="zoom-btns-vu">
+        <button class="zoom-btn-vu" onclick="vuZoom('uhf',10)">City</button>
+        <button class="zoom-btn-vu" onclick="vuZoom('uhf',9)">Region</button>
+        <button class="zoom-btn-vu" onclick="vuZoom('uhf',8)">Wide</button>
       </div>
-
-      <!-- POWER LAYERS -->
       <div class="vu-sec">
-        <div class="vu-sec-title" style="color:#ff9eff;">Coverage Layers — click to toggle</div>
+        <div class="vu-sec-title" style="color:#ff9eff;">Power Levels — click to toggle</div>
         <div class="vu-item" id="vli-u100w" onclick="vuToggle('u100w')">
           <div class="vu-dot" style="border-color:#7700cc;background:rgba(119,0,204,.35)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#7700cc">100 W</div>
-            <div class="vu-range" id="uhf-r100w">Max smooth-earth: ~80 km</div>
+            <div class="vu-range">~80 km — Greater Accra region</div>
           </div>
         </div>
         <div class="vu-item" id="vli-u10w" onclick="vuToggle('u10w')">
           <div class="vu-dot" style="border-color:#aa33ff;background:rgba(170,51,255,.28)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#aa33ff">10 W</div>
-            <div class="vu-range" id="uhf-r10w">Max smooth-earth: ~40 km</div>
+            <div class="vu-range">~40 km — Tema–Accra–Kasoa axis</div>
           </div>
         </div>
         <div class="vu-item" id="vli-u5w" onclick="vuToggle('u5w')">
           <div class="vu-dot" style="border-color:#d966ff;background:rgba(217,102,255,.24)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#d966ff">5 W</div>
-            <div class="vu-range" id="uhf-r5w">Max smooth-earth: ~28 km</div>
+            <div class="vu-range">~28 km — Accra city limits</div>
           </div>
         </div>
         <div class="vu-item" id="vli-u1w" onclick="vuToggle('u1w')">
           <div class="vu-dot" style="border-color:#ff9eff;background:rgba(255,158,255,.20)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#ff9eff">1 W</div>
-            <div class="vu-range" id="uhf-r1w">Max smooth-earth: ~13 km</div>
+            <div class="vu-range">~13 km — local neighbourhoods</div>
           </div>
         </div>
-        <div class="ring-key" style="margin-top:9px;">
-          <span class="rk-solid" style="color:#7700cc"></span><span>Terrain polygon</span>
-          <span class="rk-dashed" style="color:#7700cc;margin-left:8px;"></span><span>Smooth-earth limit</span>
-        </div>
       </div>
-
       <div class="vu-note">
-        <strong>Model:</strong> 36 radials × 22 elevation samples (SRTM 90m). Earth curvature (4/3 Re) included. UHF has 9.5 dB more free-space loss than VHF — approximately half the range. <strong>Solid polygon</strong> = terrain-blocked coverage. <strong>Dashed ring</strong> = smooth-earth power limit.
+        <strong>Propagation mode:</strong> Strict line-of-sight. Free-space path loss at 435 MHz is <strong>9.5 dB higher</strong> than at 145 MHz at the same distance, which halves the effective range vs VHF.<br/><br/>
+        UHF is heavily attenuated by buildings, vegetation and terrain. Range scales as <strong>√P</strong>.
       </div>
     </div>
     <div class="vu-foot">
-      UHF 430–440 MHz · SRTM terrain model · Ant: 9-el Yagi<br/>
-      ⚠ 90m DEM resolution — fine urban obstacles not modelled
+      UHF 430–440 MHz · LOS model · Ant: 9-el Yagi ~10 m AGL<br/>
+      ⚠ Indicative only — UHF range is highly terrain-dependent
     </div>
   </div><!-- /uhf-panel -->
 
@@ -894,372 +818,114 @@ function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g
 // VHF / UHF LAYERS
 // ══════════════════════════════════════════════
 
-// ══════════════════════════════════════════════
-// VHF / UHF TERRAIN ENGINE
-// ══════════════════════════════════════════════
-
-const NUM_RADIALS = 36;
-const NUM_SAMPLES = 22;
-const EFF_EARTH_R  = 8495; // km  (4/3 × 6371 — standard atmosphere k-factor)
-
-// Radio horizon (one-way) km for height h metres
-function rHorizon(h){ return 4.12 * Math.sqrt(Math.max(0, h)); }
-// Full horizon TX (h1) + RX (h2=2m default)
-function fullHorizon(h1, h2=2){ return rHorizon(h1) + rHorizon(h2); }
-// Earth bulge correction in metres at distance dKm
-function earthBulge(dKm){ return 1000 * dKm * dKm / (2 * EFF_EARTH_R); }
-
-// Destination point from lat/lon, bearing (deg), distance (km)
-function destPt(lat, lon, brg, dKm){
-  const R=6371, d=dKm/R, θ=brg*Math.PI/180;
-  const φ1=lat*Math.PI/180, λ1=lon*Math.PI/180;
-  const φ2=Math.asin(Math.sin(φ1)*Math.cos(d)+Math.cos(φ1)*Math.sin(d)*Math.cos(θ));
-  const λ2=λ1+Math.atan2(Math.sin(θ)*Math.sin(d)*Math.cos(φ1),Math.cos(d)-Math.sin(φ1)*Math.sin(φ2));
-  return [φ2*180/Math.PI, λ2*180/Math.PI];
-}
-
-// LOS range along one radial: returns furthest visible km
-// txH = TX total height (terrain elev + antenna AGL) in metres
-// profile = [{d:km, elev:m}, ...] sorted by ascending distance
-function losRange(txH, profile){
-  let maxClear = 0;
-  for(let i=0; i<profile.length; i++){
-    const {d:D, elev:rxE} = profile[i];
-    if(D <= 0) continue;
-    const rxTotalH = rxE + 2;   // assume 2m RX AGL
-    let blocked = false;
-    for(let j=0; j<i; j++){
-      const {d, elev} = profile[j];
-      const apparentH = elev + earthBulge(d);  // terrain + earth bulge
-      const losLineH  = txH + (rxTotalH - txH) * (d / D);  // LOS line height at d
-      if(apparentH > losLineH + 0.5){  // 0.5m clearance margin
-        blocked = true;
-        break;
-      }
-    }
-    if(!blocked) maxClear = D;
-  }
-  return maxClear;
-}
-
-// State
-const VU_ALT = {vhf:10, uhf:10};
-const VU_CACHE  = {vhf:null, uhf:null};   // cached {terrainLOS[], txElev, txLat, txLon}
-const VU_POLYS  = {};                       // L.polygon / L.circle keyed by layer id
-const vuVisible = {};
-let   activeMode = 'hf';
-let   topoTileLayer = null;
-
-// Colours / fill opacities per band
-const VU_CFG = {
-  vhf:{
-    powers:{p100w:150, p10w:75, p5w:50, p1w:25},
-    colors:{p100w:'#007a2e', p10w:'#00b341', p5w:'#39d353', p1w:'#90ff57'},
-    fop:   {p100w:.12,       p10w:.16,       p5w:.20,       p1w:.26},
-    ckeys: ['v100w','v10w','v5w','v1w'],
-    rangeIds: ['vhf-r100w','vhf-r10w','vhf-r5w','vhf-r1w'],
-  },
-  uhf:{
-    powers:{p100w:80,  p10w:40, p5w:28, p1w:13},
-    colors:{p100w:'#7700cc', p10w:'#aa33ff', p5w:'#d966ff', p1w:'#ff9eff'},
-    fop:   {p100w:.14,       p10w:.18,       p5w:.22,       p1w:.28},
-    ckeys: ['u100w','u10w','u5w','u1w'],
-    rangeIds: ['uhf-r100w','uhf-r10w','uhf-r5w','uhf-r1w'],
-  }
+const VU_DEFS = {
+  // VHF 145
+  v100w:[150000,'#007a2e','#007a2e',.15,'5 3'],
+  v10w: [ 75000,'#00b341','#00b341',.19,'5 3'],
+  v5w:  [ 50000,'#39d353','#39d353',.23,'5 3'],
+  v1w:  [ 25000,'#90ff57','#90ff57',.28,'5 3'],
+  // UHF 435
+  u100w:[ 80000,'#7700cc','#7700cc',.18,'4 2'],
+  u10w: [ 40000,'#aa33ff','#aa33ff',.22,'4 2'],
+  u5w:  [ 28000,'#d966ff','#d966ff',.26,'4 2'],
+  u1w:  [ 13000,'#ff9eff','#ff9eff',.30,'4 2'],
 };
 
-// ── Altitude slider ──────────────────────────────────────────
-function setAlt(band, val){
-  VU_ALT[band] = parseInt(val);
-  document.getElementById(band+'-altBig').textContent = val;
-  document.getElementById(band+'-altSlider').value   = val;
-  const h = fullHorizon(parseInt(val));
-  document.getElementById(band+'-horizonInfo').textContent =
-    `Smooth-earth radio horizon: ~${Math.round(h)} km at ${val}m AGL`;
-  // Update range labels to show horizon-capped maximums
-  const cfg = VU_CFG[band];
-  const pkeys = ['p100w','p10w','p5w','p1w'];
-  pkeys.forEach((pk,i)=>{
-    const cap = Math.min(cfg.powers[pk], h);
-    const el  = document.getElementById(cfg.rangeIds[i]);
-    if(el) el.textContent = `Max (horizon-capped): ~${Math.round(cap)} km`;
+const VU_TIPS = {
+  v100w:'VHF 100 W · ~150 km · Greater Accra + Volta region',
+  v10w: 'VHF 10 W  · ~75 km  · Metro Accra + Cape Coast',
+  v5w:  'VHF 5 W   · ~50 km  · Accra metropolitan area',
+  v1w:  'VHF 1 W   · ~25 km  · Central Accra (LOS)',
+  u100w:'UHF 100 W · ~80 km  · Greater Accra region',
+  u10w: 'UHF 10 W  · ~40 km  · Tema–Accra–Kasoa axis',
+  u5w:  'UHF 5 W   · ~28 km  · Accra city limits',
+  u1w:  'UHF 1 W   · ~13 km  · Local neighbourhoods',
+};
+
+const vuCircles = {};
+const vuVisible = {};
+let activeMode = 'hf';
+
+function initVULayers(){
+  const ACCRA = [S.lat, S.lon];
+  Object.entries(VU_DEFS).forEach(([k,[r,col,fill,fo,da]])=>{
+    vuCircles[k] = L.circle(ACCRA,{radius:r,color:col,fillColor:fill,weight:2,opacity:.88,fillOpacity:fo,dashArray:da});
+    vuCircles[k].bindTooltip(VU_TIPS[k],{className:'ltt',direction:'top'});
+    vuVisible[k] = false; // hidden until VHF/UHF tab is active
   });
-  // Rebuild polygons from cache instantly if available
-  if(VU_CACHE[band]) drawVUPolys(band);
 }
 
-// ── Elevation API fetch with batching ───────────────────────
-async function fetchElevBatch(locs, onProgress){
-  const BATCH=90;
-  const results = new Array(locs.length).fill(0);
-  const total   = Math.ceil(locs.length / BATCH);
-  for(let i=0; i<locs.length; i+=BATCH){
-    const slice = locs.slice(i, i+BATCH);
-    const q = slice.map(([la,lo])=>`${la.toFixed(5)},${lo.toFixed(5)}`).join('|');
-    try{
-      const r = await fetch(`https://api.opentopodata.org/v1/srtm90m?locations=${q}`);
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      const data = await r.json();
-      if(data.results) data.results.forEach((res,j)=>{ results[i+j] = res.elevation||0; });
-    } catch(e){ console.warn('Elevation batch error:', e); }
-    if(onProgress) onProgress(Math.floor(i/BATCH)+1, total);
-    if(i+BATCH < locs.length) await new Promise(r=>setTimeout(r, 1150));
-  }
-  return results;
-}
-
-// ── Main compute function ────────────────────────────────────
-async function computeTerrainCoverage(band){
-  const altM   = VU_ALT[band];
-  const cfg    = VU_CFG[band];
-  const statusEl = document.getElementById(band+'-status');
-  const btnEl    = document.getElementById(band+'-computeBtn');
-  btnEl.disabled = true;
-  statusEl.style.display = 'block';
-  statusEl.innerHTML = '⏳ Fetching TX site elevation…';
-
-  const txLat=S.lat, txLon=S.lon;
-  let txElev=0;
-  try{
-    await new Promise(r=>setTimeout(r,300));
-    const r=await fetch(`https://api.opentopodata.org/v1/srtm90m?locations=${txLat.toFixed(5)},${txLon.toFixed(5)}`);
-    const d=await r.json();
-    txElev = Math.max(0, d.results[0].elevation || 0);
-    await new Promise(r=>setTimeout(r,1150));
-  } catch(e){ console.warn('TX elevation fetch failed:', e); }
-
-  const txTotalH = txElev + altM;
-  const horizon  = fullHorizon(altM);
-  const maxRange = Math.min(horizon, cfg.powers.p100w);
-
-  // Build all sample point locations
-  const bearings = Array.from({length:NUM_RADIALS}, (_,i) => i*(360/NUM_RADIALS));
-  const allLocs=[], locMap=[];
-  bearings.forEach((brg,ri)=>{
-    for(let si=0; si<NUM_SAMPLES; si++){
-      const dKm = (si+1) * maxRange / NUM_SAMPLES;
-      allLocs.push(destPt(txLat, txLon, brg, dKm));
-      locMap.push({ri, dKm});
-    }
-  });
-
-  const total = Math.ceil(allLocs.length/90);
-  statusEl.innerHTML = `⛰ Fetching SRTM elevations — 0 / ${total} batches…`;
-
-  const elevs = await fetchElevBatch(allLocs, (done,tot)=>{
-    statusEl.innerHTML = `⛰ Fetching SRTM elevations — ${done} / ${tot} batches…`;
-  });
-
-  statusEl.innerHTML = '📐 Computing line-of-sight for each radial…';
-  await new Promise(r=>setTimeout(r,50)); // let DOM update
-
-  // Build per-radial profiles
-  const profiles = Array.from({length:NUM_RADIALS}, ()=>[]);
-  locMap.forEach(({ri,dKm},idx)=>{
-    profiles[ri].push({d:dKm, elev:Math.max(0, elevs[idx])});
-  });
-
-  // LOS range per radial
-  const terrainLOS = profiles.map(prof => losRange(txTotalH, prof));
-
-  // Cache result
-  VU_CACHE[band] = {terrainLOS, txElev, txLat, txLon};
-
-  // Update horizon info with actual TX elevation
-  document.getElementById(band+'-horizonInfo').textContent =
-    `TX terrain: ${Math.round(txElev)}m · Ant: ${altM}m AGL → total ${Math.round(txTotalH)}m · Horizon: ~${Math.round(horizon)} km`;
-
-  // Draw polygons
-  drawVUPolys(band);
-
-  statusEl.innerHTML = `✅ Done — ${NUM_RADIALS} radials × ${NUM_SAMPLES} samples (SRTM 90m). Adjust altitude slider to update instantly.`;
-  btnEl.disabled = false;
-}
-
-// ── Draw (or redraw) VU polygons from cached LOS data ────────
-function drawVUPolys(band){
-  const cache = VU_CACHE[band];
-  if(!cache) return;
-  const {terrainLOS, txLat, txLon} = cache;
-  const altM   = VU_ALT[band];
-  const horizon= fullHorizon(altM);
-  const cfg    = VU_CFG[band];
-  const bearings = Array.from({length:NUM_RADIALS}, (_,i)=>i*(360/NUM_RADIALS));
-  const pkeys  = ['p100w','p10w','p5w','p1w'];
-
-  // Remove existing layers
-  cfg.ckeys.forEach(ck=>{
-    if(VU_POLYS[ck])     { try{map.removeLayer(VU_POLYS[ck]);    }catch(e){} }
-    if(VU_POLYS[ck+'-h']){ try{map.removeLayer(VU_POLYS[ck+'-h']);}catch(e){} }
-  });
-
-  pkeys.forEach((pk,idx)=>{
-    const ck        = cfg.ckeys[idx];
-    const col       = cfg.colors[pk];
-    const fo        = cfg.fop[pk];
-    const pRange    = cfg.powers[pk];
-    const smoothMax = Math.min(pRange, horizon);
-
-    // Dashed smooth-earth horizon circle
-    const hCircle = L.circle([txLat,txLon],{
-      radius:smoothMax*1000, color:col, fillColor:'transparent',
-      weight:1.5, opacity:.45, fillOpacity:0, dashArray:'6 4'
-    });
-    hCircle.addTo(map);
-    VU_POLYS[ck+'-h'] = hCircle;
-
-    // Terrain-aware filled polygon
-    const pts = bearings.map((brg,ri)=>{
-      const effectiveKm = Math.min(smoothMax, Math.max(0.3, terrainLOS[ri]));
-      return destPt(txLat, txLon, brg, effectiveKm);
-    });
-    pts.push(pts[0]); // close
-
-    const poly = L.polygon(pts,{
-      color:col, fillColor:col, weight:2,
-      opacity:.85, fillOpacity:fo, smoothFactor:2
-    });
-    const pLabel = pk==='p100w'?'100 W':pk==='p10w'?'10 W':pk==='p5w'?'5 W':'1 W';
-    poly.bindTooltip(`${band.toUpperCase()} ${pLabel} · terrain-aware · ant ${altM}m AGL`,{className:'ltt',direction:'top'});
-    poly.addTo(map);
-    VU_POLYS[ck] = poly;
-    vuVisible[ck] = true;
-    const li = document.getElementById('vli-'+ck);
+function showVUBand(band){
+  // Remove all VU layers first
+  Object.values(vuCircles).forEach(c=>{try{map.removeLayer(c);}catch(e){}});
+  const keys = band==='vhf'
+    ? ['v100w','v10w','v5w','v1w']
+    : ['u100w','u10w','u5w','u1w'];
+  // Add largest first
+  [...keys].reverse().forEach(k=>{
+    vuCircles[k].addTo(map);
+    vuVisible[k]=true;
+    const li=document.getElementById('vli-'+k);
     if(li) li.classList.remove('off');
   });
-
-  // Update range labels
-  pkeys.forEach((pk,i)=>{
-    const el = document.getElementById(cfg.rangeIds[i]);
-    if(el){
-      const smoothMax = Math.min(cfg.powers[pk], horizon);
-      el.textContent = `Horizon cap: ~${Math.round(smoothMax)} km at ${altM}m AGL`;
-    }
-  });
+  // Fit to largest
+  const largest = vuCircles[keys[0]];
+  map.fitBounds(largest.getBounds().pad(0.1));
 }
 
-// ── Toggle individual VU layer ───────────────────────────────
+function hideAllVU(){
+  Object.values(vuCircles).forEach(c=>{try{map.removeLayer(c);}catch(e){}});
+  Object.keys(vuVisible).forEach(k=>vuVisible[k]=false);
+}
+
 function vuToggle(key){
-  const li = document.getElementById('vli-'+key);
-  const poly  = VU_POLYS[key];
-  const hcirc = VU_POLYS[key+'-h'];
+  const li=document.getElementById('vli-'+key);
   if(vuVisible[key]){
-    if(poly)  try{map.removeLayer(poly); }catch(e){}
-    if(hcirc) try{map.removeLayer(hcirc);}catch(e){}
+    map.removeLayer(vuCircles[key]);
     vuVisible[key]=false;
     if(li) li.classList.add('off');
   } else {
-    if(poly)  poly.addTo(map);
-    if(hcirc) hcirc.addTo(map);
+    vuCircles[key].addTo(map);
     vuVisible[key]=true;
     if(li) li.classList.remove('off');
   }
 }
 
-// ── Topo tile toggle ─────────────────────────────────────────
-function toggleTopoTile(band){
-  const btn = document.getElementById(band+'-topoBtn');
-  if(topoTileLayer){
-    map.removeLayer(topoTileLayer);
-    topoTileLayer = null;
-    btn.classList.remove('on');
-    btn.textContent='⛰ Show Topo Map';
-    // Sync both buttons
-    ['vhf-topoBtn','uhf-topoBtn'].forEach(id=>{
-      const b=document.getElementById(id);
-      if(b){b.classList.remove('on');b.textContent='⛰ Show Topo Map';}
-    });
-  } else {
-    topoTileLayer = L.tileLayer(
-      'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      {attribution:'Map data: © OpenStreetMap | Style: © OpenTopoMap (CC-BY-SA)',
-       subdomains:'abc', maxZoom:17, opacity:0.82}
-    ).addTo(map);
-    btn.classList.add('on');
-    btn.textContent='🌑 Show Dark Map';
-    ['vhf-topoBtn','uhf-topoBtn'].forEach(id=>{
-      const b=document.getElementById(id);
-      if(b){b.classList.add('on');b.textContent='🌑 Show Dark Map';}
-    });
-  }
+function vuZoom(band, zoom){
+  map.setView([S.lat, S.lon], zoom, {animate:true});
 }
 
-// ── Hide all VU layers ───────────────────────────────────────
-function hideAllVU(){
-  Object.entries(VU_POLYS).forEach(([k,layer])=>{
-    try{map.removeLayer(layer);}catch(e){}
-  });
-  Object.keys(vuVisible).forEach(k=>vuVisible[k]=false);
-}
-
-// ── Show initial simple circles (before terrain compute) ─────
-function showVUCircles(band){
-  const cfg=VU_CFG[band];
-  const altM=VU_ALT[band];
-  const horizon=fullHorizon(altM);
-  const bearings=Array.from({length:NUM_RADIALS},(_,i)=>i*(360/NUM_RADIALS));
-  const pkeys=['p100w','p10w','p5w','p1w'];
-
-  hideAllVU();
-  pkeys.forEach((pk,idx)=>{
-    const ck=cfg.ckeys[idx];
-    const smoothMax=Math.min(cfg.powers[pk], horizon);
-    const c=L.circle([S.lat,S.lon],{
-      radius:smoothMax*1000, color:cfg.colors[pk], fillColor:cfg.colors[pk],
-      weight:2, opacity:.82, fillOpacity:cfg.fop[pk], dashArray:'7 4'
-    });
-    c.bindTooltip(`${band.toUpperCase()} ${pk==='p100w'?'100W':pk==='p10w'?'10W':pk==='p5w'?'5W':'1W'} · smooth-earth · click ⛰ Compute for terrain`,{className:'ltt',direction:'top'});
-    c.addTo(map);
-    VU_POLYS[ck]=c;
-    vuVisible[ck]=true;
-    const li=document.getElementById('vli-'+ck);
-    if(li) li.classList.remove('off');
-  });
-
-  const largest=VU_POLYS[cfg.ckeys[0]];
-  if(largest) map.fitBounds(L.circle([S.lat,S.lon],{radius:Math.min(cfg.powers.p100w, horizon)*1000}).getBounds().pad(0.1));
-}
-
-// ── TX marker helper ─────────────────────────────────────────
-function addTXMarker(){
-  if(txMk){try{map.removeLayer(txMk);}catch(e){}}
-  const ico=L.divIcon({className:'',iconSize:[0,0],iconAnchor:[0,0],html:`
-    <div style="position:relative;width:0;height:0;">
-      <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out infinite;"></div>
-      <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out .75s infinite;"></div>
-      <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out 1.5s infinite;"></div>
-      <div style="position:absolute;transform:translate(-50%,-50%);width:10px;height:10px;background:#00ffc3;border-radius:50%;box-shadow:0 0 10px #00ffc3,0 0 22px #00ffc388;"></div>
-      <div style="position:absolute;left:7px;top:5px;font-family:'Share Tech Mono',monospace;font-size:9px;color:#00ffc3;white-space:nowrap;text-shadow:0 0 6px #00ffc3;letter-spacing:.05em;">TX</div>
-    </div>`
-  });
-  txMk=L.marker([S.lat,S.lon],{icon:ico,zIndexOffset:1000}).addTo(map);
-}
-
-// ── Band mode switcher ───────────────────────────────────────
 function switchMode(mode){
-  activeMode=mode;
+  activeMode = mode;
+  // Update tabs
   document.querySelectorAll('.mode-tab').forEach(t=>t.className='mode-tab');
   document.getElementById('tab-'+mode).className='mode-tab active-'+mode;
-  document.getElementById('hf-panel').style.display  = mode==='hf'  ? 'flex':'none';
-  document.getElementById('vhf-panel').style.display = mode==='vhf' ? 'flex':'none';
-  document.getElementById('uhf-panel').style.display = mode==='uhf' ? 'flex':'none';
-
+  // Show/hide panels
+  document.getElementById('hf-panel').style.display  = mode==='hf'  ? 'flex' : 'none';
+  document.getElementById('vhf-panel').style.display = mode==='vhf' ? 'flex' : 'none';
+  document.getElementById('uhf-panel').style.display = mode==='uhf' ? 'flex' : 'none';
+  // Show/hide map layers
   if(mode==='hf'){
     hideAllVU();
-    if(topoTileLayer){ map.removeLayer(topoTileLayer); topoTileLayer=null; }
-    ['vhf-topoBtn','uhf-topoBtn'].forEach(id=>{
-      const b=document.getElementById(id);
-      if(b){b.classList.remove('on');b.textContent='⛰ Show Topo Map';}
-    });
-    rebuildLayers();
+    rebuildLayers(); // restore HF circles
     autoFit();
   } else {
+    // Clear HF layers
     cvLayers.forEach(l=>map.removeLayer(l)); cvLayers=[];
+    if(txMk){map.removeLayer(txMk);txMk=null;}
     hideAllVU();
-    // Restore terrain polys if cached, else show initial circles
-    if(VU_CACHE[mode]) drawVUPolys(mode);
-    else showVUCircles(mode);
-    addTXMarker();
+    showVUBand(mode);
+    // Re-add TX marker
+    const ico=L.divIcon({className:'',iconSize:[0,0],iconAnchor:[0,0],html:`
+      <div style="position:relative;width:0;height:0;">
+        <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out infinite;"></div>
+        <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out .75s infinite;"></div>
+        <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out 1.5s infinite;"></div>
+        <div style="position:absolute;transform:translate(-50%,-50%);width:10px;height:10px;background:#00ffc3;border-radius:50%;box-shadow:0 0 10px #00ffc3,0 0 22px #00ffc388;"></div>
+        <div style="position:absolute;left:7px;top:5px;font-family:'Share Tech Mono',monospace;font-size:9px;color:#00ffc3;white-space:nowrap;text-shadow:0 0 6px #00ffc3;letter-spacing:.05em;">TX</div>
+      </div>`
+    });
+    txMk=L.marker([S.lat,S.lon],{icon:ico,zIndexOffset:1000}).addTo(map);
   }
 }
 
@@ -1274,6 +940,7 @@ buildPwrPresets();
 document.getElementById('pwrSlider').value=p2s(S.power);
 document.getElementById('latIn').value=S.lat;
 document.getElementById('lonIn').value=S.lon;
+initVULayers();
 rebuildLayers();
 autoFit();
 </script>
