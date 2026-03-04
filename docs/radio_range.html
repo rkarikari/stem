@@ -337,8 +337,8 @@ option{background:#0b1820;}
           <div class="alt-big" id="vhf-altBig">1.5</div>
           <div class="alt-unit">m AGL</div>
         </div>
-        <input type="range" id="vhf-altSlider" min="1.5" max="400" value="1.5" step="0.5" oninput="setAlt('vhf',this.value)" style="width:100%;"/>
-        <div class="alt-scale"><span>1.5m</span><span>100m</span><span>200m</span><span>300m</span><span>400m</span></div>
+        <input type="range" id="vhf-altSlider" min="1.5" max="120" value="1.5" step="0.5" oninput="setAlt('vhf',this.value)" style="width:100%;"/>
+        <div class="alt-scale"><span>1.5m</span><span>30m</span><span>60m</span><span>90m</span><span>120m</span></div>
         <div class="alt-presets">
           <button class="btn btn-xs on" id="vhf-ht-btn" onclick="setAlt('vhf',1.5)" title="Handheld transceiver at mouth level">📻 HT 1.5m</button>
           <button class="btn btn-xs" onclick="setAlt('vhf',5)">5m</button>
@@ -346,8 +346,8 @@ option{background:#0b1820;}
           <button class="btn btn-xs" onclick="setAlt('vhf',30)">30m</button>
           <button class="btn btn-xs" onclick="setAlt('vhf',50)">50m</button>
           <button class="btn btn-xs" onclick="setAlt('vhf',100)">100m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',200)">200m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',400)">400m</button>
+          
+          <button class="btn btn-xs" onclick="setAlt('vhf',120)">120m</button>
         </div>
         <div class="horizon-info" id="vhf-horizonInfo">📻 HT at mouth level — smooth-earth horizon: ~6.9 km at 1.5m AGL</div>
         <button class="terrain-compute-btn" id="vhf-computeBtn" onclick="computeTerrainCoverage('vhf')">
@@ -426,8 +426,8 @@ option{background:#0b1820;}
           <div class="alt-big" id="uhf-altBig">1.5</div>
           <div class="alt-unit">m AGL</div>
         </div>
-        <input type="range" id="uhf-altSlider" min="1.5" max="400" value="1.5" step="0.5" oninput="setAlt('uhf',this.value)" style="width:100%;"/>
-        <div class="alt-scale"><span>1.5m</span><span>100m</span><span>200m</span><span>300m</span><span>400m</span></div>
+        <input type="range" id="uhf-altSlider" min="1.5" max="120" value="1.5" step="0.5" oninput="setAlt('uhf',this.value)" style="width:100%;"/>
+        <div class="alt-scale"><span>1.5m</span><span>30m</span><span>60m</span><span>90m</span><span>120m</span></div>
         <div class="alt-presets">
           <button class="btn btn-xs on" id="uhf-ht-btn" onclick="setAlt('uhf',1.5)" title="Handheld transceiver at mouth level">📻 HT 1.5m</button>
           <button class="btn btn-xs" onclick="setAlt('uhf',5)">5m</button>
@@ -435,8 +435,8 @@ option{background:#0b1820;}
           <button class="btn btn-xs" onclick="setAlt('uhf',30)">30m</button>
           <button class="btn btn-xs" onclick="setAlt('uhf',50)">50m</button>
           <button class="btn btn-xs" onclick="setAlt('uhf',100)">100m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',200)">200m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',400)">400m</button>
+          
+          <button class="btn btn-xs" onclick="setAlt('uhf',120)">120m</button>
         </div>
         <div class="horizon-info" id="uhf-horizonInfo">📻 HT at mouth level — smooth-earth horizon: ~6.9 km at 1.5m AGL</div>
         <button class="terrain-compute-btn" id="uhf-computeBtn" onclick="computeTerrainCoverage('uhf')">
