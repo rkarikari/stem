@@ -349,7 +349,7 @@ option{background:#0b1820;}
           
           <button class="btn btn-xs" onclick="setAlt('vhf',120)">120m</button>
         </div>
-        <div class="horizon-info" id="vhf-horizonInfo">📻 HT at mouth level — smooth-earth horizon: ~6.9 km at 1.5m AGL</div>
+        <div class="horizon-info" id="vhf-horizonInfo">📻 HT at mouth level — Hata ultra-urban: ~7.9 km (100W) at 1.5m AGL</div>
         <button class="terrain-compute-btn" id="vhf-computeBtn" onclick="computeTerrainCoverage('vhf')">
           ⛰ Compute Terrain Coverage (SRTM)
         </button>
@@ -371,28 +371,28 @@ option{background:#0b1820;}
           <div class="vu-dot" style="border-color:#007a2e;background:rgba(0,122,46,.35)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#007a2e">100 W</div>
-            <div class="vu-range" id="vhf-r100w">Terrain+env (ultra-urban): ~57 km</div>
+            <div class="vu-range" id="vhf-r100w">Hata+terrain (ultra-urban): ~7.9 km</div>
           </div>
         </div>
         <div class="vu-item" id="vli-v10w" onclick="vuToggle('v10w')">
           <div class="vu-dot" style="border-color:#00b341;background:rgba(0,179,65,.30)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#00b341">10 W</div>
-            <div class="vu-range" id="vhf-r10w">Terrain+env (ultra-urban): ~29 km</div>
+            <div class="vu-range" id="vhf-r10w">Hata+terrain (ultra-urban): ~4.7 km</div>
           </div>
         </div>
         <div class="vu-item" id="vli-v5w" onclick="vuToggle('v5w')">
           <div class="vu-dot" style="border-color:#39d353;background:rgba(57,211,83,.25)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#39d353">5 W</div>
-            <div class="vu-range" id="vhf-r5w">Terrain+env (ultra-urban): ~19 km</div>
+            <div class="vu-range" id="vhf-r5w">Hata+terrain (ultra-urban): ~4.0 km</div>
           </div>
         </div>
         <div class="vu-item" id="vli-v1w" onclick="vuToggle('v1w')">
           <div class="vu-dot" style="border-color:#90ff57;background:rgba(144,255,87,.20)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#90ff57">1 W</div>
-            <div class="vu-range" id="vhf-r1w">Terrain+env (ultra-urban): ~10 km</div>
+            <div class="vu-range" id="vhf-r1w">Hata+terrain (ultra-urban): ~2.8 km</div>
           </div>
         </div>
         <div class="ring-key" style="margin-top:9px;">
@@ -438,7 +438,7 @@ option{background:#0b1820;}
           
           <button class="btn btn-xs" onclick="setAlt('uhf',120)">120m</button>
         </div>
-        <div class="horizon-info" id="uhf-horizonInfo">📻 HT at mouth level — smooth-earth horizon: ~6.9 km at 1.5m AGL</div>
+        <div class="horizon-info" id="uhf-horizonInfo">📻 HT at mouth level — Hata ultra-urban: ~4.1 km (100W) at 1.5m AGL</div>
         <button class="terrain-compute-btn" id="uhf-computeBtn" onclick="computeTerrainCoverage('uhf')">
           ⛰ Compute Terrain Coverage (SRTM)
         </button>
@@ -460,28 +460,28 @@ option{background:#0b1820;}
           <div class="vu-dot" style="border-color:#7700cc;background:rgba(119,0,204,.35)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#7700cc">100 W</div>
-            <div class="vu-range" id="uhf-r100w">Terrain+env (ultra-urban): ~18 km</div>
+            <div class="vu-range" id="uhf-r100w">Hata+terrain (ultra-urban): ~4.1 km</div>
           </div>
         </div>
         <div class="vu-item" id="vli-u10w" onclick="vuToggle('u10w')">
           <div class="vu-dot" style="border-color:#aa33ff;background:rgba(170,51,255,.28)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#aa33ff">10 W</div>
-            <div class="vu-range" id="uhf-r10w">Terrain+env (ultra-urban): ~9 km</div>
+            <div class="vu-range" id="uhf-r10w">Hata+terrain (ultra-urban): ~2.4 km</div>
           </div>
         </div>
         <div class="vu-item" id="vli-u5w" onclick="vuToggle('u5w')">
           <div class="vu-dot" style="border-color:#d966ff;background:rgba(217,102,255,.24)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#d966ff">5 W</div>
-            <div class="vu-range" id="uhf-r5w">Terrain+env (ultra-urban): ~6 km</div>
+            <div class="vu-range" id="uhf-r5w">Hata+terrain (ultra-urban): ~2.1 km</div>
           </div>
         </div>
         <div class="vu-item" id="vli-u1w" onclick="vuToggle('u1w')">
           <div class="vu-dot" style="border-color:#ff9eff;background:rgba(255,158,255,.20)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#ff9eff">1 W</div>
-            <div class="vu-range" id="uhf-r1w">Terrain+env (ultra-urban): ~3 km</div>
+            <div class="vu-range" id="uhf-r1w">Hata+terrain (ultra-urban): ~1.4 km</div>
           </div>
         </div>
         <div class="ring-key" style="margin-top:9px;">
@@ -987,20 +987,12 @@ function setAlt(band, val){
 
   const horizon = fullHorizon(h);
   const htLabel = h === HT_HEIGHT ? '📻 HT at mouth level — ' : '';
+  const r100 = vuPowersComputed(band).p100w;
   document.getElementById(band+'-horizonInfo').textContent =
-    `${htLabel}Smooth-earth horizon: ~${horizon.toFixed(1)} km at ${display}m AGL`;
+    `${htLabel}Hata ${VU_ENV[band]}: ~${r100.toFixed(1)} km (100W) · geo horizon ~${horizon.toFixed(1)} km at ${display}m AGL`;
 
-  // Update range labels with env+horizon-capped maximums
-  const cfg = VU_CFG[band];
-  const pkeys = ['p100w','p10w','p5w','p1w'];
-  const ef = envFactor(band);
-  pkeys.forEach((pk,i)=>{
-    const cap = Math.min(cfg.rawPowers[pk] * ef, horizon);
-    const el  = document.getElementById(cfg.rangeIds[i]);
-    if(el) el.textContent = h === HT_HEIGHT
-      ? `HT+env capped: ~${cap.toFixed(1)} km`
-      : `Terrain+env cap: ~${Math.round(cap)} km`;
-  });
+  // Update range labels using Hata engine (env+altitude aware)
+  updateRangeLabels(band);
 
   // Rebuild polygons from cache instantly if available
   if(VU_CACHE[band]) drawVUPolys(band);
@@ -1012,82 +1004,97 @@ let   activeMode = 'hf';
 let   topoTileLayer = null;
 
 // ══════════════════════════════════════════════
-// ENVIRONMENT DENSITY (Okumura-Hata / COST-231)
+// HATA PROPAGATION ENGINE
+// Okumura-Hata (1980) / COST-231 — ITU-R P.529
+// Valid: f 150–1500 MHz, hB 1.5–200 m, d 0.1–100 km
+// RX sensitivity: −117 dBm (NFM, decent HT)
+// TX antenna: rubber duck 0 dBi; RX whip: 2 dBi
 // ══════════════════════════════════════════════
-// Range multipliers derived from the Hata model path-loss corrections.
-// Reference: ITU-R P.529-2 / Hata (1980) / COST-231 final report (EUR 18957).
-//
-// Ultra-Urban  → dense highrise core (e.g. Accra CBD, Lagos Island, Nairobi CBD):
-//   +8 dB over standard urban (large-city C_H correction) → ×0.40 vs open
-// Urban         → continuous 2–8 story built-up area (Hata "large city" baseline):
-//   approx ×0.55 vs open
-// Suburban      → LSU = LU − 2(log f/28)² − 5.4 → ~−9.5 dB vs urban → ×0.85 vs open
-// Rural         → LO = LU − 4.78(log f)² + 18.33 log f − 40.94 → ~−28 dB vs urban → ×1.0 vs open (near free-space)
-// Open/LOS      → free-space limit (flat savanna, sea, desert) → ×1.0 (no clutter penalty)
-//
-// VHF (145 MHz) and UHF (435 MHz) factors differ because Hata corrections are
-// frequency-dependent (26.16 log f term); UHF suffers ~6 dB more clutter loss.
+
+const HATA_RX_SENS = -117; // dBm
+
+// Path loss functions (return dB)
+function _hata_CH(f, hM) {
+  return (f <= 200)
+    ? 8.29  * Math.pow(Math.log10(1.54  * hM), 2) - 1.1   // large city, VHF
+    : 3.2   * Math.pow(Math.log10(11.75 * hM), 2) - 4.97; // large city, UHF+
+}
+function _hata_LU(f, hB, hM, d) {
+  // Hata urban (large city)
+  const hBc = Math.max(hB, 1.5);
+  const dc  = Math.max(d, 0.1);
+  return 69.55 + 26.16*Math.log10(f) - 13.82*Math.log10(hBc) - _hata_CH(f,hM)
+       + (44.9 - 6.55*Math.log10(hBc)) * Math.log10(dc);
+}
+function hataLoss(env, f, hB, hM, d) {
+  const LU = _hata_LU(f, hB, hM, d);
+  if (env === 'ultra_urban') return LU + 6.0; // +6 dB dense highrise penalty (Erceg/empirical)
+  if (env === 'urban')       return LU;
+  if (env === 'suburban')    return LU - 2*Math.pow(Math.log10(f/28),2) - 5.4;
+  if (env === 'rural')       return LU - 4.78*Math.pow(Math.log10(f),2) + 18.33*Math.log10(f) - 40.94 + 8;
+  // open / LOS
+  return LU - 4.78*Math.pow(Math.log10(f),2) + 18.33*Math.log10(f) - 40.94;
+}
+
+// Solve max range for given tx power, env, freq, antenna height
+function hataMaxRange(env, freqMHz, hB_m, txW, maxD=200) {
+  const txdBm  = 10 * Math.log10(txW * 1000);
+  const budget = txdBm + 0 + 2 - HATA_RX_SENS; // 0 dBi TX, 2 dBi RX
+  const hM = 1.5; // receiver at 1.5 m (HT)
+  let lo = 0.05, hi = maxD;
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo + hi) / 2;
+    if (hataLoss(env, freqMHz, hB_m, hM, Math.max(mid, 0.1)) < budget) lo = mid;
+    else hi = mid;
+  }
+  return Math.min((lo+hi)/2, maxD);
+}
+
+// ══════════════════════════════════════════════
+// ENVIRONMENT DENSITY
+// Based on Okumura-Hata (1980) + COST-231 dB corrections
+// Ultra-Urban: +6 dB over Hata large-city (dense highrise, street canyons)
+// Urban:       Hata large-city baseline
+// Suburban:    Hata suburban formula (−9 to −12 dB vs urban)
+// Rural:       Hata open + moderate clutter (+8 dB vs pure open)
+// Open/LOS:    Hata open-area formula (near free-space over flat terrain)
+// ══════════════════════════════════════════════
 
 const ENV_TYPES = [
   {
-    id: 'ultra_urban',
-    label: 'Ultra-Urban',
-    short: 'Ultra\nUrban',
-    vhf: 0.38,   // dense highrise core: ~10 dB over open  (Accra CBD, Victoria Island Lagos)
-    uhf: 0.22,   // UHF extra ~8 dB multipath in canyons
-    desc: 'Dense highrise core — CBD, skyscrapers, street canyons. Severe multipath & shadow loss.',
-    example: 'Accra CBD · Victoria Island Lagos · Nairobi CBD · Johannesburg Sandton',
+    id: 'ultra_urban', label: 'Ultra-Urban', short: 'Ultra\nUrban',
+    desc: 'Dense highrise CBD, skyscraper canyons. +6 dB over Hata urban. Severe multipath & shadowing.',
+    example: 'Accra CBD · Victoria Island Lagos · Nairobi CBD · Sandton Johannesburg',
     color: '#ff4444'
   },
   {
-    id: 'urban',
-    label: 'Urban',
-    short: 'Urban',
-    vhf: 0.52,   // Hata large-city baseline at 145 MHz, ~7 dB loss vs open
-    uhf: 0.32,   // COST-231 Hata at 435 MHz
-    desc: 'Continuous 2–8 storey buildings, heavy traffic corridors. Standard Okumura-Hata urban.',
-    example: 'Airport Residential Accra · Kumasi city · Ibadan · Dar es Salaam city',
+    id: 'urban', label: 'Urban', short: 'Urban',
+    desc: 'Continuous 2–8 storey built-up area. Hata large-city baseline (empirical Tokyo measurements).',
+    example: 'Airport Residential Accra · Kumasi city · Ibadan · Dar es Salaam centre',
     color: '#ff9900'
   },
   {
-    id: 'suburban',
-    label: 'Suburban',
-    short: 'Suburban',
-    vhf: 0.70,   // Hata suburban: LSU = LU − 2(log(145/28))² − 5.4 ≈ −9.4 dB vs urban
-    uhf: 0.50,   // COST-231 suburban correction
-    desc: 'Detached 1–2 storey housing, shopping centres, light industrial. Hata suburban model.',
-    example: 'East Legon Accra · Spintex · Tema residential · Abeokuta suburbs',
+    id: 'suburban', label: 'Suburban', short: 'Suburban',
+    desc: 'Detached housing, shopping centres, light industry. Hata suburban: L_SU = L_U − 2(log f/28)² − 5.4',
+    example: 'East Legon · Spintex Rd · Tema residential · Abeokuta suburbs',
     color: '#ffe033'
   },
   {
-    id: 'rural',
-    label: 'Rural',
-    short: 'Rural',
-    vhf: 0.88,   // Hata open: LO = LU − 4.78(log145)² + 18.33·log145 − 40.94 ≈ −27 dB vs urban
-    uhf: 0.72,   // UHF rural — less correction than VHF due to 26.16 log f offset
-    desc: 'Villages, scattered buildings, farmland, moderate tree cover. Near Hata open-area model.',
+    id: 'rural', label: 'Rural', short: 'Rural',
+    desc: 'Villages, scattered buildings, farmland, tree cover. Hata open + 8 dB scatter/tree correction.',
     example: 'Volta Region villages · Brong-Ahafo farmland · Northern Ghana savanna edge',
     color: '#6bcb77'
   },
   {
-    id: 'open',
-    label: 'Open/LOS',
-    short: 'Open\nLOS',
-    vhf: 1.00,   // free-space / near free-space (flat open terrain, sea, desert)
-    uhf: 1.00,
-    desc: 'Flat open terrain — savanna, sea, desert, airfield. Near free-space path loss.',
-    example: 'Gulf of Guinea · Northern savanna · Kalahari · open floodplain',
+    id: 'open', label: 'Open/LOS', short: 'Open\nLOS',
+    desc: 'Flat open terrain. Hata open-area formula. Near free-space (savanna, sea, desert, airfield).',
+    example: 'Gulf of Guinea · Northern savanna plains · Kalahari · open floodplain',
     color: '#00ffc3'
   }
 ];
 
 // Active environment per band (default: ultra_urban)
 const VU_ENV = { vhf: 'ultra_urban', uhf: 'ultra_urban' };
-
-function envFactor(band){
-  const e = ENV_TYPES.find(x => x.id === VU_ENV[band]);
-  return e ? e[band] : 1.0;
-}
 
 function buildEnvGrid(band){
   const grid = document.getElementById(band+'-envGrid');
@@ -1098,8 +1105,7 @@ function buildEnvGrid(band){
     btn.className = 'env-btn' + (e.id === VU_ENV[band] ? ' on' : '');
     btn.innerHTML = e.short.replace('\n','<br>');
     btn.title = e.desc;
-    btn.style.borderColor = VU_ENV[band] === e.id ? e.color : '';
-    btn.style.color       = VU_ENV[band] === e.id ? e.color : '';
+    if (e.id === VU_ENV[band]) { btn.style.borderColor = e.color; btn.style.color = e.color; }
     btn.onclick = () => setEnv(band, e.id);
     grid.appendChild(btn);
   });
@@ -1110,53 +1116,68 @@ function updateEnvInfo(band){
   const e   = ENV_TYPES.find(x => x.id === VU_ENV[band]);
   const inf = document.getElementById(band+'-envInfo');
   if(!e || !inf) return;
-  const f = e[band];
-  const dbLoss = -20 * Math.log10(f);  // extra path loss vs open
+  const freqMHz = band==='vhf' ? 145 : 435;
+  const altM    = VU_ALT[band];
+  const r100    = hataMaxRange(e.id, freqMHz, altM, 100);
+  const r1      = hataMaxRange(e.id, freqMHz, altM, 1);
+  // dB penalty vs open for reference
+  const dOpen   = hataLoss('open',   freqMHz, Math.max(altM,1.5), 1.5, 5);
+  const dThis   = hataLoss(e.id,     freqMHz, Math.max(altM,1.5), 1.5, 5);
+  const dbDiff  = (dThis - dOpen).toFixed(1);
   inf.innerHTML =
-    `<strong>${e.label}</strong> · ×${f.toFixed(2)} range vs open · ~${dbLoss.toFixed(1)} dB extra clutter loss<br/>` +
+    `<strong>${e.label}</strong> · +${dbDiff} dB vs open · Hata model @${altM}m<br/>` +
+    `100W→~${r100.toFixed(1)} km &nbsp; 1W→~${r1.toFixed(1)} km<br/>` +
     `${e.desc}<br/><span style="color:var(--accent2);font-size:.58rem;">e.g. ${e.example}</span>`;
 }
 
 function setEnv(band, envId){
   VU_ENV[band] = envId;
   buildEnvGrid(band);
-  // Recompute displayed ranges
-  const altM   = VU_ALT[band];
-  const horizon = fullHorizon(altM);
-  const cfg    = VU_CFG[band];
-  const ef     = envFactor(band);
-  const pkeys  = ['p100w','p10w','p5w','p1w'];
-  pkeys.forEach((pk,i) => {
-    const rawKm  = cfg.rawPowers[pk];
-    const cap    = Math.min(rawKm * ef, horizon);
-    const el     = document.getElementById(cfg.rangeIds[i]);
-    if(el) el.textContent = `Terrain+env: ~${cap.toFixed(1)} km`;
-  });
-  // Redraw polygons if terrain data cached
+  updateRangeLabels(band);
   if(VU_CACHE[band]) drawVUPolys(band);
   else showVUCircles(band);
 }
 
+// Compute env-corrected, horizon-capped range for each power level
+function vuPowersComputed(band){
+  const env     = VU_ENV[band];
+  const freqMHz = band==='vhf' ? 145 : 435;
+  const altM    = VU_ALT[band];
+  const horizon = fullHorizon(altM);
+  const compute = (w) => Math.min(hataMaxRange(env, freqMHz, altM, w), horizon);
+  return { p100w: compute(100), p10w: compute(10), p5w: compute(5), p1w: compute(1) };
+}
+
+function updateRangeLabels(band){
+  const cfg    = VU_CFG[band];
+  const altM   = VU_ALT[band];
+  const pkeys  = ['p100w','p10w','p5w','p1w'];
+  const powers = vuPowersComputed(band);
+  pkeys.forEach((pk,i) => {
+    const el = document.getElementById(cfg.rangeIds[i]);
+    if(el) el.textContent = `Hata+terrain: ~${powers[pk].toFixed(1)} km`;
+  });
+  updateEnvInfo(band);
+}
+
 // ── VU_CFG: base range tables (open/flat terrain) ────────────
-// vuPowers(band) applies env factor at call time
+// vuPowers(band) applies Hata engine at call time
 function vuPowers(band){
-  const ef = envFactor(band);
-  const r  = VU_CFG[band].rawPowers;
-  return {p100w:r.p100w*ef, p10w:r.p10w*ef, p5w:r.p5w*ef, p1w:r.p1w*ef};
+  return vuPowersComputed(band);
 }
 
 const VU_CFG = {
   vhf:{
-    rawPowers:{p100w:150, p10w:75, p5w:50, p1w:25},
-    powers:{p100w:150, p10w:75, p5w:50, p1w:25},
+    rawPowers:{p100w:38, p10w:22, p5w:19, p1w:13},
+    powers:{p100w:38, p10w:22, p5w:19, p1w:13},
     colors:{p100w:'#007a2e', p10w:'#00b341', p5w:'#39d353', p1w:'#90ff57'},
     fop:   {p100w:.12,       p10w:.16,       p5w:.20,       p1w:.26},
     ckeys: ['v100w','v10w','v5w','v1w'],
     rangeIds: ['vhf-r100w','vhf-r10w','vhf-r5w','vhf-r1w'],
   },
   uhf:{
-    rawPowers:{p100w:80,  p10w:40, p5w:28, p1w:13},
-    powers:{p100w:80,  p10w:40, p5w:28, p1w:13},
+    rawPowers:{p100w:22, p10w:13, p5w:11, p1w:8},
+    powers:{p100w:22, p10w:13, p5w:11, p1w:8},
     colors:{p100w:'#7700cc', p10w:'#aa33ff', p5w:'#d966ff', p1w:'#ff9eff'},
     fop:   {p100w:.14,       p10w:.18,       p5w:.22,       p1w:.28},
     ckeys: ['u100w','u10w','u5w','u1w'],
@@ -1209,7 +1230,7 @@ async function computeTerrainCoverage(band){
 
   const txTotalH = txElev + altM;
   const horizon  = fullHorizon(altM);
-  const maxRange = Math.min(horizon, vuPowers(band).p100w);
+  const maxRange = Math.min(horizon, vuPowersComputed(band).p100w);
 
   // Build all sample point locations
   const bearings = Array.from({length:NUM_RADIALS}, (_,i) => i*(360/NUM_RADIALS));
@@ -1246,7 +1267,7 @@ async function computeTerrainCoverage(band){
 
   // Update horizon info with actual TX elevation
   document.getElementById(band+'-horizonInfo').textContent =
-    `TX terrain: ${Math.round(txElev)}m · Ant: ${altM}m AGL → total ${Math.round(txTotalH)}m · Horizon: ~${horizon.toFixed(1)} km`;
+    `TX terrain: ${Math.round(txElev)}m · Ant: ${altM}m AGL → total ${Math.round(txTotalH)}m · Hata ${VU_ENV[band]} 100W: ~${vuPowersComputed(band).p100w.toFixed(1)} km`;
 
   // Draw polygons
   drawVUPolys(band);
@@ -1272,14 +1293,15 @@ function drawVUPolys(band){
     if(VU_POLYS[ck+'-h']){ try{map.removeLayer(VU_POLYS[ck+'-h']);}catch(e){} }
   });
 
+  const envPowers = vuPowersComputed(band);
   pkeys.forEach((pk,idx)=>{
     const ck        = cfg.ckeys[idx];
     const col       = cfg.colors[pk];
     const fo        = cfg.fop[pk];
-    const pRange    = vuPowers(band)[pk];
+    const pRange    = envPowers[pk];
     const smoothMax = Math.min(pRange, horizon);
 
-    // Dashed smooth-earth horizon circle
+    // Dashed Hata-limit circle (env+horizon capped)
     const hCircle = L.circle([txLat,txLon],{
       radius:smoothMax*1000, color:col, fillColor:'transparent',
       weight:1.5, opacity:.45, fillOpacity:0, dashArray:'6 4'
@@ -1300,7 +1322,7 @@ function drawVUPolys(band){
     });
     const pLabel = pk==='p100w'?'100 W':pk==='p10w'?'10 W':pk==='p5w'?'5 W':'1 W';
     const htTag = altM === HT_HEIGHT ? ' 📻 HT' : '';
-    poly.bindTooltip(`${band.toUpperCase()} ${pLabel}${htTag} · terrain-aware · ant ${altM}m AGL`,{className:'ltt',direction:'top'});
+    poly.bindTooltip(`${band.toUpperCase()} ${pLabel}${htTag} · Hata+terrain · ${VU_ENV[band]} · ant ${altM}m AGL`,{className:'ltt',direction:'top'});
     poly.addTo(map);
     VU_POLYS[ck] = poly;
     vuVisible[ck] = true;
@@ -1308,17 +1330,8 @@ function drawVUPolys(band){
     if(li) li.classList.remove('off');
   });
 
-  // Update range labels
-  pkeys.forEach((pk,i)=>{
-    const el = document.getElementById(cfg.rangeIds[i]);
-    if(el){
-      const ef2 = envFactor(band);
-      const envMax = Math.min(cfg.rawPowers[pk] * ef2, horizon);
-      el.textContent = altM === HT_HEIGHT
-        ? `HT terrain+env: ~${envMax.toFixed(1)} km`
-        : `Terrain+env: ~${Math.round(envMax)} km at ${altM}m AGL`;
-    }
-  });
+  // Update range labels via Hata engine
+  updateRangeLabels(band);
 }
 
 // ── Toggle individual VU layer ───────────────────────────────
@@ -1384,9 +1397,10 @@ function showVUCircles(band){
   const pkeys=['p100w','p10w','p5w','p1w'];
 
   hideAllVU();
+  const envPowers = vuPowersComputed(band);
   pkeys.forEach((pk,idx)=>{
     const ck=cfg.ckeys[idx];
-    const smoothMax=Math.min(vuPowers(band)[pk], horizon);
+    const smoothMax=Math.min(envPowers[pk], horizon);
     const c=L.circle([S.lat,S.lon],{
       radius:smoothMax*1000, color:cfg.colors[pk], fillColor:cfg.colors[pk],
       weight:2, opacity:.82, fillOpacity:cfg.fop[pk], dashArray:'7 4'
@@ -1402,7 +1416,7 @@ function showVUCircles(band){
   });
 
   const largest=VU_POLYS[cfg.ckeys[0]];
-  if(largest) map.fitBounds(L.circle([S.lat,S.lon],{radius:Math.min(vuPowers(band).p100w, horizon)*1000}).getBounds().pad(0.1));
+  if(largest) map.fitBounds(L.circle([S.lat,S.lon],{radius:Math.min(envPowers.p100w, horizon)*1000}).getBounds().pad(0.1));
 }
 
 // ── TX marker helper ─────────────────────────────────────────
