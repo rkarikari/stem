@@ -326,14 +326,12 @@ option{background:#0b1820;}
       <div class="vu-sec">
         <div class="vu-sec-title" style="color:#90ff57;">TX Antenna / Site Elevation</div>
         <div class="alt-row">
-          <div class="alt-big" id="vhf-altBig">1.5</div>
+          <div class="alt-big" id="vhf-altBig">10</div>
           <div class="alt-unit">m AGL</div>
         </div>
-        <input type="range" id="vhf-altSlider" min="1.5" max="400" value="1.5" step="0.5" oninput="setAlt('vhf',this.value)" style="width:100%;"/>
-        <div class="alt-scale"><span>1.5m</span><span>100m</span><span>200m</span><span>300m</span><span>400m</span></div>
+        <input type="range" id="vhf-altSlider" min="10" max="400" value="10" step="5" oninput="setAlt('vhf',this.value)" style="width:100%;"/>
+        <div class="alt-scale"><span>10m</span><span>100m</span><span>200m</span><span>300m</span><span>400m</span></div>
         <div class="alt-presets">
-          <button class="btn btn-xs on" id="vhf-ht-btn" onclick="setAlt('vhf',1.5)" title="Handheld transceiver at mouth level">📻 HT 1.5m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',5)">5m</button>
           <button class="btn btn-xs" onclick="setAlt('vhf',10)">10m</button>
           <button class="btn btn-xs" onclick="setAlt('vhf',30)">30m</button>
           <button class="btn btn-xs" onclick="setAlt('vhf',50)">50m</button>
@@ -341,7 +339,7 @@ option{background:#0b1820;}
           <button class="btn btn-xs" onclick="setAlt('vhf',200)">200m</button>
           <button class="btn btn-xs" onclick="setAlt('vhf',400)">400m</button>
         </div>
-        <div class="horizon-info" id="vhf-horizonInfo">📻 HT at mouth level — smooth-earth horizon: ~6.9 km at 1.5m AGL</div>
+        <div class="horizon-info" id="vhf-horizonInfo">Smooth-earth radio horizon: ~19 km at 10m AGL</div>
         <button class="terrain-compute-btn" id="vhf-computeBtn" onclick="computeTerrainCoverage('vhf')">
           ⛰ Compute Terrain Coverage (SRTM)
         </button>
@@ -408,14 +406,12 @@ option{background:#0b1820;}
       <div class="vu-sec">
         <div class="vu-sec-title" style="color:#ff9eff;">TX Antenna / Site Elevation</div>
         <div class="alt-row">
-          <div class="alt-big" id="uhf-altBig">1.5</div>
+          <div class="alt-big" id="uhf-altBig">10</div>
           <div class="alt-unit">m AGL</div>
         </div>
-        <input type="range" id="uhf-altSlider" min="1.5" max="400" value="1.5" step="0.5" oninput="setAlt('uhf',this.value)" style="width:100%;"/>
-        <div class="alt-scale"><span>1.5m</span><span>100m</span><span>200m</span><span>300m</span><span>400m</span></div>
+        <input type="range" id="uhf-altSlider" min="10" max="400" value="10" step="5" oninput="setAlt('uhf',this.value)" style="width:100%;"/>
+        <div class="alt-scale"><span>10m</span><span>100m</span><span>200m</span><span>300m</span><span>400m</span></div>
         <div class="alt-presets">
-          <button class="btn btn-xs on" id="uhf-ht-btn" onclick="setAlt('uhf',1.5)" title="Handheld transceiver at mouth level">📻 HT 1.5m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',5)">5m</button>
           <button class="btn btn-xs" onclick="setAlt('uhf',10)">10m</button>
           <button class="btn btn-xs" onclick="setAlt('uhf',30)">30m</button>
           <button class="btn btn-xs" onclick="setAlt('uhf',50)">50m</button>
@@ -423,7 +419,7 @@ option{background:#0b1820;}
           <button class="btn btn-xs" onclick="setAlt('uhf',200)">200m</button>
           <button class="btn btn-xs" onclick="setAlt('uhf',400)">400m</button>
         </div>
-        <div class="horizon-info" id="uhf-horizonInfo">📻 HT at mouth level — smooth-earth horizon: ~6.9 km at 1.5m AGL</div>
+        <div class="horizon-info" id="uhf-horizonInfo">Smooth-earth radio horizon: ~19 km at 10m AGL</div>
         <button class="terrain-compute-btn" id="uhf-computeBtn" onclick="computeTerrainCoverage('uhf')">
           ⛰ Compute Terrain Coverage (SRTM)
         </button>
@@ -947,41 +943,7 @@ function losRange(txH, profile){
 }
 
 // State
-const VU_ALT = {vhf:1.5, uhf:1.5};
-
-// HT presets that get a special "on" highlight
-const HT_HEIGHT = 1.5;
-
-function setAlt(band, val){
-  const h = parseFloat(val);
-  VU_ALT[band] = h;
-  const display = h === Math.floor(h) ? h.toString() : h.toFixed(1);
-  document.getElementById(band+'-altBig').textContent = display;
-  document.getElementById(band+'-altSlider').value   = h;
-
-  // Highlight HT button when at 1.5m, clear otherwise
-  const htBtn = document.getElementById(band+'-ht-btn');
-  if(htBtn) htBtn.classList.toggle('on', h === HT_HEIGHT);
-
-  const horizon = fullHorizon(h);
-  const htLabel = h === HT_HEIGHT ? '📻 HT at mouth level — ' : '';
-  document.getElementById(band+'-horizonInfo').textContent =
-    `${htLabel}Smooth-earth horizon: ~${horizon.toFixed(1)} km at ${display}m AGL`;
-
-  // Update range labels with horizon-capped maximums
-  const cfg = VU_CFG[band];
-  const pkeys = ['p100w','p10w','p5w','p1w'];
-  pkeys.forEach((pk,i)=>{
-    const cap = Math.min(cfg.powers[pk], horizon);
-    const el  = document.getElementById(cfg.rangeIds[i]);
-    if(el) el.textContent = h === HT_HEIGHT
-      ? `HT horizon-capped: ~${cap.toFixed(1)} km`
-      : `Max (horizon-capped): ~${Math.round(cap)} km`;
-  });
-
-  // Rebuild polygons from cache instantly if available
-  if(VU_CACHE[band]) drawVUPolys(band);
-}
+const VU_ALT = {vhf:10, uhf:10};
 const VU_CACHE  = {vhf:null, uhf:null};   // cached {terrainLOS[], txElev, txLat, txLon}
 const VU_POLYS  = {};                       // L.polygon / L.circle keyed by layer id
 const vuVisible = {};
@@ -1007,7 +969,24 @@ const VU_CFG = {
 };
 
 // ── Altitude slider ──────────────────────────────────────────
-// setAlt defined above with VU_ALT
+function setAlt(band, val){
+  VU_ALT[band] = parseInt(val);
+  document.getElementById(band+'-altBig').textContent = val;
+  document.getElementById(band+'-altSlider').value   = val;
+  const h = fullHorizon(parseInt(val));
+  document.getElementById(band+'-horizonInfo').textContent =
+    `Smooth-earth radio horizon: ~${Math.round(h)} km at ${val}m AGL`;
+  // Update range labels to show horizon-capped maximums
+  const cfg = VU_CFG[band];
+  const pkeys = ['p100w','p10w','p5w','p1w'];
+  pkeys.forEach((pk,i)=>{
+    const cap = Math.min(cfg.powers[pk], h);
+    const el  = document.getElementById(cfg.rangeIds[i]);
+    if(el) el.textContent = `Max (horizon-capped): ~${Math.round(cap)} km`;
+  });
+  // Rebuild polygons from cache instantly if available
+  if(VU_CACHE[band]) drawVUPolys(band);
+}
 
 // ── Elevation API fetch with batching ───────────────────────
 async function fetchElevBatch(locs, onProgress){
@@ -1088,7 +1067,7 @@ async function computeTerrainCoverage(band){
 
   // Update horizon info with actual TX elevation
   document.getElementById(band+'-horizonInfo').textContent =
-    `TX terrain: ${Math.round(txElev)}m · Ant: ${altM}m AGL → total ${Math.round(txTotalH)}m · Horizon: ~${horizon.toFixed(1)} km`;
+    `TX terrain: ${Math.round(txElev)}m · Ant: ${altM}m AGL → total ${Math.round(txTotalH)}m · Horizon: ~${Math.round(horizon)} km`;
 
   // Draw polygons
   drawVUPolys(band);
@@ -1141,8 +1120,7 @@ function drawVUPolys(band){
       opacity:.85, fillOpacity:fo, smoothFactor:2
     });
     const pLabel = pk==='p100w'?'100 W':pk==='p10w'?'10 W':pk==='p5w'?'5 W':'1 W';
-    const htTag = altM === HT_HEIGHT ? ' 📻 HT' : '';
-    poly.bindTooltip(`${band.toUpperCase()} ${pLabel}${htTag} · terrain-aware · ant ${altM}m AGL`,{className:'ltt',direction:'top'});
+    poly.bindTooltip(`${band.toUpperCase()} ${pLabel} · terrain-aware · ant ${altM}m AGL`,{className:'ltt',direction:'top'});
     poly.addTo(map);
     VU_POLYS[ck] = poly;
     vuVisible[ck] = true;
@@ -1155,7 +1133,7 @@ function drawVUPolys(band){
     const el = document.getElementById(cfg.rangeIds[i]);
     if(el){
       const smoothMax = Math.min(cfg.powers[pk], horizon);
-      el.textContent = altM === HT_HEIGHT ? `HT horizon-capped: ~${Math.min(cfg.powers[pk], horizon).toFixed(1)} km at ${altM}m AGL` : `Horizon cap: ~${Math.round(Math.min(cfg.powers[pk], horizon))} km at ${altM}m AGL`;
+      el.textContent = `Horizon cap: ~${Math.round(smoothMax)} km at ${altM}m AGL`;
     }
   });
 }
@@ -1230,9 +1208,7 @@ function showVUCircles(band){
       radius:smoothMax*1000, color:cfg.colors[pk], fillColor:cfg.colors[pk],
       weight:2, opacity:.82, fillOpacity:cfg.fop[pk], dashArray:'7 4'
     });
-    const pwrLabel = pk==='p100w'?'100W':pk==='p10w'?'10W':pk==='p5w'?'5W':'1W';
-    const htTag2 = altM === HT_HEIGHT ? ' 📻 HT' : '';
-    c.bindTooltip(`${band.toUpperCase()} ${pwrLabel}${htTag2} · smooth-earth · click ⛰ Compute for terrain`,{className:'ltt',direction:'top'});
+    c.bindTooltip(`${band.toUpperCase()} ${pk==='p100w'?'100W':pk==='p10w'?'10W':pk==='p5w'?'5W':'1W'} · smooth-earth · click ⛰ Compute for terrain`,{className:'ltt',direction:'top'});
     c.addTo(map);
     VU_POLYS[ck]=c;
     vuVisible[ck]=true;
@@ -1298,9 +1274,6 @@ buildPwrPresets();
 document.getElementById('pwrSlider').value=p2s(S.power);
 document.getElementById('latIn').value=S.lat;
 document.getElementById('lonIn').value=S.lon;
-// Initialise VHF/UHF panels to 1.5m HT state
-setAlt('vhf', 1.5);
-setAlt('uhf', 1.5);
 rebuildLayers();
 autoFit();
 </script>
