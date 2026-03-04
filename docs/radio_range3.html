@@ -175,14 +175,6 @@ option{background:#0b1820;}
 .rk-solid{width:22px;height:2px;background:currentColor;}
 .rk-dashed{width:22px;height:0;border-top:2px dashed currentColor;opacity:.5;}
 
-/* Environment density selector */
-.env-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-top:6px;}
-.env-btn{background:var(--inp);border:1px solid var(--border);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.58rem;padding:5px 2px;cursor:pointer;text-align:center;transition:all .15s;line-height:1.3;}
-.env-btn:hover{border-color:var(--border2);color:var(--text);}
-.env-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(0,255,195,.09);}
-.env-factor{margin-top:6px;font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--dim);line-height:1.6;padding:5px 8px;background:rgba(0,0,0,.2);border-left:2px solid var(--border2);}
-.env-factor strong{color:var(--text);}
-
 /* Map */
 .map-area{flex:1;position:relative;overflow:hidden;}
 #map{width:100%;height:100%;}
@@ -326,7 +318,7 @@ option{background:#0b1820;}
   <div id="vhf-panel" class="vhf-panel">
     <div class="vu-head">
       <div class="vu-title" style="color:#90ff57;">▲ VHF 2 m COVERAGE</div>
-      <div class="vu-sub">145.500 MHz FM · Terrain Propagation Default · Urban Density Model</div>
+      <div class="vu-sub">145.500 MHz FM · Terrain-Aware LOS Model</div>
     </div>
     <div class="vu-scroll">
 
@@ -357,13 +349,6 @@ option{background:#0b1820;}
         <button class="topo-toggle-btn" id="vhf-topoBtn" onclick="toggleTopoTile('vhf')">⛰ Show Topo Map</button>
       </div>
 
-      <!-- ENVIRONMENT DENSITY -->
-      <div class="vu-sec">
-        <div class="vu-sec-title" style="color:#90ff57;">Environment Density</div>
-        <div class="env-grid" id="vhf-envGrid"></div>
-        <div class="env-factor" id="vhf-envInfo"></div>
-      </div>
-
       <!-- POWER LAYERS -->
       <div class="vu-sec">
         <div class="vu-sec-title" style="color:#90ff57;">Coverage Layers — click to toggle</div>
@@ -371,28 +356,28 @@ option{background:#0b1820;}
           <div class="vu-dot" style="border-color:#007a2e;background:rgba(0,122,46,.35)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#007a2e">100 W</div>
-            <div class="vu-range" id="vhf-r100w">Terrain+env (ultra-urban): ~57 km</div>
+            <div class="vu-range" id="vhf-r100w">Max smooth-earth: ~150 km</div>
           </div>
         </div>
         <div class="vu-item" id="vli-v10w" onclick="vuToggle('v10w')">
           <div class="vu-dot" style="border-color:#00b341;background:rgba(0,179,65,.30)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#00b341">10 W</div>
-            <div class="vu-range" id="vhf-r10w">Terrain+env (ultra-urban): ~29 km</div>
+            <div class="vu-range" id="vhf-r10w">Max smooth-earth: ~75 km</div>
           </div>
         </div>
         <div class="vu-item" id="vli-v5w" onclick="vuToggle('v5w')">
           <div class="vu-dot" style="border-color:#39d353;background:rgba(57,211,83,.25)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#39d353">5 W</div>
-            <div class="vu-range" id="vhf-r5w">Terrain+env (ultra-urban): ~19 km</div>
+            <div class="vu-range" id="vhf-r5w">Max smooth-earth: ~50 km</div>
           </div>
         </div>
         <div class="vu-item" id="vli-v1w" onclick="vuToggle('v1w')">
           <div class="vu-dot" style="border-color:#90ff57;background:rgba(144,255,87,.20)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#90ff57">1 W</div>
-            <div class="vu-range" id="vhf-r1w">Terrain+env (ultra-urban): ~10 km</div>
+            <div class="vu-range" id="vhf-r1w">Max smooth-earth: ~25 km</div>
           </div>
         </div>
         <div class="ring-key" style="margin-top:9px;">
@@ -402,12 +387,12 @@ option{background:#0b1820;}
       </div>
 
       <div class="vu-note">
-        <strong>Model:</strong> 36 radials × 22 elevation samples (SRTM 90m). Terrain LOS computed by default on band switch. Earth curvature (4/3 Re) included. <strong>Environment density</strong> applies Okumura-Hata / COST-231 clutter loss on top of terrain. <strong>Solid polygon</strong> = terrain+env coverage. <strong>Dashed ring</strong> = theoretical max (open/LOS).
+        <strong>Model:</strong> 36 radials × 22 elevation samples (SRTM 90m). Earth curvature (4/3 Re) included. LOS checked point-by-point. <strong>Solid polygon</strong> = terrain-blocked coverage. <strong>Dashed ring</strong> = smooth-earth power limit. Altitude slider recomputes polygon instantly from cached data.
       </div>
     </div>
     <div class="vu-foot">
-      VHF 144–146 MHz · SRTM terrain model (default) · Ant: 7-el Yagi<br/>
-      Urban density applied via Okumura-Hata/COST-231 · ⚠ 90m DEM resolution
+      VHF 144–146 MHz · SRTM terrain model · Ant: 7-el Yagi<br/>
+      ⚠ 90m DEM resolution — fine urban obstacles not modelled
     </div>
   </div><!-- /vhf-panel -->
 
@@ -415,7 +400,7 @@ option{background:#0b1820;}
   <div id="uhf-panel" class="uhf-panel">
     <div class="vu-head">
       <div class="vu-title" style="color:#ff9eff;">◆ UHF 70 cm COVERAGE</div>
-      <div class="vu-sub">435.000 MHz FM · Terrain Propagation Default · Urban Density Model</div>
+      <div class="vu-sub">435.000 MHz FM · Terrain-Aware LOS Model</div>
     </div>
     <div class="vu-scroll">
 
@@ -446,13 +431,6 @@ option{background:#0b1820;}
         <button class="topo-toggle-btn" id="uhf-topoBtn" onclick="toggleTopoTile('uhf')">⛰ Show Topo Map</button>
       </div>
 
-      <!-- ENVIRONMENT DENSITY -->
-      <div class="vu-sec">
-        <div class="vu-sec-title" style="color:#ff9eff;">Environment Density</div>
-        <div class="env-grid" id="uhf-envGrid"></div>
-        <div class="env-factor" id="uhf-envInfo"></div>
-      </div>
-
       <!-- POWER LAYERS -->
       <div class="vu-sec">
         <div class="vu-sec-title" style="color:#ff9eff;">Coverage Layers — click to toggle</div>
@@ -460,28 +438,28 @@ option{background:#0b1820;}
           <div class="vu-dot" style="border-color:#7700cc;background:rgba(119,0,204,.35)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#7700cc">100 W</div>
-            <div class="vu-range" id="uhf-r100w">Terrain+env (ultra-urban): ~18 km</div>
+            <div class="vu-range" id="uhf-r100w">Max smooth-earth: ~80 km</div>
           </div>
         </div>
         <div class="vu-item" id="vli-u10w" onclick="vuToggle('u10w')">
           <div class="vu-dot" style="border-color:#aa33ff;background:rgba(170,51,255,.28)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#aa33ff">10 W</div>
-            <div class="vu-range" id="uhf-r10w">Terrain+env (ultra-urban): ~9 km</div>
+            <div class="vu-range" id="uhf-r10w">Max smooth-earth: ~40 km</div>
           </div>
         </div>
         <div class="vu-item" id="vli-u5w" onclick="vuToggle('u5w')">
           <div class="vu-dot" style="border-color:#d966ff;background:rgba(217,102,255,.24)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#d966ff">5 W</div>
-            <div class="vu-range" id="uhf-r5w">Terrain+env (ultra-urban): ~6 km</div>
+            <div class="vu-range" id="uhf-r5w">Max smooth-earth: ~28 km</div>
           </div>
         </div>
         <div class="vu-item" id="vli-u1w" onclick="vuToggle('u1w')">
           <div class="vu-dot" style="border-color:#ff9eff;background:rgba(255,158,255,.20)"></div>
           <div class="vu-info">
             <div class="vu-pwr" style="color:#ff9eff">1 W</div>
-            <div class="vu-range" id="uhf-r1w">Terrain+env (ultra-urban): ~3 km</div>
+            <div class="vu-range" id="uhf-r1w">Max smooth-earth: ~13 km</div>
           </div>
         </div>
         <div class="ring-key" style="margin-top:9px;">
@@ -491,12 +469,12 @@ option{background:#0b1820;}
       </div>
 
       <div class="vu-note">
-        <strong>Model:</strong> 36 radials × 22 elevation samples (SRTM 90m). Terrain LOS computed by default. UHF has ~9.5 dB more free-space loss than VHF plus higher clutter loss in urban environments. <strong>Environment density</strong> applies Okumura-Hata / COST-231 correction per environment type.
+        <strong>Model:</strong> 36 radials × 22 elevation samples (SRTM 90m). Earth curvature (4/3 Re) included. UHF has 9.5 dB more free-space loss than VHF — approximately half the range. <strong>Solid polygon</strong> = terrain-blocked coverage. <strong>Dashed ring</strong> = smooth-earth power limit.
       </div>
     </div>
     <div class="vu-foot">
-      UHF 430–440 MHz · SRTM terrain model (default) · Ant: 9-el Yagi<br/>
-      Urban density applied via Okumura-Hata/COST-231 · ⚠ 90m DEM resolution
+      UHF 430–440 MHz · SRTM terrain model · Ant: 9-el Yagi<br/>
+      ⚠ 90m DEM resolution — fine urban obstacles not modelled
     </div>
   </div><!-- /uhf-panel -->
 
@@ -990,16 +968,15 @@ function setAlt(band, val){
   document.getElementById(band+'-horizonInfo').textContent =
     `${htLabel}Smooth-earth horizon: ~${horizon.toFixed(1)} km at ${display}m AGL`;
 
-  // Update range labels with env+horizon-capped maximums
+  // Update range labels with horizon-capped maximums
   const cfg = VU_CFG[band];
   const pkeys = ['p100w','p10w','p5w','p1w'];
-  const ef = envFactor(band);
   pkeys.forEach((pk,i)=>{
-    const cap = Math.min(cfg.rawPowers[pk] * ef, horizon);
+    const cap = Math.min(cfg.powers[pk], horizon);
     const el  = document.getElementById(cfg.rangeIds[i]);
     if(el) el.textContent = h === HT_HEIGHT
-      ? `HT+env capped: ~${cap.toFixed(1)} km`
-      : `Terrain+env cap: ~${Math.round(cap)} km`;
+      ? `HT horizon-capped: ~${cap.toFixed(1)} km`
+      : `Max (horizon-capped): ~${Math.round(cap)} km`;
   });
 
   // Rebuild polygons from cache instantly if available
@@ -1011,144 +988,17 @@ const vuVisible = {};
 let   activeMode = 'hf';
 let   topoTileLayer = null;
 
-// ══════════════════════════════════════════════
-// ENVIRONMENT DENSITY (Okumura-Hata / COST-231)
-// ══════════════════════════════════════════════
-// Range multipliers derived from the Hata model path-loss corrections.
-// Reference: ITU-R P.529-2 / Hata (1980) / COST-231 final report (EUR 18957).
-//
-// Ultra-Urban  → dense highrise core (e.g. Accra CBD, Lagos Island, Nairobi CBD):
-//   +8 dB over standard urban (large-city C_H correction) → ×0.40 vs open
-// Urban         → continuous 2–8 story built-up area (Hata "large city" baseline):
-//   approx ×0.55 vs open
-// Suburban      → LSU = LU − 2(log f/28)² − 5.4 → ~−9.5 dB vs urban → ×0.85 vs open
-// Rural         → LO = LU − 4.78(log f)² + 18.33 log f − 40.94 → ~−28 dB vs urban → ×1.0 vs open (near free-space)
-// Open/LOS      → free-space limit (flat savanna, sea, desert) → ×1.0 (no clutter penalty)
-//
-// VHF (145 MHz) and UHF (435 MHz) factors differ because Hata corrections are
-// frequency-dependent (26.16 log f term); UHF suffers ~6 dB more clutter loss.
-
-const ENV_TYPES = [
-  {
-    id: 'ultra_urban',
-    label: 'Ultra-Urban',
-    short: 'Ultra\nUrban',
-    vhf: 0.38,   // dense highrise core: ~10 dB over open  (Accra CBD, Victoria Island Lagos)
-    uhf: 0.22,   // UHF extra ~8 dB multipath in canyons
-    desc: 'Dense highrise core — CBD, skyscrapers, street canyons. Severe multipath & shadow loss.',
-    example: 'Accra CBD · Victoria Island Lagos · Nairobi CBD · Johannesburg Sandton',
-    color: '#ff4444'
-  },
-  {
-    id: 'urban',
-    label: 'Urban',
-    short: 'Urban',
-    vhf: 0.52,   // Hata large-city baseline at 145 MHz, ~7 dB loss vs open
-    uhf: 0.32,   // COST-231 Hata at 435 MHz
-    desc: 'Continuous 2–8 storey buildings, heavy traffic corridors. Standard Okumura-Hata urban.',
-    example: 'Airport Residential Accra · Kumasi city · Ibadan · Dar es Salaam city',
-    color: '#ff9900'
-  },
-  {
-    id: 'suburban',
-    label: 'Suburban',
-    short: 'Suburban',
-    vhf: 0.70,   // Hata suburban: LSU = LU − 2(log(145/28))² − 5.4 ≈ −9.4 dB vs urban
-    uhf: 0.50,   // COST-231 suburban correction
-    desc: 'Detached 1–2 storey housing, shopping centres, light industrial. Hata suburban model.',
-    example: 'East Legon Accra · Spintex · Tema residential · Abeokuta suburbs',
-    color: '#ffe033'
-  },
-  {
-    id: 'rural',
-    label: 'Rural',
-    short: 'Rural',
-    vhf: 0.88,   // Hata open: LO = LU − 4.78(log145)² + 18.33·log145 − 40.94 ≈ −27 dB vs urban
-    uhf: 0.72,   // UHF rural — less correction than VHF due to 26.16 log f offset
-    desc: 'Villages, scattered buildings, farmland, moderate tree cover. Near Hata open-area model.',
-    example: 'Volta Region villages · Brong-Ahafo farmland · Northern Ghana savanna edge',
-    color: '#6bcb77'
-  },
-  {
-    id: 'open',
-    label: 'Open/LOS',
-    short: 'Open\nLOS',
-    vhf: 1.00,   // free-space / near free-space (flat open terrain, sea, desert)
-    uhf: 1.00,
-    desc: 'Flat open terrain — savanna, sea, desert, airfield. Near free-space path loss.',
-    example: 'Gulf of Guinea · Northern savanna · Kalahari · open floodplain',
-    color: '#00ffc3'
-  }
-];
-
-// Active environment per band (default: ultra_urban)
-const VU_ENV = { vhf: 'ultra_urban', uhf: 'ultra_urban' };
-
-function envFactor(band){
-  const e = ENV_TYPES.find(x => x.id === VU_ENV[band]);
-  return e ? e[band] : 1.0;
-}
-
-function buildEnvGrid(band){
-  const grid = document.getElementById(band+'-envGrid');
-  if(!grid) return;
-  grid.innerHTML = '';
-  ENV_TYPES.forEach(e => {
-    const btn = document.createElement('button');
-    btn.className = 'env-btn' + (e.id === VU_ENV[band] ? ' on' : '');
-    btn.innerHTML = e.short.replace('\n','<br>');
-    btn.title = e.desc;
-    btn.style.borderColor = VU_ENV[band] === e.id ? e.color : '';
-    btn.style.color       = VU_ENV[band] === e.id ? e.color : '';
-    btn.onclick = () => setEnv(band, e.id);
-    grid.appendChild(btn);
-  });
-  updateEnvInfo(band);
-}
-
-function updateEnvInfo(band){
-  const e   = ENV_TYPES.find(x => x.id === VU_ENV[band]);
-  const inf = document.getElementById(band+'-envInfo');
-  if(!e || !inf) return;
-  const f = e[band];
-  const dbLoss = -20 * Math.log10(f);  // extra path loss vs open
-  inf.innerHTML =
-    `<strong>${e.label}</strong> · ×${f.toFixed(2)} range vs open · ~${dbLoss.toFixed(1)} dB extra clutter loss<br/>` +
-    `${e.desc}<br/><span style="color:var(--accent2);font-size:.58rem;">e.g. ${e.example}</span>`;
-}
-
-function setEnv(band, envId){
-  VU_ENV[band] = envId;
-  buildEnvGrid(band);
-  // Recompute displayed ranges
-  const altM   = VU_ALT[band];
-  const horizon = fullHorizon(altM);
-  const cfg    = VU_CFG[band];
-  const ef     = envFactor(band);
-  const pkeys  = ['p100w','p10w','p5w','p1w'];
-  pkeys.forEach((pk,i) => {
-    const rawKm  = cfg.rawPowers[pk];
-    const cap    = Math.min(rawKm * ef, horizon);
-    const el     = document.getElementById(cfg.rangeIds[i]);
-    if(el) el.textContent = `Terrain+env: ~${cap.toFixed(1)} km`;
-  });
-  // Redraw polygons if terrain data cached
-  if(VU_CACHE[band]) drawVUPolys(band);
-  else updateVUCircles(band);
-}
-
-
+// Colours / fill opacities per band
+const VU_CFG = {
   vhf:{
-    rawPowers:{p100w:150, p10w:75, p5w:50, p1w:25},
-    get powers(){ const ef=envFactor('vhf'); const r=this.rawPowers; return {p100w:r.p100w*ef, p10w:r.p10w*ef, p5w:r.p5w*ef, p1w:r.p1w*ef}; },
+    powers:{p100w:150, p10w:75, p5w:50, p1w:25},
     colors:{p100w:'#007a2e', p10w:'#00b341', p5w:'#39d353', p1w:'#90ff57'},
     fop:   {p100w:.12,       p10w:.16,       p5w:.20,       p1w:.26},
     ckeys: ['v100w','v10w','v5w','v1w'],
     rangeIds: ['vhf-r100w','vhf-r10w','vhf-r5w','vhf-r1w'],
   },
   uhf:{
-    rawPowers:{p100w:80,  p10w:40, p5w:28, p1w:13},
-    get powers(){ const ef=envFactor('uhf'); const r=this.rawPowers; return {p100w:r.p100w*ef, p10w:r.p10w*ef, p5w:r.p5w*ef, p1w:r.p1w*ef}; },
+    powers:{p100w:80,  p10w:40, p5w:28, p1w:13},
     colors:{p100w:'#7700cc', p10w:'#aa33ff', p5w:'#d966ff', p1w:'#ff9eff'},
     fop:   {p100w:.14,       p10w:.18,       p5w:.22,       p1w:.28},
     ckeys: ['u100w','u10w','u5w','u1w'],
@@ -1304,11 +1154,8 @@ function drawVUPolys(band){
   pkeys.forEach((pk,i)=>{
     const el = document.getElementById(cfg.rangeIds[i]);
     if(el){
-      const ef2 = envFactor(band);
-      const envMax = Math.min(cfg.rawPowers[pk] * ef2, horizon);
-      el.textContent = altM === HT_HEIGHT
-        ? `HT terrain+env: ~${envMax.toFixed(1)} km`
-        : `Terrain+env: ~${Math.round(envMax)} km at ${altM}m AGL`;
+      const smoothMax = Math.min(cfg.powers[pk], horizon);
+      el.textContent = altM === HT_HEIGHT ? `HT horizon-capped: ~${Math.min(cfg.powers[pk], horizon).toFixed(1)} km at ${altM}m AGL` : `Horizon cap: ~${Math.round(Math.min(cfg.powers[pk], horizon))} km at ${altM}m AGL`;
     }
   });
 }
@@ -1385,7 +1232,7 @@ function showVUCircles(band){
     });
     const pwrLabel = pk==='p100w'?'100W':pk==='p10w'?'10W':pk==='p5w'?'5W':'1W';
     const htTag2 = altM === HT_HEIGHT ? ' 📻 HT' : '';
-    c.bindTooltip(`${band.toUpperCase()} ${pwrLabel}${htTag2} · env-adjusted · click ⛰ Compute for terrain`,{className:'ltt',direction:'top'});
+    c.bindTooltip(`${band.toUpperCase()} ${pwrLabel}${htTag2} · smooth-earth · click ⛰ Compute for terrain`,{className:'ltt',direction:'top'});
     c.addTo(map);
     VU_POLYS[ck]=c;
     vuVisible[ck]=true;
@@ -1433,12 +1280,9 @@ function switchMode(mode){
   } else {
     cvLayers.forEach(l=>map.removeLayer(l)); cvLayers=[];
     hideAllVU();
-    // Restore terrain polys if cached; otherwise auto-trigger terrain compute (terrain is default)
+    // Restore terrain polys if cached, else show initial circles
     if(VU_CACHE[mode]) drawVUPolys(mode);
-    else {
-      showVUCircles(mode);           // show provisional env-adjusted circles immediately
-      computeTerrainCoverage(mode);  // auto-start terrain fetch in background
-    }
+    else showVUCircles(mode);
     addTXMarker();
   }
 }
@@ -1457,9 +1301,6 @@ document.getElementById('lonIn').value=S.lon;
 // Initialise VHF/UHF panels to 1.5m HT state
 setAlt('vhf', 1.5);
 setAlt('uhf', 1.5);
-// Build environment density selectors (default: ultra_urban)
-buildEnvGrid('vhf');
-buildEnvGrid('uhf');
 rebuildLayers();
 autoFit();
 </script>
