@@ -1134,13 +1134,21 @@ function setEnv(band, envId){
   });
   // Redraw polygons if terrain data cached
   if(VU_CACHE[band]) drawVUPolys(band);
-  else updateVUCircles(band);
+  else showVUCircles(band);
 }
 
+// ── VU_CFG: base range tables (open/flat terrain) ────────────
+// vuPowers(band) applies env factor at call time
+function vuPowers(band){
+  const ef = envFactor(band);
+  const r  = VU_CFG[band].rawPowers;
+  return {p100w:r.p100w*ef, p10w:r.p10w*ef, p5w:r.p5w*ef, p1w:r.p1w*ef};
+}
 
+const VU_CFG = {
   vhf:{
     rawPowers:{p100w:150, p10w:75, p5w:50, p1w:25},
-    get powers(){ const ef=envFactor('vhf'); const r=this.rawPowers; return {p100w:r.p100w*ef, p10w:r.p10w*ef, p5w:r.p5w*ef, p1w:r.p1w*ef}; },
+    powers:{p100w:150, p10w:75, p5w:50, p1w:25},
     colors:{p100w:'#007a2e', p10w:'#00b341', p5w:'#39d353', p1w:'#90ff57'},
     fop:   {p100w:.12,       p10w:.16,       p5w:.20,       p1w:.26},
     ckeys: ['v100w','v10w','v5w','v1w'],
@@ -1148,7 +1156,7 @@ function setEnv(band, envId){
   },
   uhf:{
     rawPowers:{p100w:80,  p10w:40, p5w:28, p1w:13},
-    get powers(){ const ef=envFactor('uhf'); const r=this.rawPowers; return {p100w:r.p100w*ef, p10w:r.p10w*ef, p5w:r.p5w*ef, p1w:r.p1w*ef}; },
+    powers:{p100w:80,  p10w:40, p5w:28, p1w:13},
     colors:{p100w:'#7700cc', p10w:'#aa33ff', p5w:'#d966ff', p1w:'#ff9eff'},
     fop:   {p100w:.14,       p10w:.18,       p5w:.22,       p1w:.28},
     ckeys: ['u100w','u10w','u5w','u1w'],
@@ -1201,7 +1209,7 @@ async function computeTerrainCoverage(band){
 
   const txTotalH = txElev + altM;
   const horizon  = fullHorizon(altM);
-  const maxRange = Math.min(horizon, cfg.powers.p100w);
+  const maxRange = Math.min(horizon, vuPowers(band).p100w);
 
   // Build all sample point locations
   const bearings = Array.from({length:NUM_RADIALS}, (_,i) => i*(360/NUM_RADIALS));
@@ -1268,7 +1276,7 @@ function drawVUPolys(band){
     const ck        = cfg.ckeys[idx];
     const col       = cfg.colors[pk];
     const fo        = cfg.fop[pk];
-    const pRange    = cfg.powers[pk];
+    const pRange    = vuPowers(band)[pk];
     const smoothMax = Math.min(pRange, horizon);
 
     // Dashed smooth-earth horizon circle
@@ -1378,7 +1386,7 @@ function showVUCircles(band){
   hideAllVU();
   pkeys.forEach((pk,idx)=>{
     const ck=cfg.ckeys[idx];
-    const smoothMax=Math.min(cfg.powers[pk], horizon);
+    const smoothMax=Math.min(vuPowers(band)[pk], horizon);
     const c=L.circle([S.lat,S.lon],{
       radius:smoothMax*1000, color:cfg.colors[pk], fillColor:cfg.colors[pk],
       weight:2, opacity:.82, fillOpacity:cfg.fop[pk], dashArray:'7 4'
@@ -1394,7 +1402,7 @@ function showVUCircles(band){
   });
 
   const largest=VU_POLYS[cfg.ckeys[0]];
-  if(largest) map.fitBounds(L.circle([S.lat,S.lon],{radius:Math.min(cfg.powers.p100w, horizon)*1000}).getBounds().pad(0.1));
+  if(largest) map.fitBounds(L.circle([S.lat,S.lon],{radius:Math.min(vuPowers(band).p100w, horizon)*1000}).getBounds().pad(0.1));
 }
 
 // ── TX marker helper ─────────────────────────────────────────
