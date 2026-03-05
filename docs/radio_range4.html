@@ -243,7 +243,7 @@ option{background:#0b1820;}
         <button class="btn btn-full" id="clickBtn" onclick="toggleClickMode()">📍 CLICK MAP TO SET TX</button>
         <div class="loc-box">
           <div class="loc-name" id="locName">Accra, Ghana</div>
-          <div id="locCoords">5.5610°N &nbsp; 0.2090°W</div>
+          <div id="locCoords">5.6037°N &nbsp; 0.1870°W</div>
         </div>
       </div>
     </div>
@@ -546,8 +546,8 @@ const MAX_KM = 18000;
 // ══════════════════════════════════════════════
 
 const S = {
-  lat:5.561, lon:-0.209, locName:'Accra, Ghana',
-  band:'10m', power:1, cond:'average', time:'day',
+  lat:5.6037, lon:-0.1870, locName:'Accra, Ghana',
+  band:'40m', power:100, cond:'average', time:'day',
   ant:'inverted_v', bearing:0, clickMode:false
 };
 
@@ -635,26 +635,6 @@ function rebuildLayers(){
     layer.bindTooltip(`${fmtPwr(p)} · ~${km.toLocaleString()} km`,{className:'ltt',direction:'top'});
     layer.addTo(map);
     cvLayers.push(layer);
-
-    // Permanent radius label at the north edge of the ring
-    const labelPt = destPt(S.lat, S.lon, 0, km);
-    const label = L.marker(labelPt, {
-      icon: L.divIcon({
-        className: '',
-        iconAnchor: [0, 0],
-        html: `<div style="
-          font-family:'Share Tech Mono',monospace;font-size:10px;
-          color:${c};white-space:nowrap;
-          text-shadow:0 0 6px #000,0 0 10px #000,1px 1px 2px #000;
-          transform:translate(-50%,-50%);
-          pointer-events:none;letter-spacing:.04em;
-          background:rgba(6,12,14,.7);padding:1px 5px;border-left:2px solid ${c};"
-        >${km>=1000?(km/1000).toFixed(1)+'k':km} km · ${fmtPwr(p)}</div>`
-      }),
-      interactive: false, zIndexOffset: 500
-    });
-    label.addTo(map);
-    cvLayers.push(label);
   });
 
   // TX Marker
@@ -1005,36 +985,7 @@ function setAlt(band, val){
 }
 const VU_CACHE  = {vhf:null, uhf:null};   // cached {terrainLOS[], txElev, txLat, txLon}
 const VU_POLYS  = {};                       // L.polygon / L.circle keyed by layer id
-const VU_LABELS = {};                       // map range-label markers keyed by layer id
 const vuVisible = {};
-
-function addVULabel(ck, col, km, pwrText, lat, lon){
-  if(VU_LABELS[ck]){ try{map.removeLayer(VU_LABELS[ck]);}catch(e){} }
-  if(km < 0.05) return;
-  const labelPt = destPt(lat, lon, 45, km); // NE bearing for label placement
-  const lbl = L.marker(labelPt,{
-    icon: L.divIcon({
-      className:'',
-      iconAnchor:[0,0],
-      html:`<div style="
-        font-family:'Share Tech Mono',monospace;font-size:10px;
-        color:${col};white-space:nowrap;
-        text-shadow:0 0 8px #000,1px 1px 2px #000;
-        transform:translate(-50%,-50%);
-        pointer-events:none;letter-spacing:.04em;
-        background:rgba(6,12,14,.75);padding:1px 6px;
-        border-left:2px solid ${col};"
-      >${km>=1?(km).toFixed(1):( km*1000).toFixed(0)+'m'} km · ${pwrText}</div>`
-    }),
-    interactive:false, zIndexOffset:600
-  });
-  lbl.addTo(map);
-  VU_LABELS[ck] = lbl;
-}
-
-function removeVULabel(ck){
-  if(VU_LABELS[ck]){ try{map.removeLayer(VU_LABELS[ck]);}catch(e){} delete VU_LABELS[ck]; }
-}
 let   activeMode = 'hf';
 let   topoTileLayer = null;
 
@@ -1325,7 +1276,6 @@ function drawVUPolys(band){
   cfg.ckeys.forEach(ck=>{
     if(VU_POLYS[ck])     { try{map.removeLayer(VU_POLYS[ck]);    }catch(e){} }
     if(VU_POLYS[ck+'-h']){ try{map.removeLayer(VU_POLYS[ck+'-h']);}catch(e){} }
-    if(VU_LABELS[ck])    { try{map.removeLayer(VU_LABELS[ck]);   }catch(e){} delete VU_LABELS[ck]; }
   });
 
   const envPowers = vuPowersComputed(band);
@@ -1365,7 +1315,6 @@ function drawVUPolys(band){
     if(pk === 'p1w'){
       vuVisible[ck] = true;
       if(li) li.classList.remove('off');
-      addVULabel(ck, col, smoothMax, pLabel, txLat, txLon);
     } else {
       // keep hCircle visible as reference ring but hide filled polygon
       try{ map.removeLayer(poly); }catch(e){}
@@ -1386,7 +1335,6 @@ function vuToggle(key){
   if(vuVisible[key]){
     if(poly)  try{map.removeLayer(poly); }catch(e){}
     if(hcirc) try{map.removeLayer(hcirc);}catch(e){}
-    removeVULabel(key);
     vuVisible[key]=false;
     if(li) li.classList.add('off');
   } else {
@@ -1394,17 +1342,6 @@ function vuToggle(key){
     if(hcirc) hcirc.addTo(map);
     vuVisible[key]=true;
     if(li) li.classList.remove('off');
-    // Re-add range label
-    const band  = key.startsWith('v') ? 'vhf' : 'uhf';
-    const cfg   = VU_CFG[band];
-    const pkMap = {v10w:'p10w',v5w:'p5w',v1w:'p1w',u10w:'p10w',u5w:'p5w',u1w:'p1w'};
-    const pk    = pkMap[key];
-    const col   = cfg.colors[pk];
-    const pwrTxt= pk==='p10w'?'10W':pk==='p5w'?'5W':'1W';
-    const altM  = VU_ALT[band];
-    const horizon = fullHorizon(altM);
-    const km    = Math.min(vuPowersComputed(band)[pk], horizon);
-    addVULabel(key, col, km, pwrTxt, S.lat, S.lon);
   }
 }
 
@@ -1441,7 +1378,6 @@ function hideAllVU(){
   Object.entries(VU_POLYS).forEach(([k,layer])=>{
     try{map.removeLayer(layer);}catch(e){}
   });
-  Object.keys(VU_LABELS).forEach(k=>{ try{map.removeLayer(VU_LABELS[k]);}catch(e){} delete VU_LABELS[k]; });
   Object.keys(vuVisible).forEach(k=>vuVisible[k]=false);
 }
 
@@ -1472,7 +1408,6 @@ function showVUCircles(band){
       c.addTo(map);
       vuVisible[ck]=true;
       if(li) li.classList.remove('off');
-      addVULabel(ck, cfg.colors[pk], smoothMax, pwrLabel, S.lat, S.lon);
     } else {
       vuVisible[ck]=false;
       if(li) li.classList.add('off');
