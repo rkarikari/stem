@@ -395,12 +395,12 @@ option{background:#0b1820;}
       </div>
 
       <div class="vu-note">
-        <strong>Model:</strong> 72 radials × 40 SRTM samples. Fresnel zone (60% F1) clearance checked at every obstacle — slopes, valleys, cliff faces and ridge shadows all produce realistic non-circular coverage. Earth curvature (4/3 Rₑ) included. <strong>Solid polygon</strong> = terrain+Fresnel coverage. <strong>Dashed ring</strong> = Hata power limit (open terrain).
+        <strong>Model:</strong> 36 radials × 22 elevation samples (SRTM 90m). Terrain LOS computed by default on band switch. Earth curvature (4/3 Re) included. <strong>Environment density</strong> applies Okumura-Hata / COST-231 clutter loss on top of terrain. <strong>Solid polygon</strong> = terrain+env coverage. <strong>Dashed ring</strong> = theoretical max (open/LOS).
       </div>
     </div>
     <div class="vu-foot">
-      VHF 144–146 MHz · 72 radials · SRTM 90m · Fresnel+LOS terrain model<br/>
-      Okumura-Hata/COST-231 env density · ⚠ 90m DEM — sub-building features not resolved
+      VHF 144–146 MHz · SRTM terrain model (default) · Ant: 7-el Yagi<br/>
+      Urban density applied via Okumura-Hata/COST-231 · ⚠ 90m DEM resolution
     </div>
   </div><!-- /vhf-panel -->
 
@@ -477,12 +477,12 @@ option{background:#0b1820;}
       </div>
 
       <div class="vu-note">
-        <strong>Model:</strong> 72 radials × 40 SRTM samples. Fresnel zone (60% F1) clearance at 435 MHz — shorter wavelength means tighter Fresnel radius, so UHF is more sensitive to terrain obstruction than VHF. Valley and slope shadowing fully modelled. No circular fallback shown during compute.
+        <strong>Model:</strong> 36 radials × 22 elevation samples (SRTM 90m). Terrain LOS computed by default. UHF has ~9.5 dB more free-space loss than VHF plus higher clutter loss in urban environments. <strong>Environment density</strong> applies Okumura-Hata / COST-231 correction per environment type.
       </div>
     </div>
     <div class="vu-foot">
-      UHF 430–440 MHz · 72 radials · SRTM 90m · Fresnel+LOS terrain model<br/>
-      Okumura-Hata/COST-231 env density · ⚠ 90m DEM — sub-building features not resolved
+      UHF 430–440 MHz · SRTM terrain model (default) · Ant: 9-el Yagi<br/>
+      Urban density applied via Okumura-Hata/COST-231 · ⚠ 90m DEM resolution
     </div>
   </div><!-- /uhf-panel -->
 
@@ -935,19 +935,16 @@ function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g
 // VHF / UHF TERRAIN ENGINE
 // ══════════════════════════════════════════════
 
-const NUM_RADIALS = 72;   // every 5° — needed for realistic terrain shape
-const NUM_SAMPLES = 40;   // 40 points per radial — finer resolution on slopes
+const NUM_RADIALS = 36;
+const NUM_SAMPLES = 22;
 const EFF_EARTH_R  = 8495; // km  (4/3 × 6371 — standard atmosphere k-factor)
 
 // Radio horizon (one-way) km for height h metres
 function rHorizon(h){ return 4.12 * Math.sqrt(Math.max(0, h)); }
 // Full horizon TX (h1) + RX (h2=2m default)
 function fullHorizon(h1, h2=2){ return rHorizon(h1) + rHorizon(h2); }
-// Earth bulge correction in metres at distance dKm along a path of total length DKm
-function earthBulge(dKm, DKm){
-  // Parabolic formula: bulge = d*(D-d)/(2*Re) where Re = effective earth radius
-  return 1000 * dKm * (DKm - dKm) / (2 * EFF_EARTH_R);
-}
+// Earth bulge correction in metres at distance dKm
+function earthBulge(dKm){ return 1000 * dKm * dKm / (2 * EFF_EARTH_R); }
 
 // Destination point from lat/lon, bearing (deg), distance (km)
 function destPt(lat, lon, brg, dKm){
@@ -958,98 +955,28 @@ function destPt(lat, lon, brg, dKm){
   return [φ2*180/Math.PI, λ2*180/Math.PI];
 }
 
-// ── Terrain-accurate LOS with Fresnel zone clearance ─────────
-//
-// For each candidate endpoint i along the radial:
-//   1. Compute the geometric LOS line from TX to RX
-//   2. At each intermediate terrain point j, check:
-//      a. Earth-bulge-corrected terrain height vs LOS line   (geometric block)
-//      b. First Fresnel zone radius F1 at that point         (diffraction block)
-//   If any intermediate point exceeds LOS − F1 the path is blocked.
-//
-// Returns array of {losKm, blocked} per sample point — NOT just the furthest clear.
-// The caller uses this to build per-power-level polygons correctly:
-//   • If a point is NOT blocked AND Hata path-loss allows it → include in that power's polygon
-//   • If blocked → exclude from all polygons (hard shadow)
-//
-// txH    = TX total height above MSL (terrain_elev + antenna_AGL), metres
-// profile = [{d:km, elev:m}, ...] sorted ascending by distance
-// freqMHz = operating frequency in MHz (for Fresnel radius)
-//
-function terrainProfile(txH, profile, freqMHz){
-  const λm = 300 / freqMHz;  // wavelength in metres
-  const results = [];
-
-  for(let i = 0; i < profile.length; i++){
-    const {d: D, elev: rxElev} = profile[i];
-    if(D <= 0){ results.push({d:D, blocked:true, clearanceM:-999}); continue; }
-
-    const rxH = rxElev + 2;  // RX at 2m AGL (handheld)
-
-    // LOS line height at TX: txH (absolute MSL), at RX: rxH (absolute MSL)
-    // At intermediate point d: H_los(d) = txH + (rxH - txH) * (d/D)
-    let minClearance = Infinity;  // minimum clearance over any obstacle (metres)
-    let blocked = false;
-
-    for(let j = 0; j < i; j++){
-      const {d, elev: obsElev} = profile[j];
-
-      // Earth bulge at this point along path of total length D
-      const bulge = earthBulge(d, D);
-
-      // Effective obstacle top (terrain + bulge, both in metres MSL equivalent)
-      const obsTop = obsElev + bulge;
-
-      // LOS line height at this intermediate distance
-      const losH = txH + (rxH - txH) * (d / D);
-
-      // Geometric clearance (positive = clear, negative = blocked)
-      const geomClear = losH - obsTop;
-
-      // First Fresnel zone radius at this point (metres)
-      // F1 = sqrt(λ * d1 * d2 / D_total)  where distances in metres
-      const d1m = d * 1000;
-      const d2m = (D - d) * 1000;
-      const Dm  = D * 1000;
-      const F1  = Math.sqrt(λm * d1m * d2m / Dm);
-
-      // ITU-R P.526: need 60% F1 clearance for near-LOS conditions
-      // Below 60% F1 causes diffraction loss; below 0 is hard block
-      const required = 0.6 * F1;
-      const clearance = geomClear - required;
-
-      if(clearance < minClearance) minClearance = clearance;
-      if(geomClear < 0){ blocked = true; break; }  // hard geometric block
-    }
-
-    // Fresnel-soft block: if minimum clearance < 0 (didn't clear 60% F1 on any obstacle)
-    if(!blocked && minClearance < 0) blocked = true;
-
-    results.push({ d: D, blocked, clearanceM: minClearance });
-  }
-  return results;
-}
-
-// Returns the furthest unblocked distance (km) along a radial profile.
-// Returns 0 if TX itself is in a depression/valley and even the first sample is blocked.
-function losRangeFromProfile(txH, profile, freqMHz){
-  const pts = terrainProfile(txH, profile, freqMHz);
-  // Walk forward: once blocked, stop (shadowing is cumulative along a radial)
-  // But handle re-emergence: a ridge can block then terrain drops and re-opens.
-  // Use "furthest unblocked" — covers ridgeline gaps and saddles.
+// LOS range along one radial: returns furthest visible km
+// txH = TX total height (terrain elev + antenna AGL) in metres
+// profile = [{d:km, elev:m}, ...] sorted by ascending distance
+function losRange(txH, profile){
   let maxClear = 0;
-  let consecutiveBlocked = 0;
-  for(let i = 0; i < pts.length; i++){
-    if(!pts[i].blocked){
-      maxClear = pts[i].d;
-      consecutiveBlocked = 0;
-    } else {
-      consecutiveBlocked++;
-      // After 3 consecutive blocked samples (= deep shadow), stop extending
-      if(consecutiveBlocked >= 3) break;
+  for(let i=0; i<profile.length; i++){
+    const {d:D, elev:rxE} = profile[i];
+    if(D <= 0) continue;
+    const rxTotalH = rxE + 2;   // assume 2m RX AGL
+    let blocked = false;
+    for(let j=0; j<i; j++){
+      const {d, elev} = profile[j];
+      const apparentH = elev + earthBulge(d);  // terrain + earth bulge
+      const losLineH  = txH + (rxTotalH - txH) * (d / D);  // LOS line height at d
+      if(apparentH > losLineH + 0.5){  // 0.5m clearance margin
+        blocked = true;
+        break;
+      }
     }
+    if(!blocked) maxClear = D;
   }
-  return maxClear;  // may be 0 for a fully blocked radial (valley, face of cliff)
+  return maxClear;
 }
 
 // State
@@ -1324,7 +1251,6 @@ async function fetchElevBatch(locs, onProgress){
 async function computeTerrainCoverage(band){
   const altM   = VU_ALT[band];
   const cfg    = VU_CFG[band];
-  const freqMHz = band === 'vhf' ? 145 : 435;
   const statusEl = document.getElementById(band+'-status');
   const btnEl    = document.getElementById(band+'-computeBtn');
   btnEl.disabled = true;
@@ -1343,11 +1269,9 @@ async function computeTerrainCoverage(band){
 
   const txTotalH = txElev + altM;
   const horizon  = fullHorizon(altM);
-  // Sample out to the furthest possible reach (10W open) so all power layers use same data
-  const openPowers = vuPowersComputed(band);
-  const maxRange = Math.min(horizon, openPowers.p10w * 1.15); // 15% margin beyond 10W
+  const maxRange = Math.min(horizon, vuPowersComputed(band).p10w);
 
-  // Build all sample point locations (72 radials × 40 samples)
+  // Build all sample point locations
   const bearings = Array.from({length:NUM_RADIALS}, (_,i) => i*(360/NUM_RADIALS));
   const allLocs=[], locMap=[];
   bearings.forEach((brg,ri)=>{
@@ -1359,30 +1283,30 @@ async function computeTerrainCoverage(band){
   });
 
   const total = Math.ceil(allLocs.length/90);
-  statusEl.innerHTML = `⛰ Fetching SRTM elevations — 0 / ${total} batches (${NUM_RADIALS} radials × ${NUM_SAMPLES} samples)…`;
+  statusEl.innerHTML = `⛰ Fetching SRTM elevations — 0 / ${total} batches…`;
 
   const elevs = await fetchElevBatch(allLocs, (done,tot)=>{
     statusEl.innerHTML = `⛰ Fetching SRTM elevations — ${done} / ${tot} batches…`;
   });
 
-  statusEl.innerHTML = '📐 Computing terrain LOS + Fresnel zones…';
-  await new Promise(r=>setTimeout(r,50));
+  statusEl.innerHTML = '📐 Computing line-of-sight for each radial…';
+  await new Promise(r=>setTimeout(r,50)); // let DOM update
 
-  // Build per-radial profiles and compute LOS
+  // Build per-radial profiles
   const profiles = Array.from({length:NUM_RADIALS}, ()=>[]);
   locMap.forEach(({ri,dKm},idx)=>{
     profiles[ri].push({d:dKm, elev:Math.max(0, elevs[idx])});
   });
 
-  // terrainLOS[ri] = furthest unblocked km on radial ri (0 = fully blocked)
-  const terrainLOS = profiles.map(prof => losRangeFromProfile(txTotalH, prof, freqMHz));
+  // LOS range per radial
+  const terrainLOS = profiles.map(prof => losRange(txTotalH, prof));
 
   // Cache result
   VU_CACHE[band] = {terrainLOS, txElev, txLat, txLon};
 
   // Update horizon info with actual TX elevation
   document.getElementById(band+'-horizonInfo').textContent =
-    `TX: ${Math.round(txElev)}m ASL · Ant: ${altM}m AGL → ${Math.round(txTotalH)}m · Hata ${VU_ENV[band]} 10W: ~${openPowers.p10w.toFixed(1)} km`;
+    `TX terrain: ${Math.round(txElev)}m · Ant: ${altM}m AGL → total ${Math.round(txTotalH)}m · Hata ${VU_ENV[band]} 10W: ~${vuPowersComputed(band).p10w.toFixed(1)} km`;
 
   // Draw polygons
   drawVUPolys(band);
@@ -1426,12 +1350,9 @@ function drawVUPolys(band){
     VU_POLYS[ck+'-h'] = hCircle;
 
     // Terrain-aware filled polygon
-    // effectiveKm = 0 on fully blocked radials (valley / cliff face) — no artificial floor
     const pts = bearings.map((brg,ri)=>{
-      const losKm = terrainLOS[ri];
-      // Cap by Hata power range; blocked radials (losKm=0) produce a point at TX
-      const effectiveKm = Math.min(smoothMax, Math.max(0, losKm));
-      return destPt(txLat, txLon, brg, Math.max(effectiveKm, 0.005)); // 5m stub avoids degenerate polygon
+      const effectiveKm = Math.min(smoothMax, Math.max(0.3, terrainLOS[ri]));
+      return destPt(txLat, txLon, brg, effectiveKm);
     });
     pts.push(pts[0]); // close
 
@@ -1603,9 +1524,12 @@ function switchMode(mode){
   } else {
     cvLayers.forEach(l=>map.removeLayer(l)); cvLayers=[];
     hideAllVU();
-    // Restore terrain polys if cached; otherwise compute immediately (no circle fallback)
+    // Restore terrain polys if cached; otherwise auto-trigger terrain compute (terrain is default)
     if(VU_CACHE[mode]) drawVUPolys(mode);
-    else computeTerrainCoverage(mode);  // terrain-only — no misleading circles shown
+    else {
+      showVUCircles(mode);           // show provisional env-adjusted circles immediately
+      computeTerrainCoverage(mode);  // auto-start terrain fetch in background
+    }
     addTXMarker();
   }
 }
