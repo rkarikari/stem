@@ -1126,7 +1126,7 @@ function setAlt(band, val){
 
   // Rebuild polygons from cache instantly; fall back to Hata circles if not yet computed
   if(VU_CACHE[band]) drawVUPolys(band);
-  else if(activeMode === band) computeTerrainCoverage(band);
+  else if(activeMode === band) showVUCircles(band);
 }
 const VU_CACHE  = {vhf:null, uhf:null};   // cached {profiles, txElev, txLat, txLon}
 let   activeMode = 'hf';
@@ -1137,16 +1137,18 @@ function invalidateVUCache(){
   VU_CACHE.vhf = null;
   VU_CACHE.uhf = null;
   hideAllVU();
-  // Always recompute terrain for both bands when TX moves.
-  // Active band runs immediately; the other runs after it completes.
   if(activeMode === 'vhf' || activeMode === 'uhf'){
-    const other = activeMode === 'vhf' ? 'uhf' : 'vhf';
-    computeTerrainCoverage(activeMode).then(()=>computeTerrainCoverage(other));
+    // On a VHF/UHF tab — show the Hata reference rings and prompt recompute
+    showVUCircles(activeMode);
     addTXMarker();
-  } else {
-    // On HF tab — compute both bands in background so they're ready when switched to
-    computeTerrainCoverage('vhf').then(()=>computeTerrainCoverage('uhf'));
   }
+  // Show pending-recompute hint on both panels
+  ['vhf','uhf'].forEach(b=>{
+    const s = document.getElementById(b+'-status');
+    const btn = document.getElementById(b+'-computeBtn');
+    if(s){ s.style.display='block'; s.innerHTML='📍 Location changed — press ⛰ Compute to update terrain.'; }
+    if(btn) btn.disabled = false;
+  });
 }
 const VU_POLYS  = {};                       // L.polygon / L.circle keyed by layer id
 const VU_LABELS = {};                       // map range-label markers keyed by layer id
@@ -1329,7 +1331,7 @@ function setEnv(band, envId){
   buildEnvGrid(band);
   updateRangeLabels(band);
   if(VU_CACHE[band]) drawVUPolys(band);
-  else computeTerrainCoverage(band);
+  else showVUCircles(band);
 }
 
 // ── VHF/UHF antenna selector ─────────────────────────────────
@@ -1360,7 +1362,7 @@ function setVUAnt(band, antId){
   updateVUAntInfo(band);
   updateRangeLabels(band);
   if(VU_CACHE[band]) drawVUPolys(band);
-  else computeTerrainCoverage(band);
+  else showVUCircles(band);
 }
 
 function setVUBear(band, val){
@@ -1369,7 +1371,7 @@ function setVUBear(band, val){
   const el = document.getElementById(band+'-bearVal');
   if(el) el.textContent = `${VU_BEAR[band]}° ${dir}`;
   if(VU_CACHE[band]) drawVUPolys(band);
-  else computeTerrainCoverage(band);
+  else showVUCircles(band);
 }
 
 // Compute env-corrected, horizon-capped range for each power level
@@ -1775,7 +1777,7 @@ function switchMode(mode){
     hideAllVU();
     // Restore terrain polys if cached; otherwise compute immediately (no circle fallback)
     if(VU_CACHE[mode]) drawVUPolys(mode);
-    else computeTerrainCoverage(mode);  // terrain-only — no misleading circles shown
+    else showVUCircles(mode);
     addTXMarker();
   }
 }
@@ -1802,9 +1804,6 @@ buildVUAntSel('vhf');
 buildVUAntSel('uhf');
 rebuildLayers();
 autoFit();
-// Auto-compute terrain coverage for both bands on page load.
-// VHF runs first; UHF starts after VHF finishes to avoid hammering the elevation API.
-computeTerrainCoverage('vhf').then(()=>computeTerrainCoverage('uhf'));
 </script>
 </body>
 </html>
