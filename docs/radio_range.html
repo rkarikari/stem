@@ -1070,10 +1070,11 @@ function setAlt(band, val){
   if(htBtn) htBtn.classList.toggle('on', h === HT_HEIGHT);
 
   const horizon = fullHorizon(h);
-  const htLabel = h === HT_HEIGHT ? '📻 HT at mouth level — ' : '';
+  const htLabel = h === HT_HEIGHT ? '📻 HT — ' : '';
   const r10 = vuPowersComputed(band).p10w;
+  const txElevStr = VU_CACHE[band] ? ` · TX ${Math.round(VU_CACHE[band].txElev)}m ASL` : '';
   document.getElementById(band+'-horizonInfo').textContent =
-    `${htLabel}Hata ${VU_ENV[band]}: ~${vuPowersComputed(band).p1w.toFixed(1)} km (1W) · 10W: ~${r10.toFixed(1)} km · geo horizon ~${horizon.toFixed(1)} km at ${display}m AGL`;
+    `${htLabel}${display}m AGL${txElevStr} · Hata ${VU_ENV[band]}: 1W ~${vuPowersComputed(band).p1w.toFixed(1)} km · 10W ~${r10.toFixed(1)} km`;
 
   // Update range labels using Hata engine (env+altitude aware)
   updateRangeLabels(band);
@@ -1368,17 +1369,15 @@ async function computeTerrainCoverage(band){
   statusEl.innerHTML = '📐 Computing terrain LOS + Fresnel zones…';
   await new Promise(r=>setTimeout(r,50));
 
-  // Build per-radial profiles and compute LOS
+  // Build per-radial profiles
   const profiles = Array.from({length:NUM_RADIALS}, ()=>[]);
   locMap.forEach(({ri,dKm},idx)=>{
     profiles[ri].push({d:dKm, elev:Math.max(0, elevs[idx])});
   });
 
-  // terrainLOS[ri] = furthest unblocked km on radial ri (0 = fully blocked)
-  const terrainLOS = profiles.map(prof => losRangeFromProfile(txTotalH, prof, freqMHz));
-
-  // Cache result
-  VU_CACHE[band] = {terrainLOS, txElev, txLat, txLon};
+  // Cache raw elevation profiles — NOT pre-computed LOS.
+  // drawVUPolys recomputes LOS from profiles using current VU_ALT on every redraw.
+  VU_CACHE[band] = {profiles, txElev, txLat, txLon};
 
   // Update horizon info with actual TX elevation
   document.getElementById(band+'-horizonInfo').textContent =
@@ -1395,12 +1394,17 @@ async function computeTerrainCoverage(band){
 function drawVUPolys(band){
   const cache = VU_CACHE[band];
   if(!cache) return;
-  const {terrainLOS, txLat, txLon} = cache;
-  const altM   = VU_ALT[band];
-  const horizon= fullHorizon(altM);
-  const cfg    = VU_CFG[band];
+  const {profiles, txElev, txLat, txLon} = cache;
+  const altM    = VU_ALT[band];
+  const freqMHz = band === 'vhf' ? 145 : 435;
+  const txTotalH = txElev + altM;        // recomputed from current slider — key fix
+  const horizon  = fullHorizon(altM);
+  const cfg     = VU_CFG[band];
   const bearings = Array.from({length:NUM_RADIALS}, (_,i)=>i*(360/NUM_RADIALS));
-  const pkeys  = ['p10w','p5w','p1w'];
+  const pkeys   = ['p10w','p5w','p1w'];
+
+  // Recompute LOS for every radial at the current antenna height — no API call needed
+  const terrainLOS = profiles.map(prof => losRangeFromProfile(txTotalH, prof, freqMHz));
 
   // Remove existing layers
   cfg.ckeys.forEach(ck=>{
