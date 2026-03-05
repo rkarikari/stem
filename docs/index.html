@@ -4,632 +4,834 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RadioSport STEM Handbook v3.0 - Master Index</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --green: #00ff88;
+            --green-dim: #00cc6a;
+            --green-faint: rgba(0,255,136,0.12);
+            --green-glow: rgba(0,255,136,0.4);
+            --cyan: #00e5ff;
+            --cyan-dim: #00b8cc;
+            --amber: #ffb300;
+            --red: #ff4444;
+            --bg: #030d07;
+            --bg-card: #050f09;
+            --bg-card2: #060c08;
+            --border: rgba(0,255,136,0.25);
+            --border-bright: rgba(0,255,136,0.6);
+            --text-dim: rgba(0,255,136,0.5);
+            --mono: 'Share Tech Mono', monospace;
+            --display: 'Orbitron', monospace;
+            --crt: 'VT323', monospace;
         }
-        
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: var(--mono);
+            background: var(--bg);
+            color: var(--green);
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
+            overflow-x: hidden;
+            position: relative;
         }
-        
+
+        /* CRT scanline overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.08) 2px,
+                rgba(0,0,0,0.08) 4px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Phosphor vignette */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* Subtle grid background */
+        .grid-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
         .container {
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
+            padding: 0 20px 40px;
+            position: relative;
+            z-index: 1;
         }
-        
+
+        /* ── HEADER ── */
         .header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 60px 40px;
-            text-align: center;
+            padding: 40px 40px 30px;
+            border-bottom: 1px solid var(--border-bright);
             position: relative;
-            overflow: hidden;
-        }
-        
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%);
-            opacity: 0.5;
-        }
-        
-        .header h1 {
-            font-size: 48px;
-            margin-bottom: 20px;
-            z-index: 1;
-            position: relative;
-            animation: fadeInDown 1s ease-out;
-        }
-        
-        .header .subtitle {
-            font-size: 24px;
-            opacity: 0.9;
-            z-index: 1;
-            position: relative;
-            animation: fadeInUp 1s ease-out 0.3s both;
-        }
-        
-        .header .version {
-            display: inline-block;
-            background: rgba(255,255,255,0.2);
-            padding: 10px 25px;
-            border-radius: 25px;
-            margin-top: 20px;
-            font-size: 16px;
-            backdrop-filter: blur(10px);
-            animation: fadeIn 1s ease-out 0.6s both;
-        }
-        
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .content {
-            padding: 40px;
-        }
-        
-        .intro {
-            text-align: center;
-            margin-bottom: 50px;
-            color: #2c3e50;
-        }
-        
-        .intro h2 {
-            color: #1e3c72;
-            margin-bottom: 20px;
-            font-size: 32px;
-        }
-        
-        .intro p {
-            font-size: 18px;
-            line-height: 1.8;
-            max-width: 800px;
-            margin: 0 auto 30px;
-        }
-        
-        .badges {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 30px;
-        }
-        
-        .badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 10px 25px;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 14px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        
-        .badge:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
-        }
-
-        .section-divider {
-            margin: 60px 0 40px 0;
-            text-align: center;
-            position: relative;
-        }
-
-        .section-divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #667eea, transparent);
-        }
-
-        .section-divider h2 {
-            display: inline-block;
-            background: white;
-            padding: 0 30px;
-            position: relative;
-            z-index: 1;
-            color: #1e3c72;
-            font-size: 28px;
-        }
-        
-        .chapters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-            margin-top: 40px;
-        }
-        
-        .chapter-card {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-            border-left: 5px solid #667eea;
-            cursor: pointer;
-        }
-        
-        .chapter-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        .chapter-card.addendum {
-            border-left-color: #ff6b6b;
-            background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%);
-        }
-        
-        .chapter-number {
-            font-size: 48px;
-            font-weight: bold;
-            color: #667eea;
-            opacity: 0.3;
-            line-height: 1;
             margin-bottom: 10px;
         }
 
-        .chapter-card.addendum .chapter-number {
-            color: #ff6b6b;
+        .header-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
         }
-        
-        .chapter-title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #1e3c72;
-            margin-bottom: 15px;
+
+        .header-top-bar span { opacity: 0.6; }
+
+        .blink {
+            animation: blink 1.2s step-end infinite;
         }
-        
-        .chapter-description {
-            color: #555;
-            font-size: 14px;
-            line-height: 1.6;
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .header h1 {
+            font-family: var(--display);
+            font-size: clamp(20px, 4vw, 42px);
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--green);
+            text-shadow: 0 0 20px var(--green-glow), 0 0 40px rgba(0,255,136,0.2);
+            line-height: 1.1;
+            margin-bottom: 12px;
+        }
+
+        .header-subtitle {
+            font-size: 11px;
+            letter-spacing: 6px;
+            color: var(--text-dim);
+            text-transform: uppercase;
             margin-bottom: 20px;
         }
-        
-        .chapter-topics {
+
+        .header-meta {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .meta-item {
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .meta-item span {
+            color: var(--cyan);
+            text-shadow: 0 0 8px rgba(0,229,255,0.5);
+        }
+
+        .version-badge {
+            display: inline-block;
+            border: 1px solid var(--cyan-dim);
+            color: var(--cyan);
+            padding: 4px 14px;
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-shadow: 0 0 8px rgba(0,229,255,0.5);
+        }
+
+        /* ── INTRO BAND ── */
+        .intro-band {
+            background: var(--green-faint);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--green);
+            padding: 25px 35px;
+            margin: 20px 0 35px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .intro-band p {
+            font-size: 12px;
+            line-height: 1.9;
+            color: rgba(0,255,136,0.75);
+            letter-spacing: 0.5px;
+        }
+
+        .badges {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
+            align-content: center;
         }
-        
-        .topic-tag {
-            background: white;
-            color: #667eea;
+
+        .badge {
+            border: 1px solid var(--border);
+            color: var(--text-dim);
             padding: 5px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            border: 1px solid #667eea;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            cursor: default;
+        }
+
+        .badge:hover {
+            border-color: var(--green);
+            color: var(--green);
+            background: var(--green-faint);
+            text-shadow: 0 0 8px var(--green-glow);
+        }
+
+        /* ── SECTION HEADER ── */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 40px 0 20px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-header h2 {
+            font-family: var(--display);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: var(--green);
+        }
+
+        .section-header::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border), transparent);
+        }
+
+        .section-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            padding: 3px 8px;
+        }
+
+        /* ── CHAPTER GRID ── */
+        .chapters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 2px;
+        }
+
+        .chapter-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 22px 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chapter-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--green-dim);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .chapter-card:hover {
+            background: var(--green-faint);
+            border-color: var(--border-bright);
+        }
+
+        .chapter-card:hover::before {
+            opacity: 1;
+        }
+
+        .chapter-card.addendum {
+            border-color: rgba(255,179,0,0.2);
+        }
+
+        .chapter-card.addendum::before {
+            background: var(--amber);
+        }
+
+        .chapter-card.addendum:hover {
+            border-color: rgba(255,179,0,0.5);
+            background: rgba(255,179,0,0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+
+        .chapter-number {
+            font-family: var(--display);
+            font-size: 28px;
+            font-weight: 900;
+            color: rgba(0,255,136,0.15);
+            letter-spacing: 2px;
+            line-height: 1;
+        }
+
+        .chapter-card.addendum .chapter-number {
+            color: rgba(255,179,0,0.15);
+        }
+
+        .chapter-icon {
+            font-size: 20px;
+            opacity: 0.7;
+        }
+
+        .chapter-title {
+            font-family: var(--display);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--green);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0,255,136,0.3);
+            line-height: 1.4;
+        }
+
+        .chapter-card.addendum .chapter-title {
+            color: var(--amber);
+            text-shadow: 0 0 10px rgba(255,179,0,0.3);
+        }
+
+        .chapter-description {
+            font-size: 11px;
+            line-height: 1.8;
+            color: rgba(0,255,136,0.55);
+            margin-bottom: 14px;
+        }
+
+        .chapter-topics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .topic-tag {
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border: 1px solid rgba(0,229,255,0.25);
+            color: rgba(0,229,255,0.6);
+            padding: 3px 8px;
         }
 
         .chapter-card.addendum .topic-tag {
-            color: #ff6b6b;
-            border-color: #ff6b6b;
+            border-color: rgba(255,179,0,0.25);
+            color: rgba(255,179,0,0.6);
         }
-        
+
         .view-button {
             display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 30px;
-            border-radius: 25px;
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
             text-decoration: none;
-            font-weight: bold;
-            margin-top: 15px;
-            transition: all 0.3s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            color: var(--green);
+            border: 1px solid var(--green-dim);
+            padding: 7px 18px;
+            transition: all 0.2s;
         }
-        
+
         .view-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+            background: var(--green);
+            color: var(--bg);
+            text-shadow: none;
+            box-shadow: 0 0 20px var(--green-glow);
         }
 
         .chapter-card.addendum .view-button {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: var(--amber);
+            border-color: rgba(255,179,0,0.5);
         }
-        
+
+        .chapter-card.addendum .view-button:hover {
+            background: var(--amber);
+            color: var(--bg);
+            box-shadow: 0 0 20px rgba(255,179,0,0.4);
+        }
+
+        /* ── FREQUENCY BAR (decorative) ── */
+        .freq-bar {
+            margin: 40px 0 10px;
+            height: 2px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                var(--green-dim) 10%,
+                var(--cyan) 30%,
+                var(--green) 50%,
+                var(--cyan) 70%,
+                var(--green-dim) 90%,
+                transparent 100%
+            );
+            box-shadow: 0 0 10px rgba(0,255,136,0.3);
+        }
+
+        /* ── FOOTER ── */
         .footer {
-            background: #2c3e50;
-            color: white;
-            text-align: center;
-            padding: 30px;
             margin-top: 50px;
+            padding: 25px 35px;
+            border: 1px solid var(--border);
+            border-top: 1px solid var(--border-bright);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        
-        .footer p {
-            margin: 10px 0;
+
+        .footer-left {
+            font-family: var(--display);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0,255,136,0.3);
         }
-        
-        .icon {
-            font-size: 36px;
-            margin-bottom: 15px;
+
+        .footer-center {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            text-align: center;
+        }
+
+        .footer-right {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            text-align: right;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+            animation: pulse 2s ease-in-out infinite;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--green); }
+            50% { opacity: 0.4; box-shadow: 0 0 2px var(--green); }
+        }
+
+        /* ── STARTUP ANIMATION ── */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chapter-card {
+            animation: fadeIn 0.4s ease both;
+        }
+
+        .chapter-card:nth-child(1)  { animation-delay: 0.05s; }
+        .chapter-card:nth-child(2)  { animation-delay: 0.10s; }
+        .chapter-card:nth-child(3)  { animation-delay: 0.15s; }
+        .chapter-card:nth-child(4)  { animation-delay: 0.20s; }
+        .chapter-card:nth-child(5)  { animation-delay: 0.25s; }
+        .chapter-card:nth-child(6)  { animation-delay: 0.30s; }
+        .chapter-card:nth-child(7)  { animation-delay: 0.35s; }
+        .chapter-card:nth-child(8)  { animation-delay: 0.40s; }
+        .chapter-card:nth-child(9)  { animation-delay: 0.45s; }
+        .chapter-card:nth-child(10) { animation-delay: 0.50s; }
+        .chapter-card:nth-child(11) { animation-delay: 0.55s; }
+        .chapter-card:nth-child(12) { animation-delay: 0.60s; }
+        .chapter-card:nth-child(13) { animation-delay: 0.65s; }
+        .chapter-card:nth-child(14) { animation-delay: 0.70s; }
+        .chapter-card:nth-child(15) { animation-delay: 0.75s; }
+
+        @media (max-width: 700px) {
+            .intro-band { grid-template-columns: 1fr; }
+            .chapters-grid { grid-template-columns: 1fr; }
+            .footer { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📡 RADIOSPORT STEM HANDBOOK</h1>
-            <div class="subtitle">Advanced Technology Education Program</div>
-			<div class="title"> Training Tomorrow's Engineers Today </div>
-            <div class="version">Version 3.0 — Complete Edition</div>
+<div class="grid-bg"></div>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-top-bar">
+            <span>SYS:RADIOSPORT-STEM // EDUCATIONAL PLATFORM</span>
+            <span class="blink">▋</span>
+            <span id="clock"></span>
         </div>
-        
-        <div class="content">
-            <div class="intro">
-                <h2>Welcome to RadioSport</h2>
-                <p>
-                    RadioSport is a comprehensive STEM education program that integrates amateur radio, 
-                    satellite communications, drone operations, artificial intelligence, renewable energy, 
-                    and advanced software development. Students gain hands-on experience with cutting-edge 
-                    technologies while developing critical thinking, problem-solving, and teamwork skills.
-                </p>
-                <p>
-                    This handbook contains 15 comprehensive chapters covering everything from basic RF theory 
-                    to advanced satellite operations and autonomous drone systems, plus a technical addendum 
-                    on antenna system performance analysis. Each chapter includes detailed technical explanations, 
-                    practical exercises, code examples, and safety protocols.
-                </p>
-                
-                <div class="badges">
-                    <span class="badge">🔬 Science</span>
-                    <span class="badge">💻 Technology</span>
-                    <span class="badge">⚙️ Engineering</span>
-                    <span class="badge">📐 Mathematics</span>
-                    <span class="badge">🛰️ Satellites</span>
-                    <span class="badge">🚁 Drones</span>
-                    <span class="badge">🤖 AI/ML</span>
-                    <span class="badge">☀️ Solar Power</span>
-                </div>
-            </div>
-            
-            <div class="chapters-grid">
-                <!-- Chapter 1 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch1.html'">
-                    <div class="icon">📋</div>
-                    <div class="chapter-number">01</div>
-                    <div class="chapter-title">Mission Statement & STEM Excellence</div>
-                    <div class="chapter-description">
-                        Discover the RadioSport philosophy, integrated technology platform, and how we combine 
-                        radio communications, satellites, drones, AI, and renewable energy into a cohesive 
-                        learning experience.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Program Overview</span>
-                        <span class="topic-tag">Technology Stack</span>
-                        <span class="topic-tag">Learning Model</span>
-                    </div>
-                    <a href="radiosport_ch1.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 2 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch2.html'">
-                    <div class="icon">🎓</div>
-                    <div class="chapter-number">02</div>
-                    <div class="chapter-title">Program Structure & Integration</div>
-                    <div class="chapter-description">
-                        Complete curriculum breakdown with knowledge streams covering AI, radio theory, 
-                        satellite operations, drone systems, and coding. Includes weekly schedules and 
-                        specialization tracks.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Curriculum</span>
-                        <span class="topic-tag">Schedules</span>
-                        <span class="topic-tag">Specializations</span>
-                    </div>
-                    <a href="radiosport_ch2.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 3 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch3.html'">
-                    <div class="icon">☀️</div>
-                    <div class="chapter-number">03</div>
-                    <div class="chapter-title">Solar & Battery Power Systems</div>
-                    <div class="chapter-description">
-                        Master renewable energy systems for off-grid operations. Learn photovoltaic principles, 
-                        MPPT technology, battery chemistry, power budgeting, and system design for radio and 
-                        drone operations.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Solar Panels</span>
-                        <span class="topic-tag">LiFePO4</span>
-                        <span class="topic-tag">LiPo</span>
-                        <span class="topic-tag">MPPT</span>
-                    </div>
-                    <a href="radiosport_ch3.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 4 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch4.html'">
-                    <div class="icon">📻</div>
-                    <div class="chapter-number">04</div>
-                    <div class="chapter-title">HF/VHF/UHF Communications</div>
-                    <div class="chapter-description">
-                        Comprehensive coverage of terrestrial radio communications including ionospheric 
-                        propagation, line-of-sight calculations, link budgets, digital modes, and repeater 
-                        operations.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">RF Theory</span>
-                        <span class="topic-tag">Propagation</span>
-                        <span class="topic-tag">Digital Modes</span>
-                    </div>
-                    <a href="radiosport_ch4.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 5 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch5.html'">
-                    <div class="icon">🛰️</div>
-                    <div class="chapter-number">05</div>
-                    <div class="chapter-title">Amateur Radio Satellite Communications</div>
-                    <div class="chapter-description">
-                        Complete guide to satellite operations including orbital mechanics, Doppler shift, 
-                        tracking software, ground station design, and making contacts through AO-91, AO-92, 
-                        SO-50, and ISS.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Orbital Mechanics</span>
-                        <span class="topic-tag">Doppler</span>
-                        <span class="topic-tag">Ground Stations</span>
-                        <span class="topic-tag">ISS</span>
-                    </div>
-                    <a href="radiosport_ch5.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 6 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch6.html'">
-                    <div class="icon">🚁</div>
-                    <div class="chapter-number">06</div>
-                    <div class="chapter-title">Drone Operations & Integration</div>
-                    <div class="chapter-description">
-                        Aviation fundamentals, multirotor flight dynamics, DJI platform specifications, 
-                        mission planning, and innovative applications combining drones with radio and 
-                        satellite communications.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Flight Dynamics</span>
-                        <span class="topic-tag">Mission Planning</span>
-                        <span class="topic-tag">Radio Integration</span>
-                    </div>
-                    <a href="radiosport_ch6.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 7 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch7.html'">
-                    <div class="icon">🤖</div>
-                    <div class="chapter-number">07</div>
-                    <div class="chapter-title">Artificial Intelligence Applications</div>
-                    <div class="chapter-description">
-                        Offline AI systems for RadioSport including machine learning algorithms, neural 
-                        networks, propagation prediction, signal classification, and autonomous drone navigation.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Machine Learning</span>
-                        <span class="topic-tag">Neural Networks</span>
-                        <span class="topic-tag">Automation</span>
-                    </div>
-                    <a href="radiosport_ch7.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 8 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch8.html'">
-                    <div class="icon">💻</div>
-                    <div class="chapter-number">08</div>
-                    <div class="chapter-title">Advanced Coding: C++ & Python</div>
-                    <div class="chapter-description">
-                        Software development for radio control, satellite tracking, drone automation, and 
-                        signal processing. Includes real-world projects and code examples for all major 
-                        RadioSport systems.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Python</span>
-                        <span class="topic-tag">C++</span>
-                        <span class="topic-tag">Real-time Systems</span>
-                    </div>
-                    <a href="radiosport_ch8.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 9 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch9.html'">
-                    <div class="icon">📊</div>
-                    <div class="chapter-number">09</div>
-                    <div class="chapter-title">Signal Processing & DSP</div>
-                    <div class="chapter-description">
-                        Digital signal processing fundamentals including FFT, filtering, modulation/demodulation, 
-                        Software Defined Radio (SDR), and spectrum analysis techniques.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">FFT</span>
-                        <span class="topic-tag">Filters</span>
-                        <span class="topic-tag">SDR</span>
-                    </div>
-                    <a href="radiosport_ch9.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 10 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch10.html'">
-                    <div class="icon">📡</div>
-                    <div class="chapter-number">10</div>
-                    <div class="chapter-title">Antenna Design & Construction</div>
-                    <div class="chapter-description">
-                        Complete antenna engineering from theory to practice. Design, build, and test dipoles, 
-                        Yagis, helicals, and satellite antennas. Includes NEC modeling and pattern measurement.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Antenna Theory</span>
-                        <span class="topic-tag">Building</span>
-                        <span class="topic-tag">Testing</span>
-                    </div>
-                    <a href="radiosport_ch10.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 11 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch11.html'">
-                    <div class="icon">🔧</div>
-                    <div class="chapter-number">11</div>
-                    <div class="chapter-title">Integrated Hands-On Projects</div>
-                    <div class="chapter-description">
-                        Multi-technology capstone projects combining radio, satellites, drones, AI, and solar 
-                        power. Complete build instructions for real-world systems and competitive challenges.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Capstones</span>
-                        <span class="topic-tag">Integration</span>
-                        <span class="topic-tag">Competitions</span>
-                    </div>
-                    <a href="radiosport_ch11.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 12 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch12.html'">
-                    <div class="icon">🏕️</div>
-                    <div class="chapter-number">12</div>
-                    <div class="chapter-title">Field Operations & Deployments</div>
-                    <div class="chapter-description">
-                        Plan and execute field operations including site surveys, portable station setup, 
-                        emergency communications, and multi-day deployments with integrated systems.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Field Days</span>
-                        <span class="topic-tag">EmComm</span>
-                        <span class="topic-tag">Logistics</span>
-                    </div>
-                    <a href="radiosport_ch12.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 13 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch13.html'">
-                    <div class="icon">⚠️</div>
-                    <div class="chapter-number">13</div>
-                    <div class="chapter-title">Safety Protocols & Regulations</div>
-                    <div class="chapter-description">
-                        Comprehensive safety training for RF exposure, electrical systems, drone operations, 
-                        and field safety. Includes regulatory compliance for amateur radio and UAS operations.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">RF Safety</span>
-                        <span class="topic-tag">Electrical</span>
-                        <span class="topic-tag">Regulations</span>
-                    </div>
-                    <a href="radiosport_ch13.html" class="view-button">View Chapter →</a>
-                </div>
-                
 
-                <!-- Chapter 14 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch14.html'">
-                    <div class="icon">🏆</div>
-                    <div class="chapter-number">14</div>
-                    <div class="chapter-title">Awards, Budget & Sustainability</div>
-                    <div class="chapter-description">
-                        Program economics, equipment budgets, fundraising strategies, certification paths, 
-                        awards programs, and building a sustainable RadioSport club for long-term success.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Budget</span>
-                        <span class="topic-tag">Certifications</span>
-                        <span class="topic-tag">Sustainability</span>
-                    </div>
-                    <a href="radiosport_ch14.html" class="view-button">View Chapter →</a>
-                </div>
-                
-                <!-- Chapter 15 -->
-                <div class="chapter-card" onclick="window.location.href='radiosport_ch15.html'">
-                    <div class="icon">💻</div>
-                    <div class="chapter-number">15</div>
-                    <div class="chapter-title">Student Capstone Projects</div>
-                    <div class="chapter-description">
-                        Real-world application development demonstrating mastery across all domains. Students 
-                        build production-grade tools like the samples listed.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Full-Stack Dev</span>
-                        <span class="topic-tag">Deployment</span>
-                        <span class="topic-tag">Portfolio</span>
-                    </div>
-                    <a href="radiosport_ch15.html" class="view-button">View Chapter →</a>
-                </div>
-            </div>
+        <h1>📡 RadioSport STEM Handbook</h1>
+        <div class="header-subtitle">Advanced Technology Education Program &nbsp;|&nbsp; Training Tomorrow's Engineers Today</div>
 
-            <!-- Technical Addendum Section -->
-            <div class="section-divider">
-                <h2>📚 Technical Addendum</h2>
-            </div>
-
-            <div class="chapters-grid">
-                <!-- Addendum: Antenna Analysis -->
-                <div class="chapter-card addendum" onclick="window.location.href='antenna_analysis_report.html'">
-                    <div class="icon">📡</div>
-                    <div class="chapter-number">A1</div>
-                    <div class="chapter-title">HT Antenna System Performance Analysis</div>
-                    <div class="chapter-description">
-                        Comprehensive RF performance evaluation of handheld transceiver antenna systems based on 
-                        field measurements. Analyzes realized system performance including antenna efficiency, 
-                        impedance matching, chassis coupling effects, and band-dependent radiation patterns. Features 
-                        interactive data visualization, distance modeling with path loss calculations, and engineering 
-                        conclusions for VHF/UHF antenna selection and optimization.
-                    </div>
-                    <div class="chapter-topics">
-                        <span class="topic-tag">Field Measurements</span>
-                        <span class="topic-tag">System Integration</span>
-                        <span class="topic-tag">VHF/UHF Performance</span>
-                        <span class="topic-tag">Interactive Analysis</span>
-                    </div>
-                    <a href="antenna_analysis_report.html" class="view-button">View Analysis →</a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <p><strong>RadioSport STEM Education Program</strong></p>
-            <p>Version 3.0 — Complete Edition</p>
-            <p>Empowering Youth Through Advanced Technology Education</p>
-            <p style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
-                📡 Amateur Radio • 🛰️ Satellites • 🚁 Drones • 🤖 AI • ☀️ Solar Power • 💻 Coding
-            </p>
+        <div class="header-meta">
+            <div class="meta-item">VER <span>3.0 COMPLETE</span></div>
+            <div class="meta-item">CHAPTERS <span>15 + A1</span></div>
+            <div class="meta-item">DOMAINS <span>RF · SAT · UAV · AI · DSP · SOLAR</span></div>
+            <div style="margin-left: auto;"><span class="version-badge">VERSION 3.0</span></div>
         </div>
     </div>
+
+    <!-- INTRO BAND -->
+    <div class="intro-band">
+        <p>
+            RadioSport is a comprehensive STEM education program integrating amateur radio, satellite communications,
+            drone operations, artificial intelligence, renewable energy, and advanced software development.
+            Students gain hands-on experience with cutting-edge technologies while developing critical thinking,
+            problem-solving, and teamwork skills.
+        </p>
+        <div>
+            <p style="margin-bottom: 12px;">
+                This handbook contains 15 comprehensive chapters covering RF theory through advanced satellite
+                operations and autonomous drone systems, plus a technical addendum on antenna system performance analysis.
+            </p>
+            <div class="badges">
+                <span class="badge">SCIENCE</span>
+                <span class="badge">TECHNOLOGY</span>
+                <span class="badge">ENGINEERING</span>
+                <span class="badge">MATHEMATICS</span>
+                <span class="badge">SATELLITES</span>
+                <span class="badge">DRONES</span>
+                <span class="badge">AI / ML</span>
+                <span class="badge">SOLAR PWR</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHAPTER SECTION -->
+    <div class="section-header">
+        <h2>Core Curriculum</h2>
+        <span class="section-label">15 MODULES</span>
+    </div>
+
+    <div class="chapters-grid">
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch1.html'">
+            <div class="card-header">
+                <div class="chapter-number">01</div>
+                <div class="chapter-icon">📋</div>
+            </div>
+            <div class="chapter-title">Mission Statement &amp; STEM Excellence</div>
+            <div class="chapter-description">Discover the RadioSport philosophy, integrated technology platform, and how we combine radio communications, satellites, drones, AI, and renewable energy into a cohesive learning experience.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Program Overview</span>
+                <span class="topic-tag">Technology Stack</span>
+                <span class="topic-tag">Learning Model</span>
+            </div>
+            <a href="radiosport_ch1.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch2.html'">
+            <div class="card-header">
+                <div class="chapter-number">02</div>
+                <div class="chapter-icon">🎓</div>
+            </div>
+            <div class="chapter-title">Program Structure &amp; Integration</div>
+            <div class="chapter-description">Complete curriculum breakdown with knowledge streams covering AI, radio theory, satellite operations, drone systems, and coding. Includes weekly schedules and specialization tracks.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Curriculum</span>
+                <span class="topic-tag">Schedules</span>
+                <span class="topic-tag">Specializations</span>
+            </div>
+            <a href="radiosport_ch2.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch3.html'">
+            <div class="card-header">
+                <div class="chapter-number">03</div>
+                <div class="chapter-icon">☀️</div>
+            </div>
+            <div class="chapter-title">Solar &amp; Battery Power Systems</div>
+            <div class="chapter-description">Master renewable energy systems for off-grid operations. Learn photovoltaic principles, MPPT technology, battery chemistry, power budgeting, and system design for radio and drone operations.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Solar Panels</span>
+                <span class="topic-tag">LiFePO4</span>
+                <span class="topic-tag">LiPo</span>
+                <span class="topic-tag">MPPT</span>
+            </div>
+            <a href="radiosport_ch3.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch4.html'">
+            <div class="card-header">
+                <div class="chapter-number">04</div>
+                <div class="chapter-icon">📻</div>
+            </div>
+            <div class="chapter-title">HF / VHF / UHF Communications</div>
+            <div class="chapter-description">Comprehensive coverage of terrestrial radio communications including ionospheric propagation, line-of-sight calculations, link budgets, digital modes, and repeater operations.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">RF Theory</span>
+                <span class="topic-tag">Propagation</span>
+                <span class="topic-tag">Digital Modes</span>
+            </div>
+            <a href="radiosport_ch4.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch5.html'">
+            <div class="card-header">
+                <div class="chapter-number">05</div>
+                <div class="chapter-icon">🛰️</div>
+            </div>
+            <div class="chapter-title">Amateur Radio Satellite Communications</div>
+            <div class="chapter-description">Complete guide to satellite operations including orbital mechanics, Doppler shift, tracking software, ground station design, and making contacts through AO-91, AO-92, SO-50, and ISS.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Orbital Mechanics</span>
+                <span class="topic-tag">Doppler</span>
+                <span class="topic-tag">Ground Stations</span>
+                <span class="topic-tag">ISS</span>
+            </div>
+            <a href="radiosport_ch5.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch6.html'">
+            <div class="card-header">
+                <div class="chapter-number">06</div>
+                <div class="chapter-icon">🚁</div>
+            </div>
+            <div class="chapter-title">Drone Operations &amp; Integration</div>
+            <div class="chapter-description">Aviation fundamentals, multirotor flight dynamics, DJI platform specifications, mission planning, and innovative applications combining drones with radio and satellite communications.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Flight Dynamics</span>
+                <span class="topic-tag">Mission Planning</span>
+                <span class="topic-tag">Radio Integration</span>
+            </div>
+            <a href="radiosport_ch6.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch7.html'">
+            <div class="card-header">
+                <div class="chapter-number">07</div>
+                <div class="chapter-icon">🤖</div>
+            </div>
+            <div class="chapter-title">Artificial Intelligence Applications</div>
+            <div class="chapter-description">Offline AI systems for RadioSport including machine learning algorithms, neural networks, propagation prediction, signal classification, and autonomous drone navigation.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Machine Learning</span>
+                <span class="topic-tag">Neural Networks</span>
+                <span class="topic-tag">Automation</span>
+            </div>
+            <a href="radiosport_ch7.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch8.html'">
+            <div class="card-header">
+                <div class="chapter-number">08</div>
+                <div class="chapter-icon">💻</div>
+            </div>
+            <div class="chapter-title">Advanced Coding: C++ &amp; Python</div>
+            <div class="chapter-description">Software development for radio control, satellite tracking, drone automation, and signal processing. Includes real-world projects and code examples for all major RadioSport systems.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Python</span>
+                <span class="topic-tag">C++</span>
+                <span class="topic-tag">Real-time Systems</span>
+            </div>
+            <a href="radiosport_ch8.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch9.html'">
+            <div class="card-header">
+                <div class="chapter-number">09</div>
+                <div class="chapter-icon">📊</div>
+            </div>
+            <div class="chapter-title">Signal Processing &amp; DSP</div>
+            <div class="chapter-description">Digital signal processing fundamentals including FFT, filtering, modulation/demodulation, Software Defined Radio (SDR), and spectrum analysis techniques.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">FFT</span>
+                <span class="topic-tag">Filters</span>
+                <span class="topic-tag">SDR</span>
+            </div>
+            <a href="radiosport_ch9.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch10.html'">
+            <div class="card-header">
+                <div class="chapter-number">10</div>
+                <div class="chapter-icon">📡</div>
+            </div>
+            <div class="chapter-title">Antenna Design &amp; Construction</div>
+            <div class="chapter-description">Complete antenna engineering from theory to practice. Design, build, and test dipoles, Yagis, helicals, and satellite antennas. Includes NEC modeling and pattern measurement.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Antenna Theory</span>
+                <span class="topic-tag">Building</span>
+                <span class="topic-tag">Testing</span>
+            </div>
+            <a href="radiosport_ch10.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch11.html'">
+            <div class="card-header">
+                <div class="chapter-number">11</div>
+                <div class="chapter-icon">🔧</div>
+            </div>
+            <div class="chapter-title">Integrated Hands-On Projects</div>
+            <div class="chapter-description">Multi-technology capstone projects combining radio, satellites, drones, AI, and solar power. Complete build instructions for real-world systems and competitive challenges.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Capstones</span>
+                <span class="topic-tag">Integration</span>
+                <span class="topic-tag">Competitions</span>
+            </div>
+            <a href="radiosport_ch11.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch12.html'">
+            <div class="card-header">
+                <div class="chapter-number">12</div>
+                <div class="chapter-icon">🏕️</div>
+            </div>
+            <div class="chapter-title">Field Operations &amp; Deployments</div>
+            <div class="chapter-description">Plan and execute field operations including site surveys, portable station setup, emergency communications, and multi-day deployments with integrated systems.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Field Days</span>
+                <span class="topic-tag">EmComm</span>
+                <span class="topic-tag">Logistics</span>
+            </div>
+            <a href="radiosport_ch12.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch13.html'">
+            <div class="card-header">
+                <div class="chapter-number">13</div>
+                <div class="chapter-icon">⚠️</div>
+            </div>
+            <div class="chapter-title">Safety Protocols &amp; Regulations</div>
+            <div class="chapter-description">Comprehensive safety training for RF exposure, electrical systems, drone operations, and field safety. Includes regulatory compliance for amateur radio and UAS operations.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">RF Safety</span>
+                <span class="topic-tag">Electrical</span>
+                <span class="topic-tag">Regulations</span>
+            </div>
+            <a href="radiosport_ch13.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch14.html'">
+            <div class="card-header">
+                <div class="chapter-number">14</div>
+                <div class="chapter-icon">🏆</div>
+            </div>
+            <div class="chapter-title">Awards, Budget &amp; Sustainability</div>
+            <div class="chapter-description">Program economics, equipment budgets, fundraising strategies, certification paths, awards programs, and building a sustainable RadioSport club for long-term success.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Budget</span>
+                <span class="topic-tag">Certifications</span>
+                <span class="topic-tag">Sustainability</span>
+            </div>
+            <a href="radiosport_ch14.html" class="view-button">View Chapter →</a>
+        </div>
+
+        <div class="chapter-card" onclick="window.location.href='radiosport_ch15.html'">
+            <div class="card-header">
+                <div class="chapter-number">15</div>
+                <div class="chapter-icon">💻</div>
+            </div>
+            <div class="chapter-title">Student Capstone Projects</div>
+            <div class="chapter-description">Real-world application development demonstrating mastery across all domains. Students build production-grade tools showcasing integrated RadioSport technologies.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Full-Stack Dev</span>
+                <span class="topic-tag">Deployment</span>
+                <span class="topic-tag">Portfolio</span>
+            </div>
+            <a href="radiosport_ch15.html" class="view-button">View Chapter →</a>
+        </div>
+
+    </div>
+
+    <!-- ADDENDUM SECTION -->
+    <div class="section-header" style="margin-top: 50px;">
+        <h2 style="color: var(--amber); text-shadow: 0 0 10px rgba(255,179,0,0.3);">Technical Addendum</h2>
+        <span class="section-label" style="border-color: rgba(255,179,0,0.25); color: rgba(255,179,0,0.5);">SUPPLEMENTAL DATA</span>
+    </div>
+
+    <div class="chapters-grid">
+        <div class="chapter-card addendum" onclick="window.location.href='antenna_analysis_report.html'">
+            <div class="card-header">
+                <div class="chapter-number">A1</div>
+                <div class="chapter-icon">📡</div>
+            </div>
+            <div class="chapter-title">HT Antenna System Performance Analysis</div>
+            <div class="chapter-description">Comprehensive RF performance evaluation of handheld transceiver antenna systems based on field measurements. Analyzes realized system performance including antenna efficiency, impedance matching, chassis coupling effects, and band-dependent radiation patterns. Features interactive data visualization, distance modeling with path loss calculations, and engineering conclusions for VHF/UHF antenna selection and optimization.</div>
+            <div class="chapter-topics">
+                <span class="topic-tag">Field Measurements</span>
+                <span class="topic-tag">System Integration</span>
+                <span class="topic-tag">VHF/UHF Performance</span>
+                <span class="topic-tag">Interactive Analysis</span>
+            </div>
+            <a href="antenna_analysis_report.html" class="view-button">View Analysis →</a>
+        </div>
+    </div>
+
+    <div class="freq-bar"></div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-left">
+            <span class="status-dot"></span>RadioSport STEM
+        </div>
+        <div class="footer-center">
+            VERSION 3.0 — COMPLETE EDITION<br>
+            <span style="color: var(--text-dim); font-size:9px; letter-spacing:2px;">
+                RF · SATELLITES · DRONES · AI · SOLAR · CODING
+            </span>
+        </div>
+        <div class="footer-right">
+            EMPOWERING YOUTH THROUGH<br>ADVANCED TECHNOLOGY EDUCATION
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function updateClock() {
+        const now = new Date();
+        const t = now.toUTCString().replace('GMT','UTC');
+        document.getElementById('clock').textContent = t;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+</script>
 </body>
 </html>
