@@ -1,1488 +1,785 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner — Accra</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear Satellite Transponder — Frequency Pairs</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap');
-:root{
-  --bg:#060c0e;--sb:#0b1820;--sbh:#0e1f27;--border:#1a3a42;--border2:#26464e;
-  --accent:#00ffc3;--accent2:#00b894;--dim:#4a8a82;--text:#b8d8d2;--text2:#7aaaa4;
-  --inp:#0f2530;--r1:#00e5ff;--r2:#ffe033;--r3:#ff9900;--r4:#ff4444;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Rajdhani',sans-serif;color:var(--text);}
-.app{display:flex;height:100vh;}
+  :root {
+    --green: #00ff88;
+    --amber: #ffaa00;
+    --cyan: #00e5ff;
+    --red: #ff4466;
+    --bg: #050a06;
+    --bg2: #0a110b;
+    --bg3: #06110a;
+    --border: #1a3320;
+    --text: #a0ffcc;
+    --text-dim: #4a8860;
+  }
 
-/* ── SIDEBAR ── */
-.sidebar{width:300px;min-width:300px;height:100%;background:var(--sb);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;z-index:100;}
-.sb-head{padding:13px 16px 11px;border-bottom:1px solid var(--border);background:#080f12;flex-shrink:0;}
-.sb-title{font-family:'Share Tech Mono',monospace;font-size:.95rem;color:var(--accent);letter-spacing:.08em;display:flex;align-items:center;gap:8px;}
-.sb-title::before{content:'';width:8px;height:8px;background:var(--accent);border-radius:50%;animation:blink 1.4s ease-in-out infinite;flex-shrink:0;box-shadow:0 0 8px var(--accent);}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
-.sb-sub{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);margin-top:3px;letter-spacing:.05em;}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-.sb-scroll{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
-.sb-scroll::-webkit-scrollbar{width:3px;}
-.sb-scroll::-webkit-scrollbar-thumb{background:var(--border);}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    padding: 2rem;
+    position: relative;
+    overflow-x: hidden;
+  }
 
-/* Sections */
-.sec{border-bottom:1px solid var(--border);}
-.sec-hdr{padding:8px 16px;background:var(--sbh);font-family:'Share Tech Mono',monospace;font-size:.61rem;letter-spacing:.16em;color:var(--accent);text-transform:uppercase;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;transition:background .15s;}
-.sec-hdr:hover{background:#112530;}
-.sec-hdr .arr{margin-left:auto;transition:transform .2s;font-size:.65rem;color:var(--dim);}
-.sec-hdr.collapsed .arr{transform:rotate(-90deg);}
-.sec-body{padding:13px 16px;}
-.sec-body.hidden{display:none;}
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+    pointer-events: none;
+    z-index: 100;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.65) 100%);
+    pointer-events: none;
+    z-index: 99;
+  }
 
-/* Controls */
-label{font-size:.68rem;color:var(--dim);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:5px;}
-input[type=text],input[type=number]{width:100%;background:var(--inp);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.78rem;padding:6px 9px;outline:none;transition:border-color .15s;}
-input[type=text]:focus,input[type=number]:focus{border-color:var(--accent2);}
-input[type=text]::placeholder{color:var(--dim);}
-input[type=number]{-moz-appearance:textfield;}
-input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
-.row2b{display:grid;grid-template-columns:1fr auto;gap:7px;align-items:end;}
-.gap8{margin-top:8px;}
+  .header { text-align: center; margin-bottom: 2rem; animation: fadeIn 0.8s ease; }
+  .header h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.1rem, 2.5vw, 1.8rem);
+    font-weight: 900;
+    color: var(--green);
+    text-shadow: 0 0 20px var(--green), 0 0 40px rgba(0,255,136,0.35);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .header .subtitle {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 0.28em;
+    margin-top: 0.4rem;
+    text-transform: uppercase;
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0.55rem auto;
+    width: 55%;
+    box-shadow: 0 0 8px rgba(0,255,136,0.1);
+  }
 
-.btn{background:transparent;border:1px solid var(--border2);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.68rem;padding:6px 11px;cursor:pointer;letter-spacing:.07em;transition:all .15s;white-space:nowrap;}
-.btn:hover{border-color:var(--accent2);color:var(--text);}
-.btn.on{border-color:var(--accent);color:var(--accent);background:rgba(0,255,195,.07);}
-.btn.hi{border-color:var(--accent2);color:var(--accent);background:rgba(0,255,195,.04);}
-.btn-full{width:100%;text-align:center;margin-top:8px;}
-.btn-sm{font-size:.62rem;padding:4px 8px;}
-.btn-xs{font-size:.58rem;padding:3px 6px;}
+  .legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.2rem 2rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
-.loc-box{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--accent);background:rgba(0,255,195,.04);border:1px solid rgba(0,255,195,.18);padding:6px 9px;margin-top:8px;line-height:1.6;}
-.loc-name{color:var(--text);font-size:.66rem;margin-bottom:1px;}
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 1.4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 
-/* Band grid */
-.band-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;}
-.bb{background:var(--inp);border:1px solid var(--border);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.64rem;padding:5px 0;cursor:pointer;text-align:center;transition:all .15s;}
-.bb:hover{border-color:var(--border2);color:var(--text);}
-.band-info{margin-top:8px;font-family:'Share Tech Mono',monospace;font-size:.67rem;color:var(--dim);line-height:1.6;}
+  /* Explicit placement — max 2 columns
+     Col 1            Col 2
+     RS-44  r1c1      AO-7   r1c2
+     JO-97  r2c1      FO-29  r2c2 spanning rows 2–3
+     AO-73  r3c1
+  */
+  #card-rs44 { grid-column: 1; grid-row: 1; }
+  #card-ao7  { grid-column: 2; grid-row: 1; }
+  #card-jo97 { grid-column: 1; grid-row: 2; }
+  #card-ao73 { grid-column: 1; grid-row: 3; }
+  #card-fo29 { grid-column: 2; grid-row: 2 / 4; }
 
-/* Power */
-.pwr-row{display:flex;align-items:flex-end;gap:10px;margin-bottom:10px;}
-.pwr-big{font-family:'Share Tech Mono',monospace;font-size:1.6rem;color:var(--accent);line-height:1;}
-.pwr-unit{font-size:.7rem;color:var(--dim);margin-bottom:2px;}
-.pwr-in{width:85px!important;font-size:.85rem!important;}
-input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--border2);outline:none;border-radius:2px;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--accent);border-radius:50%;cursor:pointer;box-shadow:0 0 6px var(--accent);}
-input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--accent);border-radius:50%;cursor:pointer;border:none;}
-.pwr-scale{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:.54rem;color:var(--dim);margin-top:3px;}
-.pwr-presets{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px;}
+  @media (max-width: 760px) {
+    .grid { grid-template-columns: 1fr; }
+    #card-rs44, #card-ao7, #card-jo97, #card-ao73, #card-fo29 {
+      grid-column: 1 !important; grid-row: auto !important;
+    }
+  }
 
-/* Conditions */
-.cond-list{display:flex;flex-direction:column;gap:4px;}
-.cond-btn{display:flex;align-items:center;gap:9px;background:var(--inp);border:1px solid var(--border);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.68rem;padding:6px 9px;cursor:pointer;transition:all .15s;}
-.cond-btn:hover{border-color:var(--border2);color:var(--text);}
-.cond-btn.on{border-color:var(--accent);background:rgba(0,255,195,.05);color:var(--text);}
-.cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.cond-desc{font-size:.58rem;color:var(--dim);margin-left:auto;}
-.time-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px;}
-.cond-hint{margin-top:8px;font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--dim);line-height:1.55;}
+  .sat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 0 18px rgba(0,255,136,0.04), inset 0 0 28px rgba(0,0,0,0.22);
+    animation: slideUp 0.55s ease both;
+  }
 
-/* Antenna */
-select{width:100%;background:var(--inp);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.7rem;padding:7px 10px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a8a82'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color .15s;}
-select:focus{border-color:var(--accent2);}
-option{background:#0b1820;}
-.ant-info{margin-top:8px;font-size:.66rem;color:var(--dim);line-height:1.55;}
-.ant-gain{color:var(--accent);font-family:'Share Tech Mono',monospace;}
+  /* ── Card Header ── */
+  .card-header {
+    padding: 0.75rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, rgba(0,255,136,0.07) 0%, transparent 100%);
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .sat-name {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--green);
+    text-shadow: 0 0 10px rgba(0,255,136,0.55);
+  }
+  .sat-meta { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.16em; margin-top: 0.15rem; }
+  .card-header-right { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+  .magic-num { font-size: 0.58rem; color: var(--amber); opacity: 0.65; white-space: nowrap; }
 
-.bearing-wrap{margin-top:11px;}
-.bear-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
-.bear-val{font-family:'Share Tech Mono',monospace;font-size:1.1rem;color:var(--accent);}
-.bear-dir{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim);margin-left:4px;}
-.bear-scale{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:.54rem;color:var(--dim);margin-top:3px;}
+  .tag {
+    display: inline-block;
+    font-size: 0.5rem;
+    padding: 0.1rem 0.38rem;
+    border-radius: 2px;
+    letter-spacing: 0.12em;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .tag-inv   { background: rgba(0,255,136,0.1);  border: 1px solid rgba(0,255,136,0.3);  color: var(--green); }
+  .tag-noninv{ background: rgba(0,229,255,0.1);  border: 1px solid rgba(0,229,255,0.3);  color: var(--cyan); }
 
-/* Coverage summary */
-.cov-list{display:flex;flex-direction:column;gap:6px;}
-.cov-row{display:flex;align-items:center;gap:9px;font-family:'Share Tech Mono',monospace;font-size:.7rem;}
-.cv-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.cv-pwr{width:52px;color:var(--dim);}
-.cv-km{color:var(--text);flex:1;}
-.cv-geo{font-size:.6rem;color:var(--accent2);text-align:right;}
+  /* ── Transponder info ── */
+  .transponder-info {
+    padding: 0.38rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.4rem;
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    background: rgba(0,0,0,0.14);
+  }
+  .transponder-info .up-val { color: var(--cyan); }
+  .transponder-info .dn-val { color: var(--green); }
+  .transponder-info span    { color: var(--text); }
 
-/* Footer */
-.sb-foot{flex-shrink:0;padding:7px 14px;background:#080f12;border-top:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--dim);line-height:1.65;}
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: rgba(0,255,136,0.04); border-bottom: 1px solid var(--border); }
+  th {
+    padding: 0.48rem 0.85rem;
+    font-size: 0.57rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-align: right;
+  }
+  th:first-child { text-align: left; }
+  td {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.83rem;
+    text-align: right;
+    border-bottom: 1px solid rgba(26,51,32,0.4);
+    transition: background 0.1s;
+  }
+  td:first-child { text-align: left; color: var(--text-dim); font-size: 0.66rem; }
+  tr.seed-row td  { background: rgba(0,255,136,0.062); }
+  tr.seed-row td:first-child { color: var(--amber); }
+  tr.seed-row .freq-up, tr.seed-row .freq-dn { color: var(--green); text-shadow: 0 0 7px rgba(0,255,136,0.45); }
+  tr:hover td { background: rgba(0,255,136,0.035); }
+  tr.seed-row:hover td { background: rgba(0,255,136,0.09); }
+  .freq-up { color: var(--cyan); }
+  .freq-dn { color: var(--text); }
 
-/* ── BAND MODE TABS ── */
-.mode-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:#080f12;}
-.mode-tab{flex:1;padding:8px 4px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.1em;cursor:pointer;border:none;background:transparent;color:var(--dim);transition:all .2s;text-transform:uppercase;border-bottom:2px solid transparent;margin-bottom:-1px;}
-.mode-tab:hover{color:var(--text);}
-.mode-tab.active-hf {color:#00e5ff;border-bottom-color:#00e5ff;background:rgba(0,229,255,.05);}
-.mode-tab.active-vhf{color:#90ff57;border-bottom-color:#90ff57;background:rgba(144,255,87,.05);}
-.mode-tab.active-uhf{color:#ff9eff;border-bottom-color:#ff9eff;background:rgba(255,158,255,.05);}
+  .badge {
+    display: inline-block;
+    font-size: 0.5rem;
+    padding: 0.07rem 0.28rem;
+    background: rgba(255,170,0,0.12);
+    border: 1px solid rgba(255,170,0,0.3);
+    color: var(--amber);
+    border-radius: 2px;
+    vertical-align: middle;
+    margin-left: 0.28rem;
+    letter-spacing: 0.1em;
+  }
+  .badge-ctr {
+    background: rgba(0,229,255,0.08);
+    border-color: rgba(0,229,255,0.28);
+    color: var(--cyan);
+  }
 
-/* ── VHF/UHF SIDEBAR ── */
-.vhf-panel,.uhf-panel{display:none;flex-direction:column;height:100%;}
-.vhf-panel.active,.uhf-panel.active{display:flex;}
+  /* ── Passband bars ── */
+  .passband-section { border-top: 1px solid var(--border); background: rgba(0,0,0,0.16); }
+  .passband-bar {
+    padding: 0.36rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.57rem;
+    color: var(--text-dim);
+  }
+  .passband-bar + .passband-bar { border-top: 1px solid rgba(26,51,32,0.38); }
+  .pb-label { font-family: 'Orbitron', monospace; font-size: 0.54rem; font-weight: 700; min-width: 1.5rem; text-align: center; }
+  .pb-dn { color: var(--green); }
+  .pb-up { color: var(--cyan); }
+  .pb-edge { min-width: 4.2rem; text-align: center; font-size: 0.56rem; }
+  .pb-bw   { margin-left: auto; font-size: 0.53rem; opacity: 0.55; white-space: nowrap; }
 
-.vu-head{padding:13px 16px 11px;border-bottom:1px solid var(--border);background:#080f12;flex-shrink:0;}
-.vu-title{font-family:'Share Tech Mono',monospace;font-size:.88rem;letter-spacing:.07em;display:flex;align-items:center;gap:8px;}
-.vu-sub{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);margin-top:3px;letter-spacing:.05em;}
+  .bar-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; position: relative; overflow: visible; }
+  .bar-fill  { height: 100%; border-radius: 2px; width: 100%; }
+  .bar-fill-dn { background: linear-gradient(90deg, rgba(0,200,100,0.22), var(--green)); box-shadow: 0 0 5px rgba(0,255,136,0.35); }
+  .bar-fill-up { background: linear-gradient(90deg, rgba(0,180,200,0.18), var(--cyan)); box-shadow: 0 0 5px rgba(0,229,255,0.3); }
+  .bar-seed {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 10px;
+    background: var(--amber);
+    box-shadow: 0 0 4px var(--amber);
+  }
 
-.vu-scroll{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
-.vu-scroll::-webkit-scrollbar{width:3px;}
-.vu-scroll::-webkit-scrollbar-thumb{background:var(--border);}
+  /* ── Seed Editor ── */
+  .seed-btn {
+    background: none;
+    border: 1px solid rgba(255,170,0,0.28);
+    color: var(--amber);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.53rem;
+    padding: 0.16rem 0.48rem;
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: all 0.14s;
+    opacity: 0.65;
+    white-space: nowrap;
+  }
+  .seed-btn:hover { background: rgba(255,170,0,0.1); opacity: 1; }
 
-.vu-sec{border-bottom:1px solid var(--border);padding:13px 16px;}
-.vu-sec-title{font-family:'Share Tech Mono',monospace;font-size:.61rem;letter-spacing:.16em;color:var(--accent);text-transform:uppercase;margin-bottom:10px;}
+  .seed-editor {
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease, padding 0.25s ease;
+    border-top: 0px solid var(--border);
+    background: rgba(255,170,0,0.025);
+  }
+  .seed-editor.open {
+    max-height: 340px;
+    padding: 0.7rem 1.1rem 0.8rem;
+    border-top: 1px solid rgba(255,170,0,0.12);
+  }
+  .seed-editor-row  { display: flex; gap: 0.8rem; }
+  .seed-editor-field { flex: 1; }
+  .seed-editor label { font-size: 0.58rem; color: var(--text-dim); letter-spacing: 0.12em; display: block; margin-bottom: 0.22rem; }
+  .seed-editor input {
+    background: var(--bg3);
+    border: 1px solid rgba(255,170,0,0.22);
+    color: var(--amber);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    padding: 0.28rem 0.45rem;
+    width: 100%;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.13s;
+  }
+  .seed-editor input:focus { border-color: rgba(255,170,0,0.65); }
+  .seed-editor-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; align-items: center; }
+  .seed-apply {
+    background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.32);
+    color: var(--green); font-family: 'Share Tech Mono', monospace; font-size: 0.58rem;
+    padding: 0.27rem 0.75rem; border-radius: 2px; cursor: pointer; letter-spacing: 0.1em;
+    transition: all 0.13s;
+  }
+  .seed-apply:hover { background: rgba(0,255,136,0.2); }
+  .seed-cancel {
+    background: none; border: 1px solid rgba(74,136,96,0.28);
+    color: var(--text-dim); font-family: 'Share Tech Mono', monospace; font-size: 0.58rem;
+    padding: 0.27rem 0.75rem; border-radius: 2px; cursor: pointer; letter-spacing: 0.1em;
+    transition: all 0.13s;
+  }
+  .seed-cancel:hover { border-color: var(--text-dim); color: var(--text); }
+  .seed-reset {
+    background: none; border: 1px solid rgba(255,68,102,0.22);
+    color: rgba(255,68,102,0.45); font-family: 'Share Tech Mono', monospace; font-size: 0.58rem;
+    padding: 0.27rem 0.65rem; border-radius: 2px; cursor: pointer; letter-spacing: 0.1em;
+    margin-left: auto; transition: all 0.13s;
+  }
+  .seed-reset:hover { border-color: rgba(255,68,102,0.55); color: var(--red); }
+  .badge-src-default { background: rgba(74,136,96,0.1);  border-color: rgba(74,136,96,0.3);  color: var(--text-dim); }
+  .badge-src-stored  { background: rgba(0,229,255,0.08); border-color: rgba(0,229,255,0.28); color: var(--cyan); }
+  .badge-src-edited  { background: rgba(255,170,0,0.12); border-color: rgba(255,170,0,0.3);  color: var(--amber); }
 
-.vu-item{display:flex;align-items:center;gap:9px;margin-bottom:8px;cursor:pointer;transition:opacity .2s;padding:5px 7px;border:1px solid transparent;border-radius:2px;}
-.vu-item:hover{background:rgba(255,255,255,.03);border-color:var(--border);}
-.vu-item.off{opacity:.25;}
-.vu-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;border:2px solid;}
-.vu-info{flex:1;}
-.vu-pwr{font-family:'Share Tech Mono',monospace;font-size:.82rem;line-height:1;}
-.vu-range{font-size:.64rem;color:var(--dim);margin-top:1px;}
+  .seed-status {
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    margin-top: 0.3rem;
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+  .status-ts { opacity: 0.55; font-size: 0.52rem; }
 
-.vu-note{font-size:.63rem;color:var(--dim);line-height:1.55;padding:11px 16px;border-bottom:1px solid var(--border);}
-.vu-note strong{color:var(--text);}
+  .hist-panel {
+    margin-top: 0.6rem;
+    border-top: 1px solid rgba(26,51,32,0.5);
+    padding-top: 0.45rem;
+  }
+  .hist-header {
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.3rem;
+  }
+  .hist-body { max-height: 120px; overflow-y: auto; }
+  .hist-empty { font-size: 0.54rem; color: var(--text-dim); opacity: 0.5; padding: 0.2rem 0; }
+  .hist-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.56rem;
+    padding: 0.18rem 0;
+    border-bottom: 1px solid rgba(26,51,32,0.3);
+    color: var(--text-dim);
+  }
+  .hist-row:last-child { border-bottom: none; }
+  .hist-idx { color: var(--text-dim); opacity: 0.5; min-width: 1.4rem; }
+  .hist-ts  { opacity: 0.55; flex: 1; font-size: 0.53rem; }
+  .hist-up  { color: var(--cyan); }
+  .hist-sep { opacity: 0.4; }
+  .hist-dn  { color: var(--green); }
 
-.zoom-btns-vu{display:flex;gap:5px;padding:10px 16px;border-bottom:1px solid var(--border);}
-.zoom-btn-vu{flex:1;padding:5px 4px;font-family:'Share Tech Mono',monospace;font-size:.6rem;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;text-transform:uppercase;letter-spacing:.07em;transition:all .2s;}
-.zoom-btn-vu:hover{border-color:var(--accent2);color:var(--text);}
+  /* ── Footer ── */
+  .note { text-align: center; font-size: 0.58rem; color: var(--text-dim); margin-top: 2rem; letter-spacing: 0.12em; }
 
-.vu-foot{flex-shrink:0;padding:7px 14px;background:#080f12;border-top:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--dim);line-height:1.65;}
-
-/* ── ALTITUDE SLIDER ── */
-.alt-row{display:flex;align-items:baseline;gap:7px;margin-bottom:8px;}
-.alt-big{font-family:'Share Tech Mono',monospace;font-size:1.5rem;color:var(--accent);line-height:1;}
-.alt-unit{font-size:.68rem;color:var(--dim);margin-bottom:2px;}
-.alt-scale{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:.52rem;color:var(--dim);margin-top:3px;}
-.alt-presets{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
-.horizon-info{margin-top:8px;font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--accent2);line-height:1.5;background:rgba(0,255,195,.04);border:1px solid rgba(0,255,195,.15);padding:5px 8px;}
-
-/* ── TERRAIN COMPUTE ── */
-.terrain-compute-btn{width:100%;padding:7px;font-family:'Share Tech Mono',monospace;font-size:.68rem;background:rgba(0,255,195,.07);border:1px solid var(--accent2);color:var(--accent);cursor:pointer;text-transform:uppercase;letter-spacing:.1em;transition:all .2s;margin-top:10px;}
-.terrain-compute-btn:hover:not(:disabled){background:rgba(0,255,195,.13);border-color:var(--accent);}
-.terrain-compute-btn:disabled{opacity:.45;cursor:not-allowed;}
-.terrain-status{display:none;margin-top:7px;font-family:'Share Tech Mono',monospace;font-size:.63rem;color:var(--text2);line-height:1.55;padding:5px 8px;background:rgba(255,255,255,.03);border-left:2px solid var(--accent2);}
-
-/* ── TOPO TILE BUTTON ── */
-.topo-toggle-btn{width:100%;padding:5px;font-family:'Share Tech Mono',monospace;font-size:.62rem;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;text-transform:uppercase;letter-spacing:.08em;transition:all .2s;margin-top:6px;}
-.topo-toggle-btn:hover{border-color:var(--border2);color:var(--text);}
-.topo-toggle-btn.on{border-color:#6bcb77;color:#6bcb77;background:rgba(107,203,119,.07);}
-
-/* Legend note HL + dashed ring key */
-.ring-key{display:flex;align-items:center;gap:7px;font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--dim);margin-top:5px;}
-.rk-solid{width:22px;height:2px;background:currentColor;}
-.rk-dashed{width:22px;height:0;border-top:2px dashed currentColor;opacity:.5;}
-
-/* Environment density selector */
-.env-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-top:6px;}
-.env-btn{background:var(--inp);border:1px solid var(--border);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.58rem;padding:5px 2px;cursor:pointer;text-align:center;transition:all .15s;line-height:1.3;}
-.env-btn:hover{border-color:var(--border2);color:var(--text);}
-.env-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(0,255,195,.09);}
-.env-factor{margin-top:6px;font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--dim);line-height:1.6;padding:5px 8px;background:rgba(0,0,0,.2);border-left:2px solid var(--border2);}
-.env-factor strong{color:var(--text);}
-
-/* Map */
-.map-area{flex:1;position:relative;overflow:hidden;}
-#map{width:100%;height:100%;}
-.map-area::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.055) 2px,rgba(0,0,0,.055) 4px);pointer-events:none;z-index:500;}
-
-/* Click-to-set banner */
-.click-banner{display:none;position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(0,255,195,.1);border:1px solid var(--accent);color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:.7rem;padding:7px 20px;letter-spacing:.1em;white-space:nowrap;box-shadow:0 0 20px rgba(0,255,195,.2);}
-.map-area.click-mode .click-banner{display:block;}
-.map-area.click-mode #map{cursor:crosshair!important;}
-
-/* Leaflet overrides */
-.leaflet-control-attribution{background:rgba(6,12,14,.8)!important;color:#4a8a82!important;font-size:9px!important;}
-.leaflet-control-attribution a{color:var(--dim)!important;}
-.leaflet-control-zoom a{background:var(--sb)!important;border-color:var(--border)!important;color:var(--accent)!important;}
-.leaflet-popup-content-wrapper{background:#060c0e!important;border:1px solid var(--border)!important;border-radius:0!important;color:var(--text)!important;box-shadow:0 4px 24px rgba(0,0,0,.6)!important;}
-.leaflet-popup-tip{background:#060c0e!important;}
-.leaflet-popup-content{margin:0!important;}
+  /* ── Animations ── */
+  .blink { animation: blink 1.2s step-end infinite; }
+  @keyframes blink   { 50% { opacity: 0; } }
+  @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
-<div class="app">
 
-<!-- ═══ SIDEBAR ═══ -->
-<aside class="sidebar">
-
-  <!-- BAND MODE TABS -->
-  <div class="mode-tabs">
-    <button class="mode-tab active-hf"  id="tab-hf"  onclick="switchMode('hf')">⬡ HF</button>
-    <button class="mode-tab"            id="tab-vhf" onclick="switchMode('vhf')">▲ VHF 2m</button>
-    <button class="mode-tab"            id="tab-uhf" onclick="switchMode('uhf')">◆ UHF 70cm</button>
-  </div>
-
-  <!-- ── HF PANEL (original, untouched) ── -->
-  <div id="hf-panel" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
-  <div class="sb-head">
-    <div class="sb-title">HF PROPAGATION PLANNER</div>
-    <div class="sb-sub">NVIS / Skywave Coverage · Empirical Model</div>
-  </div>
-
-  <div class="sb-scroll">
-
-    <!-- LOCATION -->
-    <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ TX Location <span class="arr">▾</span></div>
-      <div class="sec-body">
-        <label>Search place / city</label>
-        <div class="row2b">
-          <input type="text" id="locSearch" placeholder="e.g. Kumasi, Lomé, Lagos…"/>
-          <button class="btn btn-sm hi" onclick="searchLoc()">GO</button>
-        </div>
-        <div class="gap8">
-          <label>Coordinates (decimal)</label>
-          <div class="row2">
-            <input type="number" id="latIn" placeholder="Latitude" step="0.0001" min="-90" max="90"/>
-            <input type="number" id="lonIn" placeholder="Longitude" step="0.0001" min="-180" max="180"/>
-          </div>
-        </div>
-        <button class="btn btn-full" id="clickBtn" onclick="toggleClickMode()">📍 CLICK MAP TO SET TX</button>
-        <div class="loc-box">
-          <div class="loc-name" id="locName">Accra, Ghana</div>
-          <div id="locCoords">5.6037°N &nbsp; 0.1870°W</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- BAND -->
-    <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Band <span class="arr">▾</span></div>
-      <div class="sec-body">
-        <div class="band-grid" id="bandGrid"></div>
-        <div class="band-info" id="bandInfo"></div>
-      </div>
-    </div>
-
-    <!-- POWER -->
-    <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Max Power <span class="arr">▾</span></div>
-      <div class="sec-body">
-        <div class="pwr-row">
-          <div>
-            <div class="pwr-big" id="pwrBig">100</div>
-            <div class="pwr-unit">WATTS</div>
-          </div>
-          <input type="number" class="pwr-in" id="pwrIn" value="100" min="0.1" max="50000" step="1" oninput="setPwr(this.value)"/>
-        </div>
-        <input type="range" id="pwrSlider" min="0" max="100" value="60" oninput="setPwrSlider(this.value)"/>
-        <div class="pwr-scale"><span>0.1W</span><span>1W</span><span>100W</span><span>1kW</span><span>10kW</span></div>
-        <div class="pwr-presets" id="pwrPresets"></div>
-      </div>
-    </div>
-
-    <!-- CONDITIONS -->
-    <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Propagation Conditions <span class="arr">▾</span></div>
-      <div class="sec-body">
-        <div class="cond-list" id="condList"></div>
-        <div class="time-row">
-          <button class="btn on" id="btnDay"   onclick="setTime('day')">☀ DAYTIME</button>
-          <button class="btn"   id="btnNight" onclick="setTime('night')">☾ NIGHT</button>
-        </div>
-        <div class="cond-hint" id="condHint"></div>
-      </div>
-    </div>
-
-    <!-- ANTENNA -->
-    <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Antenna <span class="arr">▾</span></div>
-      <div class="sec-body">
-        <label>Antenna Type</label>
-        <select id="antSel" onchange="setAnt(this.value)"></select>
-        <div class="ant-info" id="antInfo"></div>
-        <div class="bearing-wrap" id="bearWrap" style="display:none;">
-          <div class="bear-row">
-            <label style="margin:0;">Beam Heading</label>
-            <div><span class="bear-val" id="bearVal">0°</span><span class="bear-dir" id="bearDir">N</span></div>
-          </div>
-          <input type="range" id="bearSlider" min="0" max="359" value="0" oninput="setBear(this.value)"/>
-          <div class="bear-scale"><span>N</span><span>NE</span><span>E</span><span>SE</span><span>S</span><span>SW</span><span>W</span><span>NW</span><span>N</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- COVERAGE SUMMARY -->
-    <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Coverage Summary <span class="arr">▾</span></div>
-      <div class="sec-body">
-        <div class="cov-list" id="covList"></div>
-      </div>
-    </div>
-
-  </div><!-- sb-scroll -->
-
-  <div class="sb-foot">
-    Model: Empirical NVIS + F2 Skywave · Range ∝ √P · D-layer absorption included<br/>
-    Gain applied linearly · Conditions multiplicative factor<br/>
-    ⚠ Indicative only — actual coverage varies with ionosphere
-  </div>
-  </div><!-- /hf-panel -->
-
-  <!-- ── VHF PANEL ── -->
-  <div id="vhf-panel" class="vhf-panel">
-    <div class="vu-head">
-      <div class="vu-title" style="color:#90ff57;">▲ VHF 2 m COVERAGE</div>
-      <div class="vu-sub">145.500 MHz FM · Terrain Propagation Default · Urban Density Model</div>
-    </div>
-    <div class="vu-scroll">
-
-      <!-- ALTITUDE -->
-      <div class="vu-sec">
-        <div class="vu-sec-title" style="color:#90ff57;">TX Antenna / Site Elevation</div>
-        <div class="alt-row">
-          <div class="alt-big" id="vhf-altBig">1.5</div>
-          <div class="alt-unit">m AGL</div>
-        </div>
-        <input type="range" id="vhf-altSlider" min="1.5" max="120" value="1.5" step="0.5" oninput="setAlt('vhf',this.value)" style="width:100%;"/>
-        <div class="alt-scale"><span>1.5m</span><span>30m</span><span>60m</span><span>90m</span><span>120m</span></div>
-        <div class="alt-presets">
-          <button class="btn btn-xs on" id="vhf-ht-btn" onclick="setAlt('vhf',1.5)" title="Handheld transceiver at mouth level">📻 HT 1.5m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',5)">5m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',10)">10m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',30)">30m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',50)">50m</button>
-          <button class="btn btn-xs" onclick="setAlt('vhf',100)">100m</button>
-          
-          <button class="btn btn-xs" onclick="setAlt('vhf',120)">120m</button>
-        </div>
-        <div class="horizon-info" id="vhf-horizonInfo">📻 HT at mouth level — Hata ultra-urban: ~2.8 km (1W) at 1.5m AGL</div>
-        <button class="terrain-compute-btn" id="vhf-computeBtn" onclick="computeTerrainCoverage('vhf')">
-          ⛰ Compute Terrain Coverage (SRTM)
-        </button>
-        <div class="terrain-status" id="vhf-status"></div>
-        <button class="topo-toggle-btn" id="vhf-topoBtn" onclick="toggleTopoTile('vhf')">⛰ Show Topo Map</button>
-      </div>
-
-      <!-- ENVIRONMENT DENSITY -->
-      <div class="vu-sec">
-        <div class="vu-sec-title" style="color:#90ff57;">Environment Density</div>
-        <div class="env-grid" id="vhf-envGrid"></div>
-        <div class="env-factor" id="vhf-envInfo"></div>
-      </div>
-
-      <!-- POWER LAYERS -->
-      <div class="vu-sec">
-        <div class="vu-sec-title" style="color:#90ff57;">Coverage Layers — click to toggle</div>
-        <div class="vu-item" id="vli-v10w" onclick="vuToggle('v10w')">
-          <div class="vu-dot" style="border-color:#00b341;background:rgba(0,179,65,.30)"></div>
-          <div class="vu-info">
-            <div class="vu-pwr" style="color:#00b341">10 W</div>
-            <div class="vu-range" id="vhf-r10w">Hata+terrain (ultra-urban): ~4.7 km</div>
-          </div>
-        </div>
-        <div class="vu-item" id="vli-v5w" onclick="vuToggle('v5w')">
-          <div class="vu-dot" style="border-color:#39d353;background:rgba(57,211,83,.25)"></div>
-          <div class="vu-info">
-            <div class="vu-pwr" style="color:#39d353">5 W</div>
-            <div class="vu-range" id="vhf-r5w">Hata+terrain (ultra-urban): ~4.0 km</div>
-          </div>
-        </div>
-        <div class="vu-item" id="vli-v1w" onclick="vuToggle('v1w')">
-          <div class="vu-dot" style="border-color:#90ff57;background:rgba(144,255,87,.20)"></div>
-          <div class="vu-info">
-            <div class="vu-pwr" style="color:#90ff57">1 W</div>
-            <div class="vu-range" id="vhf-r1w">Hata+terrain (ultra-urban): ~2.8 km</div>
-          </div>
-        </div>
-        <div class="ring-key" style="margin-top:9px;">
-          <span class="rk-solid" style="color:#007a2e"></span><span>Terrain polygon</span>
-          <span class="rk-dashed" style="color:#007a2e;margin-left:8px;"></span><span>Smooth-earth limit</span>
-        </div>
-      </div>
-
-      <div class="vu-note">
-        <strong>Model:</strong> 36 radials × 22 elevation samples (SRTM 90m). Terrain LOS computed by default on band switch. Earth curvature (4/3 Re) included. <strong>Environment density</strong> applies Okumura-Hata / COST-231 clutter loss on top of terrain. <strong>Solid polygon</strong> = terrain+env coverage. <strong>Dashed ring</strong> = theoretical max (open/LOS).
-      </div>
-    </div>
-    <div class="vu-foot">
-      VHF 144–146 MHz · SRTM terrain model (default) · Ant: 7-el Yagi<br/>
-      Urban density applied via Okumura-Hata/COST-231 · ⚠ 90m DEM resolution
-    </div>
-  </div><!-- /vhf-panel -->
-
-  <!-- ── UHF PANEL ── -->
-  <div id="uhf-panel" class="uhf-panel">
-    <div class="vu-head">
-      <div class="vu-title" style="color:#ff9eff;">◆ UHF 70 cm COVERAGE</div>
-      <div class="vu-sub">435.000 MHz FM · Terrain Propagation Default · Urban Density Model</div>
-    </div>
-    <div class="vu-scroll">
-
-      <!-- ALTITUDE -->
-      <div class="vu-sec">
-        <div class="vu-sec-title" style="color:#ff9eff;">TX Antenna / Site Elevation</div>
-        <div class="alt-row">
-          <div class="alt-big" id="uhf-altBig">1.5</div>
-          <div class="alt-unit">m AGL</div>
-        </div>
-        <input type="range" id="uhf-altSlider" min="1.5" max="120" value="1.5" step="0.5" oninput="setAlt('uhf',this.value)" style="width:100%;"/>
-        <div class="alt-scale"><span>1.5m</span><span>30m</span><span>60m</span><span>90m</span><span>120m</span></div>
-        <div class="alt-presets">
-          <button class="btn btn-xs on" id="uhf-ht-btn" onclick="setAlt('uhf',1.5)" title="Handheld transceiver at mouth level">📻 HT 1.5m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',5)">5m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',10)">10m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',30)">30m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',50)">50m</button>
-          <button class="btn btn-xs" onclick="setAlt('uhf',100)">100m</button>
-          
-          <button class="btn btn-xs" onclick="setAlt('uhf',120)">120m</button>
-        </div>
-        <div class="horizon-info" id="uhf-horizonInfo">📻 HT at mouth level — Hata ultra-urban: ~1.4 km (1W) at 1.5m AGL</div>
-        <button class="terrain-compute-btn" id="uhf-computeBtn" onclick="computeTerrainCoverage('uhf')">
-          ⛰ Compute Terrain Coverage (SRTM)
-        </button>
-        <div class="terrain-status" id="uhf-status"></div>
-        <button class="topo-toggle-btn" id="uhf-topoBtn" onclick="toggleTopoTile('uhf')">⛰ Show Topo Map</button>
-      </div>
-
-      <!-- ENVIRONMENT DENSITY -->
-      <div class="vu-sec">
-        <div class="vu-sec-title" style="color:#ff9eff;">Environment Density</div>
-        <div class="env-grid" id="uhf-envGrid"></div>
-        <div class="env-factor" id="uhf-envInfo"></div>
-      </div>
-
-      <!-- POWER LAYERS -->
-      <div class="vu-sec">
-        <div class="vu-sec-title" style="color:#ff9eff;">Coverage Layers — click to toggle</div>
-        <div class="vu-item" id="vli-u10w" onclick="vuToggle('u10w')">
-          <div class="vu-dot" style="border-color:#aa33ff;background:rgba(170,51,255,.28)"></div>
-          <div class="vu-info">
-            <div class="vu-pwr" style="color:#aa33ff">10 W</div>
-            <div class="vu-range" id="uhf-r10w">Hata+terrain (ultra-urban): ~2.4 km</div>
-          </div>
-        </div>
-        <div class="vu-item" id="vli-u5w" onclick="vuToggle('u5w')">
-          <div class="vu-dot" style="border-color:#d966ff;background:rgba(217,102,255,.24)"></div>
-          <div class="vu-info">
-            <div class="vu-pwr" style="color:#d966ff">5 W</div>
-            <div class="vu-range" id="uhf-r5w">Hata+terrain (ultra-urban): ~2.1 km</div>
-          </div>
-        </div>
-        <div class="vu-item" id="vli-u1w" onclick="vuToggle('u1w')">
-          <div class="vu-dot" style="border-color:#ff9eff;background:rgba(255,158,255,.20)"></div>
-          <div class="vu-info">
-            <div class="vu-pwr" style="color:#ff9eff">1 W</div>
-            <div class="vu-range" id="uhf-r1w">Hata+terrain (ultra-urban): ~1.4 km</div>
-          </div>
-        </div>
-        <div class="ring-key" style="margin-top:9px;">
-          <span class="rk-solid" style="color:#7700cc"></span><span>Terrain polygon</span>
-          <span class="rk-dashed" style="color:#7700cc;margin-left:8px;"></span><span>Smooth-earth limit</span>
-        </div>
-      </div>
-
-      <div class="vu-note">
-        <strong>Model:</strong> 36 radials × 22 elevation samples (SRTM 90m). Terrain LOS computed by default. UHF has ~9.5 dB more free-space loss than VHF plus higher clutter loss in urban environments. <strong>Environment density</strong> applies Okumura-Hata / COST-231 correction per environment type.
-      </div>
-    </div>
-    <div class="vu-foot">
-      UHF 430–440 MHz · SRTM terrain model (default) · Ant: 9-el Yagi<br/>
-      Urban density applied via Okumura-Hata/COST-231 · ⚠ 90m DEM resolution
-    </div>
-  </div><!-- /uhf-panel -->
-
-</aside>
-
-<!-- ═══ MAP ═══ -->
-<div class="map-area" id="mapArea">
-  <div class="click-banner">📍 CLICK TO SET TX LOCATION &nbsp;·&nbsp; ESC to cancel</div>
-  <div id="map"></div>
+<div class="header">
+  <h1>Linear Transponder &mdash; Frequency Pairs</h1>
+  <hr class="divider">
+  <div class="subtitle">Inverting &amp; Non-Inverting &nbsp;|&nbsp; 5 kHz Grid &nbsp;|&nbsp; <span class="blink">&#9646;</span> LSB / USB</div>
 </div>
 
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#00e5ff"></div> Uplink (LSB)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#00ff88"></div> Downlink (USB)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ffaa00"></div> Seed pair</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(0,229,255,0.4)"></div> <span style="color:#00e5ff;font-size:0.6rem">INV</span>&nbsp;Inverting</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(0,229,255,0.15)"></div> <span style="color:#4a8860;font-size:0.6rem">NON</span>&nbsp;Non-Inverting</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(0,229,255,0.6)"></div> <span style="color:#00e5ff;font-size:0.6rem">CTR</span>&nbsp;Center (default)</div>
 </div>
+
+<div class="grid" id="satGrid"></div>
+<div class="note" id="footNote"></div>
 
 <script>
-// ══════════════════════════════════════════════
-// DATA TABLES
-// ══════════════════════════════════════════════
-
-const BANDS = {
-  '160m':{ label:'160m', freq:'1.8–2.0 MHz',  baseKm:{day:180,  night:1400}, propMode:'NVIS · Night-only reliable', color:'#ff6b9d' },
-  '80m': { label:'80m',  freq:'3.5–4.0 MHz',  baseKm:{day:420,  night:1800}, propMode:'NVIS',                        color:'#ff9f43' },
-  '60m': { label:'60m',  freq:'5.3–5.4 MHz',  baseKm:{day:700,  night:2100}, propMode:'NVIS',                        color:'#ffd93d' },
-  '40m': { label:'40m',  freq:'7.0–7.2 MHz',  baseKm:{day:1400, night:3000}, propMode:'NVIS / Regional',             color:'#6bcb77' },
-  '30m': { label:'30m',  freq:'10.1–10.15 MHz',baseKm:{day:2200, night:3800}, propMode:'Regional / DX',              color:'#4d96ff' },
-  '20m': { label:'20m',  freq:'14.0–14.35 MHz',baseKm:{day:5000, night:5500}, propMode:'F2 DX',                      color:'#845ef7' },
-  '17m': { label:'17m',  freq:'18.0–18.2 MHz', baseKm:{day:6000, night:3500}, propMode:'F2 DX',                      color:'#f06595' },
-  '15m': { label:'15m',  freq:'21.0–21.45 MHz',baseKm:{day:7000, night:2000}, propMode:'F2 DX',                      color:'#cc5de8' },
-  '12m': { label:'12m',  freq:'24.89–24.99 MHz',baseKm:{day:8000,night:700},  propMode:'F2 / Sporadic-E',            color:'#74c0fc' },
-  '10m': { label:'10m',  freq:'28.0–29.7 MHz', baseKm:{day:9000, night:250},  propMode:'F2 / Sporadic-E',            color:'#a9e34b' }
-};
-
-const ANTS = {
-  'inverted_v':  {label:'Inverted-V Dipole',      gain:-0.5, dir:false, bw:360, desc:'High-angle NVIS radiation, ideal for regional comms. Easy to deploy.'},
-  'dipole':      {label:'Horizontal Dipole',       gain:0,    dir:false, bw:360, desc:'Reference antenna. Bi-directional broadside pattern, good all-round.'},
-  'efhw':        {label:'End-Fed Half Wave (EFHW)',gain:0.5,  dir:false, bw:360, desc:'Convenient single feed-point. Slight gain over dipole, multi-band capable.'},
-  'delta_loop':  {label:'Delta Loop',              gain:2.0,  dir:false, bw:360, desc:'~2 dBd gain, lower noise floor, excellent for weak-signal work.'},
-  'long_wire':   {label:'Long Wire (>20 m)',        gain:2.5,  dir:false, bw:360, desc:'Broadband, easy to deploy with ATU. High angle radiation.'},
-  'vertical_qw': {label:'Vertical ¼ Wave',         gain:-2.5, dir:false, bw:360, desc:'Low takeoff angle — good for DX on 20m+, poor NVIS on 160–40m.'},
-  'gp_vertical': {label:'Ground Plane Vertical',   gain:-1.5, dir:false, bw:360, desc:'Omni at low angle. Requires good ground radials for best performance.'},
-  'mag_loop':    {label:'Magnetic Loop (Small)',    gain:-3.5, dir:false, bw:360, desc:'Compact, very low noise. Narrow bandwidth, requires careful tuning.'},
-  'yagi_3el':    {label:'Yagi 3-element',           gain:6.0,  dir:true,  bw:68,  desc:'6 dBd gain, fixed directional. Excellent for DX, focused beam.'},
-  'yagi_5el':    {label:'Yagi 5-element',           gain:8.5,  dir:true,  bw:54,  desc:'8.5 dBd high gain, narrow beam, top performance for DX stations.'},
-  'log_periodic':{label:'Log Periodic (LPDA)',      gain:5.0,  dir:true,  bw:80,  desc:'Wideband directional, ~5 dBd across multiple bands. Versatile.'}
-};
-
-const CONDS = [
-  {id:'disturbed',label:'Disturbed',  desc:'K≥5 · Solar storm',         factor:0.28, color:'#ff4444'},
-  {id:'poor',     label:'Poor',       desc:'K=3–4 · High absorption',    factor:0.52, color:'#ff9900'},
-  {id:'average',  label:'Average',    desc:'K=1–2 · Normal conditions',  factor:1.00, color:'#ffe033'},
-  {id:'good',     label:'Good',       desc:'K=0–1 · Quiet ionosphere',   factor:1.45, color:'#6bcb77'},
-  {id:'excellent',label:'Excellent',  desc:'K=0 · Enhanced propagation', factor:2.00, color:'#00ffc3'}
-];
-
-const PWR_PRESETS = [1,5,10,25,100,400,1000,1500];
-const RING_C = ['#00e5ff','#ffe033','#ff9900','#ff4444'];
-const RING_F = [.07,.10,.13,.18];
-const MAX_KM = 18000;
-
-// ══════════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════════
-
-const S = {
-  lat:5.6037, lon:-0.1870, locName:'Accra, Ghana',
-  band:'40m', power:100, cond:'average', time:'day',
-  ant:'inverted_v', bearing:0, clickMode:false
-};
-
-// ══════════════════════════════════════════════
-// MAP
-// ══════════════════════════════════════════════
-
-const map = L.map('map',{center:[S.lat,S.lon],zoom:5});
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
-  attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19
-}).addTo(map);
-
-const extraCSS = document.createElement('style');
-extraCSS.textContent=`
-@keyframes ripple{0%{transform:translate(-50%,-50%) scale(.35);opacity:.9;}100%{transform:translate(-50%,-50%) scale(2.8);opacity:0;}}
-.ltt{background:rgba(6,12,14,.95)!important;border:1px solid #1a3a42!important;color:#b8d8d2!important;
-  font-family:'Share Tech Mono',monospace!important;font-size:11px!important;padding:5px 10px!important;
-  border-radius:0!important;white-space:nowrap!important;}
-.ltt::before{display:none!important;}
-`;
-document.head.appendChild(extraCSS);
-
-let cvLayers=[], txMk=null;
-
-// ══════════════════════════════════════════════
-// COMPUTATION
-// ══════════════════════════════════════════════
-
-function calcRangeKm(powerW){
-  const b  = BANDS[S.band];
-  const a  = ANTS[S.ant];
-  const c  = CONDS.find(x=>x.id===S.cond);
-  const base = b.baseKm[S.time];
-  const gLin = Math.pow(10, a.gain/20);
-  const pFac = Math.sqrt(powerW/100);
-  return Math.min(MAX_KM, Math.round(base * gLin * pFac * c.factor));
-}
-
-function ringPowers(){
-  return [S.power, S.power/10, S.power/100, S.power/1000]
-    .filter(p=>p>=0.08);
-}
-
-// Sector polygon for directional antennas
-function sectorPts(lat,lon,km,bearDeg,bwDeg){
-  const R=6371, d=km/R;
-  const sa=(bearDeg-bwDeg/2)*Math.PI/180, ea=(bearDeg+bwDeg/2)*Math.PI/180;
-  const steps=60, dA=(ea-sa)/steps;
-  const φ1=lat*Math.PI/180, λ1=lon*Math.PI/180;
-  const pts=[[lat,lon]];
-  for(let i=0;i<=steps;i++){
-    const θ=sa+i*dA;
-    const φ2=Math.asin(Math.sin(φ1)*Math.cos(d)+Math.cos(φ1)*Math.sin(d)*Math.cos(θ));
-    const λ2=λ1+Math.atan2(Math.sin(θ)*Math.sin(d)*Math.cos(φ1),Math.cos(d)-Math.sin(φ1)*Math.sin(φ2));
-    pts.push([φ2*180/Math.PI,λ2*180/Math.PI]);
-  }
-  pts.push([lat,lon]);
-  return pts;
-}
-
-function rebuildLayers(){
-  cvLayers.forEach(l=>map.removeLayer(l));
-  cvLayers=[];
-  if(txMk){map.removeLayer(txMk);txMk=null;}
-
-  const ant=ANTS[S.ant];
-  const powers=ringPowers();
-  const band=BANDS[S.band];
-
-  powers.forEach((p,i)=>{
-    const km=calcRangeKm(p);
-    const c=RING_C[i], fi=RING_F[i];
-    let layer, backCircle;
-
-    if(ant.dir){
-      const pts=sectorPts(S.lat,S.lon,km,S.bearing,ant.bw);
-      layer=L.polygon(pts,{color:c,fillColor:c,weight:2,opacity:.85,fillOpacity:.14,dashArray:'0'});
-      const backKm=km*0.15;
-      backCircle=L.circle([S.lat,S.lon],{radius:backKm*1000,color:c,fillColor:c,weight:1,opacity:.3,fillOpacity:.04,dashArray:'4 4'});
-      backCircle.addTo(map);
-      cvLayers.push(backCircle);
-    } else {
-      layer=L.circle([S.lat,S.lon],{radius:km*1000,color:c,fillColor:c,weight:2,opacity:.85,fillOpacity:fi,dashArray:'8 5'});
-    }
-    layer.bindTooltip(`${fmtPwr(p)} · ~${km.toLocaleString()} km`,{className:'ltt',direction:'top'});
-    layer.addTo(map);
-    cvLayers.push(layer);
-  });
-
-  // TX Marker
-  const ico=L.divIcon({className:'',iconSize:[0,0],iconAnchor:[0,0],html:`
-    <div style="position:relative;width:0;height:0;">
-      <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out infinite;"></div>
-      <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out .75s infinite;"></div>
-      <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out 1.5s infinite;"></div>
-      <div style="position:absolute;transform:translate(-50%,-50%);width:10px;height:10px;background:#00ffc3;border-radius:50%;box-shadow:0 0 10px #00ffc3,0 0 22px #00ffc388;"></div>
-      <div style="position:absolute;left:7px;top:5px;font-family:'Share Tech Mono',monospace;font-size:9px;color:#00ffc3;white-space:nowrap;text-shadow:0 0 6px #00ffc3;letter-spacing:.05em;">TX</div>
-    </div>`
-  });
-
-  txMk=L.marker([S.lat,S.lon],{icon:ico,zIndexOffset:1000}).addTo(map)
-    .bindPopup(`<div style="font-family:'Share Tech Mono',monospace;font-size:11px;padding:5px 2px;line-height:1.9;">
-      <b style="color:#00ffc3">TX — ${esc(S.locName)}</b><br/>
-      ${fmtCoord(S.lat,'NS')} &nbsp; ${fmtCoord(S.lon,'EW')}<br/>
-      Band: ${band.label} &nbsp;·&nbsp; ${band.freq}<br/>
-      Antenna: ${ANTS[S.ant].label}<br/>
-      Max Power: ${fmtPwr(S.power)}<br/>
-      Conditions: ${CONDS.find(c=>c.id===S.cond).label} · ${S.time==='day'?'☀ Day':'☾ Night'}
-    </div>`);
-
-  updateCovSummary();
-}
-
-function autoFit(){
-  const ps=ringPowers();
-  if(!ps.length)return;
-  const km=calcRangeKm(ps[0]);
-  const circle=L.circle([S.lat,S.lon],{radius:km*1000});
-  const b=circle.getBounds().pad(0.08);
-  map.fitBounds(b,{maxZoom:9,animate:true});
-}
-
-// ══════════════════════════════════════════════
-// UI BUILDERS
-// ══════════════════════════════════════════════
-
-function buildBands(){
-  const g=document.getElementById('bandGrid');
-  g.innerHTML='';
-  Object.entries(BANDS).forEach(([k,b])=>{
-    const btn=document.createElement('button');
-    btn.className='bb'+(k===S.band?' on':'');
-    btn.textContent=b.label;
-    if(k===S.band){btn.style.borderColor=b.color;btn.style.color=b.color;btn.style.background=`${b.color}18`;}
-    btn.onclick=()=>{S.band=k;buildBands();updateBandInfo();rebuildLayers();autoFit();};
-    g.appendChild(btn);
-  });
-  updateBandInfo();
-}
-
-function updateBandInfo(){
-  const b=BANDS[S.band];
-  document.getElementById('bandInfo').innerHTML=
-    `<span style="color:${b.color}">${b.label}</span> · ${b.freq}<br/>Mode: <span style="color:var(--text)">${b.propMode}</span><br/>`+
-    `Day range @100W: ~${b.baseKm.day.toLocaleString()} km &nbsp;·&nbsp; Night: ~${b.baseKm.night.toLocaleString()} km`;
-}
-
-function buildConds(){
-  const c=document.getElementById('condList');
-  c.innerHTML='';
-  CONDS.forEach(x=>{
-    const d=document.createElement('div');
-    d.className='cond-btn'+(x.id===S.cond?' on':'');
-    d.innerHTML=`<span class="cdot" style="background:${x.color}"></span>
-      <span>${x.label}</span><span class="cond-desc">${x.desc}</span>`;
-    d.onclick=()=>{S.cond=x.id;buildConds();updateCondHint();rebuildLayers();};
-    c.appendChild(d);
-  });
-  updateCondHint();
-}
-
-function updateCondHint(){
-  const c=CONDS.find(x=>x.id===S.cond);
-  const t=S.time;
-  document.getElementById('condHint').innerHTML=
-    `Factor: <span style="color:var(--text)">×${c.factor}</span> relative to average conditions<br/>`+
-    (t==='night'?'Night: 160–40m ranges <span style="color:var(--accent2)">boosted</span>, higher bands reduced':
-                 'Day: D-layer absorbs 160–80m; higher bands open for DX');
-}
-
-function buildAnts(){
-  const s=document.getElementById('antSel');
-  s.innerHTML='';
-  Object.entries(ANTS).forEach(([k,a])=>{
-    const o=document.createElement('option');
-    o.value=k;o.textContent=a.label;
-    if(k===S.ant)o.selected=true;
-    s.appendChild(o);
-  });
-  updateAntInfo();
-}
-
-function updateAntInfo(){
-  const a=ANTS[S.ant];
-  const gs=a.gain>=0?`+${a.gain}`:String(a.gain);
-  document.getElementById('antInfo').innerHTML=
-    `<span class="ant-gain">${gs} dBd</span> &nbsp;·&nbsp; ${a.desc}`;
-  document.getElementById('bearWrap').style.display=a.dir?'block':'none';
-}
-
-function buildPwrPresets(){
-  const c=document.getElementById('pwrPresets');
-  c.innerHTML='';
-  PWR_PRESETS.forEach(p=>{
-    const btn=document.createElement('button');
-    btn.className='btn btn-xs';
-    btn.textContent=p>=1000?`${p/1000}kW`:`${p}W`;
-    btn.onclick=()=>setPwr(p);
-    c.appendChild(btn);
-  });
-}
-
-function updateCovSummary(){
-  const c=document.getElementById('covList');
-  c.innerHTML='';
-  ringPowers().forEach((p,i)=>{
-    const km=calcRangeKm(p);
-    const r=document.createElement('div');
-    r.className='cov-row';
-    r.innerHTML=`<span class="cv-dot" style="background:${RING_C[i]}"></span>
-      <span class="cv-pwr">${fmtPwr(p)}</span>
-      <span class="cv-km">~${km.toLocaleString()} km</span>
-      <span class="cv-geo">${geoTag(km)}</span>`;
-    c.appendChild(r);
-  });
-}
-
-function geoTag(km){
-  if(km<80)  return'Local';
-  if(km<400) return'Regional';
-  if(km<1500)return'W.Africa';
-  if(km<4000)return'Africa-wide';
-  if(km<9000)return'Inter-continental';
-  return'Global';
-}
-
-// ══════════════════════════════════════════════
-// CONTROL HANDLERS
-// ══════════════════════════════════════════════
-
-function s2p(v){return parseFloat(Math.pow(10,v/100*5-1).toPrecision(3));}
-function p2s(w){return Math.round((Math.log10(Math.max(0.1,w))+1)/5*100);}
-
-function setPwr(w){
-  w=Math.max(0.1,Math.min(50000,parseFloat(w)||100));
-  S.power=w;
-  const disp=w>=1000?(w/1000).toFixed(w>=10000?0:1)+'k':w%1===0?w:w.toFixed(w<10?2:1);
-  document.getElementById('pwrBig').textContent=disp;
-  document.getElementById('pwrIn').value=w;
-  document.getElementById('pwrSlider').value=p2s(w);
-  rebuildLayers();
-}
-function setPwrSlider(v){setPwr(s2p(v));}
-
-function setTime(t){
-  S.time=t;
-  document.getElementById('btnDay').classList.toggle('on',t==='day');
-  document.getElementById('btnNight').classList.toggle('on',t==='night');
-  updateCondHint();rebuildLayers();
-}
-
-function setAnt(k){S.ant=k;updateAntInfo();rebuildLayers();}
-
-function setBear(v){
-  S.bearing=parseInt(v);
-  document.getElementById('bearVal').textContent=S.bearing+'°';
-  document.getElementById('bearDir').textContent=compassDir(S.bearing);
-  rebuildLayers();
-}
-
-function compassDir(d){
-  return['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d/22.5)%16];
-}
-
-// Click-to-set
-function toggleClickMode(){
-  S.clickMode=!S.clickMode;
-  document.getElementById('mapArea').classList.toggle('click-mode',S.clickMode);
-  document.getElementById('clickBtn').classList.toggle('on',S.clickMode);
-  document.getElementById('clickBtn').textContent=S.clickMode?'✕ CANCEL':'📍 CLICK MAP TO SET TX';
-}
-map.on('click',function(e){
-  if(!S.clickMode)return;
-  S.lat=parseFloat(e.latlng.lat.toFixed(4));
-  S.lon=parseFloat(e.latlng.lng.toFixed(4));
-  S.locName=`${Math.abs(S.lat).toFixed(4)}°${S.lat>=0?'N':'S'}, ${Math.abs(S.lon).toFixed(4)}°${S.lon>=0?'E':'W'}`;
-  updateLocDisp();
-  toggleClickMode();
-  revGeo(S.lat,S.lon);
-  rebuildLayers();
-});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.clickMode)toggleClickMode();});
-
-function updateLocDisp(){
-  document.getElementById('latIn').value=S.lat;
-  document.getElementById('lonIn').value=S.lon;
-  document.getElementById('locName').textContent=S.locName;
-  document.getElementById('locCoords').textContent=
-    `${Math.abs(S.lat).toFixed(4)}°${S.lat>=0?'N':'S'}  ${Math.abs(S.lon).toFixed(4)}°${S.lon>=0?'E':'W'}`;
-}
-
-// Manual lat/lon entry
-['latIn','lonIn'].forEach(id=>{
-  document.getElementById(id).addEventListener('change',()=>{
-    const la=parseFloat(document.getElementById('latIn').value);
-    const lo=parseFloat(document.getElementById('lonIn').value);
-    if(!isNaN(la)&&!isNaN(lo)){
-      S.lat=la;S.lon=lo;S.locName='Custom Location';
-      updateLocDisp();rebuildLayers();map.panTo([la,lo]);
-    }
-  });
-});
-
-// Nominatim search
-async function searchLoc(){
-  const q=document.getElementById('locSearch').value.trim();
-  if(!q)return;
-  try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}});
-    const d=await r.json();
-    if(d.length){
-      S.lat=parseFloat(parseFloat(d[0].lat).toFixed(4));
-      S.lon=parseFloat(parseFloat(d[0].lon).toFixed(4));
-      S.locName=d[0].display_name.split(',').slice(0,3).join(',').trim();
-      updateLocDisp();rebuildLayers();
-      map.setView([S.lat,S.lon],Math.max(map.getZoom(),5));
-    } else { alert('Location not found — try a different search term.'); }
-  } catch(e){ alert('Search unavailable. Enter coordinates manually.'); }
-}
-document.getElementById('locSearch').addEventListener('keydown',e=>{if(e.key==='Enter')searchLoc();});
-
-async function revGeo(lat,lon){
-  try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,{headers:{'Accept-Language':'en'}});
-    const d=await r.json();
-    if(d.display_name){
-      S.locName=d.display_name.split(',').slice(0,3).join(',').trim();
-      document.getElementById('locName').textContent=S.locName;
-      rebuildLayers();
-    }
-  }catch(_){}
-}
-
-// Section collapse
-function toggleSec(hdr){
-  hdr.classList.toggle('collapsed');
-  hdr.nextElementSibling.classList.toggle('hidden');
-}
-
-// ══════════════════════════════════════════════
-// UTILS
-// ══════════════════════════════════════════════
-
-function fmtPwr(w){
-  if(w>=1000)return`${(w/1000).toFixed(w>=10000?0:1)} kW`;
-  if(w>=1)   return`${w%1===0?w:w.toFixed(w<10?2:1)} W`;
-  return`${Math.round(w*1000)} mW`;
-}
-function fmtCoord(v,ns_ew){
-  const d=ns_ew==='NS'?'NS':'EW';
-  return`${Math.abs(v).toFixed(4)}°${v>=0?d[0]:d[1]}`;
-}
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-// ══════════════════════════════════════════════
-// VHF / UHF LAYERS
-// ══════════════════════════════════════════════
-
-// ══════════════════════════════════════════════
-// VHF / UHF TERRAIN ENGINE
-// ══════════════════════════════════════════════
-
-const NUM_RADIALS = 36;
-const NUM_SAMPLES = 22;
-const EFF_EARTH_R  = 8495; // km  (4/3 × 6371 — standard atmosphere k-factor)
-
-// Radio horizon (one-way) km for height h metres
-function rHorizon(h){ return 4.12 * Math.sqrt(Math.max(0, h)); }
-// Full horizon TX (h1) + RX (h2=2m default)
-function fullHorizon(h1, h2=2){ return rHorizon(h1) + rHorizon(h2); }
-// Earth bulge correction in metres at distance dKm
-function earthBulge(dKm){ return 1000 * dKm * dKm / (2 * EFF_EARTH_R); }
-
-// Destination point from lat/lon, bearing (deg), distance (km)
-function destPt(lat, lon, brg, dKm){
-  const R=6371, d=dKm/R, θ=brg*Math.PI/180;
-  const φ1=lat*Math.PI/180, λ1=lon*Math.PI/180;
-  const φ2=Math.asin(Math.sin(φ1)*Math.cos(d)+Math.cos(φ1)*Math.sin(d)*Math.cos(θ));
-  const λ2=λ1+Math.atan2(Math.sin(θ)*Math.sin(d)*Math.cos(φ1),Math.cos(d)-Math.sin(φ1)*Math.sin(φ2));
-  return [φ2*180/Math.PI, λ2*180/Math.PI];
-}
-
-// LOS range along one radial: returns furthest visible km
-// txH = TX total height (terrain elev + antenna AGL) in metres
-// profile = [{d:km, elev:m}, ...] sorted by ascending distance
-function losRange(txH, profile){
-  let maxClear = 0;
-  for(let i=0; i<profile.length; i++){
-    const {d:D, elev:rxE} = profile[i];
-    if(D <= 0) continue;
-    const rxTotalH = rxE + 2;   // assume 2m RX AGL
-    let blocked = false;
-    for(let j=0; j<i; j++){
-      const {d, elev} = profile[j];
-      const apparentH = elev + earthBulge(d);  // terrain + earth bulge
-      const losLineH  = txH + (rxTotalH - txH) * (d / D);  // LOS line height at d
-      if(apparentH > losLineH + 0.5){  // 0.5m clearance margin
-        blocked = true;
-        break;
-      }
-    }
-    if(!blocked) maxClear = D;
-  }
-  return maxClear;
-}
-
-// State
-const VU_ALT = {vhf:1.5, uhf:1.5};
-
-// HT presets that get a special "on" highlight
-const HT_HEIGHT = 1.5;
-
-function setAlt(band, val){
-  const h = parseFloat(val);
-  VU_ALT[band] = h;
-  const display = h === Math.floor(h) ? h.toString() : h.toFixed(1);
-  document.getElementById(band+'-altBig').textContent = display;
-  document.getElementById(band+'-altSlider').value   = h;
-
-  // Highlight HT button when at 1.5m, clear otherwise
-  const htBtn = document.getElementById(band+'-ht-btn');
-  if(htBtn) htBtn.classList.toggle('on', h === HT_HEIGHT);
-
-  const horizon = fullHorizon(h);
-  const htLabel = h === HT_HEIGHT ? '📻 HT at mouth level — ' : '';
-  const r10 = vuPowersComputed(band).p10w;
-  document.getElementById(band+'-horizonInfo').textContent =
-    `${htLabel}Hata ${VU_ENV[band]}: ~${vuPowersComputed(band).p1w.toFixed(1)} km (1W) · 10W: ~${r10.toFixed(1)} km · geo horizon ~${horizon.toFixed(1)} km at ${display}m AGL`;
-
-  // Update range labels using Hata engine (env+altitude aware)
-  updateRangeLabels(band);
-
-  // Rebuild polygons from cache instantly if available
-  if(VU_CACHE[band]) drawVUPolys(band);
-}
-const VU_CACHE  = {vhf:null, uhf:null};   // cached {terrainLOS[], txElev, txLat, txLon}
-const VU_POLYS  = {};                       // L.polygon / L.circle keyed by layer id
-const vuVisible = {};
-let   activeMode = 'hf';
-let   topoTileLayer = null;
-
-// ══════════════════════════════════════════════
-// HATA PROPAGATION ENGINE
-// Okumura-Hata (1980) / COST-231 — ITU-R P.529
-// Valid: f 150–1500 MHz, hB 1.5–200 m, d 0.1–100 km
-// RX sensitivity: −117 dBm (NFM, decent HT)
-// TX antenna: rubber duck 0 dBi; RX whip: 2 dBi
-// ══════════════════════════════════════════════
-
-const HATA_RX_SENS = -117; // dBm
-
-// Path loss functions (return dB)
-function _hata_CH(f, hM) {
-  return (f <= 200)
-    ? 8.29  * Math.pow(Math.log10(1.54  * hM), 2) - 1.1   // large city, VHF
-    : 3.2   * Math.pow(Math.log10(11.75 * hM), 2) - 4.97; // large city, UHF+
-}
-function _hata_LU(f, hB, hM, d) {
-  // Hata urban (large city)
-  const hBc = Math.max(hB, 1.5);
-  const dc  = Math.max(d, 0.1);
-  return 69.55 + 26.16*Math.log10(f) - 13.82*Math.log10(hBc) - _hata_CH(f,hM)
-       + (44.9 - 6.55*Math.log10(hBc)) * Math.log10(dc);
-}
-function hataLoss(env, f, hB, hM, d) {
-  const LU = _hata_LU(f, hB, hM, d);
-  if (env === 'ultra_urban') return LU + 6.0; // +6 dB dense highrise penalty (Erceg/empirical)
-  if (env === 'urban')       return LU;
-  if (env === 'suburban')    return LU - 2*Math.pow(Math.log10(f/28),2) - 5.4;
-  if (env === 'rural')       return LU - 4.78*Math.pow(Math.log10(f),2) + 18.33*Math.log10(f) - 40.94 + 8;
-  // open / LOS
-  return LU - 4.78*Math.pow(Math.log10(f),2) + 18.33*Math.log10(f) - 40.94;
-}
-
-// Solve max range for given tx power, env, freq, antenna height
-function hataMaxRange(env, freqMHz, hB_m, txW, maxD=200) {
-  const txdBm  = 10 * Math.log10(txW * 1000);
-  const budget = txdBm + 0 + 2 - HATA_RX_SENS; // 0 dBi TX, 2 dBi RX
-  const hM = 1.5; // receiver at 1.5 m (HT)
-  let lo = 0.05, hi = maxD;
-  for (let i = 0; i < 80; i++) {
-    const mid = (lo + hi) / 2;
-    if (hataLoss(env, freqMHz, hB_m, hM, Math.max(mid, 0.1)) < budget) lo = mid;
-    else hi = mid;
-  }
-  return Math.min((lo+hi)/2, maxD);
-}
-
-// ══════════════════════════════════════════════
-// ENVIRONMENT DENSITY
-// Based on Okumura-Hata (1980) + COST-231 dB corrections
-// Ultra-Urban: +6 dB over Hata large-city (dense highrise, street canyons)
-// Urban:       Hata large-city baseline
-// Suburban:    Hata suburban formula (−9 to −12 dB vs urban)
-// Rural:       Hata open + moderate clutter (+8 dB vs pure open)
-// Open/LOS:    Hata open-area formula (near free-space over flat terrain)
-// ══════════════════════════════════════════════
-
-const ENV_TYPES = [
+// ════════════════════════════════════════════════════════════════
+//  SATELLITE DATABASE
+//  inverting : true  → dn = magic − up   (magic = up_seed + dn_seed, constant)
+//  inverting : false → dn = up + offset  (offset = dn_seed − up_seed, constant)
+//  seedDefault: null → center of passband used automatically
+// ════════════════════════════════════════════════════════════════
+const SAT_DEFS = [
   {
-    id: 'ultra_urban', label: 'Ultra-Urban', short: 'Ultra\nUrban',
-    desc: 'Dense highrise CBD, skyscraper canyons. +6 dB over Hata urban. Severe multipath & shadowing.',
-    example: 'Accra CBD · Victoria Island Lagos · Nairobi CBD · Sandton Johannesburg',
-    color: '#ff4444'
+    id: 'rs44',
+    name: 'RS-44',
+    aka: 'DOSAAF-85',
+    mode: 'Mode V/U',
+    inverting: true,
+    bw: '60 kHz',
+    upLo: 145.935, upHi: 145.995,   // LSB uplink passband
+    dnLo: 435.610, dnHi: 435.670,   // USB downlink passband
+    upMode: 'LSB', dnMode: 'USB',
+    seedDefault: { up: 145.964996, dn: 435.637864 }
   },
   {
-    id: 'urban', label: 'Urban', short: 'Urban',
-    desc: 'Continuous 2–8 storey built-up area. Hata large-city baseline (empirical Tokyo measurements).',
-    example: 'Airport Residential Accra · Kumasi city · Ibadan · Dar es Salaam centre',
-    color: '#ff9900'
+    id: 'ao7',
+    name: 'AO-7',
+    aka: 'AMSAT-OSCAR 7',
+    mode: 'Mode B',
+    inverting: true,
+    bw: '50 kHz',
+    upLo: 432.125, upHi: 432.175,
+    dnLo: 145.925, dnHi: 145.975,
+    upMode: 'LSB', dnMode: 'USB',
+    seedDefault: { up: 432.147450, dn: 145.950000 }
   },
   {
-    id: 'suburban', label: 'Suburban', short: 'Suburban',
-    desc: 'Detached housing, shopping centres, light industry. Hata suburban: L_SU = L_U − 2(log f/28)² − 5.4',
-    example: 'East Legon · Spintex Rd · Tema residential · Abeokuta suburbs',
-    color: '#ffe033'
+    id: 'jo97',
+    name: 'JO-97',
+    aka: 'JY1Sat',
+    mode: 'Mode U/V',
+    inverting: true,
+    bw: '20 kHz',
+    upLo: 435.100, upHi: 435.120,
+    dnLo: 145.855, dnHi: 145.875,
+    upMode: 'LSB', dnMode: 'USB',
+    seedDefault: { up: 435.107936, dn: 145.865200 }
   },
   {
-    id: 'rural', label: 'Rural', short: 'Rural',
-    desc: 'Villages, scattered buildings, farmland, tree cover. Hata open + 8 dB scatter/tree correction.',
-    example: 'Volta Region villages · Brong-Ahafo farmland · Northern Ghana savanna edge',
-    color: '#6bcb77'
+    id: 'ao73',
+    name: 'AO-73',
+    aka: 'FUNcube-1',
+    mode: 'Mode U/V',
+    inverting: true,
+    bw: '20 kHz',
+    // Uplink: 435.150–435.130 LSB (high→low), Downlink: 145.950–145.970 USB
+    upLo: 435.130, upHi: 435.150,
+    dnLo: 145.950, dnHi: 145.970,
+    upMode: 'LSB', dnMode: 'USB',
+    seedDefault: { up: 435.144004, dn: 145.960000 }
   },
   {
-    id: 'open', label: 'Open/LOS', short: 'Open\nLOS',
-    desc: 'Flat open terrain. Hata open-area formula. Near free-space (savanna, sea, desert, airfield).',
-    example: 'Gulf of Guinea · Northern savanna plains · Kalahari · open floodplain',
-    color: '#00ffc3'
+    id: 'fo29',
+    name: 'FO-29',
+    aka: 'JAS-2 / Fuji-OSCAR-29',
+    mode: 'Mode V/U (J)',
+    inverting: true,
+    bw: '100 kHz',
+    upLo: 145.900, upHi: 146.000,
+    dnLo: 435.800, dnHi: 435.900,
+    upMode: 'LSB', dnMode: 'USB',
+    seedDefault: null   // no seed provided → center: up=145.950, dn=435.850
   }
 ];
 
-// Active environment per band (default: ultra_urban)
-const VU_ENV = { vhf: 'ultra_urban', uhf: 'ultra_urban' };
+const STEP = 0.005; // 5 kHz
+const LS_KEY = 'linsat_seeds_v1'; // localStorage key
 
-function buildEnvGrid(band){
-  const grid = document.getElementById(band+'-envGrid');
-  if(!grid) return;
-  grid.innerHTML = '';
-  ENV_TYPES.forEach(e => {
-    const btn = document.createElement('button');
-    btn.className = 'env-btn' + (e.id === VU_ENV[band] ? ' on' : '');
-    btn.innerHTML = e.short.replace('\n','<br>');
-    btn.title = e.desc;
-    if (e.id === VU_ENV[band]) { btn.style.borderColor = e.color; btn.style.color = e.color; }
-    btn.onclick = () => setEnv(band, e.id);
-    grid.appendChild(btn);
-  });
-  updateEnvInfo(band);
+// ── Number utilities ─────────────────────────────────────────────
+const R6    = f => Math.round(f * 1e6) / 1e6;
+const R3    = f => Math.round(f * 1e3) / 1e3;
+const fmt   = f => f.toFixed(6);
+const f3    = f => f.toFixed(3);
+const clamp = (v,lo,hi) => Math.min(Math.max(v,lo),hi);
+
+function centerOf(sat) {
+  return { up: R6((sat.upLo + sat.upHi) / 2), dn: R6((sat.dnLo + sat.dnHi) / 2) };
 }
 
-function updateEnvInfo(band){
-  const e   = ENV_TYPES.find(x => x.id === VU_ENV[band]);
-  const inf = document.getElementById(band+'-envInfo');
-  if(!e || !inf) return;
-  const freqMHz = band==='vhf' ? 145 : 435;
-  const altM    = VU_ALT[band];
-  const r10     = hataMaxRange(e.id, freqMHz, altM, 10);
-  const r1      = hataMaxRange(e.id, freqMHz, altM, 1);
-  const dOpen   = hataLoss('open',   freqMHz, Math.max(altM,1.5), 1.5, 5);
-  const dThis   = hataLoss(e.id,     freqMHz, Math.max(altM,1.5), 1.5, 5);
-  const dbDiff  = (dThis - dOpen).toFixed(1);
-  inf.innerHTML =
-    `<strong>${e.label}</strong> · +${dbDiff} dB vs open · Hata model @${altM}m<br/>` +
-    `10W→~${r10.toFixed(1)} km &nbsp; 1W→~${r1.toFixed(1)} km<br/>` +
-    `${e.desc}<br/><span style="color:var(--accent2);font-size:.58rem;">e.g. ${e.example}</span>`;
+function fmtTS(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} `
+       + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-function setEnv(band, envId){
-  VU_ENV[band] = envId;
-  buildEnvGrid(band);
-  updateRangeLabels(band);
-  if(VU_CACHE[band]) drawVUPolys(band);
-  else showVUCircles(band);
+// ── localStorage helpers ─────────────────────────────────────────
+function lsLoad() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; }
+}
+function lsSave(store) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch(e) { console.warn('localStorage write failed', e); }
 }
 
-// Compute env-corrected, horizon-capped range for each power level
-function vuPowersComputed(band){
-  const env     = VU_ENV[band];
-  const freqMHz = band==='vhf' ? 145 : 435;
-  const altM    = VU_ALT[band];
-  const horizon = fullHorizon(altM);
-  const compute = (w) => Math.min(hataMaxRange(env, freqMHz, altM, w), horizon);
-  return { p10w: compute(10), p5w: compute(5), p1w: compute(1) };
-}
+// ── Seed state: { up, dn, ts, source, history[] } ────────────────
+// source: 'default' | 'center' | 'stored' | 'edited'
+// history: array of { up, dn, ts } (newest first, max 10)
+const seedState = {};
 
-function updateRangeLabels(band){
-  const cfg    = VU_CFG[band];
-  const altM   = VU_ALT[band];
-  const pkeys  = ['p10w','p5w','p1w'];
-  const powers = vuPowersComputed(band);
-  pkeys.forEach((pk,i) => {
-    const el = document.getElementById(cfg.rangeIds[i]);
-    if(el) el.textContent = `Hata+terrain: ~${powers[pk].toFixed(1)} km`;
-  });
-  updateEnvInfo(band);
-}
-
-// ── VU_CFG: base range tables (open/flat terrain) ────────────
-// vuPowers(band) applies Hata engine at call time
-function vuPowers(band){
-  return vuPowersComputed(band);
-}
-
-const VU_CFG = {
-  vhf:{
-    rawPowers:{p10w:22, p5w:19, p1w:13},
-    powers:{p10w:22, p5w:19, p1w:13},
-    colors:{p10w:'#00b341', p5w:'#39d353', p1w:'#90ff57'},
-    fop:   {p10w:.16,       p5w:.20,       p1w:.26},
-    ckeys: ['v10w','v5w','v1w'],
-    rangeIds: ['vhf-r10w','vhf-r5w','vhf-r1w'],
-  },
-  uhf:{
-    rawPowers:{p10w:13, p5w:11, p1w:8},
-    powers:{p10w:13, p5w:11, p1w:8},
-    colors:{p10w:'#aa33ff', p5w:'#d966ff', p1w:'#ff9eff'},
-    fop:   {p10w:.18,       p5w:.22,       p1w:.28},
-    ckeys: ['u10w','u5w','u1w'],
-    rangeIds: ['uhf-r10w','uhf-r5w','uhf-r1w'],
-  }
-};
-
-// ── Altitude slider ──────────────────────────────────────────
-// setAlt defined above with VU_ALT
-
-// ── Elevation API fetch with batching ───────────────────────
-async function fetchElevBatch(locs, onProgress){
-  const BATCH=90;
-  const results = new Array(locs.length).fill(0);
-  const total   = Math.ceil(locs.length / BATCH);
-  for(let i=0; i<locs.length; i+=BATCH){
-    const slice = locs.slice(i, i+BATCH);
-    const q = slice.map(([la,lo])=>`${la.toFixed(5)},${lo.toFixed(5)}`).join('|');
-    try{
-      const r = await fetch(`https://api.opentopodata.org/v1/srtm90m?locations=${q}`);
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      const data = await r.json();
-      if(data.results) data.results.forEach((res,j)=>{ results[i+j] = res.elevation||0; });
-    } catch(e){ console.warn('Elevation batch error:', e); }
-    if(onProgress) onProgress(Math.floor(i/BATCH)+1, total);
-    if(i+BATCH < locs.length) await new Promise(r=>setTimeout(r, 1150));
-  }
-  return results;
-}
-
-// ── Main compute function ────────────────────────────────────
-async function computeTerrainCoverage(band){
-  const altM   = VU_ALT[band];
-  const cfg    = VU_CFG[band];
-  const statusEl = document.getElementById(band+'-status');
-  const btnEl    = document.getElementById(band+'-computeBtn');
-  btnEl.disabled = true;
-  statusEl.style.display = 'block';
-  statusEl.innerHTML = '⏳ Fetching TX site elevation…';
-
-  const txLat=S.lat, txLon=S.lon;
-  let txElev=0;
-  try{
-    await new Promise(r=>setTimeout(r,300));
-    const r=await fetch(`https://api.opentopodata.org/v1/srtm90m?locations=${txLat.toFixed(5)},${txLon.toFixed(5)}`);
-    const d=await r.json();
-    txElev = Math.max(0, d.results[0].elevation || 0);
-    await new Promise(r=>setTimeout(r,1150));
-  } catch(e){ console.warn('TX elevation fetch failed:', e); }
-
-  const txTotalH = txElev + altM;
-  const horizon  = fullHorizon(altM);
-  const maxRange = Math.min(horizon, vuPowersComputed(band).p10w);
-
-  // Build all sample point locations
-  const bearings = Array.from({length:NUM_RADIALS}, (_,i) => i*(360/NUM_RADIALS));
-  const allLocs=[], locMap=[];
-  bearings.forEach((brg,ri)=>{
-    for(let si=0; si<NUM_SAMPLES; si++){
-      const dKm = (si+1) * maxRange / NUM_SAMPLES;
-      allLocs.push(destPt(txLat, txLon, brg, dKm));
-      locMap.push({ri, dKm});
-    }
-  });
-
-  const total = Math.ceil(allLocs.length/90);
-  statusEl.innerHTML = `⛰ Fetching SRTM elevations — 0 / ${total} batches…`;
-
-  const elevs = await fetchElevBatch(allLocs, (done,tot)=>{
-    statusEl.innerHTML = `⛰ Fetching SRTM elevations — ${done} / ${tot} batches…`;
-  });
-
-  statusEl.innerHTML = '📐 Computing line-of-sight for each radial…';
-  await new Promise(r=>setTimeout(r,50)); // let DOM update
-
-  // Build per-radial profiles
-  const profiles = Array.from({length:NUM_RADIALS}, ()=>[]);
-  locMap.forEach(({ri,dKm},idx)=>{
-    profiles[ri].push({d:dKm, elev:Math.max(0, elevs[idx])});
-  });
-
-  // LOS range per radial
-  const terrainLOS = profiles.map(prof => losRange(txTotalH, prof));
-
-  // Cache result
-  VU_CACHE[band] = {terrainLOS, txElev, txLat, txLon};
-
-  // Update horizon info with actual TX elevation
-  document.getElementById(band+'-horizonInfo').textContent =
-    `TX terrain: ${Math.round(txElev)}m · Ant: ${altM}m AGL → total ${Math.round(txTotalH)}m · Hata ${VU_ENV[band]} 10W: ~${vuPowersComputed(band).p10w.toFixed(1)} km`;
-
-  // Draw polygons
-  drawVUPolys(band);
-
-  statusEl.innerHTML = `✅ Done — ${NUM_RADIALS} radials × ${NUM_SAMPLES} samples (SRTM 90m). Adjust altitude slider to update instantly.`;
-  btnEl.disabled = false;
-}
-
-// ── Draw (or redraw) VU polygons from cached LOS data ────────
-function drawVUPolys(band){
-  const cache = VU_CACHE[band];
-  if(!cache) return;
-  const {terrainLOS, txLat, txLon} = cache;
-  const altM   = VU_ALT[band];
-  const horizon= fullHorizon(altM);
-  const cfg    = VU_CFG[band];
-  const bearings = Array.from({length:NUM_RADIALS}, (_,i)=>i*(360/NUM_RADIALS));
-  const pkeys  = ['p10w','p5w','p1w'];
-
-  // Remove existing layers
-  cfg.ckeys.forEach(ck=>{
-    if(VU_POLYS[ck])     { try{map.removeLayer(VU_POLYS[ck]);    }catch(e){} }
-    if(VU_POLYS[ck+'-h']){ try{map.removeLayer(VU_POLYS[ck+'-h']);}catch(e){} }
-  });
-
-  const envPowers = vuPowersComputed(band);
-  pkeys.forEach((pk,idx)=>{
-    const ck        = cfg.ckeys[idx];
-    const col       = cfg.colors[pk];
-    const fo        = cfg.fop[pk];
-    const pRange    = envPowers[pk];
-    const smoothMax = Math.min(pRange, horizon);
-
-    // Dashed Hata-limit circle (env+horizon capped)
-    const hCircle = L.circle([txLat,txLon],{
-      radius:smoothMax*1000, color:col, fillColor:'transparent',
-      weight:1.5, opacity:.45, fillOpacity:0, dashArray:'6 4'
-    });
-    hCircle.addTo(map);
-    VU_POLYS[ck+'-h'] = hCircle;
-
-    // Terrain-aware filled polygon
-    const pts = bearings.map((brg,ri)=>{
-      const effectiveKm = Math.min(smoothMax, Math.max(0.3, terrainLOS[ri]));
-      return destPt(txLat, txLon, brg, effectiveKm);
-    });
-    pts.push(pts[0]); // close
-
-    const poly = L.polygon(pts,{
-      color:col, fillColor:col, weight:2,
-      opacity:.85, fillOpacity:fo, smoothFactor:2
-    });
-    const pLabel = pk==='p10w'?'10 W':pk==='p5w'?'5 W':'1 W';
-    const htTag = altM === HT_HEIGHT ? ' 📻 HT' : '';
-    poly.bindTooltip(`${band.toUpperCase()} ${pLabel}${htTag} · Hata+terrain · ${VU_ENV[band]} · ant ${altM}m AGL`,{className:'ltt',direction:'top'});
-    poly.addTo(map);
-    VU_POLYS[ck] = poly;
-    const li = document.getElementById('vli-'+ck);
-    // Default: only show 1W layer
-    if(pk === 'p1w'){
-      vuVisible[ck] = true;
-      if(li) li.classList.remove('off');
+function initSeeds() {
+  const stored = lsLoad();
+  SAT_DEFS.forEach(sat => {
+    const def    = sat.seedDefault ? { ...sat.seedDefault } : centerOf(sat);
+    const src    = sat.seedDefault ? 'default' : 'center';
+    const saved  = stored[sat.id];
+    if (saved && saved.up != null && saved.dn != null) {
+      seedState[sat.id] = {
+        up: R6(saved.up), dn: R6(saved.dn),
+        ts: saved.ts || null,
+        source: 'stored',
+        history: saved.history || []
+      };
     } else {
-      // keep hCircle visible as reference ring but hide filled polygon
-      try{ map.removeLayer(poly); }catch(e){}
-      vuVisible[ck] = false;
-      if(li) li.classList.add('off');
+      seedState[sat.id] = { up: def.up, dn: def.dn, ts: null, source: src, history: [] };
     }
   });
-
-  // Update range labels via Hata engine
-  updateRangeLabels(band);
 }
 
-// ── Toggle individual VU layer ───────────────────────────────
-function vuToggle(key){
-  const li = document.getElementById('vli-'+key);
-  const poly  = VU_POLYS[key];
-  const hcirc = VU_POLYS[key+'-h'];
-  if(vuVisible[key]){
-    if(poly)  try{map.removeLayer(poly); }catch(e){}
-    if(hcirc) try{map.removeLayer(hcirc);}catch(e){}
-    vuVisible[key]=false;
-    if(li) li.classList.add('off');
+function persistSeed(id) {
+  const store = lsLoad();
+  const s = seedState[id];
+  store[id] = { up: s.up, dn: s.dn, ts: s.ts, history: s.history };
+  lsSave(store);
+}
+
+function clearPersistedSeed(id) {
+  const store = lsLoad();
+  delete store[id];
+  lsSave(store);
+}
+
+// ── Transponder formula ──────────────────────────────────────────
+function matchingUplink(sat, seed, dn) {
+  if (sat.inverting) {
+    return R6(R6(seed.up + seed.dn) - dn);
   } else {
-    if(poly)  poly.addTo(map);
-    if(hcirc) hcirc.addTo(map);
-    vuVisible[key]=true;
-    if(li) li.classList.remove('off');
+    return R6(dn - R6(seed.dn - seed.up));
   }
 }
 
-// ── Topo tile toggle ─────────────────────────────────────────
-function toggleTopoTile(band){
-  const btn = document.getElementById(band+'-topoBtn');
-  if(topoTileLayer){
-    map.removeLayer(topoTileLayer);
-    topoTileLayer = null;
-    btn.classList.remove('on');
-    btn.textContent='⛰ Show Topo Map';
-    // Sync both buttons
-    ['vhf-topoBtn','uhf-topoBtn'].forEach(id=>{
-      const b=document.getElementById(id);
-      if(b){b.classList.remove('on');b.textContent='⛰ Show Topo Map';}
-    });
+function constantLabel(sat, seed) {
+  return sat.inverting
+    ? { sym: '∑', val: R6(seed.up + seed.dn) }
+    : { sym: 'Δ', val: R6(seed.dn - seed.up) };
+}
+
+// ── Build frequency table rows ───────────────────────────────────
+function buildRows(sat, seed) {
+  const rows = [];
+  let dn = sat.dnHi;
+  while (dn >= sat.dnLo - 1e-9) {
+    const dnR    = R6(dn);
+    const up     = matchingUplink(sat, seed, dnR);
+    const offKHz = R3((dnR - seed.dn) * 1000);
+    const sign   = offKHz >= 0 ? '+' : '';
+    rows.push({ up, dn: dnR, isSeed: false, offStr: `${sign}${offKHz.toFixed(1)} kHz` });
+    dn = R6(dn - STEP);
+  }
+  let bIdx = 0, bDist = Infinity;
+  rows.forEach((r, i) => { const d = Math.abs(r.dn - seed.dn); if (d < bDist) { bDist = d; bIdx = i; } });
+  const isCtr = seedState[sat.id].source === 'center';
+  if (bDist < STEP / 2 + 1e-9) {
+    rows[bIdx].isSeed = true;
+    rows[bIdx].isCtr  = isCtr;
+    rows[bIdx].offStr = '0.0 kHz';
   } else {
-    topoTileLayer = L.tileLayer(
-      'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      {attribution:'Map data: © OpenStreetMap | Style: © OpenTopoMap (CC-BY-SA)',
-       subdomains:'abc', maxZoom:17, opacity:0.82}
-    ).addTo(map);
-    btn.classList.add('on');
-    btn.textContent='🌑 Show Dark Map';
-    ['vhf-topoBtn','uhf-topoBtn'].forEach(id=>{
-      const b=document.getElementById(id);
-      if(b){b.classList.add('on');b.textContent='🌑 Show Dark Map';}
-    });
+    rows.push({ up: seed.up, dn: seed.dn, isSeed: true, isCtr, offStr: '0.0 kHz' });
+    rows.sort((a, b) => b.dn - a.dn);
+  }
+  return rows;
+}
+
+// ── Source badge ─────────────────────────────────────────────────
+function sourceBadgeHTML(source) {
+  const map = {
+    default: ['badge-src-default', 'DEFAULT'],
+    center:  ['badge-ctr',         'CTR'],
+    stored:  ['badge-src-stored',  'STORED'],
+    edited:  ['badge-src-edited',  'EDITED'],
+  };
+  const [cls, lbl] = map[source] || ['badge', source.toUpperCase()];
+  return `<span class="badge ${cls}">${lbl}</span>`;
+}
+
+// ── History HTML ─────────────────────────────────────────────────
+function historyHTML(id) {
+  const h = seedState[id].history;
+  if (!h.length) return '<div class="hist-empty">No edit history yet</div>';
+  return h.map((e, i) => `
+    <div class="hist-row">
+      <span class="hist-idx">#${h.length - i}</span>
+      <span class="hist-ts">${fmtTS(e.ts)}</span>
+      <span class="hist-up">${fmt(e.up)}</span>
+      <span class="hist-sep">/</span>
+      <span class="hist-dn">${fmt(e.dn)}</span>
+    </div>`).join('');
+}
+
+// ── Render one card ──────────────────────────────────────────────
+function renderCard(sat, container) {
+  const s    = seedState[sat.id];
+  const seed = { up: s.up, dn: s.dn };
+  const mo   = constantLabel(sat, seed);
+  const rows = buildRows(sat, seed);
+
+  const seedPctDn = clamp((seed.dn - sat.dnLo) / (sat.dnHi - sat.dnLo) * 100, 0, 100);
+  const seedPctUp = clamp((seed.up - sat.upLo) / (sat.upHi - sat.upLo) * 100, 0, 100);
+
+  const tagCls  = sat.inverting ? 'tag-inv' : 'tag-noninv';
+  const tagText = sat.inverting ? 'INV' : 'NON';
+  const upDir   = sat.inverting ? '↓ as DN↑' : '↑ as DN↑';
+
+  const rowsHTML = rows.map(r => {
+    const cls   = r.isSeed ? ' class="seed-row"' : '';
+    const badge = r.isSeed
+      ? (r.isCtr ? '<span class="badge badge-ctr">CTR</span>' : '<span class="badge">SEED</span>')
+      : '';
+    return `<tr${cls}><td>${r.offStr}${badge}</td><td class="freq-up">${fmt(r.up)}</td><td class="freq-dn">${fmt(r.dn)}</td></tr>`;
+  }).join('');
+
+  const tsLine = s.ts
+    ? `<span class="status-ts">saved ${fmtTS(s.ts)}</span>`
+    : `<span class="status-ts">not yet saved this session</span>`;
+
+  container.innerHTML = `
+    <div class="card-header">
+      <div>
+        <div class="sat-name">${sat.name}</div>
+        <div class="sat-meta">${sat.aka} &nbsp;·&nbsp; ${sat.mode}</div>
+      </div>
+      <div class="card-header-right">
+        <span class="tag ${tagCls}">${tagText}</span>
+        ${sourceBadgeHTML(s.source)}
+        <span class="magic-num">${mo.sym}${mo.val.toFixed(6)}</span>
+        <button class="seed-btn" onclick="toggleEditor('${sat.id}')">EDIT SEED</button>
+      </div>
+    </div>
+
+    <div class="transponder-info">
+      <div>BW: <span>${sat.bw}</span></div>
+      <div>UP: <span class="up-val">${f3(sat.upLo)}–${f3(sat.upHi)} ${sat.upMode}</span>&nbsp;<span style="opacity:0.5;font-size:0.58rem">${upDir}</span></div>
+      <div>DN: <span class="dn-val">${f3(sat.dnLo)}–${f3(sat.dnHi)} ${sat.dnMode}</span></div>
+    </div>
+
+    <table>
+      <thead><tr>
+        <th>Offset from Seed</th>
+        <th>Uplink ${sat.upMode} (MHz)</th>
+        <th>Downlink ${sat.dnMode} (MHz)</th>
+      </tr></thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>
+
+    <div class="passband-section">
+      <div class="passband-bar">
+        <span class="pb-label pb-dn">DN</span>
+        <span class="pb-edge">${f3(sat.dnLo)}</span>
+        <div class="bar-track">
+          <div class="bar-fill bar-fill-dn"></div>
+          <div class="bar-seed" style="left:${seedPctDn.toFixed(1)}%"></div>
+        </div>
+        <span class="pb-edge">${f3(sat.dnHi)}</span>
+        <span class="pb-bw">${sat.dnMode} · ${sat.bw}</span>
+      </div>
+      <div class="passband-bar">
+        <span class="pb-label pb-up">UP</span>
+        <span class="pb-edge">${f3(sat.upLo)}</span>
+        <div class="bar-track">
+          <div class="bar-fill bar-fill-up"></div>
+          <div class="bar-seed" style="left:${seedPctUp.toFixed(1)}%"></div>
+        </div>
+        <span class="pb-edge">${f3(sat.upHi)}</span>
+        <span class="pb-bw">${sat.upMode} · ${sat.bw}</span>
+      </div>
+    </div>
+
+    <div class="seed-editor" id="editor-${sat.id}">
+      <div class="seed-editor-row">
+        <div class="seed-editor-field">
+          <label>Uplink ${sat.upMode} (MHz) — range ${f3(sat.upLo)}–${f3(sat.upHi)}</label>
+          <input type="number" step="0.000001" id="inp-up-${sat.id}" value="${fmt(seed.up)}">
+        </div>
+        <div class="seed-editor-field">
+          <label>Downlink ${sat.dnMode} (MHz) — range ${f3(sat.dnLo)}–${f3(sat.dnHi)}</label>
+          <input type="number" step="0.000001" id="inp-dn-${sat.id}" value="${fmt(seed.dn)}">
+        </div>
+      </div>
+      <div class="seed-editor-actions">
+        <button class="seed-apply"  onclick="applySeed('${sat.id}')">APPLY &amp; SAVE</button>
+        <button class="seed-cancel" onclick="toggleEditor('${sat.id}')">CANCEL</button>
+        <button class="seed-reset"  onclick="resetSeed('${sat.id}')">RESET TO DEFAULT</button>
+      </div>
+      <div class="seed-status" id="status-${sat.id}">
+        <span>up: ${fmt(seed.up)} &nbsp;·&nbsp; dn: ${fmt(seed.dn)}</span>
+        ${tsLine}
+      </div>
+      <div class="hist-panel">
+        <div class="hist-header">Edit History</div>
+        <div class="hist-body" id="hist-${sat.id}">${historyHTML(sat.id)}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ── Editor controls ──────────────────────────────────────────────
+function toggleEditor(id) {
+  const el = document.getElementById(`editor-${id}`);
+  el.classList.toggle('open');
+  if (el.classList.contains('open')) {
+    const s = seedState[id];
+    document.getElementById(`inp-up-${id}`).value = fmt(s.up);
+    document.getElementById(`inp-dn-${id}`).value = fmt(s.dn);
   }
 }
 
-// ── Hide all VU layers ───────────────────────────────────────
-function hideAllVU(){
-  Object.entries(VU_POLYS).forEach(([k,layer])=>{
-    try{map.removeLayer(layer);}catch(e){}
-  });
-  Object.keys(vuVisible).forEach(k=>vuVisible[k]=false);
-}
+function applySeed(id) {
+  const sat    = SAT_DEFS.find(s => s.id === id);
+  const upRaw  = parseFloat(document.getElementById(`inp-up-${id}`).value);
+  const dnRaw  = parseFloat(document.getElementById(`inp-dn-${id}`).value);
+  const status = document.getElementById(`status-${id}`);
 
-// ── Show initial simple circles (before terrain compute) ─────
-function showVUCircles(band){
-  const cfg=VU_CFG[band];
-  const altM=VU_ALT[band];
-  const horizon=fullHorizon(altM);
-  const bearings=Array.from({length:NUM_RADIALS},(_,i)=>i*(360/NUM_RADIALS));
-  const pkeys=['p10w','p5w','p1w'];
-
-  hideAllVU();
-  const envPowers = vuPowersComputed(band);
-  pkeys.forEach((pk,idx)=>{
-    const ck=cfg.ckeys[idx];
-    const smoothMax=Math.min(envPowers[pk], horizon);
-    const c=L.circle([S.lat,S.lon],{
-      radius:smoothMax*1000, color:cfg.colors[pk], fillColor:cfg.colors[pk],
-      weight:2, opacity:.82, fillOpacity:cfg.fop[pk], dashArray:'7 4'
-    });
-    const pwrLabel = pk==='p10w'?'10W':pk==='p5w'?'5W':'1W';
-    const htTag2 = altM === HT_HEIGHT ? ' 📻 HT' : '';
-    c.bindTooltip(`${band.toUpperCase()} ${pwrLabel}${htTag2} · env-adjusted · click ⛰ Compute for terrain`,{className:'ltt',direction:'top'});
-    VU_POLYS[ck]=c;
-    const li=document.getElementById('vli-'+ck);
-    // Default: only show 1W layer
-    if(pk === 'p1w'){
-      c.addTo(map);
-      vuVisible[ck]=true;
-      if(li) li.classList.remove('off');
-    } else {
-      vuVisible[ck]=false;
-      if(li) li.classList.add('off');
-    }
-  });
-
-  const p1Circle=VU_POLYS[band==='vhf'?'v1w':'u1w'];
-  if(p1Circle) map.fitBounds(p1Circle.getBounds().pad(0.3));
-}
-
-// ── TX marker helper ─────────────────────────────────────────
-function addTXMarker(){
-  if(txMk){try{map.removeLayer(txMk);}catch(e){}}
-  const ico=L.divIcon({className:'',iconSize:[0,0],iconAnchor:[0,0],html:`
-    <div style="position:relative;width:0;height:0;">
-      <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out infinite;"></div>
-      <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out .75s infinite;"></div>
-      <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out 1.5s infinite;"></div>
-      <div style="position:absolute;transform:translate(-50%,-50%);width:10px;height:10px;background:#00ffc3;border-radius:50%;box-shadow:0 0 10px #00ffc3,0 0 22px #00ffc388;"></div>
-      <div style="position:absolute;left:7px;top:5px;font-family:'Share Tech Mono',monospace;font-size:9px;color:#00ffc3;white-space:nowrap;text-shadow:0 0 6px #00ffc3;letter-spacing:.05em;">TX</div>
-    </div>`
-  });
-  txMk=L.marker([S.lat,S.lon],{icon:ico,zIndexOffset:1000}).addTo(map);
-}
-
-// ── Band mode switcher ───────────────────────────────────────
-function switchMode(mode){
-  activeMode=mode;
-  document.querySelectorAll('.mode-tab').forEach(t=>t.className='mode-tab');
-  document.getElementById('tab-'+mode).className='mode-tab active-'+mode;
-  document.getElementById('hf-panel').style.display  = mode==='hf'  ? 'flex':'none';
-  document.getElementById('vhf-panel').style.display = mode==='vhf' ? 'flex':'none';
-  document.getElementById('uhf-panel').style.display = mode==='uhf' ? 'flex':'none';
-
-  if(mode==='hf'){
-    hideAllVU();
-    if(topoTileLayer){ map.removeLayer(topoTileLayer); topoTileLayer=null; }
-    ['vhf-topoBtn','uhf-topoBtn'].forEach(id=>{
-      const b=document.getElementById(id);
-      if(b){b.classList.remove('on');b.textContent='⛰ Show Topo Map';}
-    });
-    rebuildLayers();
-    autoFit();
-  } else {
-    cvLayers.forEach(l=>map.removeLayer(l)); cvLayers=[];
-    hideAllVU();
-    // Restore terrain polys if cached; otherwise auto-trigger terrain compute (terrain is default)
-    if(VU_CACHE[mode]) drawVUPolys(mode);
-    else {
-      showVUCircles(mode);           // show provisional env-adjusted circles immediately
-      computeTerrainCoverage(mode);  // auto-start terrain fetch in background
-    }
-    addTXMarker();
+  if (isNaN(upRaw) || isNaN(dnRaw)) {
+    status.innerHTML = '<span style="color:var(--red)">✗ Invalid frequency values</span>'; return;
   }
+  const tol = 0.001;
+  if (upRaw < sat.upLo - tol || upRaw > sat.upHi + tol) {
+    status.innerHTML = `<span style="color:var(--red)">✗ Uplink ${upRaw.toFixed(6)} outside ${f3(sat.upLo)}–${f3(sat.upHi)}</span>`; return;
+  }
+  if (dnRaw < sat.dnLo - tol || dnRaw > sat.dnHi + tol) {
+    status.innerHTML = `<span style="color:var(--red)">✗ Downlink ${dnRaw.toFixed(6)} outside ${f3(sat.dnLo)}–${f3(sat.dnHi)}</span>`; return;
+  }
+
+  const ts  = new Date().toISOString();
+  const prev = { up: seedState[id].up, dn: seedState[id].dn, ts: seedState[id].ts };
+
+  // Push previous to history (keep last 10)
+  const hist = seedState[id].history;
+  if (prev.ts || seedState[id].source !== 'default') {
+    hist.unshift({ up: prev.up, dn: prev.dn, ts: prev.ts || ts });
+    if (hist.length > 10) hist.length = 10;
+  }
+
+  seedState[id] = { up: R6(upRaw), dn: R6(dnRaw), ts, source: 'edited', history: hist };
+  persistSeed(id);
+  renderCard(sat, document.getElementById(`card-${id}`));
 }
 
-// ══════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════
+function resetSeed(id) {
+  const sat = SAT_DEFS.find(s => s.id === id);
+  const def = sat.seedDefault ? { ...sat.seedDefault } : centerOf(sat);
+  const src = sat.seedDefault ? 'default' : 'center';
+  // Push current to history before resetting
+  const s = seedState[id];
+  const hist = s.history;
+  if (s.source !== 'default' && s.source !== 'center') {
+    hist.unshift({ up: s.up, dn: s.dn, ts: s.ts || new Date().toISOString() });
+    if (hist.length > 10) hist.length = 10;
+  }
+  seedState[id] = { up: def.up, dn: def.dn, ts: null, source: src, history: hist };
+  clearPersistedSeed(id);
+  renderCard(sat, document.getElementById(`card-${id}`));
+}
 
-buildBands();
-buildConds();
-buildAnts();
-buildPwrPresets();
-document.getElementById('pwrSlider').value=p2s(S.power);
-document.getElementById('latIn').value=S.lat;
-document.getElementById('lonIn').value=S.lon;
-// Initialise VHF/UHF panels to 1.5m HT state
-setAlt('vhf', 1.5);
-setAlt('uhf', 1.5);
-// Build environment density selectors (default: ultra_urban)
-buildEnvGrid('vhf');
-buildEnvGrid('uhf');
-rebuildLayers();
-autoFit();
+// ── Initial full render ──────────────────────────────────────────
+initSeeds();
+
+(function renderAll() {
+  const grid = document.getElementById('satGrid');
+  SAT_DEFS.forEach((sat, i) => {
+    const card = document.createElement('div');
+    card.className = 'sat-card';
+    card.id = `card-${sat.id}`;
+    card.style.animationDelay = `${i * 0.08}s`;
+    grid.appendChild(card);
+    renderCard(sat, card);
+  });
+
+  document.getElementById('footNote').innerHTML =
+    `All frequencies in MHz &nbsp;·&nbsp; 5 kHz downlink grid &nbsp;·&nbsp; `+
+    `Inverting: f<sub>up</sub> = ∑ &minus; f<sub>dn</sub> &nbsp;·&nbsp; `+
+    `Non-inv: f<sub>up</sub> = f<sub>dn</sub> &minus; &Delta; &nbsp;·&nbsp; `+
+    `Seeds persisted in localStorage &nbsp;·&nbsp; Doppler not applied`;
+})();
 </script>
 </body>
 </html>
