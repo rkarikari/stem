@@ -364,6 +364,21 @@ option{background:#0b1820;}
         <div class="env-factor" id="vhf-envInfo"></div>
       </div>
 
+      <!-- ANTENNA -->
+      <div class="vu-sec">
+        <div class="vu-sec-title" style="color:#90ff57;">Antenna</div>
+        <select id="vhf-antSel" style="width:100%;background:#0d1f1a;color:#90ff57;border:1px solid #1e3a2a;padding:5px 7px;font-family:'Share Tech Mono',monospace;font-size:.8rem;border-radius:4px;" onchange="setVUAnt('vhf',this.value)"></select>
+        <div class="ant-info" id="vhf-antInfo" style="margin-top:6px;font-size:.72rem;color:var(--dim);line-height:1.5;"></div>
+        <div id="vhf-bearWrap" style="display:none;margin-top:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <label style="margin:0;font-size:.72rem;">Beam Heading</label>
+            <span style="font-family:'Share Tech Mono',monospace;color:#90ff57;font-size:.85rem;" id="vhf-bearVal">0° N</span>
+          </div>
+          <input type="range" min="0" max="359" value="0" style="width:100%;" id="vhf-bearSlider" oninput="setVUBear('vhf',this.value)"/>
+          <div class="bear-scale"><span>N</span><span>NE</span><span>E</span><span>SE</span><span>S</span><span>SW</span><span>W</span><span>NW</span><span>N</span></div>
+        </div>
+      </div>
+
       <!-- POWER LAYERS -->
       <div class="vu-sec">
         <div class="vu-sec-title" style="color:#90ff57;">Coverage Layers — click to toggle</div>
@@ -446,6 +461,21 @@ option{background:#0b1820;}
         <div class="env-factor" id="uhf-envInfo"></div>
       </div>
 
+      <!-- ANTENNA -->
+      <div class="vu-sec">
+        <div class="vu-sec-title" style="color:#ff9eff;">Antenna</div>
+        <select id="uhf-antSel" style="width:100%;background:#1a0d24;color:#ff9eff;border:1px solid #3a1a4a;padding:5px 7px;font-family:'Share Tech Mono',monospace;font-size:.8rem;border-radius:4px;" onchange="setVUAnt('uhf',this.value)"></select>
+        <div class="ant-info" id="uhf-antInfo" style="margin-top:6px;font-size:.72rem;color:var(--dim);line-height:1.5;"></div>
+        <div id="uhf-bearWrap" style="display:none;margin-top:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <label style="margin:0;font-size:.72rem;">Beam Heading</label>
+            <span style="font-family:'Share Tech Mono',monospace;color:#ff9eff;font-size:.85rem;" id="uhf-bearVal">0° N</span>
+          </div>
+          <input type="range" min="0" max="359" value="0" style="width:100%;" id="uhf-bearSlider" oninput="setVUBear('uhf',this.value)"/>
+          <div class="bear-scale"><span>N</span><span>NE</span><span>E</span><span>SE</span><span>S</span><span>SW</span><span>W</span><span>NW</span><span>N</span></div>
+        </div>
+      </div>
+
       <!-- POWER LAYERS -->
       <div class="vu-sec">
         <div class="vu-sec-title" style="color:#ff9eff;">Coverage Layers — click to toggle</div>
@@ -501,17 +531,20 @@ option{background:#0b1820;}
 // DATA TABLES
 // ══════════════════════════════════════════════
 
+// baseKm = reliable range at 100 W SSB/CW, average conditions, dipole/inverted-V (ITU-R P.533 / empirical QRP records).
+// minW   = minimum working power (W) — below this S/N collapses against atmospheric / galactic noise.
+// Power scaling: range ∝ √(P/100) per ITU-R P.533 for ionospheric paths.
 const BANDS = {
-  '160m':{ label:'160m', freq:'1.8–2.0 MHz',  baseKm:{day:180,  night:1400}, propMode:'NVIS · Night-only reliable', color:'#ff6b9d' },
-  '80m': { label:'80m',  freq:'3.5–4.0 MHz',  baseKm:{day:420,  night:1800}, propMode:'NVIS',                        color:'#ff9f43' },
-  '60m': { label:'60m',  freq:'5.3–5.4 MHz',  baseKm:{day:700,  night:2100}, propMode:'NVIS',                        color:'#ffd93d' },
-  '40m': { label:'40m',  freq:'7.0–7.2 MHz',  baseKm:{day:1400, night:3000}, propMode:'NVIS / Regional',             color:'#6bcb77' },
-  '30m': { label:'30m',  freq:'10.1–10.15 MHz',baseKm:{day:2200, night:3800}, propMode:'Regional / DX',              color:'#4d96ff' },
-  '20m': { label:'20m',  freq:'14.0–14.35 MHz',baseKm:{day:5000, night:5500}, propMode:'F2 DX',                      color:'#845ef7' },
-  '17m': { label:'17m',  freq:'18.0–18.2 MHz', baseKm:{day:6000, night:3500}, propMode:'F2 DX',                      color:'#f06595' },
-  '15m': { label:'15m',  freq:'21.0–21.45 MHz',baseKm:{day:7000, night:2000}, propMode:'F2 DX',                      color:'#cc5de8' },
-  '12m': { label:'12m',  freq:'24.89–24.99 MHz',baseKm:{day:8000,night:700},  propMode:'F2 / Sporadic-E',            color:'#74c0fc' },
-  '10m': { label:'10m',  freq:'28.0–29.7 MHz', baseKm:{day:9000, night:250},  propMode:'F2 / Sporadic-E',            color:'#a9e34b' }
+  '160m':{ label:'160m', freq:'1.8–2.0 MHz',   baseKm:{day:150,  night:800},  minW:1.0,  propMode:'Groundwave + NVIS · Night-only reliable', color:'#ff6b9d' },
+  '80m': { label:'80m',  freq:'3.5–4.0 MHz',   baseKm:{day:280,  night:1200}, minW:0.5,  propMode:'NVIS · D-layer absorbs by midday',         color:'#ff9f43' },
+  '60m': { label:'60m',  freq:'5.3–5.4 MHz',   baseKm:{day:400,  night:1500}, minW:0.5,  propMode:'NVIS · Transitional band',                 color:'#ffd93d' },
+  '40m': { label:'40m',  freq:'7.0–7.2 MHz',   baseKm:{day:600,  night:2000}, minW:0.25, propMode:'NVIS day / Regional night',                color:'#6bcb77' },
+  '30m': { label:'30m',  freq:'10.1–10.15 MHz', baseKm:{day:1000, night:2500}, minW:0.25, propMode:'Regional / DX · CW & digital only',       color:'#4d96ff' },
+  '20m': { label:'20m',  freq:'14.0–14.35 MHz', baseKm:{day:2500, night:3500}, minW:0.5,  propMode:'F2 DX workhorse · Best daytime DX band',  color:'#845ef7' },
+  '17m': { label:'17m',  freq:'18.0–18.2 MHz',  baseKm:{day:3000, night:2000}, minW:1.0,  propMode:'F2 DX · Needs moderate solar activity',   color:'#f06595' },
+  '15m': { label:'15m',  freq:'21.0–21.45 MHz', baseKm:{day:3500, night:1000}, minW:1.0,  propMode:'F2 DX · Solar-cycle dependent',           color:'#cc5de8' },
+  '12m': { label:'12m',  freq:'24.89–24.99 MHz',baseKm:{day:4000, night:400},  minW:2.0,  propMode:'F2 / Sporadic-E · Near cycle peak only',  color:'#74c0fc' },
+  '10m': { label:'10m',  freq:'28.0–29.7 MHz',  baseKm:{day:4500, night:150},  minW:2.0,  propMode:'F2 / Sporadic-E · Unreliable except cycle peak', color:'#a9e34b' }
 };
 
 const ANTS = {
@@ -547,7 +580,7 @@ const MAX_KM = 18000;
 
 const S = {
   lat:5.561, lon:-0.209, locName:'Accra, Ghana',
-  band:'10m', power:1, cond:'average', time:'day',
+  band:'10m', power:2, cond:'average', time:'day',
   ant:'inverted_v', bearing:0, clickMode:false
 };
 
@@ -585,9 +618,11 @@ function calcRangeKm(powerW){
   const b  = BANDS[S.band];
   const a  = ANTS[S.ant];
   const c  = CONDS.find(x=>x.id===S.cond);
+  // Enforce atmospheric noise floor: below minW the S/N is too poor to close the link
+  if(powerW < b.minW) return 0;
   const base = b.baseKm[S.time];
   const gLin = Math.pow(10, a.gain/20);
-  const pFac = Math.sqrt(powerW/100);
+  const pFac = Math.sqrt(powerW/100);   // ITU-R P.533: range ∝ √P for ionospheric paths
   return Math.min(MAX_KM, Math.round(base * gLin * pFac * c.factor));
 }
 
@@ -625,6 +660,10 @@ function rebuildLayers(){
   powers.forEach((p,i)=>{
     const km=calcRangeKm(p);
     const c=RING_C[i], fi=RING_F[i];
+
+    // Skip rings that are below the noise floor (km=0)
+    if(km <= 0) return;
+
     let layer, backCircle;
 
     if(ant.dir){
@@ -717,7 +756,7 @@ function updateBandInfo(){
   const b=BANDS[S.band];
   document.getElementById('bandInfo').innerHTML=
     `<span style="color:${b.color}">${b.label}</span> · ${b.freq}<br/>Mode: <span style="color:var(--text)">${b.propMode}</span><br/>`+
-    `Day range @100W: ~${b.baseKm.day.toLocaleString()} km &nbsp;·&nbsp; Night: ~${b.baseKm.night.toLocaleString()} km`;
+    `Day @100W: ~${b.baseKm.day.toLocaleString()} km · Night: ~${b.baseKm.night.toLocaleString()} km · Min power: ${b.minW}W`;
 }
 
 function buildConds(){
@@ -778,24 +817,32 @@ function buildPwrPresets(){
 function updateCovSummary(){
   const c=document.getElementById('covList');
   c.innerHTML='';
+  const band=BANDS[S.band];
   ringPowers().forEach((p,i)=>{
     const km=calcRangeKm(p);
     const r=document.createElement('div');
     r.className='cov-row';
-    r.innerHTML=`<span class="cv-dot" style="background:${RING_C[i]}"></span>
-      <span class="cv-pwr">${fmtPwr(p)}</span>
-      <span class="cv-km">~${km.toLocaleString()} km</span>
-      <span class="cv-geo">${geoTag(km)}</span>`;
+    if(km <= 0){
+      r.innerHTML=`<span class="cv-dot" style="background:${RING_C[i]};opacity:.35"></span>
+        <span class="cv-pwr">${fmtPwr(p)}</span>
+        <span class="cv-km" style="color:#ff4444;font-size:.72rem;">Below noise floor (min ${band.minW}W)</span>`;
+    } else {
+      r.innerHTML=`<span class="cv-dot" style="background:${RING_C[i]}"></span>
+        <span class="cv-pwr">${fmtPwr(p)}</span>
+        <span class="cv-km">~${km.toLocaleString()} km</span>
+        <span class="cv-geo">${geoTag(km)}</span>`;
+    }
     c.appendChild(r);
   });
 }
 
 function geoTag(km){
-  if(km<80)  return'Local';
-  if(km<400) return'Regional';
-  if(km<1500)return'W.Africa';
-  if(km<4000)return'Africa-wide';
-  if(km<9000)return'Inter-continental';
+  if(km<=0)   return'No link';
+  if(km<80)   return'Local';
+  if(km<400)  return'Regional';
+  if(km<1500) return'W.Africa';
+  if(km<4000) return'Africa-wide';
+  if(km<9000) return'Inter-continental';
   return'Global';
 }
 
@@ -849,6 +896,7 @@ map.on('click',function(e){
   S.lat=parseFloat(e.latlng.lat.toFixed(4));
   S.lon=parseFloat(e.latlng.lng.toFixed(4));
   S.locName=`${Math.abs(S.lat).toFixed(4)}°${S.lat>=0?'N':'S'}, ${Math.abs(S.lon).toFixed(4)}°${S.lon>=0?'E':'W'}`;
+  invalidateVUCache();
   updateLocDisp();
   toggleClickMode();
   revGeo(S.lat,S.lon);
@@ -871,6 +919,7 @@ function updateLocDisp(){
     const lo=parseFloat(document.getElementById('lonIn').value);
     if(!isNaN(la)&&!isNaN(lo)){
       S.lat=la;S.lon=lo;S.locName='Custom Location';
+      invalidateVUCache();
       updateLocDisp();rebuildLayers();map.panTo([la,lo]);
     }
   });
@@ -887,6 +936,7 @@ async function searchLoc(){
       S.lat=parseFloat(parseFloat(d[0].lat).toFixed(4));
       S.lon=parseFloat(parseFloat(d[0].lon).toFixed(4));
       S.locName=d[0].display_name.split(',').slice(0,3).join(',').trim();
+      invalidateVUCache();
       updateLocDisp();rebuildLayers();
       map.setView([S.lat,S.lon],Math.max(map.getZoom(),5));
     } else { alert('Location not found — try a different search term.'); }
@@ -901,6 +951,7 @@ async function revGeo(lat,lon){
     if(d.display_name){
       S.locName=d.display_name.split(',').slice(0,3).join(',').trim();
       document.getElementById('locName').textContent=S.locName;
+      // no cache invalidation here — revGeo fires after map click already cleared it
       rebuildLayers();
     }
   }catch(_){}
@@ -1079,10 +1130,33 @@ function setAlt(band, val){
   // Update range labels using Hata engine (env+altitude aware)
   updateRangeLabels(band);
 
-  // Rebuild polygons from cache instantly if available
+  // Rebuild polygons from cache instantly; fall back to Hata circles if not yet computed
   if(VU_CACHE[band]) drawVUPolys(band);
+  else if(activeMode === band) showVUCircles(band);
 }
-const VU_CACHE  = {vhf:null, uhf:null};   // cached {terrainLOS[], txElev, txLat, txLon}
+const VU_CACHE  = {vhf:null, uhf:null};   // cached {profiles, txElev, txLat, txLon}
+let   activeMode = 'hf';
+let   topoTileLayer = null;
+
+// Invalidate terrain cache when TX location changes — forces re-fetch on next band switch
+function invalidateVUCache(){
+  VU_CACHE.vhf = null;
+  VU_CACHE.uhf = null;
+  hideAllVU();
+  // If currently on a VHF/UHF tab, auto-recompute immediately
+  if(activeMode === 'vhf' || activeMode === 'uhf'){
+    computeTerrainCoverage(activeMode);
+    addTXMarker();
+  } else {
+    // Show pending-recompute hint on both panels for when user switches
+    ['vhf','uhf'].forEach(b=>{
+      const s = document.getElementById(b+'-status');
+      const btn = document.getElementById(b+'-computeBtn');
+      if(s){ s.style.display='block'; s.innerHTML='📍 Location changed — terrain will recompute on tab switch.'; }
+      if(btn) btn.disabled = false;
+    });
+  }
+}
 const VU_POLYS  = {};                       // L.polygon / L.circle keyed by layer id
 const VU_LABELS = {};                       // map range-label markers keyed by layer id
 const vuVisible = {};
@@ -1114,8 +1188,6 @@ function addVULabel(ck, col, km, pwrText, lat, lon){
 function removeVULabel(ck){
   if(VU_LABELS[ck]){ try{map.removeLayer(VU_LABELS[ck]);}catch(e){} delete VU_LABELS[ck]; }
 }
-let   activeMode = 'hf';
-let   topoTileLayer = null;
 
 // ══════════════════════════════════════════════
 // HATA PROPAGATION ENGINE
@@ -1150,10 +1222,11 @@ function hataLoss(env, f, hB, hM, d) {
   return LU - 4.78*Math.pow(Math.log10(f),2) + 18.33*Math.log10(f) - 40.94;
 }
 
-// Solve max range for given tx power, env, freq, antenna height
-function hataMaxRange(env, freqMHz, hB_m, txW, maxD=200) {
+// Solve max range for given tx power, env, freq, antenna height, antenna gain
+function hataMaxRange(env, freqMHz, hB_m, txW, antGainDbd=0, maxD=200) {
   const txdBm  = 10 * Math.log10(txW * 1000);
-  const budget = txdBm + 0 + 2 - HATA_RX_SENS; // 0 dBi TX, 2 dBi RX
+  // Antenna gain shifts EIRP: +gain_dBd = extended link budget
+  const budget = txdBm + antGainDbd + 2 - HATA_RX_SENS; // gain dBd + 2 dBi RX whip
   const hM = 1.5; // receiver at 1.5 m (HT)
   let lo = 0.05, hi = maxD;
   for (let i = 0; i < 80; i++) {
@@ -1210,6 +1283,20 @@ const ENV_TYPES = [
 // Active environment per band (default: ultra_urban)
 const VU_ENV = { vhf: 'ultra_urban', uhf: 'ultra_urban' };
 
+// ── VHF/UHF antenna state ────────────────────────────────────
+const VU_ANT_TYPES = [
+  { id:'rubber_duck', label:'Rubber Duck HT',     gain:-3,   dir:false, bw:360, desc:'HT whip — omnidirectional, lossy. Typical handheld.' },
+  { id:'qw_vertical', label:'¼λ Vertical',         gain:0,    dir:false, bw:360, desc:'Reference omni. Simple whip or telescopic.' },
+  { id:'gp_vhf',      label:'Ground Plane',         gain:1,    dir:false, bw:360, desc:'Omni with radials. Good base-station antenna.' },
+  { id:'jpole',       label:'J-Pole',               gain:2,    dir:false, bw:360, desc:'Slim omni, easy to build. Good for fixed sites.' },
+  { id:'colinear',    label:'Collinear 5/8+5/8',    gain:5,    dir:false, bw:360, desc:'Stacked collinear. ~5 dBd, excellent for repeaters.' },
+  { id:'yagi3',       label:'Yagi 3-el',             gain:6,    dir:true,  bw:68,  desc:'3-element Yagi. ~6 dBd, 68° half-power beamwidth.' },
+  { id:'yagi5',       label:'Yagi 5-el',             gain:8.5,  dir:true,  bw:54,  desc:'5-element Yagi. ~8.5 dBd, 54° beamwidth.' },
+  { id:'yagi9',       label:'Yagi 9-el',             gain:12,   dir:true,  bw:38,  desc:'9-element Yagi. ~12 dBd, 38° beamwidth. High gain DX.' },
+];
+const VU_ANT  = { vhf: 'rubber_duck', uhf: 'rubber_duck' };
+const VU_BEAR = { vhf: 0, uhf: 0 }; // beam heading for directional antennas
+
 function buildEnvGrid(band){
   const grid = document.getElementById(band+'-envGrid');
   if(!grid) return;
@@ -1232,13 +1319,16 @@ function updateEnvInfo(band){
   if(!e || !inf) return;
   const freqMHz = band==='vhf' ? 145 : 435;
   const altM    = VU_ALT[band];
-  const r10     = hataMaxRange(e.id, freqMHz, altM, 10);
-  const r1      = hataMaxRange(e.id, freqMHz, altM, 1);
-  const dOpen   = hataLoss('open',   freqMHz, Math.max(altM,1.5), 1.5, 5);
-  const dThis   = hataLoss(e.id,     freqMHz, Math.max(altM,1.5), 1.5, 5);
+  const ant     = VU_ANT_TYPES.find(a=>a.id===VU_ANT[band]) || VU_ANT_TYPES[0];
+  const gain    = ant.gain;
+  const r10     = hataMaxRange(e.id, freqMHz, altM, 10, gain);
+  const r1      = hataMaxRange(e.id, freqMHz, altM, 1,  gain);
+  const dOpen   = hataLoss('open', freqMHz, Math.max(altM,1.5), 1.5, 5);
+  const dThis   = hataLoss(e.id,   freqMHz, Math.max(altM,1.5), 1.5, 5);
   const dbDiff  = (dThis - dOpen).toFixed(1);
+  const gainStr = gain >= 0 ? `+${gain}` : `${gain}`;
   inf.innerHTML =
-    `<strong>${e.label}</strong> · +${dbDiff} dB vs open · Hata model @${altM}m<br/>` +
+    `<strong>${e.label}</strong> · +${dbDiff} dB clutter · ant: ${gainStr} dBd<br/>` +
     `10W→~${r10.toFixed(1)} km &nbsp; 1W→~${r1.toFixed(1)} km<br/>` +
     `${e.desc}<br/><span style="color:var(--accent2);font-size:.58rem;">e.g. ${e.example}</span>`;
 }
@@ -1251,13 +1341,55 @@ function setEnv(band, envId){
   else showVUCircles(band);
 }
 
+// ── VHF/UHF antenna selector ─────────────────────────────────
+function buildVUAntSel(band){
+  const sel = document.getElementById(band+'-antSel');
+  if(!sel) return;
+  sel.innerHTML = '';
+  VU_ANT_TYPES.forEach(a => {
+    const o = document.createElement('option');
+    o.value = a.id;
+    o.textContent = `${a.label}  (${a.gain >= 0 ? '+' : ''}${a.gain} dBd${a.dir ? ' · DIR' : ' · omni'})`;
+    if(a.id === VU_ANT[band]) o.selected = true;
+    sel.appendChild(o);
+  });
+  updateVUAntInfo(band);
+}
+
+function updateVUAntInfo(band){
+  const ant = VU_ANT_TYPES.find(a=>a.id===VU_ANT[band]) || VU_ANT_TYPES[0];
+  const inf = document.getElementById(band+'-antInfo');
+  if(inf) inf.textContent = ant.desc;
+  const wrap = document.getElementById(band+'-bearWrap');
+  if(wrap) wrap.style.display = ant.dir ? 'block' : 'none';
+}
+
+function setVUAnt(band, antId){
+  VU_ANT[band] = antId;
+  updateVUAntInfo(band);
+  updateRangeLabels(band);
+  if(VU_CACHE[band]) drawVUPolys(band);
+  else showVUCircles(band);
+}
+
+function setVUBear(band, val){
+  VU_BEAR[band] = parseInt(val);
+  const dir = compassDir(VU_BEAR[band]);
+  const el = document.getElementById(band+'-bearVal');
+  if(el) el.textContent = `${VU_BEAR[band]}° ${dir}`;
+  if(VU_CACHE[band]) drawVUPolys(band);
+  else showVUCircles(band);
+}
+
 // Compute env-corrected, horizon-capped range for each power level
 function vuPowersComputed(band){
   const env     = VU_ENV[band];
   const freqMHz = band==='vhf' ? 145 : 435;
   const altM    = VU_ALT[band];
   const horizon = fullHorizon(altM);
-  const compute = (w) => Math.min(hataMaxRange(env, freqMHz, altM, w), horizon);
+  const ant     = VU_ANT_TYPES.find(a=>a.id===VU_ANT[band]) || VU_ANT_TYPES[0];
+  const gain    = ant.gain; // dBd — shifts EIRP and therefore Hata max range
+  const compute = (w) => Math.min(hataMaxRange(env, freqMHz, altM, w, gain), horizon);
   return { p10w: compute(10), p5w: compute(5), p1w: compute(1) };
 }
 
@@ -1397,11 +1529,13 @@ function drawVUPolys(band){
   const {profiles, txElev, txLat, txLon} = cache;
   const altM    = VU_ALT[band];
   const freqMHz = band === 'vhf' ? 145 : 435;
-  const txTotalH = txElev + altM;        // recomputed from current slider — key fix
+  const txTotalH = txElev + altM;
   const horizon  = fullHorizon(altM);
   const cfg     = VU_CFG[band];
   const bearings = Array.from({length:NUM_RADIALS}, (_,i)=>i*(360/NUM_RADIALS));
   const pkeys   = ['p10w','p5w','p1w'];
+  const ant     = VU_ANT_TYPES.find(a=>a.id===VU_ANT[band]) || VU_ANT_TYPES[0];
+  const bear    = VU_BEAR[band];
 
   // Recompute LOS for every radial at the current antenna height — no API call needed
   const terrainLOS = profiles.map(prof => losRangeFromProfile(txTotalH, prof, freqMHz));
@@ -1413,7 +1547,7 @@ function drawVUPolys(band){
     if(VU_LABELS[ck])    { try{map.removeLayer(VU_LABELS[ck]);   }catch(e){} delete VU_LABELS[ck]; }
   });
 
-  const envPowers = vuPowersComputed(band);
+  const envPowers = vuPowersComputed(band); // includes antenna gain
   pkeys.forEach((pk,idx)=>{
     const ck        = cfg.ckeys[idx];
     const col       = cfg.colors[pk];
@@ -1421,48 +1555,52 @@ function drawVUPolys(band){
     const pRange    = envPowers[pk];
     const smoothMax = Math.min(pRange, horizon);
 
-    // Dashed Hata-limit circle (env+horizon capped)
-    const hCircle = L.circle([txLat,txLon],{
-      radius:smoothMax*1000, color:col, fillColor:'transparent',
-      weight:1.5, opacity:.45, fillOpacity:0, dashArray:'6 4'
-    });
+    // Dashed Hata+antenna-limit ring (sector arc for directional, circle for omni)
+    const hCircle = ant.dir
+      ? L.polygon(sectorPts(txLat,txLon,smoothMax,bear,ant.bw),{
+          color:col,fillColor:col,weight:1.5,opacity:.45,fillOpacity:.04,dashArray:'6 4'})
+      : L.circle([txLat,txLon],{
+          radius:smoothMax*1000,color:col,fillColor:'transparent',
+          weight:1.5,opacity:.45,fillOpacity:0,dashArray:'6 4'});
     hCircle.addTo(map);
     VU_POLYS[ck+'-h'] = hCircle;
 
-    // Terrain-aware filled polygon
-    // effectiveKm = 0 on fully blocked radials (valley / cliff face) — no artificial floor
+    // Terrain-aware polygon — mask by beam sector for directional antennas
     const pts = bearings.map((brg,ri)=>{
       const losKm = terrainLOS[ri];
-      // Cap by Hata power range; blocked radials (losKm=0) produce a point at TX
-      const effectiveKm = Math.min(smoothMax, Math.max(0, losKm));
-      return destPt(txLat, txLon, brg, Math.max(effectiveKm, 0.005)); // 5m stub avoids degenerate polygon
+      let effectiveKm = Math.min(smoothMax, Math.max(0, losKm));
+      // Directional masking: radials outside the beam half-power width collapse to 0
+      if(ant.dir){
+        let delta = Math.abs(((brg - bear) + 540) % 360 - 180); // 0–180°
+        if(delta > ant.bw / 2) effectiveKm = 0;
+      }
+      return destPt(txLat, txLon, brg, Math.max(effectiveKm, 0.005));
     });
-    pts.push(pts[0]); // close
+    pts.push(pts[0]);
 
     const poly = L.polygon(pts,{
       color:col, fillColor:col, weight:2,
       opacity:.85, fillOpacity:fo, smoothFactor:2
     });
     const pLabel = pk==='p10w'?'10 W':pk==='p5w'?'5 W':'1 W';
-    const htTag = altM === HT_HEIGHT ? ' 📻 HT' : '';
-    poly.bindTooltip(`${band.toUpperCase()} ${pLabel}${htTag} · Hata+terrain · ${VU_ENV[band]} · ant ${altM}m AGL`,{className:'ltt',direction:'top'});
+    const htTag  = altM === HT_HEIGHT ? ' 📻 HT' : '';
+    const antTag = `${ant.label} (${ant.gain>=0?'+':''}${ant.gain} dBd)`;
+    const dirTag = ant.dir ? ` · ${bear}° ${compassDir(bear)}` : '';
+    poly.bindTooltip(`${band.toUpperCase()} ${pLabel}${htTag} · ${antTag}${dirTag} · ${VU_ENV[band]}`,{className:'ltt',direction:'top'});
     poly.addTo(map);
     VU_POLYS[ck] = poly;
     const li = document.getElementById('vli-'+ck);
-    // Default: only show 1W layer
     if(pk === 'p1w'){
       vuVisible[ck] = true;
       if(li) li.classList.remove('off');
       addVULabel(ck, col, smoothMax, pLabel, txLat, txLon);
     } else {
-      // keep hCircle visible as reference ring but hide filled polygon
       try{ map.removeLayer(poly); }catch(e){}
       vuVisible[ck] = false;
       if(li) li.classList.add('off');
     }
   });
 
-  // Update range labels via Hata engine
   updateRangeLabels(band);
 }
 
@@ -1533,34 +1671,43 @@ function hideAllVU(){
   Object.keys(vuVisible).forEach(k=>vuVisible[k]=false);
 }
 
-// ── Show initial simple circles (before terrain compute) ─────
+// ── Show Hata circles (pre-terrain fallback) ─────────────────
 function showVUCircles(band){
-  const cfg=VU_CFG[band];
-  const altM=VU_ALT[band];
-  const horizon=fullHorizon(altM);
-  const bearings=Array.from({length:NUM_RADIALS},(_,i)=>i*(360/NUM_RADIALS));
-  const pkeys=['p10w','p5w','p1w'];
+  const cfg    = VU_CFG[band];
+  const altM   = VU_ALT[band];
+  const horizon= fullHorizon(altM);
+  const pkeys  = ['p10w','p5w','p1w'];
+  const ant    = VU_ANT_TYPES.find(a=>a.id===VU_ANT[band]) || VU_ANT_TYPES[0];
+  const bear   = VU_BEAR[band];
 
   hideAllVU();
-  const envPowers = vuPowersComputed(band);
+  const envPowers = vuPowersComputed(band); // includes antenna gain
   pkeys.forEach((pk,idx)=>{
-    const ck=cfg.ckeys[idx];
-    const smoothMax=Math.min(envPowers[pk], horizon);
-    const c=L.circle([S.lat,S.lon],{
-      radius:smoothMax*1000, color:cfg.colors[pk], fillColor:cfg.colors[pk],
-      weight:2, opacity:.82, fillOpacity:cfg.fop[pk], dashArray:'7 4'
-    });
+    const ck       = cfg.ckeys[idx];
+    const smoothMax= Math.min(envPowers[pk], horizon);
+    const col      = cfg.colors[pk];
+    const fo       = cfg.fop[pk];
     const pwrLabel = pk==='p10w'?'10W':pk==='p5w'?'5W':'1W';
-    const htTag2 = altM === HT_HEIGHT ? ' 📻 HT' : '';
-    c.bindTooltip(`${band.toUpperCase()} ${pwrLabel}${htTag2} · env-adjusted · click ⛰ Compute for terrain`,{className:'ltt',direction:'top'});
+    const htTag    = altM === HT_HEIGHT ? ' 📻 HT' : '';
+    const dirTag   = ant.dir ? ` · ${bear}° beam` : '';
+
+    let c;
+    if(ant.dir){
+      c = L.polygon(sectorPts(S.lat,S.lon,smoothMax,bear,ant.bw),{
+        color:col,fillColor:col,weight:2,opacity:.82,fillOpacity:fo,dashArray:'7 4'});
+    } else {
+      c = L.circle([S.lat,S.lon],{
+        radius:smoothMax*1000,color:col,fillColor:col,
+        weight:2,opacity:.82,fillOpacity:fo,dashArray:'7 4'});
+    }
+    c.bindTooltip(`${band.toUpperCase()} ${pwrLabel}${htTag}${dirTag} · env-adjusted · click ⛰ for terrain`,{className:'ltt',direction:'top'});
     VU_POLYS[ck]=c;
     const li=document.getElementById('vli-'+ck);
-    // Default: only show 1W layer
     if(pk === 'p1w'){
       c.addTo(map);
       vuVisible[ck]=true;
       if(li) li.classList.remove('off');
-      addVULabel(ck, cfg.colors[pk], smoothMax, pwrLabel, S.lat, S.lon);
+      addVULabel(ck, col, smoothMax, pwrLabel, S.lat, S.lon);
     } else {
       vuVisible[ck]=false;
       if(li) li.classList.add('off');
@@ -1631,6 +1778,9 @@ setAlt('uhf', 1.5);
 // Build environment density selectors (default: ultra_urban)
 buildEnvGrid('vhf');
 buildEnvGrid('uhf');
+// Build antenna selectors
+buildVUAntSel('vhf');
+buildVUAntSel('uhf');
 rebuildLayers();
 autoFit();
 </script>
