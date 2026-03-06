@@ -6,196 +6,702 @@
     <title>Chapter 11: Integrated Projects - RadioSport Handbook</title>
     
     
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
+/* ═══════════════════════════════════════════════════
+   RADIOSPORT STEM HANDBOOK — AEROSPACE LEARNING THEME
+   Optimized for extended reading & retention
+═══════════════════════════════════════════════════ */
 :root {
-    --green: #00ff88;
-    --green-dim: #00cc6a;
-    --green-faint: rgba(0,255,136,0.10);
-    --green-glow: rgba(0,255,136,0.4);
-    --cyan: #00e5ff;
-    --cyan-dim: #00b8cc;
-    --amber: #ffb300;
-    --red: #ff4444;
-    --bg: #030d07;
-    --bg-card: #050f09;
-    --border: rgba(0,255,136,0.22);
-    --border-bright: rgba(0,255,136,0.55);
-    --text-dim: rgba(0,255,136,0.5);
-    --text-body: rgba(0,255,136,0.75);
-    --mono: 'Share Tech Mono', monospace;
-    --display: 'Orbitron', monospace;
+    /* Core palette — deep navy cosmos */
+    --bg:          #0a0e1a;
+    --bg-card:     #0f1525;
+    --bg-card2:    #141c30;
+    --bg-panel:    #111827;
+    --bg-hover:    #1a2540;
+
+    /* Accent hierarchy */
+    --accent:      #38bdf8;   /* sky blue — primary */
+    --accent-dim:  #0ea5e9;
+    --accent-glow: rgba(56,189,248,0.25);
+    --gold:        #f59e0b;   /* amber — highlights */
+    --gold-dim:    rgba(245,158,11,0.15);
+    --emerald:     #10b981;   /* green — success/tech */
+    --emerald-dim: rgba(16,185,129,0.12);
+    --rose:        #f43f5e;   /* red — warnings */
+    --violet:      #a78bfa;   /* purple — formulas */
+
+    /* Text scale */
+    --text-bright: #f0f6ff;
+    --text-body:   #c8d6e8;
+    --text-muted:  #6b82a0;
+    --text-faint:  #3d5070;
+
+    /* Borders */
+    --border:       rgba(56,189,248,0.15);
+    --border-med:   rgba(56,189,248,0.3);
+    --border-bright:rgba(56,189,248,0.55);
+
+    /* Typography */
+    --font-sans:  'Space Grotesk', system-ui, sans-serif;
+    --font-mono:  'JetBrains Mono', 'Courier New', monospace;
+    --font-disp:  'Syne', sans-serif;
+
+    /* Sizing */
+    --radius:  6px;
+    --radius-lg: 12px;
 }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
 body {
-    font-family: var(--mono);
+    font-family: var(--font-sans);
+    font-size: 16px;
     background: var(--bg);
-    color: var(--green);
+    color: var(--text-body);
     min-height: 100vh;
     overflow-x: hidden;
     position: relative;
+    line-height: 1.7;
 }
+
+/* Subtle star-field / noise texture */
 body::before {
     content: '';
     position: fixed; top:0; left:0; right:0; bottom:0;
-    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
-    pointer-events: none; z-index: 1000;
-}
-body::after {
-    content: '';
-    position: fixed; top:0; left:0; right:0; bottom:0;
-    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.65) 100%);
-    pointer-events: none; z-index: 999;
-}
-.grid-bg {
-    position: fixed; top:0; left:0; right:0; bottom:0;
-    background-image: linear-gradient(rgba(0,255,136,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,136,0.025) 1px, transparent 1px);
-    background-size: 40px 40px;
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(56,189,248,0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 85% 20%, rgba(167,139,250,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse 30% 50% at 10% 80%, rgba(16,185,129,0.03) 0%, transparent 60%);
     pointer-events: none; z-index: 0;
 }
-.container { max-width: 1200px; margin: 0 auto; padding: 0 20px 50px; position: relative; z-index: 1; }
 
-/* NAV */
+/* Blueprint grid — very subtle */
+.grid-bg {
+    position: fixed; top:0; left:0; right:0; bottom:0;
+    background-image:
+        linear-gradient(rgba(56,189,248,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56,189,248,0.018) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none; z-index: 0;
+}
+
+.container {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 28px 60px;
+    position: relative; z-index: 1;
+}
+
+/* ── NAVIGATION ── */
 .nav {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 0; border-bottom: 1px solid var(--border);
-    margin-bottom: 0; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    padding: 16px 0; border-bottom: 1px solid var(--border);
+    margin-bottom: 0; font-size: 12px;
+    letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600;
 }
 .nav a {
-    color: var(--text-dim); text-decoration: none;
-    border: 1px solid var(--border); padding: 6px 14px;
-    transition: all 0.2s;
+    color: var(--text-muted); text-decoration: none;
+    border: 1px solid var(--border); padding: 7px 18px;
+    border-radius: var(--radius);
+    transition: all 0.18s ease; font-size: 12px;
+    letter-spacing: 0.05em;
 }
-.nav a:hover { color: var(--green); border-color: var(--green); background: var(--green-faint); }
-.nav span { color: var(--text-dim); }
+.nav a:hover {
+    color: var(--accent); border-color: var(--accent);
+    background: rgba(56,189,248,0.08);
+    box-shadow: 0 0 12px rgba(56,189,248,0.15);
+}
+.nav span { color: var(--text-muted); font-size: 12px; }
 
-/* HEADER */
+/* ── HEADER ── */
 .header {
-    padding: 40px 0 30px;
-    border-bottom: 1px solid var(--border-bright);
-    margin-bottom: 35px;
+    padding: 48px 0 36px;
+    border-bottom: 1px solid var(--border-med);
+    margin-bottom: 44px;
+    position: relative;
 }
+.header::after {
+    content: '';
+    position: absolute; bottom: -1px; left: 0;
+    width: 120px; height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+}
+
 .chapter-num {
-    font-size: 10px; letter-spacing: 5px; color: var(--text-dim);
-    text-transform: uppercase; margin-bottom: 12px;
+    font-size: 11px; letter-spacing: 0.25em; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 14px;
+    font-weight: 600; font-family: var(--font-mono);
 }
+
 .header h1 {
-    font-family: var(--display);
-    font-size: clamp(18px, 3.5vw, 36px);
-    font-weight: 900; letter-spacing: 3px; text-transform: uppercase;
-    color: var(--green);
-    text-shadow: 0 0 20px var(--green-glow), 0 0 40px rgba(0,255,136,0.15);
-    line-height: 1.15; margin-bottom: 10px;
+    font-family: var(--font-disp);
+    font-size: clamp(22px, 4vw, 44px);
+    font-weight: 800;
+    color: var(--text-bright);
+    line-height: 1.15; margin-bottom: 14px;
+    letter-spacing: -0.01em;
 }
+
 .subtitle {
-    font-size: 11px; letter-spacing: 4px; color: var(--text-dim);
-    text-transform: uppercase;
+    font-size: 14px; letter-spacing: 0.12em;
+    color: var(--text-muted); text-transform: uppercase;
+    font-weight: 500;
 }
 
-/* CONTENT */
+/* ── CONTENT TYPOGRAPHY ── */
 .content { padding: 0; }
-h2 {
-    font-family: var(--display);
-    font-size: 13px; font-weight: 700; letter-spacing: 4px;
-    text-transform: uppercase; color: var(--green);
-    text-shadow: 0 0 10px rgba(0,255,136,0.3);
-    margin: 40px 0 16px; padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-}
-h3 {
-    font-family: var(--display); font-size: 11px; font-weight: 700;
-    letter-spacing: 3px; text-transform: uppercase;
-    color: var(--cyan); margin: 28px 0 12px;
-    text-shadow: 0 0 8px rgba(0,229,255,0.3);
-}
-h4 {
-    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
-    color: rgba(0,229,255,0.7); margin: 20px 0 10px;
-}
-p { font-size: 12px; line-height: 1.9; color: var(--text-body); margin-bottom: 14px; }
-ul, ol { margin: 14px 0 14px 24px; }
-li { font-size: 12px; line-height: 1.85; color: var(--text-body); margin-bottom: 6px; }
-li strong { color: var(--green); }
 
-/* CALLOUT BOXES */
+h2 {
+    font-family: var(--font-disp);
+    font-size: 20px; font-weight: 700;
+    color: var(--text-bright);
+    margin: 52px 0 18px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: -0.01em;
+    position: relative;
+}
+h2::before {
+    content: '';
+    position: absolute; bottom: -1px; left: 0;
+    width: 40px; height: 2px;
+    background: var(--accent);
+}
+
+h3 {
+    font-size: 16px; font-weight: 600;
+    color: var(--accent);
+    margin: 32px 0 12px;
+    letter-spacing: 0.01em;
+}
+
+h4 {
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--gold); margin: 22px 0 10px;
+}
+
+p {
+    font-size: 15.5px; line-height: 1.78;
+    color: var(--text-body); margin-bottom: 16px;
+}
+
+ul, ol { margin: 16px 0 16px 0; padding-left: 0; list-style: none; }
+
+li {
+    font-size: 15px; line-height: 1.75;
+    color: var(--text-body); margin-bottom: 8px;
+    padding-left: 24px; position: relative;
+}
+li::before {
+    content: '▸';
+    position: absolute; left: 0;
+    color: var(--accent); font-size: 12px; top: 2px;
+}
+ol { counter-reset: li-counter; }
+ol li { counter-increment: li-counter; }
+ol li::before {
+    content: counter(li-counter, decimal-leading-zero);
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--accent); font-weight: 700; top: 3px;
+}
+
+li strong { color: var(--text-bright); font-weight: 600; }
+li > ul { margin: 8px 0 8px; }
+
+strong { color: var(--text-bright); font-weight: 600; }
+em { color: var(--gold); font-style: italic; }
+
+/* ── CALLOUT BOXES ── */
 .mission-box, .info-box, .highlight-box, .warning-box, .tech-box,
 .formula-box, .callout, .note-box, .example-box, .safety-box {
-    background: var(--green-faint);
+    background: var(--bg-card);
     border: 1px solid var(--border);
-    border-left: 3px solid var(--green-dim);
-    padding: 22px 26px; margin: 24px 0;
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px; margin: 28px 0;
+    position: relative; overflow: hidden;
 }
-.info-box { border-left-color: var(--cyan-dim); background: rgba(0,229,255,0.05); }
-.highlight-box { border-left-color: var(--cyan); background: rgba(0,229,255,0.06); }
-.warning-box, .safety-box { border-left-color: var(--amber); background: rgba(255,179,0,0.06); }
-.warning-box h3, .warning-box h4, .safety-box h3, .safety-box h4 { color: var(--amber); text-shadow: 0 0 8px rgba(255,179,0,0.3); }
-.formula-box { border-left-color: var(--green); font-family: var(--mono); }
+.mission-box::before, .info-box::before, .highlight-box::before {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle at top right, rgba(56,189,248,0.05), transparent 70%);
+    pointer-events: none;
+}
 
-/* TABLES */
-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+.info-box { border-left-color: var(--emerald); }
+.info-box::before { background: radial-gradient(circle at top right, rgba(16,185,129,0.05), transparent 70%); }
+
+.highlight-box { border-left-color: var(--violet); }
+.highlight-box::before { background: radial-gradient(circle at top right, rgba(167,139,250,0.05), transparent 70%); }
+
+.warning-box, .safety-box {
+    border-left-color: var(--gold);
+    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(245,158,11,0.03) 100%);
+}
+.warning-box::before, .safety-box::before {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle at top right, rgba(245,158,11,0.06), transparent 70%);
+    pointer-events: none;
+}
+.warning-box h3, .warning-box h4, .safety-box h3, .safety-box h4 {
+    color: var(--gold);
+}
+
+.formula-box {
+    border-left-color: var(--violet);
+    background: rgba(167,139,250,0.04);
+    font-family: var(--font-mono);
+}
+
+.tech-box { border-left-color: var(--emerald); }
+
+/* ── TABLES ── */
+table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    margin: 24px 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+}
 th {
-    font-family: var(--display); font-size: 9px; letter-spacing: 3px;
-    text-transform: uppercase; color: var(--bg);
-    background: var(--green-dim); padding: 12px 14px; text-align: left;
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent);
+    background: rgba(56,189,248,0.08);
+    padding: 14px 16px; text-align: left;
+    border-bottom: 1px solid var(--border-med);
+    font-weight: 600;
 }
 td {
-    font-size: 11px; padding: 10px 14px; color: var(--text-body);
+    font-size: 14px; padding: 12px 16px; color: var(--text-body);
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(56,189,248,0.04); color: var(--text-bright); }
+
+/* ── ICON GRID ── */
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px; margin: 28px 0;
+}
+.icon-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 16px; text-align: center;
+    transition: all 0.2s ease;
+    cursor: default;
+}
+.icon-item:hover {
+    border-color: var(--border-bright);
+    background: var(--bg-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(56,189,248,0.1);
+}
+.icon-symbol { font-size: 36px; margin-bottom: 12px; display: block; }
+.icon-item strong {
+    font-size: 12px; letter-spacing: 0.04em;
+    color: var(--text-bright); display: block; margin-bottom: 6px;
+    font-weight: 600;
+}
+.icon-item p { font-size: 12px; color: var(--text-muted); margin: 0; }
+
+/* ── BADGES ── */
+.stem-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--border-med);
+    color: var(--text-muted); padding: 6px 14px;
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    margin: 4px; border-radius: 100px;
+    transition: all 0.18s ease; font-weight: 600;
+    background: var(--bg-card);
+}
+.stem-badge:hover {
+    border-color: var(--accent); color: var(--accent);
+    background: rgba(56,189,248,0.08);
+    box-shadow: 0 0 12px rgba(56,189,248,0.15);
+}
+
+/* ── TOPIC TAGS (index) ── */
+.topic-tag {
+    display: inline-block;
+    background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.2);
+    color: var(--accent);
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.04em;
+    margin: 2px;
+}
+
+/* ── CODE ── */
+code {
+    font-family: var(--font-mono); font-size: 13px;
+    background: rgba(56,189,248,0.08); color: var(--accent);
+    border: 1px solid rgba(56,189,248,0.2);
+    padding: 2px 7px; border-radius: 4px;
+}
+pre {
+    font-family: var(--font-mono); font-size: 13px;
+    background: var(--bg-card); color: var(--emerald);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px; overflow-x: auto; line-height: 1.6;
+    margin: 20px 0;
+    border-left: 3px solid var(--emerald);
+}
+
+/* ── CHARTS ── */
+canvas { border: 1px solid var(--border) !important; background: var(--bg-card) !important; border-radius: var(--radius) !important; }
+.chart-container {
+    margin: 24px 0; padding: 20px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+/* ── FORMS ── */
+select, input[type=range], input[type=text], input[type=number] {
+    background: var(--bg-card); color: var(--text-body);
+    border: 1px solid var(--border-med); font-family: var(--font-mono);
+    font-size: 13px; padding: 8px 14px;
+    border-radius: var(--radius); outline: none;
+}
+select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56,189,248,0.1); }
+
+button {
+    background: var(--bg-card); color: var(--accent);
+    border: 1px solid var(--accent); font-family: var(--font-mono);
+    font-size: 12px; padding: 9px 20px;
+    border-radius: var(--radius); letter-spacing: 0.08em;
+    text-transform: uppercase; cursor: pointer;
+    transition: all 0.18s ease; font-weight: 600;
+}
+button:hover {
+    color: var(--bg); background: var(--accent);
+    box-shadow: 0 0 20px rgba(56,189,248,0.3);
+}
+
+label {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-muted); font-weight: 600;
+}
+
+/* ── FREQUENCY / DECORATIVE BAR ── */
+.freq-bar {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--violet), var(--emerald), transparent);
+    margin: 50px 0 30px;
+    opacity: 0.5;
+}
+
+/* ── FOOTER ── */
+.footer {
+    margin-top: 60px; padding: 24px 0;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-muted); font-weight: 500;
+}
+.footer strong { color: var(--text-bright); }
+.footer p { font-size: 12px; color: var(--text-muted); margin: 2px 0; }
+
+/* ── STATUS DOT ── */
+.status-dot {
+    display: inline-block; width: 7px; height: 7px;
+    background: var(--emerald); border-radius: 50%;
+    margin-right: 8px; box-shadow: 0 0 6px var(--emerald);
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+    0%,100% { opacity: 1; box-shadow: 0 0 6px var(--emerald); }
+    50% { opacity: 0.6; box-shadow: 0 0 12px var(--emerald); }
+}
+
+/* ── BLINK ── */
+.blink { animation: blink 1.2s step-end infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+
+/* ── INDEX PAGE: CHAPTER CARDS ── */
+.chapter-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px;
+    cursor: pointer;
+    transition: all 0.22s ease;
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+}
+.chapter-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--violet));
+    opacity: 0; transition: opacity 0.22s;
+}
+.chapter-card:hover {
+    border-color: var(--border-bright);
+    background: var(--bg-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(56,189,248,0.12);
+}
+.chapter-card:hover::before { opacity: 1; }
+
+.chapter-card.addendum {
+    border-color: rgba(245,158,11,0.2);
+}
+.chapter-card.addendum::before {
+    background: linear-gradient(90deg, var(--gold), var(--rose));
+}
+.chapter-card.addendum:hover {
+    border-color: rgba(245,158,11,0.45);
+    box-shadow: 0 12px 32px rgba(245,158,11,0.1);
+}
+
+.card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.chapter-number {
+    font-family: var(--font-mono); font-size: 28px; font-weight: 700;
+    color: var(--text-faint); line-height: 1;
+    min-width: 44px;
+}
+.chapter-icon { font-size: 28px; }
+
+.chapter-title {
+    font-family: var(--font-disp); font-size: 16px; font-weight: 700;
+    color: var(--text-bright); margin-bottom: 10px; line-height: 1.3;
+}
+
+.chapter-description {
+    font-size: 13.5px; line-height: 1.65; color: var(--text-muted);
+    margin-bottom: 16px; flex: 1;
+}
+
+.chapter-topics { margin-bottom: 18px; }
+
+.view-button {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: transparent; color: var(--accent);
+    border: 1px solid var(--border-med);
+    padding: 8px 18px; border-radius: var(--radius);
+    font-family: var(--font-mono); font-size: 11px;
+    font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; text-decoration: none;
+    transition: all 0.18s ease; width: fit-content; cursor: pointer;
+}
+.view-button:hover {
+    background: var(--accent); color: var(--bg);
+    border-color: var(--accent);
+    box-shadow: 0 0 16px rgba(56,189,248,0.3);
+}
+
+.chapters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px; margin: 28px 0;
+}
+
+/* ── INDEX HEADER STYLES ── */
+.header-top-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; font-family: var(--font-mono);
+    color: var(--text-muted); letter-spacing: 0.1em;
+    margin-bottom: 22px; text-transform: uppercase;
+}
+.header-top-bar span { opacity: 0.7; }
+
+.header-subtitle {
+    font-size: 12px; letter-spacing: 0.2em;
+    color: var(--text-muted); text-transform: uppercase; margin-bottom: 22px;
+    font-weight: 500; font-family: var(--font-mono);
+}
+
+.header-meta { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 16px; }
+.meta-item { font-size: 12px; letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; }
+.meta-item span { color: var(--accent); font-weight: 600; }
+
+.version-badge {
+    display: inline-block;
+    border: 1px solid var(--border-med);
+    color: var(--accent); padding: 5px 16px;
+    font-size: 11px; letter-spacing: 0.12em;
+    border-radius: 100px; font-weight: 600;
+    font-family: var(--font-mono);
+    background: rgba(56,189,248,0.06);
+}
+
+.intro-band {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px; margin: 24px 0 40px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+}
+
+.badges { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.section-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin: 44px 0 20px; padding-bottom: 12px;
     border-bottom: 1px solid var(--border);
 }
-tr:hover td { background: var(--green-faint); color: var(--green); }
+.section-header h2 {
+    font-family: var(--font-disp); font-size: 18px; font-weight: 700;
+    color: var(--text-bright); margin: 0; padding: 0; border: none;
+}
+.section-header h2::before { display: none; }
+.section-label {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--text-muted); border: 1px solid var(--border);
+    padding: 4px 12px; border-radius: 100px; letter-spacing: 0.08em;
+}
 
-/* ICON GRID */
-.icon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 2px; margin: 24px 0; }
-.icon-item {
+/* Footer of index */
+.footer-left, .footer-center, .footer-right {
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted); font-weight: 500;
+}
+.footer-center { text-align: center; }
+.footer-right { text-align: right; }
+
+/* ── SCROLL PROGRESS ── */
+#scroll-progress {
+    position: fixed; top: 0; left: 0; height: 2px; z-index: 9999;
+    background: linear-gradient(90deg, var(--accent), var(--violet));
+    transition: width 0.1s linear;
+    box-shadow: 0 0 8px var(--accent);
+}
+
+/* ── READING PROGRESS INDICATOR (chapter pages) ── */
+.reading-indicator {
+    position: fixed; bottom: 28px; right: 28px;
     background: var(--bg-card); border: 1px solid var(--border);
-    padding: 22px 16px; text-align: center; transition: all 0.2s;
+    border-radius: var(--radius); padding: 10px 16px;
+    font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);
+    letter-spacing: 0.06em; z-index: 100;
+    display: flex; align-items: center; gap: 8px;
 }
-.icon-item:hover { border-color: var(--border-bright); background: var(--green-faint); }
-.icon-symbol { font-size: 32px; margin-bottom: 12px; display: block; }
-.icon-item strong { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--green); display: block; margin-bottom: 6px; }
-.icon-item p { font-size: 10px; color: var(--text-dim); margin: 0; }
+.reading-indicator .pct { color: var(--accent); font-weight: 700; }
 
-/* BADGES */
-.stem-badge {
-    display: inline-block; border: 1px solid var(--border);
-    color: var(--text-dim); padding: 5px 14px; font-size: 9px;
-    letter-spacing: 2px; text-transform: uppercase; margin: 4px;
-    transition: all 0.2s;
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+    .intro-band { grid-template-columns: 1fr; }
+    .chapters-grid { grid-template-columns: 1fr; }
+    .icon-grid { grid-template-columns: repeat(2, 1fr); }
+    .footer { flex-direction: column; gap: 8px; }
+    .footer-right { text-align: left; }
+    .container { padding: 0 16px 48px; }
+    h2 { font-size: 18px; }
+    body { font-size: 15px; }
+    .reading-indicator { display: none; }
 }
-.stem-badge:hover { border-color: var(--green); color: var(--green); background: var(--green-faint); }
 
-/* CODE */
-code, pre {
-    font-family: var(--mono); font-size: 11px;
-    background: rgba(0,255,136,0.06); color: var(--cyan);
-    border: 1px solid var(--border); padding: 2px 6px;
+/* ── PROGRESS BAR (scroll) ── */
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
-pre { display: block; padding: 16px; overflow-x: auto; line-height: 1.7; margin: 16px 0; }
+.container { animation: slideIn 0.4s ease both; }
 
-/* CHARTS (antenna report) */
-canvas { border: 1px solid var(--border) !important; background: #030d07 !important; }
-.chart-container { margin: 20px 0; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); }
-
-/* SELECT / INPUT */
-select, input[type=range], button {
-    background: var(--bg-card); color: var(--green);
-    border: 1px solid var(--border); font-family: var(--mono);
-    font-size: 11px; padding: 6px 12px;
+/* H1 single-line fix */
+.header h1 {
+    font-family: var(--font-disp);
+    font-size: clamp(14px, 2.6vw, 38px);
+    font-weight: 800;
+    color: var(--text-bright);
+    line-height: 1.1;
+    margin-bottom: 14px;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-select:hover, button:hover { border-color: var(--green-dim); background: var(--green-faint); }
-button { letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
-button:hover { color: var(--bg); background: var(--green); }
-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); }
-
-/* FOOTER */
-.footer {
-    margin-top: 50px; padding: 20px 0;
-    border-top: 1px solid var(--border-bright);
-    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
-    font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim);
+@media (max-width: 768px) {
+    .header h1 {
+        white-space: normal;
+        font-size: clamp(16px, 5.5vw, 26px);
+    }
 }
-.footer strong, .footer p strong { color: var(--green); }
-.footer p { font-size: 10px; color: var(--text-dim); margin: 2px 0; }
+
+/* ═══ DIAGRAM & CHART CONTAINERS ═══ */
+.diagram-container {
+    background: #0f1525;
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 12px;
+    padding: 24px 20px 16px;
+    margin: 32px 0;
+    position: relative;
+    overflow: hidden;
+}
+.diagram-container::before {
+    content: '';
+    position: absolute; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, #38bdf8, #a78bfa, #10b981);
+    opacity: 0.7;
+}
+.diagram-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: #38bdf8; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+}
+.diagram-title::before {
+    content: '';
+    display: inline-block; width: 3px; height: 14px;
+    background: #38bdf8; border-radius: 2px; flex-shrink: 0;
+}
+.diagram-caption {
+    font-size: 12.5px; color: #6b82a0; margin-top: 12px;
+    font-style: italic; line-height: 1.5; text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    padding: 0 8px;
+}
+.diagram-container svg {
+    width: 100% !important;
+    height: auto !important;
+    display: block;
+    border-radius: 8px;
+}
+/* svg-diagram class used in ch5 */
+.svg-diagram {
+    width: 100% !important;
+    height: auto !important;
+    display: block;
+}
+
+/* Canvas charts */
+canvas {
+    border: 1px solid rgba(56,189,248,0.15) !important;
+    background: #0f1525 !important;
+    border-radius: 8px !important;
+    width: 100% !important;
+    height: auto !important;
+}
+.chart-container {
+    background: #0f1525;
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 12px;
+    padding: 24px 20px 16px;
+    margin: 28px 0;
+    position: relative;
+    overflow: hidden;
+}
+.chart-container::before {
+    content: '';
+    position: absolute; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, #38bdf8, #a78bfa);
+    opacity: 0.6;
+}
 </style>
 
 </head>
@@ -232,71 +738,73 @@ label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: 
                 <div class="diagram-container">
                     <div class="diagram-title">Solar Field Station - Complete Wiring Diagram</div>
                     <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="800" height="600" fill="#0f1525" rx="0"/>
+    
                         <defs>
                             <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                                <polygon points="0 0, 10 3, 0 6" fill="#2196f3" />
+                                <polygon points="0 0, 10 3, 0 6" fill="#38bdf8" />
                             </marker>
                         </defs>
                         
                         <!-- Solar Panel -->
-                        <rect x="50" y="40" width="140" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="120" y="70" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">Solar Panel</text>
-                        <text x="120" y="88" style="fill:#666; font-size:12px; text-anchor:middle;">100W / 18V</text>
-                        <text x="120" y="105" style="fill:#666; font-size:12px; text-anchor:middle;">5.5A Max</text>
-                        <circle cx="190" cy="100" r="4" fill="#d32f2f"/>
-                        <text x="200" y="103" style="fill:#d32f2f; font-size:11px; font-weight:bold;">+</text>
+                        <rect x="50" y="40" width="140" height="90" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" x="120" y="70" style="fill:#0f1525; font-size:14px; font-weight:600; text-anchor:middle;">Solar Panel</text>
+                        <text x="120" y="88" style="fill:#3d5070; font-size:12px; text-anchor:middle;">100W / 18V</text>
+                        <text x="120" y="105" style="fill:#3d5070; font-size:12px; text-anchor:middle;">5.5A Max</text>
+                        <circle cx="190" cy="100" r="4" fill="#dc2626"/>
+                        <text x="200" y="103" style="fill:#dc2626; font-size:11px; font-weight:bold;">+</text>
                         <circle cx="190" cy="120" r="4" fill="#000"/>
                         <text x="200" y="123" style="fill:#000; font-size:11px; font-weight:bold;">-</text>
                         
                         <!-- Charge Controller -->
-                        <rect x="300" y="40" width="160" height="110" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="380" y="70" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">MPPT Charge</text>
-                        <text x="380" y="88" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">Controller</text>
-                        <text x="380" y="108" style="fill:#666; font-size:12px; text-anchor:middle;">20A / 12V Output</text>
-                        <text x="380" y="125" style="fill:#666; font-size:12px; text-anchor:middle;">Voltage Regulation</text>
+                        <rect x="300" y="40" width="160" height="110" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="380" y="70" style="fill:#0f1525; font-size:14px; font-weight:600; text-anchor:middle;">MPPT Charge</text>
+                        <text x="380" y="88" style="fill:#0f1525; font-size:14px; font-weight:600; text-anchor:middle;">Controller</text>
+                        <text x="380" y="108" style="fill:#3d5070; font-size:12px; text-anchor:middle;">20A / 12V Output</text>
+                        <text x="380" y="125" style="fill:#3d5070; font-size:12px; text-anchor:middle;">Voltage Regulation</text>
                         
                         <!-- Battery -->
-                        <rect x="550" y="40" width="160" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="630" y="70" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">LiFePO4 Battery</text>
-                        <text x="630" y="88" style="fill:#666; font-size:12px; text-anchor:middle;">35Ah @ 12.8V</text>
-                        <text x="630" y="105" style="fill:#666; font-size:12px; text-anchor:middle;">448Wh Capacity</text>
-                        <circle cx="550" cy="80" r="4" fill="#d32f2f"/>
-                        <text x="540" y="83" style="fill:#d32f2f; font-size:11px; font-weight:bold; text-anchor:end;">+</text>
+                        <rect x="550" y="40" width="160" height="90" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="630" y="70" style="fill:#0f1525; font-size:14px; font-weight:600; text-anchor:middle;">LiFePO4 Battery</text>
+                        <text x="630" y="88" style="fill:#3d5070; font-size:12px; text-anchor:middle;">35Ah @ 12.8V</text>
+                        <text x="630" y="105" style="fill:#3d5070; font-size:12px; text-anchor:middle;">448Wh Capacity</text>
+                        <circle cx="550" cy="80" r="4" fill="#dc2626"/>
+                        <text x="540" y="83" style="fill:#dc2626; font-size:11px; font-weight:bold; text-anchor:end;">+</text>
                         <circle cx="550" cy="100" r="4" fill="#000"/>
                         <text x="540" y="103" style="fill:#000; font-size:11px; font-weight:bold; text-anchor:end;">-</text>
                         
                         <!-- Power Distribution -->
-                        <rect x="300" y="220" width="160" height="70" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="380" y="245" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">Powerpole</text>
-                        <text x="380" y="263" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">Distribution</text>
-                        <text x="380" y="280" style="fill:#666; font-size:12px; text-anchor:middle;">30A Fused</text>
+                        <rect x="300" y="220" width="160" height="70" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="380" y="245" style="fill:#0f1525; font-size:14px; font-weight:600; text-anchor:middle;">Powerpole</text>
+                        <text x="380" y="263" style="fill:#0f1525; font-size:14px; font-weight:600; text-anchor:middle;">Distribution</text>
+                        <text x="380" y="280" style="fill:#3d5070; font-size:12px; text-anchor:middle;">30A Fused</text>
                         
                         <!-- Radio -->
-                        <rect x="80" y="370" width="140" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="150" y="400" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">VHF/UHF Radio</text>
-                        <text x="150" y="418" style="fill:#666; font-size:12px; text-anchor:middle;">50W Dual-Band</text>
-                        <text x="150" y="435" style="fill:#666; font-size:12px; text-anchor:middle;">13.8V @ 10A TX</text>
+                        <rect x="80" y="370" width="140" height="90" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="150" y="400" style="fill:#0f1525; font-size:14px; font-weight:600; text-anchor:middle;">VHF/UHF Radio</text>
+                        <text x="150" y="418" style="fill:#3d5070; font-size:12px; text-anchor:middle;">50W Dual-Band</text>
+                        <text x="150" y="435" style="fill:#3d5070; font-size:12px; text-anchor:middle;">13.8V @ 10A TX</text>
                         
                         <!-- Raspberry Pi -->
-                        <rect x="280" y="370" width="140" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="350" y="400" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">Raspberry Pi</text>
-                        <text x="350" y="418" style="fill:#666; font-size:12px; text-anchor:middle;">Power Monitor</text>
-                        <text x="350" y="435" style="fill:#666; font-size:12px; text-anchor:middle;">5V @ 0.7A</text>
+                        <rect x="280" y="370" width="140" height="90" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="350" y="400" style="fill:#0f1525; font-size:14px; font-weight:600; text-anchor:middle;">Raspberry Pi</text>
+                        <text x="350" y="418" style="fill:#3d5070; font-size:12px; text-anchor:middle;">Power Monitor</text>
+                        <text x="350" y="435" style="fill:#3d5070; font-size:12px; text-anchor:middle;">5V @ 0.7A</text>
                         
                         <!-- Antenna -->
-                        <rect x="480" y="370" width="140" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="550" y="400" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">Antenna</text>
-                        <text x="550" y="418" style="fill:#666; font-size:12px; text-anchor:middle;">Dual-Band Vertical</text>
-                        <text x="550" y="435" style="fill:#666; font-size:12px; text-anchor:middle;">2m / 70cm</text>
+                        <rect x="480" y="370" width="140" height="90" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="550" y="400" style="fill:#0f1525; font-size:14px; font-weight:600; text-anchor:middle;">Antenna</text>
+                        <text x="550" y="418" style="fill:#3d5070; font-size:12px; text-anchor:middle;">Dual-Band Vertical</text>
+                        <text x="550" y="435" style="fill:#3d5070; font-size:12px; text-anchor:middle;">2m / 70cm</text>
                         
                         <!-- Positive Wiring -->
-                        <path d="M 190,110 L 300,95" stroke="#d32f2f" stroke-width="3" fill="none"/>
-                        <text x="235" y="95" style="fill:#d32f2f; font-size:11px; font-weight:bold;">+18V</text>
+                        <path d="M 190,110 L 300,95" stroke="#dc2626" stroke-width="3" fill="none"/>
+                        <text x="235" y="95" style="fill:#dc2626; font-size:11px; font-weight:bold;">+18V</text>
                         
-                        <path d="M 460,80 L 550,80" stroke="#d32f2f" stroke-width="3" fill="none"/>
-                        <text x="495" y="72" style="fill:#d32f2f; font-size:11px; font-weight:bold;">+12.8V</text>
+                        <path d="M 460,80 L 550,80" stroke="#dc2626" stroke-width="3" fill="none"/>
+                        <text x="495" y="72" style="fill:#dc2626; font-size:11px; font-weight:bold;">+12.8V</text>
                         
-                        <path d="M 630,130 L 630,220 L 460,220 L 460,235" stroke="#d32f2f" stroke-width="3" fill="none"/>
+                        <path d="M 630,130 L 630,220 L 460,220 L 460,235" stroke="#dc2626" stroke-width="3" fill="none"/>
                         
                         <!-- Negative Wiring -->
                         <path d="M 190,120 L 240,120 L 240,140 L 300,140" stroke="#000" stroke-width="3" fill="none"/>
@@ -304,16 +812,16 @@ label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: 
                         <path d="M 610,130 L 610,270 L 300,270" stroke="#000" stroke-width="3" fill="none"/>
                         
                         <!-- Distribution to Loads -->
-                        <path d="M 300,255 L 220,255 L 220,370" stroke="#d32f2f" stroke-width="3" fill="none"/>
-                        <path d="M 380,290 L 380,370" stroke="#d32f2f" stroke-width="3" fill="none"/>
+                        <path d="M 300,255 L 220,255 L 220,370" stroke="#dc2626" stroke-width="3" fill="none"/>
+                        <path d="M 380,290 L 380,370" stroke="#dc2626" stroke-width="3" fill="none"/>
                         
                         <!-- RF Connection -->
-                        <path d="M 220,415 L 480,415" stroke="#ff9800" stroke-width="2" fill="none" stroke-dasharray="8,4"/>
-                        <text x="335" y="408" style="fill:#ff6f00; font-size:11px;">Coax (50Ω)</text>
+                        <path d="M 220,415 L 480,415" stroke="#f59e0b" stroke-width="2" fill="none" stroke-dasharray="8,4"/>
+                        <text x="335" y="408" style="fill:#d97706; font-size:11px;">Coax (50Ω)</text>
                         
                         <!-- Data Connection -->
-                        <path d="M 350,370 L 350,320 L 380,320 L 380,150" stroke="#4caf50" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
-                        <text x="330" y="330" style="fill:#2e7d32; font-size:11px; transform:rotate(-90deg); transform-origin:330px 330px;">USB</text>
+                        <path d="M 350,370 L 350,320 L 380,320 L 380,150" stroke="#10b981" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+                        <text x="330" y="330" style="fill:#059669; font-size:11px; transform:rotate(-90deg); transform-origin:330px 330px;">USB</text>
                     </svg>
                     
                     <div class="legend">
@@ -375,49 +883,51 @@ label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: 
                 <div class="diagram-container">
                     <div class="diagram-title">Energy Flow & Runtime Calculation</div>
                     <svg viewBox="0 0 800 350" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="800" height="350" fill="#0f1525" rx="0"/>
+    
                         <defs>
                             <marker id="energyArrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                                <polygon points="0 0, 10 3, 0 6" fill="#ff9800" />
+                                <polygon points="0 0, 10 3, 0 6" fill="#f59e0b" />
                             </marker>
                         </defs>
                         
                         <!-- Sun -->
-                        <circle cx="100" cy="80" r="35" fill="#ffc107" stroke="#ff9800" stroke-width="3"/>
-                        <text x="100" y="88" style="font-size:28px; text-anchor:middle;">☀️</text>
+                        <circle cx="100" cy="80" r="35" fill="#fbbf24" stroke="#f59e0b" stroke-width="3"/>
+                        <text data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" x="100" y="88" style="font-size:28px; text-anchor:middle;">☀️</text>
                         
                         <!-- Solar Panel -->
-                        <rect x="220" y="50" width="110" height="60" fill="#1976d2" stroke="#0d47a1" stroke-width="2" rx="5"/>
-                        <text x="275" y="77" style="fill:white; font-size:13px; font-weight:600; text-anchor:middle;">Solar 100W</text>
-                        <text x="275" y="95" style="fill:white; font-size:11px; text-anchor:middle;">18V / 5.5A</text>
+                        <rect x="220" y="50" width="110" height="60" fill="#0ea5e9" stroke="#0d47a1" stroke-width="2" rx="5"/>
+                        <text x="275" y="77" style="fill:#1e293b; font-size:13px; font-weight:600; text-anchor:middle;">Solar 100W</text>
+                        <text x="275" y="95" style="fill:#1e293b; font-size:11px; text-anchor:middle;">18V / 5.5A</text>
                         
                         <!-- Battery -->
-                        <rect x="420" y="50" width="110" height="60" fill="#4caf50" stroke="#2e7d32" stroke-width="2" rx="5"/>
-                        <text x="475" y="77" style="fill:white; font-size:13px; font-weight:600; text-anchor:middle;">Battery</text>
-                        <text x="475" y="95" style="fill:white; font-size:11px; text-anchor:middle;">448Wh Total</text>
+                        <rect x="420" y="50" width="110" height="60" fill="#10b981" stroke="#059669" stroke-width="2" rx="5"/>
+                        <text x="475" y="77" style="fill:#1e293b; font-size:13px; font-weight:600; text-anchor:middle;">Battery</text>
+                        <text x="475" y="95" style="fill:#1e293b; font-size:11px; text-anchor:middle;">448Wh Total</text>
                         
                         <!-- Radio -->
-                        <rect x="620" y="50" width="110" height="60" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2" rx="5"/>
-                        <text x="675" y="77" style="fill:white; font-size:13px; font-weight:600; text-anchor:middle;">Radio 50W</text>
-                        <text x="675" y="95" style="fill:white; font-size:11px; text-anchor:middle;">90W Avg Use</text>
+                        <rect x="620" y="50" width="110" height="60" fill="#a21caf" stroke="#6a1b9a" stroke-width="2" rx="5"/>
+                        <text x="675" y="77" style="fill:#1e293b; font-size:13px; font-weight:600; text-anchor:middle;">Radio 50W</text>
+                        <text x="675" y="95" style="fill:#1e293b; font-size:11px; text-anchor:middle;">90W Avg Use</text>
                         
                         <!-- Energy Arrows -->
-                        <path d="M 135,80 L 220,80" stroke="#ff9800" stroke-width="4" fill="none" marker-end="url(#energyArrow)"/>
-                        <text x="170" y="72" style="fill:#ff6f00; font-size:12px; font-weight:600;">Light</text>
+                        <path d="M 135,80 L 220,80" stroke="#f59e0b" stroke-width="4" fill="none" marker-end="url(#energyArrow)"/>
+                        <text x="170" y="72" style="fill:#d97706; font-size:12px; font-weight:600;">Light</text>
                         
-                        <path d="M 330,80 L 420,80" stroke="#ff9800" stroke-width="4" fill="none" marker-end="url(#energyArrow)"/>
-                        <text x="365" y="72" style="fill:#ff6f00; font-size:12px; font-weight:600;">Charge</text>
+                        <path d="M 330,80 L 420,80" stroke="#f59e0b" stroke-width="4" fill="none" marker-end="url(#energyArrow)"/>
+                        <text x="365" y="72" style="fill:#d97706; font-size:12px; font-weight:600;">Charge</text>
                         
-                        <path d="M 530,80 L 620,80" stroke="#ff9800" stroke-width="4" fill="none" marker-end="url(#energyArrow)"/>
-                        <text x="565" y="72" style="fill:#ff6f00; font-size:12px; font-weight:600;">Power</text>
+                        <path d="M 530,80 L 620,80" stroke="#f59e0b" stroke-width="4" fill="none" marker-end="url(#energyArrow)"/>
+                        <text x="565" y="72" style="fill:#d97706; font-size:12px; font-weight:600;">Power</text>
                         
                         <!-- Runtime Calculation Box -->
-                        <rect x="50" y="180" width="700" height="140" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
-                        <text x="400" y="210" style="fill:#2c3e50; font-size:16px; font-weight:700; text-anchor:middle;">⚡ Runtime Calculation</text>
+                        <rect x="50" y="180" width="700" height="140" fill="#1e1505" stroke="#f59e0b" stroke-width="2" rx="5"/>
+                        <text x="400" y="210" style="fill:#0f1525; font-size:16px; font-weight:700; text-anchor:middle;">⚡ Runtime Calculation</text>
                         
-                        <text x="400" y="240" style="fill:#2c3e50; font-size:14px; text-anchor:middle;">Battery Capacity: 35Ah × 12.8V = 448Wh</text>
-                        <text x="400" y="265" style="fill:#2c3e50; font-size:14px; text-anchor:middle;">Radio Power (Average): 90W (mix of TX @ 50W and RX @ 1W)</text>
-                        <text x="400" y="290" style="fill:#d32f2f; font-size:16px; font-weight:700; text-anchor:middle;">Runtime = 448Wh ÷ 90W = 5 hours @ 100% TX duty cycle</text>
-                        <text x="400" y="312" style="fill:#2e7d32; font-size:13px; font-weight:600; text-anchor:middle;">✅ Real-world: 8+ hours with typical TX/RX mix (20% duty cycle)</text>
+                        <text x="400" y="240" style="fill:#0f1525; font-size:14px; text-anchor:middle;">Battery Capacity: 35Ah × 12.8V = 448Wh</text>
+                        <text x="400" y="265" style="fill:#0f1525; font-size:14px; text-anchor:middle;">Radio Power (Average): 90W (mix of TX @ 50W and RX @ 1W)</text>
+                        <text x="400" y="290" style="fill:#dc2626; font-size:16px; font-weight:700; text-anchor:middle;">Runtime = 448Wh ÷ 90W = 5 hours @ 100% TX duty cycle</text>
+                        <text x="400" y="312" style="fill:#059669; font-size:13px; font-weight:600; text-anchor:middle;">✅ Real-world: 8+ hours with typical TX/RX mix (20% duty cycle)</text>
                     </svg>
                     
                     <div class="diagram-note">
@@ -454,63 +964,65 @@ label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: 
                 <div class="diagram-container">
                     <div class="diagram-title">Satellite Ground Station System Architecture</div>
                     <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="800" height="500" fill="#0f1525" rx="0"/>
+    
                         <!-- Computer -->
-                        <rect x="320" y="30" width="160" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="400" y="60" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">💻 Computer</text>
-                        <text x="400" y="78" style="fill:#666; font-size:11px; text-anchor:middle;">Tracking Software</text>
-                        <text x="400" y="93" style="fill:#666; font-size:11px; text-anchor:middle;">Doppler Correction</text>
-                        <text x="400" y="108" style="fill:#666; font-size:11px; text-anchor:middle;">TLE Updates</text>
+                        <rect x="320" y="30" width="160" height="90" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" x="400" y="60" style="fill:#0f1525; font-size:14px; font-weight:600; text-anchor:middle;">💻 Computer</text>
+                        <text x="400" y="78" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Tracking Software</text>
+                        <text x="400" y="93" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Doppler Correction</text>
+                        <text x="400" y="108" style="fill:#3d5070; font-size:11px; text-anchor:middle;">TLE Updates</text>
                         
                         <!-- GPS -->
-                        <rect x="80" y="40" width="130" height="70" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="145" y="70" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">📡 GPS</text>
-                        <text x="145" y="88" style="fill:#666; font-size:11px; text-anchor:middle;">Time/Position</text>
-                        <text x="145" y="103" style="fill:#666; font-size:11px; text-anchor:middle;">±10ns accuracy</text>
+                        <rect x="80" y="40" width="130" height="70" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="145" y="70" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">📡 GPS</text>
+                        <text x="145" y="88" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Time/Position</text>
+                        <text x="145" y="103" style="fill:#3d5070; font-size:11px; text-anchor:middle;">±10ns accuracy</text>
                         
                         <!-- Radio -->
-                        <rect x="590" y="30" width="130" height="90" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="655" y="60" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">📻 Radio</text>
-                        <text x="655" y="78" style="fill:#666; font-size:11px; text-anchor:middle;">VHF/UHF</text>
-                        <text x="655" y="93" style="fill:#666; font-size:11px; text-anchor:middle;">CAT Control</text>
-                        <text x="655" y="108" style="fill:#666; font-size:11px; text-anchor:middle;">Auto Frequency</text>
+                        <rect x="590" y="30" width="130" height="90" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="655" y="60" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">📻 Radio</text>
+                        <text x="655" y="78" style="fill:#3d5070; font-size:11px; text-anchor:middle;">VHF/UHF</text>
+                        <text x="655" y="93" style="fill:#3d5070; font-size:11px; text-anchor:middle;">CAT Control</text>
+                        <text x="655" y="108" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Auto Frequency</text>
                         
                         <!-- Rotator Controller -->
-                        <rect x="340" y="190" width="120" height="70" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="400" y="217" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">🎚️ Rotator</text>
-                        <text x="400" y="235" style="fill:#666; font-size:11px; text-anchor:middle;">Az/El Control</text>
-                        <text x="400" y="250" style="fill:#666; font-size:11px; text-anchor:middle;">G-5500</text>
+                        <rect x="340" y="190" width="120" height="70" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="400" y="217" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">🎚️ Rotator</text>
+                        <text x="400" y="235" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Az/El Control</text>
+                        <text x="400" y="250" style="fill:#3d5070; font-size:11px; text-anchor:middle;">G-5500</text>
                         
                         <!-- Antenna -->
-                        <rect x="320" y="340" width="160" height="110" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="400" y="370" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">📡 Antenna Array</text>
-                        <text x="400" y="388" style="fill:#666; font-size:11px; text-anchor:middle;">2m Crossed Yagi</text>
-                        <text x="400" y="403" style="fill:#666; font-size:11px; text-anchor:middle;">70cm Crossed Yagi</text>
-                        <text x="400" y="418" style="fill:#666; font-size:11px; text-anchor:middle;">Az: 0-360°</text>
-                        <text x="400" y="433" style="fill:#666; font-size:11px; text-anchor:middle;">El: 0-90°</text>
+                        <rect x="320" y="340" width="160" height="110" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="400" y="370" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">📡 Antenna Array</text>
+                        <text x="400" y="388" style="fill:#3d5070; font-size:11px; text-anchor:middle;">2m Crossed Yagi</text>
+                        <text x="400" y="403" style="fill:#3d5070; font-size:11px; text-anchor:middle;">70cm Crossed Yagi</text>
+                        <text x="400" y="418" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Az: 0-360°</text>
+                        <text x="400" y="433" style="fill:#3d5070; font-size:11px; text-anchor:middle;">El: 0-90°</text>
                         
                         <!-- Satellite -->
-                        <circle cx="650" cy="380" r="28" fill="#4caf50" stroke="#2e7d32" stroke-width="2"/>
+                        <circle cx="650" cy="380" r="28" fill="#10b981" stroke="#059669" stroke-width="2"/>
                         <text x="650" y="390" style="font-size:22px; text-anchor:middle;">🛰️</text>
-                        <text x="650" y="420" style="fill:#2e7d32; font-size:11px; font-weight:600; text-anchor:middle;">LEO Satellite</text>
+                        <text x="650" y="420" style="fill:#059669; font-size:11px; font-weight:600; text-anchor:middle;">LEO Satellite</text>
                         
                         <!-- Signal Path -->
-                        <path d="M 480,395 L 622,385" stroke="#ffc107" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
-                        <text x="540" y="385" style="fill:#ff6f00; font-size:11px; font-weight:600;">RF Signal</text>
+                        <path d="M 480,395 L 622,385" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <text x="540" y="385" style="fill:#d97706; font-size:11px; font-weight:600;">RF Signal</text>
                         
                         <!-- Connections -->
-                        <path d="M 210,75 L 320,75" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
-                        <text x="255" y="68" style="fill:#2e7d32; font-size:10px;">Time Data</text>
+                        <path d="M 210,75 L 320,75" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <text x="255" y="68" style="fill:#059669; font-size:10px;">Time Data</text>
                         
-                        <path d="M 480,75 L 590,75" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
-                        <text x="520" y="68" style="fill:#2e7d32; font-size:10px;">CAT Control</text>
+                        <path d="M 480,75 L 590,75" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <text x="520" y="68" style="fill:#059669; font-size:10px;">CAT Control</text>
                         
-                        <path d="M 400,120 L 400,190" stroke="#2196f3" stroke-width="2" fill="none"/>
-                        <text x="410" y="155" style="fill:#2196f3; font-size:10px;">Az/El Cmd</text>
+                        <path d="M 400,120 L 400,190" stroke="#38bdf8" stroke-width="2" fill="none"/>
+                        <text x="410" y="155" style="fill:#38bdf8; font-size:10px;">Az/El Cmd</text>
                         
-                        <path d="M 400,260 L 400,340" stroke="#2196f3" stroke-width="3" fill="none"/>
-                        <text x="410" y="300" style="fill:#2196f3; font-size:10px;">Motors</text>
+                        <path d="M 400,260 L 400,340" stroke="#38bdf8" stroke-width="3" fill="none"/>
+                        <text x="410" y="300" style="fill:#38bdf8; font-size:10px;">Motors</text>
                         
-                        <path d="M 480,395 L 590,395 L 620,385" stroke="#ff9800" stroke-width="2" stroke-dasharray="8,4" fill="none"/>
+                        <path d="M 480,395 L 590,395 L 620,385" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8,4" fill="none"/>
                     </svg>
                     
                     <div class="legend">
@@ -534,39 +1046,41 @@ label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: 
                 <div class="diagram-container">
                     <div class="diagram-title">Doppler Shift Correction Process</div>
                     <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="800" height="400" fill="#0f1525" rx="0"/>
+    
                         <!-- Frequency Graph -->
-                        <line x1="100" y1="300" x2="700" y2="300" stroke="#2c3e50" stroke-width="2"/>
-                        <line x1="100" y1="50" x2="100" y2="300" stroke="#2c3e50" stroke-width="2"/>
+                        <line x1="100" y1="300" x2="700" y2="300" stroke="#0f1525" stroke-width="2"/>
+                        <line x1="100" y1="50" x2="100" y2="300" stroke="#0f1525" stroke-width="2"/>
                         
                         <!-- Labels -->
-                        <text x="400" y="330" style="fill:#2c3e50; font-size:13px; text-anchor:middle; font-weight:600;">Time (Pass Duration)</text>
-                        <text x="50" y="180" style="fill:#2c3e50; font-size:13px; text-anchor:middle; font-weight:600; transform:rotate(-90 50,180);">Frequency (kHz)</text>
+                        <text data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" x="400" y="330" style="fill:#0f1525; font-size:13px; text-anchor:middle; font-weight:600;">Time (Pass Duration)</text>
+                        <text x="50" y="180" style="fill:#0f1525; font-size:13px; text-anchor:middle; font-weight:600; transform:rotate(-90 50,180);">Frequency (kHz)</text>
                         
                         <!-- Doppler Curve -->
-                        <path d="M 150,100 Q 250,80 400,150 T 650,280" stroke="#d32f2f" stroke-width="3" fill="none"/>
-                        <text x="400" y="70" style="fill:#d32f2f; font-size:13px; font-weight:600; text-anchor:middle;">Doppler Shift Pattern</text>
+                        <path d="M 150,100 Q 250,80 400,150 T 650,280" stroke="#dc2626" stroke-width="3" fill="none"/>
+                        <text x="400" y="70" style="fill:#dc2626; font-size:13px; font-weight:600; text-anchor:middle;">Doppler Shift Pattern</text>
                         
                         <!-- Reference Line -->
-                        <line x1="100" y1="150" x2="700" y2="150" stroke="#4caf50" stroke-width="2" stroke-dasharray="8,4"/>
-                        <text x="720" y="155" style="fill:#4caf50; font-size:12px; font-weight:600;">Nominal Freq</text>
+                        <line x1="100" y1="150" x2="700" y2="150" stroke="#10b981" stroke-width="2" stroke-dasharray="8,4"/>
+                        <text x="720" y="155" style="fill:#10b981; font-size:12px; font-weight:600;">Nominal Freq</text>
                         
                         <!-- Key Points -->
-                        <circle cx="150" cy="100" r="5" fill="#2196f3"/>
-                        <text x="150" y="85" style="fill:#2196f3; font-size:11px; text-anchor:middle; font-weight:600;">AOS</text>
-                        <text x="150" y="125" style="fill:#666; font-size:10px; text-anchor:middle;">+3kHz</text>
+                        <circle cx="150" cy="100" r="5" fill="#38bdf8"/>
+                        <text x="150" y="85" style="fill:#38bdf8; font-size:11px; text-anchor:middle; font-weight:600;">AOS</text>
+                        <text x="150" y="125" style="fill:#3d5070; font-size:10px; text-anchor:middle;">+3kHz</text>
                         
-                        <circle cx="400" cy="150" r="5" fill="#2196f3"/>
-                        <text x="400" y="135" style="fill:#2196f3; font-size:11px; text-anchor:middle; font-weight:600;">TCA</text>
-                        <text x="400" y="175" style="fill:#666; font-size:10px; text-anchor:middle;">0kHz</text>
+                        <circle cx="400" cy="150" r="5" fill="#38bdf8"/>
+                        <text x="400" y="135" style="fill:#38bdf8; font-size:11px; text-anchor:middle; font-weight:600;">TCA</text>
+                        <text x="400" y="175" style="fill:#3d5070; font-size:10px; text-anchor:middle;">0kHz</text>
                         
-                        <circle cx="650" cy="280" r="5" fill="#2196f3"/>
-                        <text x="650" y="265" style="fill:#2196f3; font-size:11px; text-anchor:middle; font-weight:600;">LOS</text>
-                        <text x="650" y="305" style="fill:#666; font-size:10px; text-anchor:middle;">-3kHz</text>
+                        <circle cx="650" cy="280" r="5" fill="#38bdf8"/>
+                        <text x="650" y="265" style="fill:#38bdf8; font-size:11px; text-anchor:middle; font-weight:600;">LOS</text>
+                        <text x="650" y="305" style="fill:#3d5070; font-size:10px; text-anchor:middle;">-3kHz</text>
                         
                         <!-- Correction Box -->
-                        <rect x="200" y="320" width="400" height="60" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
-                        <text x="400" y="345" style="fill:#2c3e50; font-size:12px; font-weight:600; text-anchor:middle;">Software calculates shift every 1 second</text>
-                        <text x="400" y="365" style="fill:#2c3e50; font-size:12px; text-anchor:middle;">Radio frequency adjusted via CAT commands</text>
+                        <rect x="200" y="320" width="400" height="60" fill="#1e1505" stroke="#f59e0b" stroke-width="2" rx="5"/>
+                        <text x="400" y="345" style="fill:#0f1525; font-size:12px; font-weight:600; text-anchor:middle;">Software calculates shift every 1 second</text>
+                        <text x="400" y="365" style="fill:#0f1525; font-size:12px; text-anchor:middle;">Radio frequency adjusted via CAT commands</text>
                     </svg>
                     
                     <div class="diagram-note">
@@ -610,46 +1124,48 @@ label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: 
                 <div class="diagram-container">
                     <div class="diagram-title">Drone RF Relay - Coverage Comparison</div>
                     <svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="800" height="450" fill="#0f1525" rx="0"/>
+    
                         <!-- Ground Level -->
                         <line x1="50" y1="350" x2="750" y2="350" stroke="#8d6e63" stroke-width="3"/>
-                        <text x="400" y="370" style="fill:#5d4037; font-size:12px; text-anchor:middle; font-weight:600;">Ground Level</text>
+                        <text data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" x="400" y="370" style="fill:#5d4037; font-size:12px; text-anchor:middle; font-weight:600;">Ground Level</text>
                         
                         <!-- Station A -->
-                        <rect x="80" y="320" width="40" height="30" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
-                        <text x="100" y="395" style="fill:#2c3e50; font-size:12px; text-anchor:middle; font-weight:600;">Station A</text>
+                        <rect x="80" y="320" width="40" height="30" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
+                        <text x="100" y="395" style="fill:#0f1525; font-size:12px; text-anchor:middle; font-weight:600;">Station A</text>
                         
                         <!-- Station B -->
-                        <rect x="680" y="320" width="40" height="30" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
-                        <text x="700" y="395" style="fill:#2c3e50; font-size:12px; text-anchor:middle; font-weight:600;">Station B</text>
+                        <rect x="680" y="320" width="40" height="30" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
+                        <text x="700" y="395" style="fill:#0f1525; font-size:12px; text-anchor:middle; font-weight:600;">Station B</text>
                         
                         <!-- Ground-to-Ground (Blocked) -->
-                        <path d="M 120,335 Q 400,380 680,335" stroke="#d32f2f" stroke-width="2" stroke-dasharray="8,4" fill="none"/>
-                        <text x="400" y="410" style="fill:#d32f2f; font-size:11px; text-anchor:middle; font-weight:600;">Ground-to-Ground: 10km (BLOCKED)</text>
+                        <path d="M 120,335 Q 400,380 680,335" stroke="#dc2626" stroke-width="2" stroke-dasharray="8,4" fill="none"/>
+                        <text x="400" y="410" style="fill:#dc2626; font-size:11px; text-anchor:middle; font-weight:600;">Ground-to-Ground: 10km (BLOCKED)</text>
                         
                         <!-- Terrain Obstacle -->
                         <path d="M 300,350 Q 350,280 400,250 Q 450,280 500,350" fill="#a1887f" stroke="#6d4c41" stroke-width="2"/>
                         <text x="400" y="305" style="fill:#5d4037; font-size:11px; text-anchor:middle; font-weight:600;">⛰️ Terrain</text>
                         
                         <!-- Drone -->
-                        <circle cx="400" cy="150" r="25" fill="#ff9800" stroke="#e65100" stroke-width="2"/>
+                        <circle cx="400" cy="150" r="25" fill="#f59e0b" stroke="#b45309" stroke-width="2"/>
                         <text x="400" y="160" style="font-size:20px; text-anchor:middle;">🚁</text>
-                        <text x="400" y="125" style="fill:#e65100; font-size:12px; text-anchor:middle; font-weight:600;">Drone @ 100m AGL</text>
+                        <text x="400" y="125" style="fill:#b45309; font-size:12px; text-anchor:middle; font-weight:600;">Drone @ 100m AGL</text>
                         
                         <!-- Drone Coverage Lines -->
-                        <path d="M 120,335 L 375,155" stroke="#4caf50" stroke-width="3" fill="none"/>
-                        <path d="M 425,155 L 680,335" stroke="#4caf50" stroke-width="3" fill="none"/>
+                        <path d="M 120,335 L 375,155" stroke="#10b981" stroke-width="3" fill="none"/>
+                        <path d="M 425,155 L 680,335" stroke="#10b981" stroke-width="3" fill="none"/>
                         
                         <!-- Coverage Circles -->
-                        <circle cx="400" cy="150" r="280" fill="none" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
-                        <text x="400" y="430" style="fill:#2e7d32; font-size:13px; text-anchor:middle; font-weight:700;">Via Drone: 50km Range (Line-of-Sight)</text>
+                        <circle cx="400" cy="150" r="280" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
+                        <text x="400" y="430" style="fill:#059669; font-size:13px; text-anchor:middle; font-weight:700;">Via Drone: 50km Range (Line-of-Sight)</text>
                         
                         <!-- Height Indicator -->
-                        <line x1="450" y1="150" x2="450" y2="350" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
-                        <text x="470" y="250" style="fill:#666; font-size:11px;">100m</text>
+                        <line x1="450" y1="150" x2="450" y2="350" stroke="#3d5070" stroke-width="1" stroke-dasharray="3,3"/>
+                        <text x="470" y="250" style="fill:#3d5070; font-size:11px;">100m</text>
                         
                         <!-- Distance Indicator -->
-                        <line x1="100" y1="300" x2="700" y2="300" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
-                        <text x="400" y="290" style="fill:#666; font-size:11px; text-anchor:middle;">50km Total Coverage</text>
+                        <line x1="100" y1="300" x2="700" y2="300" stroke="#3d5070" stroke-width="1" stroke-dasharray="3,3"/>
+                        <text x="400" y="290" style="fill:#3d5070; font-size:11px; text-anchor:middle;">50km Total Coverage</text>
                     </svg>
                     
                     <div class="diagram-note">
@@ -704,55 +1220,57 @@ label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: 
                 <div class="diagram-container">
                     <div class="diagram-title">AI Training & Prediction Workflow</div>
                     <svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="800" height="450" fill="#0f1525" rx="0"/>
+    
                         <defs>
                             <marker id="flowArrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                                <polygon points="0 0, 10 3, 0 6" fill="#2196f3"/>
+                                <polygon points="0 0, 10 3, 0 6" fill="#38bdf8"/>
                             </marker>
                         </defs>
                         
                         <!-- Data Collection -->
-                        <rect x="50" y="50" width="160" height="80" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="130" y="80" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">📊 Data Collection</text>
-                        <text x="130" y="98" style="fill:#666; font-size:10px; text-anchor:middle;">3+ months</text>
-                        <text x="130" y="112" style="fill:#666; font-size:9px; text-anchor:middle;">• Contact attempts</text>
-                        <text x="130" y="124" style="fill:#666; font-size:9px; text-anchor:middle;">• Solar data (SFI, K-index)</text>
+                        <rect x="50" y="50" width="160" height="80" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" x="130" y="80" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">📊 Data Collection</text>
+                        <text x="130" y="98" style="fill:#3d5070; font-size:10px; text-anchor:middle;">3+ months</text>
+                        <text x="130" y="112" style="fill:#3d5070; font-size:9px; text-anchor:middle;">• Contact attempts</text>
+                        <text x="130" y="124" style="fill:#3d5070; font-size:9px; text-anchor:middle;">• Solar data (SFI, K-index)</text>
                         
                         <!-- Feature Engineering -->
-                        <rect x="270" y="50" width="160" height="80" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="350" y="80" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">⚙️ Features</text>
-                        <text x="350" y="98" style="fill:#666; font-size:9px; text-anchor:middle;">Hour, Day, SFI</text>
-                        <text x="350" y="110" style="fill:#666; font-size:9px; text-anchor:middle;">K-index, Frequency</text>
-                        <text x="350" y="122" style="fill:#666; font-size:9px; text-anchor:middle;">Distance</text>
+                        <rect x="270" y="50" width="160" height="80" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="350" y="80" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">⚙️ Features</text>
+                        <text x="350" y="98" style="fill:#3d5070; font-size:9px; text-anchor:middle;">Hour, Day, SFI</text>
+                        <text x="350" y="110" style="fill:#3d5070; font-size:9px; text-anchor:middle;">K-index, Frequency</text>
+                        <text x="350" y="122" style="fill:#3d5070; font-size:9px; text-anchor:middle;">Distance</text>
                         
                         <!-- ML Model -->
-                        <rect x="490" y="50" width="160" height="80" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
-                        <text x="570" y="80" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">🧠 ML Model</text>
-                        <text x="570" y="98" style="fill:#666; font-size:9px; text-anchor:middle;">Neural Network</text>
-                        <text x="570" y="110" style="fill:#666; font-size:9px; text-anchor:middle;">or Random Forest</text>
-                        <text x="570" y="122" style="fill:#666; font-size:9px; text-anchor:middle;">Training: 80/20 split</text>
+                        <rect x="490" y="50" width="160" height="80" fill="#1e1505" stroke="#f59e0b" stroke-width="2" rx="5"/>
+                        <text x="570" y="80" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">🧠 ML Model</text>
+                        <text x="570" y="98" style="fill:#3d5070; font-size:9px; text-anchor:middle;">Neural Network</text>
+                        <text x="570" y="110" style="fill:#3d5070; font-size:9px; text-anchor:middle;">or Random Forest</text>
+                        <text x="570" y="122" style="fill:#3d5070; font-size:9px; text-anchor:middle;">Training: 80/20 split</text>
                         
                         <!-- Arrows -->
-                        <path d="M 210,90 L 270,90" stroke="#2196f3" stroke-width="2" marker-end="url(#flowArrow)" fill="none"/>
-                        <path d="M 430,90 L 490,90" stroke="#2196f3" stroke-width="2" marker-end="url(#flowArrow)" fill="none"/>
+                        <path d="M 210,90 L 270,90" stroke="#38bdf8" stroke-width="2" marker-end="url(#flowArrow)" fill="none"/>
+                        <path d="M 430,90 L 490,90" stroke="#38bdf8" stroke-width="2" marker-end="url(#flowArrow)" fill="none"/>
                         
                         <!-- Prediction Output -->
-                        <rect x="270" y="200" width="260" height="100" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="5"/>
-                        <text x="400" y="230" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">📈 Predictions</text>
-                        <text x="400" y="250" style="fill:#666; font-size:11px; text-anchor:middle;">Success Probability: 0.0 - 1.0</text>
-                        <text x="400" y="268" style="fill:#2e7d32; font-size:11px; font-weight:600; text-anchor:middle;">Best Times for Next 7 Days</text>
-                        <text x="400" y="286" style="fill:#666; font-size:10px; text-anchor:middle;">Per band & distance</text>
+                        <rect x="270" y="200" width="260" height="100" fill="#0d1e12" stroke="#10b981" stroke-width="2" rx="5"/>
+                        <text x="400" y="230" style="fill:#0f1525; font-size:14px; font-weight:600; text-anchor:middle;">📈 Predictions</text>
+                        <text x="400" y="250" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Success Probability: 0.0 - 1.0</text>
+                        <text x="400" y="268" style="fill:#059669; font-size:11px; font-weight:600; text-anchor:middle;">Best Times for Next 7 Days</text>
+                        <text x="400" y="286" style="fill:#3d5070; font-size:10px; text-anchor:middle;">Per band & distance</text>
                         
                         <!-- Arrow to Prediction -->
-                        <path d="M 570,130 L 570,250 L 530,250" stroke="#2196f3" stroke-width="2" marker-end="url(#flowArrow)" fill="none"/>
+                        <path d="M 570,130 L 570,250 L 530,250" stroke="#38bdf8" stroke-width="2" marker-end="url(#flowArrow)" fill="none"/>
                         
                         <!-- Dashboard -->
-                        <rect x="150" y="340" width="500" height="80" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
-                        <text x="400" y="370" style="fill:#2c3e50; font-size:14px; font-weight:600; text-anchor:middle;">💻 Web Dashboard</text>
-                        <text x="400" y="390" style="fill:#666; font-size:11px; text-anchor:middle;">Real-time propagation forecast • SMS/Email alerts</text>
-                        <text x="400" y="408" style="fill:#666; font-size:11px; text-anchor:middle;">Continuous learning from new contacts</text>
+                        <rect x="150" y="340" width="500" height="80" fill="#1e1633" stroke="#a21caf" stroke-width="2" rx="5"/>
+                        <text x="400" y="370" style="fill:#0f1525; font-size:14px; font-weight:600; text-anchor:middle;">💻 Web Dashboard</text>
+                        <text x="400" y="390" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Real-time propagation forecast • SMS/Email alerts</text>
+                        <text x="400" y="408" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Continuous learning from new contacts</text>
                         
                         <!-- Arrow to Dashboard -->
-                        <path d="M 400,300 L 400,340" stroke="#2196f3" stroke-width="2" marker-end="url(#flowArrow)" fill="none"/>
+                        <path d="M 400,300 L 400,340" stroke="#38bdf8" stroke-width="2" marker-end="url(#flowArrow)" fill="none"/>
                     </svg>
                 </div>
 
@@ -793,52 +1311,54 @@ label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: 
                 <div class="diagram-container">
                     <div class="diagram-title">Multi-Operator Contest Station Layout</div>
                     <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="800" height="500" fill="#0f1525" rx="0"/>
+    
                         <!-- Operator Positions -->
-                        <rect x="50" y="80" width="150" height="100" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="125" y="110" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">👤 Operator 1</text>
-                        <text x="125" y="130" style="fill:#666; font-size:11px; text-anchor:middle;">VHF 2m SSB/FM</text>
-                        <text x="125" y="148" style="fill:#666; font-size:10px; text-anchor:middle;">Yagi Antenna</text>
-                        <text x="125" y="165" style="fill:#666; font-size:10px; text-anchor:middle;">50W Mobile</text>
+                        <rect x="50" y="80" width="150" height="100" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" data-recolor="1" x="125" y="110" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">👤 Operator 1</text>
+                        <text x="125" y="130" style="fill:#3d5070; font-size:11px; text-anchor:middle;">VHF 2m SSB/FM</text>
+                        <text x="125" y="148" style="fill:#3d5070; font-size:10px; text-anchor:middle;">Yagi Antenna</text>
+                        <text x="125" y="165" style="fill:#3d5070; font-size:10px; text-anchor:middle;">50W Mobile</text>
                         
-                        <rect x="230" y="80" width="150" height="100" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="305" y="110" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">👤 Operator 2</text>
-                        <text x="305" y="130" style="fill:#666; font-size:11px; text-anchor:middle;">UHF 70cm SSB/FM</text>
-                        <text x="305" y="148" style="fill:#666; font-size:10px; text-anchor:middle;">Yagi Antenna</text>
-                        <text x="305" y="165" style="fill:#666; font-size:10px; text-anchor:middle;">50W Mobile</text>
+                        <rect x="230" y="80" width="150" height="100" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="305" y="110" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">👤 Operator 2</text>
+                        <text x="305" y="130" style="fill:#3d5070; font-size:11px; text-anchor:middle;">UHF 70cm SSB/FM</text>
+                        <text x="305" y="148" style="fill:#3d5070; font-size:10px; text-anchor:middle;">Yagi Antenna</text>
+                        <text x="305" y="165" style="fill:#3d5070; font-size:10px; text-anchor:middle;">50W Mobile</text>
                         
-                        <rect x="410" y="80" width="150" height="100" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
-                        <text x="485" y="110" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">👤 Operator 3</text>
-                        <text x="485" y="130" style="fill:#666; font-size:11px; text-anchor:middle;">HF 40m/20m</text>
-                        <text x="485" y="148" style="fill:#666; font-size:10px; text-anchor:middle;">Wire Antenna</text>
-                        <text x="485" y="165" style="fill:#666; font-size:10px; text-anchor:middle;">QRP 10W</text>
+                        <rect x="410" y="80" width="150" height="100" fill="#162033" stroke="#38bdf8" stroke-width="2" rx="5"/>
+                        <text x="485" y="110" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">👤 Operator 3</text>
+                        <text x="485" y="130" style="fill:#3d5070; font-size:11px; text-anchor:middle;">HF 40m/20m</text>
+                        <text x="485" y="148" style="fill:#3d5070; font-size:10px; text-anchor:middle;">Wire Antenna</text>
+                        <text x="485" y="165" style="fill:#3d5070; font-size:10px; text-anchor:middle;">QRP 10W</text>
                         
                         <!-- Logger Position -->
-                        <rect x="590" y="80" width="150" height="100" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
-                        <text x="665" y="110" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">💻 Logger</text>
-                        <text x="665" y="130" style="fill:#666; font-size:11px; text-anchor:middle;">Contact Database</text>
-                        <text x="665" y="148" style="fill:#666; font-size:10px; text-anchor:middle;">Real-time Scoring</text>
-                        <text x="665" y="165" style="fill:#666; font-size:10px; text-anchor:middle;">Network Sync</text>
+                        <rect x="590" y="80" width="150" height="100" fill="#1e1505" stroke="#f59e0b" stroke-width="2" rx="5"/>
+                        <text x="665" y="110" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">💻 Logger</text>
+                        <text x="665" y="130" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Contact Database</text>
+                        <text x="665" y="148" style="fill:#3d5070; font-size:10px; text-anchor:middle;">Real-time Scoring</text>
+                        <text x="665" y="165" style="fill:#3d5070; font-size:10px; text-anchor:middle;">Network Sync</text>
                         
                         <!-- Central Network -->
-                        <circle cx="400" cy="280" r="60" fill="#e8f5e9" stroke="#4caf50" stroke-width="2"/>
-                        <text x="400" y="275" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">🌐 Network</text>
-                        <text x="400" y="295" style="fill:#666; font-size:11px; text-anchor:middle;">Shared</text>
-                        <text x="400" y="310" style="fill:#666; font-size:11px; text-anchor:middle;">Database</text>
+                        <circle cx="400" cy="280" r="60" fill="#0d1e12" stroke="#10b981" stroke-width="2"/>
+                        <text x="400" y="275" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">🌐 Network</text>
+                        <text x="400" y="295" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Shared</text>
+                        <text x="400" y="310" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Database</text>
                         
                         <!-- Power Management -->
-                        <rect x="280" y="390" width="240" height="80" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
-                        <text x="400" y="420" style="fill:#2c3e50; font-size:13px; font-weight:600; text-anchor:middle;">⚡ Power Manager</text>
-                        <text x="400" y="440" style="fill:#666; font-size:11px; text-anchor:middle;">Solar/Battery System</text>
-                        <text x="400" y="458" style="fill:#666; font-size:10px; text-anchor:middle;">Energy Budget Optimization</text>
+                        <rect x="280" y="390" width="240" height="80" fill="#1e1633" stroke="#a21caf" stroke-width="2" rx="5"/>
+                        <text x="400" y="420" style="fill:#0f1525; font-size:13px; font-weight:600; text-anchor:middle;">⚡ Power Manager</text>
+                        <text x="400" y="440" style="fill:#3d5070; font-size:11px; text-anchor:middle;">Solar/Battery System</text>
+                        <text x="400" y="458" style="fill:#3d5070; font-size:10px; text-anchor:middle;">Energy Budget Optimization</text>
                         
                         <!-- Network Connections -->
-                        <path d="M 125,180 L 360,250" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
-                        <path d="M 305,180 L 385,245" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
-                        <path d="M 485,180 L 415,245" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
-                        <path d="M 665,180 L 440,250" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <path d="M 125,180 L 360,250" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <path d="M 305,180 L 385,245" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <path d="M 485,180 L 415,245" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                        <path d="M 665,180 L 440,250" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
                         
                         <!-- Power Connections -->
-                        <path d="M 400,340 L 400,390" stroke="#9c27b0" stroke-width="3" fill="none"/>
+                        <path d="M 400,340 L 400,390" stroke="#a21caf" stroke-width="3" fill="none"/>
                     </svg>
                     
                     <div class="diagram-note">
