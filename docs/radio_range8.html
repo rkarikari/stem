@@ -316,13 +316,12 @@ option{background:#0b1820;}
   </div><!-- sb-scroll -->
 
   <div class="sb-foot">
-    <span style="color:#ffffff;font-weight:bold">━</span> ZONE 1 · Groundwave (ITU-R P.368) &nbsp;
-    <span style="color:#00ffc3;font-weight:bold">━</span> ZONE 2 · NVIS 0–650 km filled &nbsp;<br/>
-    <span style="color:#444">▒</span> ZONE 3a · Dead zone (skip zone) &nbsp;
-    <span style="color:var(--accent)">━</span> ZONE 3b · F-layer DX ring<br/>
-    Zones are mutually exclusive · skipInner fixed (geometry) · skipOuter scales √P<br/>
-    Sources: ITU-R P.368, P.533 · ARRL Handbook · electronics-notes.com<br/>
-    ⚠ Average conditions · actual ionosphere varies with solar cycle, season, time
+    <span style="color:#ffffff">━</span> Groundwave (GW) &nbsp;
+    <span style="color:#00ffc3">━</span> NVIS 0–650 km filled &nbsp;
+    <span style="color:var(--dim)">▒</span> Skip zone (dead) &nbsp;
+    <span style="color:var(--accent)">━</span> F2/Skip DX ring<br/>
+    Model: ITU-R P.533 · NVIS 0–650 km no skip zone · F2 skip inner/outer per ARRL<br/>
+    ⚠ Indicative · actual range varies with ionosphere, solar cycle, season
   </div>
   </div><!-- /hf-panel -->
 
@@ -535,177 +534,130 @@ option{background:#0b1820;}
 // DATA TABLES
 // ══════════════════════════════════════════════
 
-// ══════════════════════════════════════════════════════════════════
-// HF PROPAGATION MODEL — Certified Physics Reference
-// ══════════════════════════════════════════════════════════════════
+// ── HF Propagation Model ─────────────────────────────────────
+// Each band has three distinct propagation zones shown separately on the map:
 //
-// THREE MUTUALLY EXCLUSIVE ZONES rendered on map — no overlap between zones:
+// 1. GROUNDWAVE (always present, frequency-dependent attenuation per ITU-R P.368)
+//    Horizontally-polarised wire antennas have very poor groundwave efficiency;
+//    values below are for average soil conductivity, horizontal dipole/inverted-V.
+//    Higher bands attenuate faster — 10m groundwave is only ~2 km at 100W.
 //
-// ZONE 1 — GROUNDWAVE (white dashed ring)
-//   Surface wave. Always present, day and night. Frequency-dependent attenuation.
-//   Source: ITU-R P.368, 100W ERP, horizontal dipole/inverted-V, avg soil (σ=5 mS/m).
-//   Wire antennas are poor GW radiators vs. verticals — values below reflect that.
-//   @ 100W: 160m~150 km, 80m~80 km, 60m~50 km, 40m~30 km, 30m~15 km, 20m~8 km, 10m~2 km.
+// 2. NVIS (Near-Vertical Incidence Skywave) — filled disk 0 to nvisKm
+//    Only valid when foF2 (critical frequency) > band frequency.
+//    Day:  foF2 ~8–10 MHz tropical/equatorial (Accra benefits) → 160/80/60/40m usable
+//          40m NVIS works daytime in tropics; 80m marginal midday; 160m D-layer kills it.
+//    Night: foF2 drops to ~3–5 MHz → only 160m/80m reliable for NVIS.
+//    NVIS ceiling: ~650 km (Wikipedia/ARRL); reliable core ~400 km.
+//    nvisKm: null = NVIS not available on this band in these conditions.
 //
-// ZONE 2 — NVIS (cyan, filled disk from GW edge to nvisKm)
-//   Near-Vertical Incidence Skywave. Signal arrives at 0–650 km with NO skip zone gap.
-//   Source: ARRL Handbook; G0ISW/QSL.net: "usable 50–650 km, no skip zone".
-//   Valid only when operating frequency < foF2 (ionospheric critical frequency).
-//   DAYTIME tropical (Accra, equatorial): foF2 ≈ 8–12 MHz.
-//     → 160m (1.8 MHz): D-layer completely absorbs. NVIS = null.
-//     → 80m (3.5 MHz): D-layer severely attenuates by midday. NVIS = null (average day).
-//     → 60m (5.3 MHz): Below foF2, D-layer less severe. NVIS = 600 km.
-//     → 40m (7 MHz): Below foF2. NVIS = 600 km.
-//     → 30m (10 MHz): At foF2 limit — unreliable. NVIS = null.
-//   NIGHTTIME: foF2 drops to ≈ 3–4 MHz (D-layer gone, F2 weaker).
-//     → 160m (1.8 MHz): Valid. NVIS = 400 km.
-//     → 80m (3.5 MHz): Valid. NVIS = 500 km.
-//     → 60m+ : foF2 < freq → NVIS fails. null.
+// 3. SKIP / F-layer DX — annular ring from skipInnerKm to skipOuterKm
+//    skipInnerKm = near edge of first-hop skip (dead zone within this radius)
+//    skipOuterKm = reliable first-hop F2 reach at 100W average conditions
+//    Multi-hop extends further but with significant signal loss; shown as skipOuterKm.
+//    Skip zone and DX range scale with √(P/100) per ITU-R P.533.
+//    Night: F2 persists but lower bands have shorter skip; higher bands may go dead.
 //
-// ZONE 3a — DEAD ZONE (grey hatched annulus, exclusive region)
-//   Skip zone: gap between GW/NVIS outer edge and skip inner edge.
-//   Width = skipInnerKm − max(gwKm, nvisKm or 0).
-//   Only rendered when this gap > 0. No overlap with NVIS zone.
+// minW: minimum power for ionospheric path closure against atmospheric noise floor.
+// color: band identification colour used across all layers.
 //
-// ZONE 3b — F-LAYER DX RING (band colour annulus)
-//   First-hop F2 or E-layer skywave. Inner = skip distance, outer = max first hop.
-//   Skip inner (empirical, ARRL/electronics-notes, average conditions, 100W):
-//     160m night: ~100 km. Day: null (D-layer blocks F propagation entirely).
-//     80m  night: ~200 km. Day: null.
-//     60m  day:   ~300 km (E-layer). Night: ~400 km.
-//     40m  day:   ~500 km (E→F). Night: ~300 km.
-//     30m  day:   ~800 km. Night: ~500 km.
-//     20m  day:   ~800 km. Night: ~500 km.
-//     17m  day:  ~1000 km. Night: ~700 km (if open).
-//     15m  day:  ~1200 km. Night: null (closed).
-//     12m  day:  ~1500 km. Night: null.
-//     10m  day:  ~1800 km. Night: null.
-//   Skip inner does NOT scale with power (geometric/ionospheric constraint, not budget).
-//   Max first hop: E ~2000 km, F2-day ~4500 km, F2-night ~3500 km.
-//   skipOuter DOES scale with power (√P/100 per ITU-R P.533).
-//
-// POWER SCALING:
-//   Ionospheric (NVIS outer, skipOuter): range ∝ √(P/100). ITU-R P.533.
-//   Groundwave: range ∝ (P/100)^0.3 (slower; surface-wave geometry).
-//   skipInner: fixed — does NOT scale with power.
-//   condFactor: applies to ionospheric paths only.
-//
-// Sources: ITU-R P.368, ITU-R P.533, ARRL Handbook 2023, electronics-notes.com,
-//          G0ISW/QSL.net, VU2NSB skip zone article, N4UFP HF propagation slides.
+// Sources: ARRL Handbook, ITU-R P.533, Wikipedia NVIS, QSL.net propagation guide,
+//          PARG NVIS, practicalantennas.com, electronics-notes.com skip zone data.
 
 const BANDS = {
   '160m':{
     label:'160m', freq:'1.8–2.0 MHz', color:'#ff6b9d', minW:1.0,
-    propMode:{
-      day:  'ZONE 1 only — D-layer completely absorbs 160m skywave · Groundwave ~150 km',
-      night:'ZONE 1 GW 150 km · ZONE 2 NVIS 0–400 km · ZONE 3 F2 DX 100–2500 km',
-    },
-    gw:        {day:150,  night:150},
-    nvis:      {day:null, night:400},
-    skipInner: {day:null, night:100},   // very short skip; low MUF, long wavelength
-    skipOuter: {day:null, night:2500},
+    propMode:'Groundwave · NVIS (night only) · F-layer DX night',
+    // Day: D-layer completely absorbs 160m — no NVIS, no skip, groundwave only ~150km
+    // Night: D-layer gone — NVIS 0-400km; F2 skip inner ~0km (very short), outer ~2000km
+    gw:      {day:150,  night:150},   // groundwave km (100W, horizontal dipole, avg soil)
+    nvis:    {day:null, night:400},   // NVIS radius km (null = not available)
+    skipInner:{day:null, night:50},   // inner edge of F2 skip (null = no skip this time)
+    skipOuter:{day:null, night:2000}, // outer edge of reliable first-hop F2
   },
   '80m':{
     label:'80m', freq:'3.5–4.0 MHz', color:'#ff9f43', minW:0.5,
-    propMode:{
-      day:  'ZONE 1 only — D-layer blocks 80m skywave in average daytime · GW ~80 km',
-      night:'ZONE 1 GW 80 km · ZONE 2 NVIS 0–500 km · ZONE 3 F2 DX 200–3000 km',
-    },
-    gw:        {day:80,   night:80},
-    nvis:      {day:null, night:500},   // D-layer blocks daytime NVIS on 80m
-    skipInner: {day:null, night:200},
-    skipOuter: {day:null, night:3000},
+    propMode:'Groundwave · NVIS (night, marginal day) · F2 DX night',
+    // Day: heavy D-layer absorption; 80m NVIS marginal midday, works morning/evening
+    //      skip zone ~400km inner, first hop ~1500km outer
+    // Night: best NVIS band; D-layer gone; skip ~0-200km inner, DX ~3000km
+    gw:      {day:80,   night:80},
+    nvis:    {day:300,  night:500},   // day: works early/late; night: excellent
+    skipInner:{day:400, night:100},
+    skipOuter:{day:1500,night:3000},
   },
   '60m':{
     label:'60m', freq:'5.3–5.4 MHz', color:'#ffd93d', minW:0.5,
-    propMode:{
-      day:  'ZONE 1 GW 50 km · ZONE 2 NVIS 0–600 km · ZONE 3 E-skip 300–2000 km',
-      night:'ZONE 1 GW 50 km · No NVIS (foF2 < 5.3 MHz) · ZONE 3 F2 skip 400–3000 km',
-    },
-    gw:        {day:50,   night:50},
-    nvis:      {day:600,  night:null},  // foF2 night < 5.3 MHz → NVIS fails
-    skipInner: {day:300,  night:400},
-    skipOuter: {day:2000, night:3000},
+    propMode:'NVIS (day & night) · Regional skip day · F2 DX night',
+    // Day: foF2 ~8-10MHz in tropics → 60m (5.3MHz) well below critical freq → good NVIS
+    // Night: foF2 drops ~3-5MHz → 60m above critical → NVIS fails; skip only
+    gw:      {day:40,   night:40},
+    nvis:    {day:500,  night:null},  // excellent NVIS daytime in tropics; gone at night
+    skipInner:{day:300, night:500},
+    skipOuter:{day:2000,night:2500},
   },
   '40m':{
     label:'40m', freq:'7.0–7.2 MHz', color:'#6bcb77', minW:0.25,
-    propMode:{
-      day:  'ZONE 1 GW 30 km · ZONE 2 NVIS 0–600 km (tropical foF2 > 7 MHz) · ZONE 3 E-skip 500–3000 km',
-      night:'ZONE 1 GW 30 km · No NVIS (foF2 < 7 MHz night) · ZONE 3 F2 skip 300–4000 km',
-    },
-    gw:        {day:30,   night:30},
-    nvis:      {day:600,  night:null},  // foF2 drops below 7 MHz at night
-    skipInner: {day:500,  night:300},
-    skipOuter: {day:3000, night:4000},
+    propMode:'NVIS day (tropics) · Skip 800 km day · DX night',
+    // Day: 7MHz below daytime foF2 in tropics → NVIS works; skip zone ~800km inner
+    // Night: NVIS fails (foF2 < 7MHz); strong F2 DX; skip inner shrinks
+    gw:      {day:30,   night:30},
+    nvis:    {day:600,  night:null},  // NVIS works daytime in tropical latitudes (Accra)
+    skipInner:{day:800, night:300},
+    skipOuter:{day:3000,night:4000},
   },
   '30m':{
     label:'30m', freq:'10.1–10.15 MHz', color:'#4d96ff', minW:0.25,
-    propMode:{
-      day:  'ZONE 1 GW 15 km · No NVIS (at foF2 limit) · ZONE 3 F-skip 800–4000 km · CW+digital',
-      night:'ZONE 1 GW 15 km · No NVIS · ZONE 3 F2 skip 500–4000 km · CW+digital',
-    },
-    gw:        {day:15,   night:15},
-    nvis:      {day:null, night:null},  // 30m at/above foF2 limit — unreliable
-    skipInner: {day:800,  night:500},
-    skipOuter: {day:4000, night:4000},
+    propMode:'No NVIS · Skip 1000 km day · Regional/DX · CW+digital',
+    // 30m is above tropical daytime foF2 peak ~10MHz — NVIS unreliable
+    // Daytime: short skip via E/F1 layer; night: F2 DX
+    gw:      {day:15,   night:15},
+    nvis:    {day:null, night:null},  // NVIS not reliable on 30m
+    skipInner:{day:1000,night:500},
+    skipOuter:{day:3500,night:4000},
   },
   '20m':{
     label:'20m', freq:'14.0–14.35 MHz', color:'#845ef7', minW:0.5,
-    propMode:{
-      day:  'ZONE 1 GW 8 km · No NVIS · ZONE 3 F2 skip 800–4500 km — reliable worldwide DX',
-      night:'ZONE 1 GW 8 km · No NVIS · ZONE 3 F2 skip 500–4000 km — east-west paths open',
-    },
-    gw:        {day:8,    night:8},
-    nvis:      {day:null, night:null},
-    skipInner: {day:800,  night:500},
-    skipOuter: {day:4500, night:4000},
+    propMode:'No NVIS · Skip ~500 km · F2 DX workhorse',
+    // Classic F2 DX band; skip zone 300-500km; no NVIS
+    // Day: reliable worldwide F2; night: often remains open on east-west paths
+    gw:      {day:5,    night:5},
+    nvis:    {day:null, night:null},
+    skipInner:{day:500, night:300},
+    skipOuter:{day:4500,night:4000},
   },
   '17m':{
     label:'17m', freq:'18.0–18.2 MHz', color:'#f06595', minW:1.0,
-    propMode:{
-      day:  'ZONE 1 GW 5 km · No NVIS · ZONE 3 F2 skip 1000–5000 km — solar dependent',
-      night:'ZONE 1 GW 5 km · No NVIS · ZONE 3 F2 skip 700–4000 km (if F2 open)',
-    },
-    gw:        {day:5,    night:5},
-    nvis:      {day:null, night:null},
-    skipInner: {day:1000, night:700},
-    skipOuter: {day:5000, night:4000},
+    propMode:'No NVIS · Skip ~800 km · F2 DX · Solar dependent',
+    gw:      {day:3,    night:3},
+    nvis:    {day:null, night:null},
+    skipInner:{day:800, night:null},  // night: often dead — F2 too thin
+    skipOuter:{day:5000,night:2500},
   },
   '15m':{
     label:'15m', freq:'21.0–21.45 MHz', color:'#cc5de8', minW:1.0,
-    propMode:{
-      day:  'ZONE 1 GW 3 km · No NVIS · ZONE 3 F2 skip 1200–5000 km — solar cycle dependent',
-      night:'ZONE 1 only — 15m closed at night (F2 MUF < 21 MHz) · GW 3 km',
-    },
-    gw:        {day:3,    night:3},
-    nvis:      {day:null, night:null},
-    skipInner: {day:1200, night:null},  // closed at night
-    skipOuter: {day:5000, night:null},
+    propMode:'No NVIS · Skip ~1000 km · F2 DX · Solar-cycle dependent',
+    gw:      {day:2,    night:2},
+    nvis:    {day:null, night:null},
+    skipInner:{day:1000,night:null},
+    skipOuter:{day:5000,night:1500},
   },
   '12m':{
     label:'12m', freq:'24.89–24.99 MHz', color:'#74c0fc', minW:2.0,
-    propMode:{
-      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3 F2 skip 1500–5000 km — near solar peak only',
-      night:'ZONE 1 only — 12m closed at night · GW 2 km',
-    },
-    gw:        {day:2,    night:2},
-    nvis:      {day:null, night:null},
-    skipInner: {day:1500, night:null},
-    skipOuter: {day:5000, night:null},
+    propMode:'No NVIS · Skip ~1200 km · F2/Sporadic-E · Near cycle peak',
+    gw:      {day:2,    night:2},
+    nvis:    {day:null, night:null},
+    skipInner:{day:1200,night:null},
+    skipOuter:{day:5000,night:null},  // essentially dead at night except high SSN
   },
   '10m':{
     label:'10m', freq:'28.0–29.7 MHz', color:'#a9e34b', minW:2.0,
-    propMode:{
-      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3 F2 skip 1800–5500 km — solar peak only',
-      night:'ZONE 1 only — 10m dead at night (F2 MUF < 28 MHz) · GW 2 km',
-    },
-    gw:        {day:2,    night:2},
-    nvis:      {day:null, night:null},
-    skipInner: {day:1800, night:null},
-    skipOuter: {day:5500, night:null},
+    propMode:'No NVIS · Skip ~1500 km · F2/Sporadic-E · Unreliable except cycle peak',
+    gw:      {day:2,    night:2},
+    nvis:    {day:null, night:null},
+    skipInner:{day:1500,night:null},
+    skipOuter:{day:5500,night:null},  // dead at night except sporadic-E
   },
 };
-
 
 const ANTS = {
   'inverted_v':  {label:'Inverted-V Dipole',      gain:-0.5, dir:false, bw:360, desc:'High-angle NVIS radiation, ideal for regional comms. Easy to deploy.'},
@@ -867,153 +819,129 @@ function rebuildLayers(){
     lbl.addTo(map); cvLayers.push(lbl);
   }
 
-  const col = b.color;
+  const col = b.color; // band colour used for all zones
   const powers = ringPowers();
 
-  // ─────────────────────────────────────────────────────────────
-  // ZONE 1 — GROUNDWAVE (white dashed ring)
-  // Always present. Omni regardless of antenna (surface wave, polarisation-independent).
-  // Scales with power^0.3 per surface-wave geometry.
-  // Shown once at full power only — inner-most zone, always rendered.
-  // ─────────────────────────────────────────────────────────────
-  const gwKm = scaledGW(b.gw[t], S.power);
-  if(gwKm >= 1){
-    const gwColor = '#ffffff';
-    const gwLayer = L.circle([S.lat,S.lon],{
-      radius: gwKm*1000,
-      color: gwColor, fillColor: gwColor,
-      weight:2, opacity:.85, fillOpacity:.06,
-      dashArray:'6 4'
-    });
-    gwLayer.bindTooltip(
-      `ZONE 1 · Groundwave · ${b.label} · ~${gwKm} km · ${t==='day'?'☀ Day':'☾ Night'}\n`+
-      `ITU-R P.368 · 100W · avg soil · horizontal dipole`,
-      {className:'ltt',direction:'top'});
-    addLayer(gwLayer);
-    addLabel(gwKm, gwColor, 'ZONE 1 · GW', 90);
+  // ── ZONE 1: GROUNDWAVE (solid filled, innermost, always shown) ────────────
+  // Groundwave is omni regardless of antenna type (surface-wave, polarisation-independent)
+  // Show only for full power level (no power rings for groundwave — too cluttered)
+  {
+    const gwKm = scaledGW(b.gw[t], S.power);
+    if(gwKm >= 1){
+      const gwColor = '#ffffff';
+      const gwLayer = L.circle([S.lat,S.lon],{
+        radius: gwKm*1000,
+        color: gwColor, fillColor: gwColor,
+        weight:1.5, opacity:.7, fillOpacity:.08,
+        dashArray:'3 3'
+      });
+      gwLayer.bindTooltip(`Groundwave · ~${gwKm} km · ${b.label} ${t==='day'?'☀':'☾'}`,{className:'ltt',direction:'top'});
+      addLayer(gwLayer);
+      addLabel(gwKm, gwColor, 'GW', 90);
+    }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // ZONE 2 — NVIS (cyan filled disk, from GW outer edge to nvisKm)
-  // Only rendered when NVIS is available (nvis[t] !== null).
-  // Exclusive: rendered as annulus from gwKm to nvisKm (no overlap with GW zone).
-  // Multiple power rings shown (each as annulus).
-  // Antenna gain applies. Condition factor applies. Skip inner does NOT apply.
-  // ─────────────────────────────────────────────────────────────
+  // ── ZONE 2: NVIS — filled disk (no skip zone dead-zone) ───────────────────
+  // Only for bands/times where NVIS is available. Antenna gain applies.
+  // Condition factor applies. Shown as a solid translucent disk.
   const nvisBaseKm = b.nvis[t];
-  let maxNvisKm = 0;  // track for dead zone calculation
   if(nvisBaseKm){
     const nvisColor = '#00ffc3';
     powers.forEach((p, pi)=>{
       if(p < b.minW) return;
       const nvisKm = scaledIono(nvisBaseKm * gLin, p, c.factor);
       if(nvisKm < 1) return;
-      if(pi === 0) maxNvisKm = nvisKm;
-      const fo = [.20,.14,.09,.05][pi];
-      const innerEdge = Math.max(gwKm, 1); // NVIS annulus starts at GW outer edge
+      const fo = [.18,.13,.10,.07][pi];
 
       let layer;
       if(ant.dir){
-        // Directional: sector annulus
-        const outerPts = sectorPts(S.lat,S.lon,nvisKm,S.bearing,ant.bw);
-        const innerPts = innerEdge > 2
-          ? sectorPts(S.lat,S.lon,innerEdge,S.bearing,ant.bw).slice(1,-1).reverse()
-          : [];
-        layer = L.polygon(innerEdge > 2 ? [outerPts, innerPts] : [outerPts],{
+        layer = L.polygon(sectorPts(S.lat,S.lon,nvisKm,S.bearing,ant.bw),{
           color:nvisColor, fillColor:nvisColor,
-          weight:2, opacity:.9, fillOpacity:fo
+          weight:2, opacity:.8, fillOpacity:fo
         });
       } else {
-        layer = innerEdge > 2
-          ? L.polygon(annulusPts(S.lat,S.lon,innerEdge,nvisKm),{
-              color:nvisColor, fillColor:nvisColor,
-              weight:2, opacity:.9, fillOpacity:fo
-            })
-          : L.circle([S.lat,S.lon],{
-              radius:nvisKm*1000,
-              color:nvisColor, fillColor:nvisColor,
-              weight:2, opacity:.9, fillOpacity:fo
-            });
+        layer = L.circle([S.lat,S.lon],{
+          radius:nvisKm*1000,
+          color:nvisColor, fillColor:nvisColor,
+          weight:2, opacity:.8, fillOpacity:fo
+        });
       }
-      layer.bindTooltip(
-        `ZONE 2 · NVIS · ${fmtPwr(p)} · ${innerEdge}–${nvisKm} km · No skip zone gap\n`+
-        `Near-Vertical Incidence Skywave · foF2 > ${b.freq} · ${t==='day'?'☀ Day':'☾ Night'}`,
-        {className:'ltt',direction:'top'});
+      layer.bindTooltip(`NVIS · ${fmtPwr(p)} · ~${nvisKm} km · 0–${nvisKm} km filled (no skip zone)`,{className:'ltt',direction:'top'});
       addLayer(layer);
-      if(pi===0) addLabel(nvisKm, nvisColor, 'ZONE 2 · NVIS', 315);
+      if(pi===0) addLabel(nvisKm, nvisColor, `NVIS ${fmtPwr(p)}`, 315);
     });
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // ZONES 3a & 3b — DEAD ZONE + F-LAYER DX RING
-  // Only rendered when skipOuter[t] is not null.
-  // skipInner is FIXED (geometric/ionospheric, does not scale with power).
-  // Dead zone (3a): from max(gwKm, maxNvisKm) to skipInner — exclusively no signal.
-  // DX ring  (3b): from skipInner to skipOuter — F2/E-layer first hop.
-  // skipOuter scales with power and conditions.
-  // ─────────────────────────────────────────────────────────────
-  const skipInnerKm = b.skipInner[t];  // fixed, no power scaling
+  // ── ZONE 3: SKIP ZONE (dead zone annulus) + F2 DX ring ───────────────────
+  // Skip inner = near edge of first-hop skip (stations inside this radius can't be reached via skip)
+  // Skip outer = reliable first-hop F2/E-layer reach
+  // Shown as: hatched dead zone + coloured DX ring
+  const skipInnerBase = b.skipInner[t];
   const skipOuterBase = b.skipOuter[t];
 
   if(skipOuterBase){
-    // Render dead zone once (at full power — it's geometrically fixed)
-    if(skipInnerKm && skipInnerKm > 1){
-      const deadInner = Math.max(gwKm, maxNvisKm, 1);
-      const deadOuter = skipInnerKm;
-      if(deadOuter > deadInner + 20){
-        const deadPts = annulusPts(S.lat,S.lon,deadInner,deadOuter);
-        const deadLayer = L.polygon(deadPts,{
-          color:'#444444', fillColor:'#111111',
-          weight:1.5, opacity:.6, fillOpacity:.25,
-          dashArray:'5 3'
-        });
-        deadLayer.bindTooltip(
-          `ZONE 3a · Dead Zone (Skip Zone) · ${deadInner}–${deadOuter} km\n`+
-          `No signal via groundwave, NVIS, or F-layer skip · ${t==='day'?'☀ Day':'☾ Night'}`,
-          {className:'ltt',direction:'top'});
-        addLayer(deadLayer);
-        addLabel(Math.round((deadInner+deadOuter)/2), '#555555', 'ZONE 3a · DEAD', 180);
-      }
-    }
-
-    // DX ring — multiple power rings
     powers.forEach((p, pi)=>{
       if(p < b.minW) return;
+
       const skipOuter = scaledIono(skipOuterBase * gLin, p, c.factor);
       if(skipOuter < 1) return;
-      const ringInner = skipInnerKm || 0;
-      const fo = [.18,.12,.08,.04][pi];
+
+      // Skip inner: scales less aggressively with power (geometric constraint)
+      const skipInner = skipInnerBase
+        ? Math.round(skipInnerBase * Math.pow(p/100, 0.15))  // very weak power dependence
+        : 0;
+
+      const fo = [.15,.11,.08,.05][pi];
       const dxColor = col;
 
-      let dxLayer;
+      // Dead zone: hatched annulus from groundwave edge to skip inner
+      if(skipInner > 5){
+        const gwKm = scaledGW(b.gw[t], p);
+        const deadInner = Math.max(gwKm, 2);
+        const deadOuter = skipInner;
+        if(deadOuter > deadInner + 10){
+          const deadPts = annulusPts(S.lat,S.lon,deadInner,deadOuter);
+          const deadLayer = L.polygon(deadPts,{
+            color:'#555555', fillColor:'#222222',
+            weight:1, opacity:.5, fillOpacity:.12,
+            dashArray:'4 4'
+          });
+          deadLayer.bindTooltip(`Skip zone (dead zone) · ${deadInner}–${skipInner} km · no signal via ${b.label}`,{className:'ltt',direction:'top'});
+          addLayer(deadLayer);
+          if(pi===0) addLabel(Math.round((deadInner+deadOuter)/2), '#666666', 'SKIP ZONE', 135);
+        }
+      }
+
+      // F2/DX ring: annulus from skip inner to skip outer
+      const ringInner = skipInner > 0 ? skipInner : 0;
       if(ant.dir){
+        // Directional: sector from inner to outer
         const outerPts = sectorPts(S.lat,S.lon,skipOuter,S.bearing,ant.bw);
-        const innerPts = ringInner > 10
-          ? sectorPts(S.lat,S.lon,ringInner,S.bearing,ant.bw).slice(1,-1).reverse()
+        const innerPts = skipInner > 5
+          ? sectorPts(S.lat,S.lon,skipInner,S.bearing,ant.bw).slice(1,-1).reverse()
           : [];
-        dxLayer = L.polygon(ringInner > 10 ? [outerPts, innerPts] : [outerPts],{
+        const dxLayer = L.polygon(skipInner > 5 ? [outerPts, innerPts] : [outerPts],{
           color:dxColor, fillColor:dxColor,
-          weight:2, opacity:.9, fillOpacity:fo
+          weight:2, opacity:.85, fillOpacity:fo
         });
+        dxLayer.bindTooltip(`F2/Skip · ${fmtPwr(p)} · ${ringInner>0?ringInner+'–':'0–'}${skipOuter} km`,{className:'ltt',direction:'top'});
+        addLayer(dxLayer);
       } else {
-        dxLayer = ringInner > 10
-          ? L.polygon(annulusPts(S.lat,S.lon,ringInner,skipOuter),{
+        // Omni: full annulus
+        const dxLayer = skipInner > 5
+          ? L.polygon(annulusPts(S.lat,S.lon,skipInner,skipOuter),{
               color:dxColor, fillColor:dxColor,
-              weight:2, opacity:.9, fillOpacity:fo
+              weight:2, opacity:.85, fillOpacity:fo
             })
           : L.circle([S.lat,S.lon],{
               radius:skipOuter*1000,
               color:dxColor, fillColor:dxColor,
-              weight:2, opacity:.9, fillOpacity:fo
+              weight:2, opacity:.85, fillOpacity:fo
             });
+        dxLayer.bindTooltip(`F2/Skip · ${fmtPwr(p)} · ${ringInner>0?ringInner+'–':''}~${skipOuter} km`,{className:'ltt',direction:'top'});
+        addLayer(dxLayer);
       }
-      const innerLabel = ringInner > 10 ? `${ringInner}–` : '';
-      dxLayer.bindTooltip(
-        `ZONE 3b · F-layer DX · ${fmtPwr(p)} · ${innerLabel}~${skipOuter} km\n`+
-        `First-hop skip · ${t==='day'?'☀ Day · F2/E-layer':'☾ Night · F2-layer'}`,
-        {className:'ltt',direction:'top'});
-      addLayer(dxLayer);
-      if(pi===0) addLabel(skipOuter, dxColor, 'ZONE 3b · F-DX', 45);
+      if(pi===0) addLabel(skipOuter, dxColor, `F2 ${fmtPwr(p)}`, 45);
     });
   }
 
@@ -1072,10 +1000,15 @@ function updateBandInfo(){
   const nvis = b.nvis[t];
   const skip = b.skipOuter[t];
   const inner= b.skipInner[t];
+  let zones = [];
+  if(gw)   zones.push(`GW ~${gw} km`);
+  if(nvis)  zones.push(`NVIS 0–${nvis} km`);
+  if(skip)  zones.push(`F2 skip ${inner?inner+'–':''}${skip} km`);
+  if(!zones.length) zones.push('No propagation');
   document.getElementById('bandInfo').innerHTML=
     `<span style="color:${b.color}">${b.label}</span> · ${b.freq}<br/>` +
-    `<span style="color:var(--dim)">${b.propMode[t]}</span><br/>` +
-    `Min power: ${b.minW}W · ${t==='day'?'☀ Day':'☾ Night'}`;
+    `<span style="color:var(--text)">${b.propMode}</span><br/>` +
+    `@100W ${t==='day'?'☀ Day':'☾ Night'}: ${zones.join(' · ')} · Min power: ${b.minW}W`;
 }
 
 function updateCovSummary(){
@@ -1086,51 +1019,47 @@ function updateCovSummary(){
   const t=S.time;
   const gLin=Math.pow(10,ANTS[S.ant].gain/20);
 
+  // Row helper
   function row(dotColor, label, kmText, tag){
     const r=document.createElement('div');
     r.className='cov-row';
     r.innerHTML=`<span class="cv-dot" style="background:${dotColor}"></span>
-      <span class="cv-pwr" style="width:80px;font-size:.72rem">${label}</span>
+      <span class="cv-pwr" style="width:70px">${label}</span>
       <span class="cv-km">${kmText}</span>
       <span class="cv-geo">${tag}</span>`;
     c.appendChild(r);
   }
 
-  // Zone 1: Groundwave
+  // Groundwave
   const gw=scaledGW(b.gw[t],S.power);
-  row('#ffffff','Z1 · GW', gw>=1?`~${gw} km`:'N/A', gw>=1?geoTag(gw):'—');
+  if(gw>=1) row('#ffffff','GW',`~${gw} km`,geoTag(gw));
 
-  // Zone 2: NVIS
-  if(b.nvis[t] && S.power>=b.minW){
-    const nv=scaledIono(b.nvis[t]*gLin,S.power,cond.factor);
-    row('#00ffc3','Z2 · NVIS',`${gw}–${nv} km`,geoTag(nv));
+  // NVIS
+  if(b.nvis[t]){
+    if(S.power>=b.minW){
+      const nv=scaledIono(b.nvis[t]*gLin,S.power,cond.factor);
+      row('#00ffc3','NVIS',`0–${nv} km (filled)`,geoTag(nv));
+    } else {
+      row('#00ffc3','NVIS',`Below min power (${b.minW}W)`,'—');
+    }
   } else {
-    const reason = !b.nvis[t]
-      ? (t==='day'?'D-layer absorbs / above foF2':'foF2 < band freq at night')
-      : `Below min power (${b.minW}W)`;
-    row('#1a3a2a','Z2 · NVIS',reason,'—');
+    row('#333','NVIS','Not available this band/time','—');
   }
 
-  // Zone 3a: Dead zone
-  const skipInner = b.skipInner[t];  // fixed, no power scaling
-  const maxNvis = b.nvis[t] && S.power>=b.minW
-    ? scaledIono(b.nvis[t]*gLin,S.power,cond.factor) : 0;
-  const deadInner = Math.max(gw,maxNvis,1);
-  if(skipInner && skipInner > deadInner+20){
-    row('#333333','Z3a · Dead',`${deadInner}–${skipInner} km`,'No signal');
-  } else if(!skipInner && !b.nvis[t] && !b.skipOuter[t]){
-    row('#333333','Z3a · Dead','Entire band dead this time/day','No signal');
-  }
-
-  // Zone 3b: F-layer DX
-  if(b.skipOuter[t] && S.power>=b.minW){
-    const outer=scaledIono(b.skipOuter[t]*gLin,S.power,cond.factor);
-    const inner=skipInner||0;
-    row(b.color,'Z3b · F-DX',`${inner>0?inner+'–':''}~${outer} km`,geoTag(outer));
-  } else if(b.skipOuter[t]){
-    row(b.color,'Z3b · F-DX',`Below min power (${b.minW}W)`,'—');
+  // F2 skip
+  if(b.skipOuter[t]){
+    if(S.power>=b.minW){
+      const outer=scaledIono(b.skipOuter[t]*gLin,S.power,cond.factor);
+      const inner=b.skipInner[t]?Math.round(b.skipInner[t]*Math.pow(S.power/100,0.15)):0;
+      row(b.color,'F2/Skip',`${inner>0?inner+'–':''}~${outer} km`,geoTag(outer));
+      if(inner>0){
+        row('#444','Dead zone',`${scaledGW(b.gw[t],S.power)}–${inner} km`,'No signal');
+      }
+    } else {
+      row(b.color,'F2/Skip',`Below min power (${b.minW}W)`,'—');
+    }
   } else {
-    row('#1a1a2a','Z3b · F-DX',t==='night'?'Band closed at night':'No F-skip this band','—');
+    row('#333','F2/Skip',t==='night'?'Band closed at night':'No skip this band','—');
   }
 }
 
@@ -1153,10 +1082,9 @@ function updateCondHint(){
   const c=CONDS.find(x=>x.id===S.cond);
   const t=S.time;
   document.getElementById('condHint').innerHTML=
-    `Factor ×${c.factor} applies to NVIS & F-DX ranges only · Groundwave unaffected<br/>`+
-    (t==='night'
-      ? '☾ Night: D-layer gone · low bands open for NVIS/F2 · high bands (15–10m) closed'
-      : '☀ Day: D-layer active · absorbs 160/80m · foF2~10 MHz tropical · 40/60m NVIS active');
+    `Factor: <span style="color:var(--text)">×${c.factor}</span> relative to average conditions<br/>`+
+    (t==='night'?'Night: D-layer gone — lower bands open for NVIS/DX':
+                 'Day: D-layer active — absorbs 160–80m; higher bands best for DX');
 }
 
 function buildAnts(){
