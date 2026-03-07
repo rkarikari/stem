@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.05</title>
+<title>Ham Radio Coverage Planner · v1.03</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -576,7 +576,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.05';
+const APP_VERSION = 'v1.03';
 const APP_DATE    = '2026-03-07';
 
 // ══════════════════════════════════════════════
@@ -644,74 +644,72 @@ const APP_DATE    = '2026-03-07';
 const BANDS = {
   '160m':{
     label:'160m', freq:'1.8–2.0 MHz', freqMHz:1.9, color:'#ff6b9d', minW:1.0,
-    dLayerThresh:0.25,
+    dLayerThresh:0.25,  // D-layer fraction at which 160m NVIS is killed (very sensitive)
     propMode:{
       day:  'ZONE 1 only — D-layer completely absorbs 160m skywave · Groundwave ~150 km',
       night:'ZONE 1 GW 150 km · ZONE 2 NVIS 0–400 km · ZONE 3 F2 DX 100–2500 km',
     },
-    // ITU-R P.368: groundwave is time-invariant (surface wave, depends only on freq & soil).
-    // @ 100W, avg soil (σ=5 mS/m), horizontal wire antenna reference.
-    gw:        150,
+    gw:        {day:150,  night:150},
     nvis:      {day:null, night:400},
-    skipInner: {day:null, night:100},
+    skipInner: {day:null, night:100},   // very short skip; low MUF, long wavelength
     skipOuter: {day:null, night:2500},
   },
   '80m':{
     label:'80m', freq:'3.5–4.0 MHz', freqMHz:3.7, color:'#ff9f43', minW:0.5,
-    dLayerThresh:0.70,
+    dLayerThresh:0.70,  // 80m: significant D-layer needed before NVIS killed
     propMode:{
       day:  'ZONE 1 only — D-layer blocks 80m skywave in average daytime · GW ~80 km',
       night:'ZONE 1 GW 80 km · ZONE 2 NVIS 0–500 km · ZONE 3 F2 DX 200–3000 km',
     },
-    gw:        80,
-    nvis:      {day:null, night:500},
+    gw:        {day:80,   night:80},
+    nvis:      {day:null, night:500},   // D-layer blocks daytime NVIS on 80m
     skipInner: {day:null, night:200},
     skipOuter: {day:null, night:3000},
   },
   '60m':{
     label:'60m', freq:'5.3–5.4 MHz', freqMHz:5.35, color:'#ffd93d', minW:0.5,
-    dLayerThresh:0.92,
+    dLayerThresh:0.92,  // 60m: very tolerant, D-layer has limited effect at 5 MHz
     propMode:{
       day:  'ZONE 1 GW 50 km · ZONE 2 NVIS 0–600 km · ZONE 3 E-skip 300–2000 km',
       night:'ZONE 1 GW 50 km · No NVIS (foF2 < 5.3 MHz) · ZONE 3 F2 skip 400–3000 km',
     },
-    gw:        50,
-    nvis:      {day:600,  night:null},
+    gw:        {day:50,   night:50},
+    nvis:      {day:600,  night:null},  // foF2 night < 5.3 MHz → NVIS fails
     skipInner: {day:300,  night:400},
     skipOuter: {day:2000, night:3000},
   },
   '40m':{
     label:'40m', freq:'7.0–7.2 MHz', freqMHz:7.1, color:'#6bcb77', minW:0.25,
-    dLayerThresh:0.97,
+    dLayerThresh:0.97,  // 40m: D-layer barely absorbs at 7 MHz; foF2 is the main gating factor
     propMode:{
       day:  'ZONE 1 GW 30 km · ZONE 2 NVIS 0–600 km (tropical foF2 > 7 MHz) · ZONE 3 E-skip 500–3000 km',
       night:'ZONE 1 GW 30 km · No NVIS (foF2 < 7 MHz night) · ZONE 3 F2 skip 300–4000 km',
     },
-    gw:        30,
-    nvis:      {day:600,  night:null},
+    gw:        {day:30,   night:30},
+    nvis:      {day:600,  night:null},  // foF2 drops below 7 MHz at night
     skipInner: {day:500,  night:300},
     skipOuter: {day:3000, night:4000},
   },
   '30m':{
     label:'30m', freq:'10.1–10.15 MHz', freqMHz:10.1, color:'#4d96ff', minW:0.25,
-    dLayerThresh:0.99,
+    dLayerThresh:0.99,  // 30m: essentially D-layer immune; NVIS gated by foF2 alone
     propMode:{
       day:  'ZONE 1 GW 15 km · No NVIS (at foF2 limit) · ZONE 3 F-skip 800–4000 km · CW+digital',
       night:'ZONE 1 GW 15 km · No NVIS · ZONE 3 F2 skip 500–4000 km · CW+digital',
     },
-    gw:        15,
-    nvis:      {day:null, night:null},
+    gw:        {day:15,   night:15},
+    nvis:      {day:null, night:null},  // 30m at/above foF2 limit — unreliable
     skipInner: {day:800,  night:500},
     skipOuter: {day:4000, night:4000},
   },
   '20m':{
     label:'20m', freq:'14.0–14.35 MHz', freqMHz:14.175, color:'#845ef7', minW:0.5,
-    dLayerThresh:1.00,
+    dLayerThresh:1.00,  // 20m: above typical foF2 — NVIS never available
     propMode:{
       day:  'ZONE 1 GW 8 km · No NVIS · ZONE 3 F2 skip 800–4500 km — reliable worldwide DX',
       night:'ZONE 1 GW 8 km · No NVIS · ZONE 3 F2 skip 500–4000 km — east-west paths open',
     },
-    gw:        8,
+    gw:        {day:8,    night:8},
     nvis:      {day:null, night:null},
     skipInner: {day:800,  night:500},
     skipOuter: {day:4500, night:4000},
@@ -723,7 +721,7 @@ const BANDS = {
       day:  'ZONE 1 GW 5 km · No NVIS · ZONE 3 F2 skip 1000–5000 km — solar dependent',
       night:'ZONE 1 GW 5 km · No NVIS · ZONE 3 F2 skip 700–4000 km (if F2 open)',
     },
-    gw:        5,
+    gw:        {day:5,    night:5},
     nvis:      {day:null, night:null},
     skipInner: {day:1000, night:700},
     skipOuter: {day:5000, night:4000},
@@ -735,9 +733,9 @@ const BANDS = {
       day:  'ZONE 1 GW 3 km · No NVIS · ZONE 3 F2 skip 1200–5000 km — solar cycle dependent',
       night:'ZONE 1 only — 15m closed at night (F2 MUF < 21 MHz) · GW 3 km',
     },
-    gw:        3,
+    gw:        {day:3,    night:3},
     nvis:      {day:null, night:null},
-    skipInner: {day:1200, night:null},
+    skipInner: {day:1200, night:null},  // closed at night
     skipOuter: {day:5000, night:null},
   },
   '12m':{
@@ -747,7 +745,7 @@ const BANDS = {
       day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3 F2 skip 1500–5000 km — near solar peak only',
       night:'ZONE 1 only — 12m closed at night · GW 2 km',
     },
-    gw:        2,
+    gw:        {day:2,    night:2},
     nvis:      {day:null, night:null},
     skipInner: {day:1500, night:null},
     skipOuter: {day:5000, night:null},
@@ -759,7 +757,7 @@ const BANDS = {
       day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3 F2 skip 1800–5500 km — solar peak only',
       night:'ZONE 1 only — 10m dead at night (F2 MUF < 28 MHz) · GW 2 km',
     },
-    gw:        2,
+    gw:        {day:2,    night:2},
     nvis:      {day:null, night:null},
     skipInner: {day:1800, night:null},
     skipOuter: {day:5500, night:null},
@@ -768,30 +766,17 @@ const BANDS = {
 
 
 const ANTS = {
-  // All gain values in dBd (relative to reference half-wave horizontal dipole at 0 dBd).
-  // Used as: range ∝ 10^(gain/20) — field amplitude ratio relative to dipole reference.
-  // Base values calibrated for ionospheric paths (NVIS + skip). Groundwave not antenna-gain-scaled
-  // (GW base values assume wire antenna; vertical advantage on GW is implicit in GW base value).
-  //
-  // NVIS note: antenna gain for NVIS is the HIGH-ANGLE (zenith) component, not the DX lobe.
-  // Inverted-V and low dipoles are comparable for NVIS. Verticals are poor for NVIS (−6 to −10 dBd
-  // at zenith) but good for DX (positive dBd). The gain values below represent a reasonable
-  // weighted average across the NVIS and skip zones this model renders, since a single gain
-  // scalar cannot independently optimise both path types simultaneously.
-  'inverted_v':  {label:'Inverted-V Dipole',      gain:-0.5, dir:false, bw:360, desc:'Comparable to dipole for NVIS; slightly lower DX lobe (−0.5 dBd). Easy to deploy with single support.'},
-  'dipole':      {label:'Horizontal Dipole',       gain:0,    dir:false, bw:360, desc:'Reference antenna (0 dBd). Bi-directional broadside pattern, good all-round performance.'},
-  'efhw':        {label:'End-Fed Half Wave (EFHW)',gain:0.5,  dir:false, bw:360, desc:'Slight gain over dipole (+0.5 dBd typical). Convenient single feed-point, multi-band capable.'},
-  'delta_loop':  {label:'Delta Loop',              gain:2.0,  dir:false, bw:360, desc:'~2 dBd gain over dipole, lower noise floor. Excellent for weak-signal work.'},
-  'long_wire':   {label:'Long Wire (>20 m)',        gain:2.5,  dir:false, bw:360, desc:'Broadband with ATU. High-angle radiation suits NVIS; modest low-angle gain for DX.'},
-  // Verticals: free-space gain ~5.19 dBi = +3.04 dBd over dipole for low-angle DX.
-  // However, for NVIS (high-angle), vertical is genuinely poor (−6 to −10 dBd at zenith).
-  // Values below are a practical compromise; true NVIS performance with a vertical is worse.
-  'vertical_qw': {label:'Vertical ¼ Wave',         gain:2.0,  dir:false, bw:360, desc:'Good low-angle DX gain (~+2 dBd vs dipole). Poor for NVIS — high-angle signal is weak. Needs good ground radials.'},
-  'gp_vertical': {label:'Ground Plane Vertical',   gain:2.5,  dir:false, bw:360, desc:'Omni low-angle radiation, ~+2.5 dBd for DX paths. Requires good ground plane for rated performance.'},
-  'mag_loop':    {label:'Magnetic Loop (Small)',    gain:-3.5, dir:false, bw:360, desc:'Compact, very low noise floor. Narrow bandwidth, requires careful tuning. −3.5 dBd vs dipole.'},
-  'yagi_3el':    {label:'Yagi 3-element',           gain:6.0,  dir:true,  bw:68,  desc:'~6 dBd gain, fixed directional beam. Excellent for DX on 20m–10m. Focused forward lobe.'},
-  'yagi_5el':    {label:'Yagi 5-element',           gain:8.5,  dir:true,  bw:54,  desc:'~8.5 dBd high gain, narrow beam. Top performance for dedicated DX stations.'},
-  'log_periodic':{label:'Log Periodic (LPDA)',      gain:5.0,  dir:true,  bw:80,  desc:'Wideband directional, ~5 dBd across multiple bands. Versatile DX antenna.'}
+  'inverted_v':  {label:'Inverted-V Dipole',      gain:-0.5, dir:false, bw:360, desc:'High-angle NVIS radiation, ideal for regional comms. Easy to deploy.'},
+  'dipole':      {label:'Horizontal Dipole',       gain:0,    dir:false, bw:360, desc:'Reference antenna. Bi-directional broadside pattern, good all-round.'},
+  'efhw':        {label:'End-Fed Half Wave (EFHW)',gain:0.5,  dir:false, bw:360, desc:'Convenient single feed-point. Slight gain over dipole, multi-band capable.'},
+  'delta_loop':  {label:'Delta Loop',              gain:2.0,  dir:false, bw:360, desc:'~2 dBd gain, lower noise floor, excellent for weak-signal work.'},
+  'long_wire':   {label:'Long Wire (>20 m)',        gain:2.5,  dir:false, bw:360, desc:'Broadband, easy to deploy with ATU. High angle radiation.'},
+  'vertical_qw': {label:'Vertical ¼ Wave',         gain:-2.5, dir:false, bw:360, desc:'Low takeoff angle — good for DX on 20m+, poor NVIS on 160–40m.'},
+  'gp_vertical': {label:'Ground Plane Vertical',   gain:-1.5, dir:false, bw:360, desc:'Omni at low angle. Requires good ground radials for best performance.'},
+  'mag_loop':    {label:'Magnetic Loop (Small)',    gain:-3.5, dir:false, bw:360, desc:'Compact, very low noise. Narrow bandwidth, requires careful tuning.'},
+  'yagi_3el':    {label:'Yagi 3-element',           gain:6.0,  dir:true,  bw:68,  desc:'6 dBd gain, fixed directional. Excellent for DX, focused beam.'},
+  'yagi_5el':    {label:'Yagi 5-element',           gain:8.5,  dir:true,  bw:54,  desc:'8.5 dBd high gain, narrow beam, top performance for DX stations.'},
+  'log_periodic':{label:'Log Periodic (LPDA)',      gain:5.0,  dir:true,  bw:80,  desc:'Wideband directional, ~5 dBd across multiple bands. Versatile.'}
 };
 
 const CONDS = [
@@ -1339,8 +1324,7 @@ function liveZones(band){
   const eLayerPresent = (lt >= st.sunriseLT + 1.0 && lt < st.sunsetLT - 0.5);
 
   // ── Groundwave ─────────────────────────────────────────────────
-  // ITU-R P.368: surface wave is time-invariant — depends only on frequency and soil.
-  const gwBase = b.gw;
+  const gwBase = b.gw.day !== undefined ? b.gw.day : b.gw;
 
   // ── M(3000)F2 factor — latitude-zone-aware ────────────────────
   // Source profiles: M3K_EQ (equatorial, Oyekola 2010), M3K_MID (mid-lat,
@@ -1391,16 +1375,8 @@ function liveZones(band){
 
   if(f2SkipAvail || eSkipAvail){
     const totalDay  = st.sunsetLT - st.sunriseLT;
-    // skipInner transitions from night to day value as the F2 layer rises after sunrise.
-    // The F2 layer reaches full daytime virtual height and skip distance by ~2–3h after
-    // sunrise, then holds through the day. A logistic (sigmoid) centred on sunrise+2h
-    // with a steep k gives a rapid transition, avoiding the previous error of a linear
-    // ramp that reached day value only at sunset (midday was 50% of the way between
-    // night and day values). siDayFrac ≈ 0 at night, ≈ 1 from mid-morning onward.
-    const midpoint = st.sunriseLT + 2.0;   // F2 reaches daytime height ~2h after sunrise
-    const k = 4.0;                          // steepness: 0.05 at SR, 0.95 at SR+3h
     const siDayFrac = isDaytime
-      ? 1.0 / (1.0 + Math.exp(-k * (lt - midpoint)))
+      ? Math.min(1, Math.max(0, (lt - st.sunriseLT) / totalDay))
       : 0;
     const siDay   = b.skipInner.day;
     const siNight = b.skipInner.night;
