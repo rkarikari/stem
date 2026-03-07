@@ -316,9 +316,13 @@ option{background:#0b1820;}
   </div><!-- sb-scroll -->
 
   <div class="sb-foot">
-    Model: Empirical NVIS + F2 Skywave · Range ∝ √P · D-layer absorption included<br/>
-    Gain applied linearly · Conditions multiplicative factor<br/>
-    ⚠ Indicative only — actual coverage varies with ionosphere
+    <span style="color:#ffffff;font-weight:bold">━</span> ZONE 1 · Groundwave (ITU-R P.368) &nbsp;
+    <span style="color:#00ffc3;font-weight:bold">━</span> ZONE 2 · NVIS 0–650 km filled &nbsp;<br/>
+    <span style="color:#444">▒</span> ZONE 3a · Dead zone (skip zone) &nbsp;
+    <span style="color:var(--accent)">━</span> ZONE 3b · F-layer DX ring<br/>
+    Zones are mutually exclusive · skipInner fixed (geometry) · skipOuter scales √P<br/>
+    Sources: ITU-R P.368, P.533 · ARRL Handbook · electronics-notes.com<br/>
+    ⚠ Average conditions · actual ionosphere varies with solar cycle, season, time
   </div>
   </div><!-- /hf-panel -->
 
@@ -410,7 +414,7 @@ option{background:#0b1820;}
       </div>
 
       <div class="vu-note">
-        <strong>Model:</strong> 72 radials × 40 SRTM 90m samples. Geometric LOS with earth-bulge correction (4/3 Rₑ). 15 m clearance tolerance absorbs DEM noise (±10 m SRTM spec) and knife-edge grace. Hata/COST-231 clutter already accounts for buildings — terrain only blocks true ridges and hills above the LOS line. <strong>Polygon</strong> = terrain-shadowed Hata coverage. <strong>Dashed ring</strong> = smooth-earth Hata limit.
+        <strong>Model:</strong> 72 radials × 40 SRTM 90m samples. Each radial traces outward from TX; the first terrain obstruction above the geometric LOS line (with earth-bulge correction, 15 m tolerance) ends that radial's coverage. The filled polygon shape is therefore unique per direction — pointing north can give very different range than pointing west. Hata/COST-231 clutter budget caps each radial independently. <strong>Polygon</strong> = terrain+Hata shaped coverage. <strong>Dashed ring</strong> = theoretical smooth-earth Hata limit.
       </div>
     </div>
     <div class="vu-foot">
@@ -507,7 +511,7 @@ option{background:#0b1820;}
       </div>
 
       <div class="vu-note">
-        <strong>Model:</strong> 72 radials × 40 SRTM 90m samples. Geometric LOS with earth-bulge (4/3 Rₑ). 15 m clearance tolerance. UHF (435 MHz) Hata loss is ~9 dB higher than VHF per km, so coverage is shorter but terrain shadowing uses the same geometric LOS engine — not double-penalised by Fresnel zone on top of clutter loss.
+        <strong>Model:</strong> 72 radials × 40 SRTM 90m samples. Geometric LOS with earth-bulge (4/3 Rₑ). 15 m clearance tolerance. Each radial stops at the first terrain blockage — so coverage is asymmetric by design; the polygon shape reflects real terrain, not a circle. UHF (435 MHz) Hata loss is ~9 dB higher than VHF per km. <strong>Polygon</strong> = terrain+Hata shaped coverage. <strong>Dashed ring</strong> = smooth-earth limit.
       </div>
     </div>
     <div class="vu-foot">
@@ -531,21 +535,177 @@ option{background:#0b1820;}
 // DATA TABLES
 // ══════════════════════════════════════════════
 
-// baseKm = reliable range at 100 W SSB/CW, average conditions, dipole/inverted-V (ITU-R P.533 / empirical QRP records).
-// minW   = minimum working power (W) — below this S/N collapses against atmospheric / galactic noise.
-// Power scaling: range ∝ √(P/100) per ITU-R P.533 for ionospheric paths.
+// ══════════════════════════════════════════════════════════════════
+// HF PROPAGATION MODEL — Certified Physics Reference
+// ══════════════════════════════════════════════════════════════════
+//
+// THREE MUTUALLY EXCLUSIVE ZONES rendered on map — no overlap between zones:
+//
+// ZONE 1 — GROUNDWAVE (white dashed ring)
+//   Surface wave. Always present, day and night. Frequency-dependent attenuation.
+//   Source: ITU-R P.368, 100W ERP, horizontal dipole/inverted-V, avg soil (σ=5 mS/m).
+//   Wire antennas are poor GW radiators vs. verticals — values below reflect that.
+//   @ 100W: 160m~150 km, 80m~80 km, 60m~50 km, 40m~30 km, 30m~15 km, 20m~8 km, 10m~2 km.
+//
+// ZONE 2 — NVIS (cyan, filled disk from GW edge to nvisKm)
+//   Near-Vertical Incidence Skywave. Signal arrives at 0–650 km with NO skip zone gap.
+//   Source: ARRL Handbook; G0ISW/QSL.net: "usable 50–650 km, no skip zone".
+//   Valid only when operating frequency < foF2 (ionospheric critical frequency).
+//   DAYTIME tropical (Accra, equatorial): foF2 ≈ 8–12 MHz.
+//     → 160m (1.8 MHz): D-layer completely absorbs. NVIS = null.
+//     → 80m (3.5 MHz): D-layer severely attenuates by midday. NVIS = null (average day).
+//     → 60m (5.3 MHz): Below foF2, D-layer less severe. NVIS = 600 km.
+//     → 40m (7 MHz): Below foF2. NVIS = 600 km.
+//     → 30m (10 MHz): At foF2 limit — unreliable. NVIS = null.
+//   NIGHTTIME: foF2 drops to ≈ 3–4 MHz (D-layer gone, F2 weaker).
+//     → 160m (1.8 MHz): Valid. NVIS = 400 km.
+//     → 80m (3.5 MHz): Valid. NVIS = 500 km.
+//     → 60m+ : foF2 < freq → NVIS fails. null.
+//
+// ZONE 3a — DEAD ZONE (grey hatched annulus, exclusive region)
+//   Skip zone: gap between GW/NVIS outer edge and skip inner edge.
+//   Width = skipInnerKm − max(gwKm, nvisKm or 0).
+//   Only rendered when this gap > 0. No overlap with NVIS zone.
+//
+// ZONE 3b — F-LAYER DX RING (band colour annulus)
+//   First-hop F2 or E-layer skywave. Inner = skip distance, outer = max first hop.
+//   Skip inner (empirical, ARRL/electronics-notes, average conditions, 100W):
+//     160m night: ~100 km. Day: null (D-layer blocks F propagation entirely).
+//     80m  night: ~200 km. Day: null.
+//     60m  day:   ~300 km (E-layer). Night: ~400 km.
+//     40m  day:   ~500 km (E→F). Night: ~300 km.
+//     30m  day:   ~800 km. Night: ~500 km.
+//     20m  day:   ~800 km. Night: ~500 km.
+//     17m  day:  ~1000 km. Night: ~700 km (if open).
+//     15m  day:  ~1200 km. Night: null (closed).
+//     12m  day:  ~1500 km. Night: null.
+//     10m  day:  ~1800 km. Night: null.
+//   Skip inner does NOT scale with power (geometric/ionospheric constraint, not budget).
+//   Max first hop: E ~2000 km, F2-day ~4500 km, F2-night ~3500 km.
+//   skipOuter DOES scale with power (√P/100 per ITU-R P.533).
+//
+// POWER SCALING:
+//   Ionospheric (NVIS outer, skipOuter): range ∝ √(P/100). ITU-R P.533.
+//   Groundwave: range ∝ (P/100)^0.3 (slower; surface-wave geometry).
+//   skipInner: fixed — does NOT scale with power.
+//   condFactor: applies to ionospheric paths only.
+//
+// Sources: ITU-R P.368, ITU-R P.533, ARRL Handbook 2023, electronics-notes.com,
+//          G0ISW/QSL.net, VU2NSB skip zone article, N4UFP HF propagation slides.
+
 const BANDS = {
-  '160m':{ label:'160m', freq:'1.8–2.0 MHz',   baseKm:{day:150,  night:800},  minW:1.0,  propMode:'Groundwave + NVIS · Night-only reliable', color:'#ff6b9d' },
-  '80m': { label:'80m',  freq:'3.5–4.0 MHz',   baseKm:{day:280,  night:1200}, minW:0.5,  propMode:'NVIS · D-layer absorbs by midday',         color:'#ff9f43' },
-  '60m': { label:'60m',  freq:'5.3–5.4 MHz',   baseKm:{day:400,  night:1500}, minW:0.5,  propMode:'NVIS · Transitional band',                 color:'#ffd93d' },
-  '40m': { label:'40m',  freq:'7.0–7.2 MHz',   baseKm:{day:600,  night:2000}, minW:0.25, propMode:'NVIS day / Regional night',                color:'#6bcb77' },
-  '30m': { label:'30m',  freq:'10.1–10.15 MHz', baseKm:{day:1000, night:2500}, minW:0.25, propMode:'Regional / DX · CW & digital only',       color:'#4d96ff' },
-  '20m': { label:'20m',  freq:'14.0–14.35 MHz', baseKm:{day:2500, night:3500}, minW:0.5,  propMode:'F2 DX workhorse · Best daytime DX band',  color:'#845ef7' },
-  '17m': { label:'17m',  freq:'18.0–18.2 MHz',  baseKm:{day:3000, night:2000}, minW:1.0,  propMode:'F2 DX · Needs moderate solar activity',   color:'#f06595' },
-  '15m': { label:'15m',  freq:'21.0–21.45 MHz', baseKm:{day:3500, night:1000}, minW:1.0,  propMode:'F2 DX · Solar-cycle dependent',           color:'#cc5de8' },
-  '12m': { label:'12m',  freq:'24.89–24.99 MHz',baseKm:{day:4000, night:400},  minW:2.0,  propMode:'F2 / Sporadic-E · Near cycle peak only',  color:'#74c0fc' },
-  '10m': { label:'10m',  freq:'28.0–29.7 MHz',  baseKm:{day:4500, night:150},  minW:2.0,  propMode:'F2 / Sporadic-E · Unreliable except cycle peak', color:'#a9e34b' }
+  '160m':{
+    label:'160m', freq:'1.8–2.0 MHz', color:'#ff6b9d', minW:1.0,
+    propMode:{
+      day:  'ZONE 1 only — D-layer completely absorbs 160m skywave · Groundwave ~150 km',
+      night:'ZONE 1 GW 150 km · ZONE 2 NVIS 0–400 km · ZONE 3 F2 DX 100–2500 km',
+    },
+    gw:        {day:150,  night:150},
+    nvis:      {day:null, night:400},
+    skipInner: {day:null, night:100},   // very short skip; low MUF, long wavelength
+    skipOuter: {day:null, night:2500},
+  },
+  '80m':{
+    label:'80m', freq:'3.5–4.0 MHz', color:'#ff9f43', minW:0.5,
+    propMode:{
+      day:  'ZONE 1 only — D-layer blocks 80m skywave in average daytime · GW ~80 km',
+      night:'ZONE 1 GW 80 km · ZONE 2 NVIS 0–500 km · ZONE 3 F2 DX 200–3000 km',
+    },
+    gw:        {day:80,   night:80},
+    nvis:      {day:null, night:500},   // D-layer blocks daytime NVIS on 80m
+    skipInner: {day:null, night:200},
+    skipOuter: {day:null, night:3000},
+  },
+  '60m':{
+    label:'60m', freq:'5.3–5.4 MHz', color:'#ffd93d', minW:0.5,
+    propMode:{
+      day:  'ZONE 1 GW 50 km · ZONE 2 NVIS 0–600 km · ZONE 3 E-skip 300–2000 km',
+      night:'ZONE 1 GW 50 km · No NVIS (foF2 < 5.3 MHz) · ZONE 3 F2 skip 400–3000 km',
+    },
+    gw:        {day:50,   night:50},
+    nvis:      {day:600,  night:null},  // foF2 night < 5.3 MHz → NVIS fails
+    skipInner: {day:300,  night:400},
+    skipOuter: {day:2000, night:3000},
+  },
+  '40m':{
+    label:'40m', freq:'7.0–7.2 MHz', color:'#6bcb77', minW:0.25,
+    propMode:{
+      day:  'ZONE 1 GW 30 km · ZONE 2 NVIS 0–600 km (tropical foF2 > 7 MHz) · ZONE 3 E-skip 500–3000 km',
+      night:'ZONE 1 GW 30 km · No NVIS (foF2 < 7 MHz night) · ZONE 3 F2 skip 300–4000 km',
+    },
+    gw:        {day:30,   night:30},
+    nvis:      {day:600,  night:null},  // foF2 drops below 7 MHz at night
+    skipInner: {day:500,  night:300},
+    skipOuter: {day:3000, night:4000},
+  },
+  '30m':{
+    label:'30m', freq:'10.1–10.15 MHz', color:'#4d96ff', minW:0.25,
+    propMode:{
+      day:  'ZONE 1 GW 15 km · No NVIS (at foF2 limit) · ZONE 3 F-skip 800–4000 km · CW+digital',
+      night:'ZONE 1 GW 15 km · No NVIS · ZONE 3 F2 skip 500–4000 km · CW+digital',
+    },
+    gw:        {day:15,   night:15},
+    nvis:      {day:null, night:null},  // 30m at/above foF2 limit — unreliable
+    skipInner: {day:800,  night:500},
+    skipOuter: {day:4000, night:4000},
+  },
+  '20m':{
+    label:'20m', freq:'14.0–14.35 MHz', color:'#845ef7', minW:0.5,
+    propMode:{
+      day:  'ZONE 1 GW 8 km · No NVIS · ZONE 3 F2 skip 800–4500 km — reliable worldwide DX',
+      night:'ZONE 1 GW 8 km · No NVIS · ZONE 3 F2 skip 500–4000 km — east-west paths open',
+    },
+    gw:        {day:8,    night:8},
+    nvis:      {day:null, night:null},
+    skipInner: {day:800,  night:500},
+    skipOuter: {day:4500, night:4000},
+  },
+  '17m':{
+    label:'17m', freq:'18.0–18.2 MHz', color:'#f06595', minW:1.0,
+    propMode:{
+      day:  'ZONE 1 GW 5 km · No NVIS · ZONE 3 F2 skip 1000–5000 km — solar dependent',
+      night:'ZONE 1 GW 5 km · No NVIS · ZONE 3 F2 skip 700–4000 km (if F2 open)',
+    },
+    gw:        {day:5,    night:5},
+    nvis:      {day:null, night:null},
+    skipInner: {day:1000, night:700},
+    skipOuter: {day:5000, night:4000},
+  },
+  '15m':{
+    label:'15m', freq:'21.0–21.45 MHz', color:'#cc5de8', minW:1.0,
+    propMode:{
+      day:  'ZONE 1 GW 3 km · No NVIS · ZONE 3 F2 skip 1200–5000 km — solar cycle dependent',
+      night:'ZONE 1 only — 15m closed at night (F2 MUF < 21 MHz) · GW 3 km',
+    },
+    gw:        {day:3,    night:3},
+    nvis:      {day:null, night:null},
+    skipInner: {day:1200, night:null},  // closed at night
+    skipOuter: {day:5000, night:null},
+  },
+  '12m':{
+    label:'12m', freq:'24.89–24.99 MHz', color:'#74c0fc', minW:2.0,
+    propMode:{
+      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3 F2 skip 1500–5000 km — near solar peak only',
+      night:'ZONE 1 only — 12m closed at night · GW 2 km',
+    },
+    gw:        {day:2,    night:2},
+    nvis:      {day:null, night:null},
+    skipInner: {day:1500, night:null},
+    skipOuter: {day:5000, night:null},
+  },
+  '10m':{
+    label:'10m', freq:'28.0–29.7 MHz', color:'#a9e34b', minW:2.0,
+    propMode:{
+      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3 F2 skip 1800–5500 km — solar peak only',
+      night:'ZONE 1 only — 10m dead at night (F2 MUF < 28 MHz) · GW 2 km',
+    },
+    gw:        {day:2,    night:2},
+    nvis:      {day:null, night:null},
+    skipInner: {day:1800, night:null},
+    skipOuter: {day:5500, night:null},
+  },
 };
+
 
 const ANTS = {
   'inverted_v':  {label:'Inverted-V Dipole',      gain:-0.5, dir:false, bw:360, desc:'High-angle NVIS radiation, ideal for regional comms. Easy to deploy.'},
@@ -614,21 +774,50 @@ let cvLayers=[], txMk=null;
 // COMPUTATION
 // ══════════════════════════════════════════════
 
+// ── Power/condition scaling ───────────────────────────────────
+// ITU-R P.533: ionospheric path range ∝ √(P/100)
+// Groundwave: range ∝ (P/100)^0.3 (slower falloff vs power due to surface-wave geometry)
+// Conditions factor applies to ionospheric paths only (not groundwave).
+
+function scaledIono(baseKm, powerW, condFactor){
+  if(!baseKm || baseKm <= 0) return 0;
+  return Math.min(MAX_KM, Math.round(baseKm * Math.sqrt(powerW/100) * condFactor));
+}
+function scaledGW(baseKm, powerW){
+  if(!baseKm || baseKm <= 0) return 0;
+  return Math.max(1, Math.round(baseKm * Math.pow(powerW/100, 0.3)));
+}
+
+// Backwards-compatible single range for summary panel (best ionospheric path)
 function calcRangeKm(powerW){
-  const b  = BANDS[S.band];
-  const a  = ANTS[S.ant];
-  const c  = CONDS.find(x=>x.id===S.cond);
-  // Enforce atmospheric noise floor: below minW the S/N is too poor to close the link
+  const b = BANDS[S.band];
+  const c = CONDS.find(x=>x.id===S.cond);
+  const a = ANTS[S.ant];
   if(powerW < b.minW) return 0;
-  const base = b.baseKm[S.time];
   const gLin = Math.pow(10, a.gain/20);
-  const pFac = Math.sqrt(powerW/100);   // ITU-R P.533: range ∝ √P for ionospheric paths
-  return Math.min(MAX_KM, Math.round(base * gLin * pFac * c.factor));
+  const t = S.time;
+  // Prefer NVIS range if available, else skip outer
+  const nvis   = b.nvis[t]    ? scaledIono(b.nvis[t]    * gLin, powerW, c.factor) : 0;
+  const skip   = b.skipOuter[t]? scaledIono(b.skipOuter[t]* gLin, powerW, c.factor) : 0;
+  return Math.max(nvis, skip, scaledGW(b.gw[t], powerW));
 }
 
 function ringPowers(){
   return [S.power, S.power/10, S.power/100, S.power/1000]
     .filter(p=>p>=0.08);
+}
+
+// ── Annulus polygon: ring from innerKm to outerKm ─────────────
+// Built as outer circle minus inner hole using Leaflet's polygon with holes
+function annulusPts(lat, lon, innerKm, outerKm, steps=72){
+  const outer=[], inner=[];
+  for(let i=0;i<=steps;i++){
+    const brg = (i/steps)*360;
+    outer.push(destPt(lat,lon,brg,outerKm));
+    inner.push(destPt(lat,lon,brg,innerKm));
+  }
+  inner.reverse();
+  return [outer, inner]; // Leaflet polygon with hole
 }
 
 // Sector polygon for directional antennas
@@ -653,55 +842,182 @@ function rebuildLayers(){
   cvLayers=[];
   if(txMk){map.removeLayer(txMk);txMk=null;}
 
-  const ant=ANTS[S.ant];
-  const powers=ringPowers();
-  const band=BANDS[S.band];
+  const ant  = ANTS[S.ant];
+  const b    = BANDS[S.band];
+  const c    = CONDS.find(x=>x.id===S.cond);
+  const t    = S.time;
+  const gLin = Math.pow(10, ant.gain/20);
 
-  powers.forEach((p,i)=>{
-    const km=calcRangeKm(p);
-    const c=RING_C[i], fi=RING_F[i];
+  // Helper to add a layer to map and cvLayers
+  function addLayer(layer){ layer.addTo(map); cvLayers.push(layer); }
 
-    // Skip rings that are below the noise floor (km=0)
-    if(km <= 0) return;
-
-    let layer, backCircle;
-
-    if(ant.dir){
-      const pts=sectorPts(S.lat,S.lon,km,S.bearing,ant.bw);
-      layer=L.polygon(pts,{color:c,fillColor:c,weight:2,opacity:.85,fillOpacity:.14,dashArray:'0'});
-      const backKm=km*0.15;
-      backCircle=L.circle([S.lat,S.lon],{radius:backKm*1000,color:c,fillColor:c,weight:1,opacity:.3,fillOpacity:.04,dashArray:'4 4'});
-      backCircle.addTo(map);
-      cvLayers.push(backCircle);
-    } else {
-      layer=L.circle([S.lat,S.lon],{radius:km*1000,color:c,fillColor:c,weight:2,opacity:.85,fillOpacity:fi,dashArray:'8 5'});
-    }
-    layer.bindTooltip(`${fmtPwr(p)} · ~${km.toLocaleString()} km`,{className:'ltt',direction:'top'});
-    layer.addTo(map);
-    cvLayers.push(layer);
-
-    // Permanent radius label at the north edge of the ring
-    const labelPt = destPt(S.lat, S.lon, 0, km);
-    const label = L.marker(labelPt, {
-      icon: L.divIcon({
-        className: '',
-        iconAnchor: [0, 0],
-        html: `<div style="
-          font-family:'Share Tech Mono',monospace;font-size:10px;
-          color:${c};white-space:nowrap;
-          text-shadow:0 0 6px #000,0 0 10px #000,1px 1px 2px #000;
-          transform:translate(-50%,-50%);
-          pointer-events:none;letter-spacing:.04em;
-          background:rgba(6,12,14,.7);padding:1px 5px;border-left:2px solid ${c};"
-        >${km>=1000?(km/1000).toFixed(1)+'k':km} km · ${fmtPwr(p)}</div>`
-      }),
-      interactive: false, zIndexOffset: 500
+  // Helper to add a distance label
+  function addLabel(km, color, text, bearing=0){
+    if(km < 1) return;
+    const pt = destPt(S.lat, S.lon, bearing, km);
+    const lbl = L.marker(pt,{
+      icon: L.divIcon({ className:'', iconAnchor:[0,0],
+        html:`<div style="font-family:'Share Tech Mono',monospace;font-size:10px;
+          color:${color};white-space:nowrap;text-shadow:0 0 6px #000,1px 1px 2px #000;
+          transform:translate(-50%,-50%);pointer-events:none;letter-spacing:.04em;
+          background:rgba(6,12,14,.75);padding:1px 5px;border-left:2px solid ${color};">
+          ${km>=1000?(km/1000).toFixed(1)+'k':km} km · ${text}</div>`
+      }), interactive:false, zIndexOffset:500
     });
-    label.addTo(map);
-    cvLayers.push(label);
-  });
+    lbl.addTo(map); cvLayers.push(lbl);
+  }
 
-  // TX Marker
+  const col = b.color;
+  const powers = ringPowers();
+
+  // ─────────────────────────────────────────────────────────────
+  // ZONE 1 — GROUNDWAVE (white dashed ring)
+  // Always present. Omni regardless of antenna (surface wave, polarisation-independent).
+  // Scales with power^0.3 per surface-wave geometry.
+  // Shown once at full power only — inner-most zone, always rendered.
+  // ─────────────────────────────────────────────────────────────
+  const gwKm = scaledGW(b.gw[t], S.power);
+  if(gwKm >= 1){
+    const gwColor = '#ffffff';
+    const gwLayer = L.circle([S.lat,S.lon],{
+      radius: gwKm*1000,
+      color: gwColor, fillColor: gwColor,
+      weight:2, opacity:.85, fillOpacity:.06,
+      dashArray:'6 4'
+    });
+    gwLayer.bindTooltip(
+      `ZONE 1 · Groundwave · ${b.label} · ~${gwKm} km · ${t==='day'?'☀ Day':'☾ Night'}\n`+
+      `ITU-R P.368 · 100W · avg soil · horizontal dipole`,
+      {className:'ltt',direction:'top'});
+    addLayer(gwLayer);
+    addLabel(gwKm, gwColor, 'ZONE 1 · GW', 90);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // ZONE 2 — NVIS (cyan filled disk, from GW outer edge to nvisKm)
+  // Only rendered when NVIS is available (nvis[t] !== null).
+  // Exclusive: rendered as annulus from gwKm to nvisKm (no overlap with GW zone).
+  // Multiple power rings shown (each as annulus).
+  // Antenna gain applies. Condition factor applies. Skip inner does NOT apply.
+  // ─────────────────────────────────────────────────────────────
+  const nvisBaseKm = b.nvis[t];
+  let maxNvisKm = 0;  // track for dead zone calculation
+  if(nvisBaseKm){
+    const nvisColor = '#00ffc3';
+    powers.forEach((p, pi)=>{
+      if(p < b.minW) return;
+      const nvisKm = scaledIono(nvisBaseKm * gLin, p, c.factor);
+      if(nvisKm < 1) return;
+      if(pi === 0) maxNvisKm = nvisKm;
+      const fo = [.20,.14,.09,.05][pi];
+      const innerEdge = Math.max(gwKm, 1); // NVIS annulus starts at GW outer edge
+
+      let layer;
+      if(ant.dir){
+        // Directional: sector annulus
+        const outerPts = sectorPts(S.lat,S.lon,nvisKm,S.bearing,ant.bw);
+        const innerPts = innerEdge > 2
+          ? sectorPts(S.lat,S.lon,innerEdge,S.bearing,ant.bw).slice(1,-1).reverse()
+          : [];
+        layer = L.polygon(innerEdge > 2 ? [outerPts, innerPts] : [outerPts],{
+          color:nvisColor, fillColor:nvisColor,
+          weight:2, opacity:.9, fillOpacity:fo
+        });
+      } else {
+        layer = innerEdge > 2
+          ? L.polygon(annulusPts(S.lat,S.lon,innerEdge,nvisKm),{
+              color:nvisColor, fillColor:nvisColor,
+              weight:2, opacity:.9, fillOpacity:fo
+            })
+          : L.circle([S.lat,S.lon],{
+              radius:nvisKm*1000,
+              color:nvisColor, fillColor:nvisColor,
+              weight:2, opacity:.9, fillOpacity:fo
+            });
+      }
+      layer.bindTooltip(
+        `ZONE 2 · NVIS · ${fmtPwr(p)} · ${innerEdge}–${nvisKm} km · No skip zone gap\n`+
+        `Near-Vertical Incidence Skywave · foF2 > ${b.freq} · ${t==='day'?'☀ Day':'☾ Night'}`,
+        {className:'ltt',direction:'top'});
+      addLayer(layer);
+      if(pi===0) addLabel(nvisKm, nvisColor, 'ZONE 2 · NVIS', 315);
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // ZONES 3a & 3b — DEAD ZONE + F-LAYER DX RING
+  // Only rendered when skipOuter[t] is not null.
+  // skipInner is FIXED (geometric/ionospheric, does not scale with power).
+  // Dead zone (3a): from max(gwKm, maxNvisKm) to skipInner — exclusively no signal.
+  // DX ring  (3b): from skipInner to skipOuter — F2/E-layer first hop.
+  // skipOuter scales with power and conditions.
+  // ─────────────────────────────────────────────────────────────
+  const skipInnerKm = b.skipInner[t];  // fixed, no power scaling
+  const skipOuterBase = b.skipOuter[t];
+
+  if(skipOuterBase){
+    // Render dead zone once (at full power — it's geometrically fixed)
+    if(skipInnerKm && skipInnerKm > 1){
+      const deadInner = Math.max(gwKm, maxNvisKm, 1);
+      const deadOuter = skipInnerKm;
+      if(deadOuter > deadInner + 20){
+        const deadPts = annulusPts(S.lat,S.lon,deadInner,deadOuter);
+        const deadLayer = L.polygon(deadPts,{
+          color:'#444444', fillColor:'#111111',
+          weight:1.5, opacity:.6, fillOpacity:.25,
+          dashArray:'5 3'
+        });
+        deadLayer.bindTooltip(
+          `ZONE 3a · Dead Zone (Skip Zone) · ${deadInner}–${deadOuter} km\n`+
+          `No signal via groundwave, NVIS, or F-layer skip · ${t==='day'?'☀ Day':'☾ Night'}`,
+          {className:'ltt',direction:'top'});
+        addLayer(deadLayer);
+        addLabel(Math.round((deadInner+deadOuter)/2), '#555555', 'ZONE 3a · DEAD', 180);
+      }
+    }
+
+    // DX ring — multiple power rings
+    powers.forEach((p, pi)=>{
+      if(p < b.minW) return;
+      const skipOuter = scaledIono(skipOuterBase * gLin, p, c.factor);
+      if(skipOuter < 1) return;
+      const ringInner = skipInnerKm || 0;
+      const fo = [.18,.12,.08,.04][pi];
+      const dxColor = col;
+
+      let dxLayer;
+      if(ant.dir){
+        const outerPts = sectorPts(S.lat,S.lon,skipOuter,S.bearing,ant.bw);
+        const innerPts = ringInner > 10
+          ? sectorPts(S.lat,S.lon,ringInner,S.bearing,ant.bw).slice(1,-1).reverse()
+          : [];
+        dxLayer = L.polygon(ringInner > 10 ? [outerPts, innerPts] : [outerPts],{
+          color:dxColor, fillColor:dxColor,
+          weight:2, opacity:.9, fillOpacity:fo
+        });
+      } else {
+        dxLayer = ringInner > 10
+          ? L.polygon(annulusPts(S.lat,S.lon,ringInner,skipOuter),{
+              color:dxColor, fillColor:dxColor,
+              weight:2, opacity:.9, fillOpacity:fo
+            })
+          : L.circle([S.lat,S.lon],{
+              radius:skipOuter*1000,
+              color:dxColor, fillColor:dxColor,
+              weight:2, opacity:.9, fillOpacity:fo
+            });
+      }
+      const innerLabel = ringInner > 10 ? `${ringInner}–` : '';
+      dxLayer.bindTooltip(
+        `ZONE 3b · F-layer DX · ${fmtPwr(p)} · ${innerLabel}~${skipOuter} km\n`+
+        `First-hop skip · ${t==='day'?'☀ Day · F2/E-layer':'☾ Night · F2-layer'}`,
+        {className:'ltt',direction:'top'});
+      addLayer(dxLayer);
+      if(pi===0) addLabel(skipOuter, dxColor, 'ZONE 3b · F-DX', 45);
+    });
+  }
+
+  // ── TX Marker ──────────────────────────────────────────────
   const ico=L.divIcon({className:'',iconSize:[0,0],iconAnchor:[0,0],html:`
     <div style="position:relative;width:0;height:0;">
       <div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border:2px solid #00ffc3;border-radius:50%;animation:ripple 2.2s ease-out infinite;"></div>
@@ -711,27 +1027,24 @@ function rebuildLayers(){
       <div style="position:absolute;left:7px;top:5px;font-family:'Share Tech Mono',monospace;font-size:9px;color:#00ffc3;white-space:nowrap;text-shadow:0 0 6px #00ffc3;letter-spacing:.05em;">TX</div>
     </div>`
   });
-
   txMk=L.marker([S.lat,S.lon],{icon:ico,zIndexOffset:1000}).addTo(map)
     .bindPopup(`<div style="font-family:'Share Tech Mono',monospace;font-size:11px;padding:5px 2px;line-height:1.9;">
       <b style="color:#00ffc3">TX — ${esc(S.locName)}</b><br/>
       ${fmtCoord(S.lat,'NS')} &nbsp; ${fmtCoord(S.lon,'EW')}<br/>
-      Band: ${band.label} &nbsp;·&nbsp; ${band.freq}<br/>
+      Band: ${b.label} &nbsp;·&nbsp; ${b.freq}<br/>
       Antenna: ${ANTS[S.ant].label}<br/>
       Max Power: ${fmtPwr(S.power)}<br/>
-      Conditions: ${CONDS.find(c=>c.id===S.cond).label} · ${S.time==='day'?'☀ Day':'☾ Night'}
+      Conditions: ${c.label} · ${t==='day'?'☀ Day':'☾ Night'}
     </div>`);
 
   updateCovSummary();
 }
 
 function autoFit(){
-  const ps=ringPowers();
-  if(!ps.length)return;
-  const km=calcRangeKm(ps[0]);
-  const circle=L.circle([S.lat,S.lon],{radius:km*1000});
-  const b=circle.getBounds().pad(0.08);
-  map.fitBounds(b,{maxZoom:9,animate:true});
+  const km = calcRangeKm(S.power);
+  if(km < 1) return;
+  const circle = L.circle([S.lat,S.lon],{radius: Math.max(km,100)*1000});
+  map.fitBounds(circle.getBounds().pad(0.08),{maxZoom:9,animate:true});
 }
 
 // ══════════════════════════════════════════════
@@ -754,10 +1067,73 @@ function buildBands(){
 
 function updateBandInfo(){
   const b=BANDS[S.band];
+  const t=S.time;
+  const gw   = b.gw[t];
+  const nvis = b.nvis[t];
+  const skip = b.skipOuter[t];
+  const inner= b.skipInner[t];
   document.getElementById('bandInfo').innerHTML=
-    `<span style="color:${b.color}">${b.label}</span> · ${b.freq}<br/>Mode: <span style="color:var(--text)">${b.propMode}</span><br/>`+
-    `Day @100W: ~${b.baseKm.day.toLocaleString()} km · Night: ~${b.baseKm.night.toLocaleString()} km · Min power: ${b.minW}W`;
+    `<span style="color:${b.color}">${b.label}</span> · ${b.freq}<br/>` +
+    `<span style="color:var(--dim)">${b.propMode[t]}</span><br/>` +
+    `Min power: ${b.minW}W · ${t==='day'?'☀ Day':'☾ Night'}`;
 }
+
+function updateCovSummary(){
+  const c=document.getElementById('covList');
+  c.innerHTML='';
+  const b=BANDS[S.band];
+  const cond=CONDS.find(x=>x.id===S.cond);
+  const t=S.time;
+  const gLin=Math.pow(10,ANTS[S.ant].gain/20);
+
+  function row(dotColor, label, kmText, tag){
+    const r=document.createElement('div');
+    r.className='cov-row';
+    r.innerHTML=`<span class="cv-dot" style="background:${dotColor}"></span>
+      <span class="cv-pwr" style="width:80px;font-size:.72rem">${label}</span>
+      <span class="cv-km">${kmText}</span>
+      <span class="cv-geo">${tag}</span>`;
+    c.appendChild(r);
+  }
+
+  // Zone 1: Groundwave
+  const gw=scaledGW(b.gw[t],S.power);
+  row('#ffffff','Z1 · GW', gw>=1?`~${gw} km`:'N/A', gw>=1?geoTag(gw):'—');
+
+  // Zone 2: NVIS
+  if(b.nvis[t] && S.power>=b.minW){
+    const nv=scaledIono(b.nvis[t]*gLin,S.power,cond.factor);
+    row('#00ffc3','Z2 · NVIS',`${gw}–${nv} km`,geoTag(nv));
+  } else {
+    const reason = !b.nvis[t]
+      ? (t==='day'?'D-layer absorbs / above foF2':'foF2 < band freq at night')
+      : `Below min power (${b.minW}W)`;
+    row('#1a3a2a','Z2 · NVIS',reason,'—');
+  }
+
+  // Zone 3a: Dead zone
+  const skipInner = b.skipInner[t];  // fixed, no power scaling
+  const maxNvis = b.nvis[t] && S.power>=b.minW
+    ? scaledIono(b.nvis[t]*gLin,S.power,cond.factor) : 0;
+  const deadInner = Math.max(gw,maxNvis,1);
+  if(skipInner && skipInner > deadInner+20){
+    row('#333333','Z3a · Dead',`${deadInner}–${skipInner} km`,'No signal');
+  } else if(!skipInner && !b.nvis[t] && !b.skipOuter[t]){
+    row('#333333','Z3a · Dead','Entire band dead this time/day','No signal');
+  }
+
+  // Zone 3b: F-layer DX
+  if(b.skipOuter[t] && S.power>=b.minW){
+    const outer=scaledIono(b.skipOuter[t]*gLin,S.power,cond.factor);
+    const inner=skipInner||0;
+    row(b.color,'Z3b · F-DX',`${inner>0?inner+'–':''}~${outer} km`,geoTag(outer));
+  } else if(b.skipOuter[t]){
+    row(b.color,'Z3b · F-DX',`Below min power (${b.minW}W)`,'—');
+  } else {
+    row('#1a1a2a','Z3b · F-DX',t==='night'?'Band closed at night':'No F-skip this band','—');
+  }
+}
+
 
 function buildConds(){
   const c=document.getElementById('condList');
@@ -777,9 +1153,10 @@ function updateCondHint(){
   const c=CONDS.find(x=>x.id===S.cond);
   const t=S.time;
   document.getElementById('condHint').innerHTML=
-    `Factor: <span style="color:var(--text)">×${c.factor}</span> relative to average conditions<br/>`+
-    (t==='night'?'Night: 160–40m ranges <span style="color:var(--accent2)">boosted</span>, higher bands reduced':
-                 'Day: D-layer absorbs 160–80m; higher bands open for DX');
+    `Factor ×${c.factor} applies to NVIS & F-DX ranges only · Groundwave unaffected<br/>`+
+    (t==='night'
+      ? '☾ Night: D-layer gone · low bands open for NVIS/F2 · high bands (15–10m) closed'
+      : '☀ Day: D-layer active · absorbs 160/80m · foF2~10 MHz tropical · 40/60m NVIS active');
 }
 
 function buildAnts(){
@@ -811,28 +1188,6 @@ function buildPwrPresets(){
     btn.textContent=p>=1000?`${p/1000}kW`:`${p}W`;
     btn.onclick=()=>setPwr(p);
     c.appendChild(btn);
-  });
-}
-
-function updateCovSummary(){
-  const c=document.getElementById('covList');
-  c.innerHTML='';
-  const band=BANDS[S.band];
-  ringPowers().forEach((p,i)=>{
-    const km=calcRangeKm(p);
-    const r=document.createElement('div');
-    r.className='cov-row';
-    if(km <= 0){
-      r.innerHTML=`<span class="cv-dot" style="background:${RING_C[i]};opacity:.35"></span>
-        <span class="cv-pwr">${fmtPwr(p)}</span>
-        <span class="cv-km" style="color:#ff4444;font-size:.72rem;">Below noise floor (min ${band.minW}W)</span>`;
-    } else {
-      r.innerHTML=`<span class="cv-dot" style="background:${RING_C[i]}"></span>
-        <span class="cv-pwr">${fmtPwr(p)}</span>
-        <span class="cv-km">~${km.toLocaleString()} km</span>
-        <span class="cv-geo">${geoTag(km)}</span>`;
-    }
-    c.appendChild(r);
   });
 }
 
@@ -868,7 +1223,7 @@ function setTime(t){
   S.time=t;
   document.getElementById('btnDay').classList.toggle('on',t==='day');
   document.getElementById('btnNight').classList.toggle('on',t==='night');
-  updateCondHint();rebuildLayers();
+  updateCondHint();updateBandInfo();rebuildLayers();autoFit();
 }
 
 function setAnt(k){S.ant=k;updateAntInfo();rebuildLayers();}
@@ -1041,42 +1396,60 @@ function losRangeFromProfile(txH, profile, _freqMHz){
   const n = profile.length;
   if(n === 0) return 0;
 
-  // Pre-compute absolute TX and RX heights for each candidate endpoint
-  let maxClear = 0;
+  // We scan outward from TX and find the FIRST sample that is terrain-blocked.
+  // That is the realistic coverage edge for this radial bearing — once a ridge
+  // blocks the LOS, signal in that direction is lost regardless of what lies beyond.
+  //
+  // We keep a running "max obstacle angle" (elevation angle from TX) so that
+  // each successive sample is checked against the worst obstruction seen so far.
+  // This correctly handles: flat land → rise → ridge → shadowed valley.
+  //
+  // txH = TX antenna height above MSL (terrain_elev + AGL)
+
+  // Elevation angle (radians above horizontal) from TX to a point
+  // using a flat-earth approximation valid for the short distances involved.
+  // Earth-bulge correction raises apparent obstacle height; we fold that in here.
+
+  let maxObstacleAngle = -Infinity; // steepest obstacle angle seen so far
 
   for(let i = 0; i < n; i++){
     const {d: D, elev: rxElev} = profile[i];
     if(D <= 0) continue;
 
-    const rxH = rxElev + 2;   // RX at 2m AGL (handheld)
-    let blocked = false;
+    // Earth-bulge at this point (distance D along path of total length D = itself)
+    // For intermediate obstacles we'll re-check in the obstruction scan below.
+    // Here compute the effective RX height (MSL) accounting for earth curvature
+    const rxBulge = 1000 * D * D / (2 * EFF_EARTH_R); // bulge at endpoint itself
+    const rxH = rxElev + rxBulge + 2; // 2m AGL handheld
 
+    // Elevation angle from TX to this RX point (positive = above horizontal)
+    const rxAngle = (rxH - txH) / (D * 1000); // dimensionless slope
+
+    // Check if any intermediate obstacle (j < i) blocks the LOS to point i
+    let blocked = false;
     for(let j = 0; j < i; j++){
       const {d, elev: obsElev} = profile[j];
-
-      // Earth-bulge correction: effective obstacle raise due to spherical earth
-      // Uses corrected parabolic formula for path of total length D
+      // Earth-bulge at intermediate point on a path of total length D
       const bulge = 1000 * d * (D - d) / (2 * EFF_EARTH_R);
-
-      // Effective obstacle top (MSL equivalent)
       const obsTop = obsElev + bulge;
-
-      // LOS line height at this intermediate point
+      // LOS height at distance d (linear interpolation from TX to RX)
       const losH = txH + (rxH - txH) * (d / D);
-
-      // Block only if terrain is significantly above the LOS line
-      // (tolerance absorbs DEM noise + small-obstacle diffraction grace)
       if(obsTop > losH + LOS_TOLERANCE_M){
         blocked = true;
         break;
       }
     }
 
-    if(!blocked) maxClear = D;
-    // Note: we use "furthest unblocked" (not first-blocked-stop) so that
-    // coverage can re-emerge after a ridge — saddles and gaps are preserved.
+    if(blocked){
+      // Return the distance to the PREVIOUS clear sample as the coverage edge.
+      // If even the first sample is blocked, return a tiny stub (0.01 km) so
+      // the polygon vertex isn't at zero which confuses Leaflet.
+      return i > 0 ? profile[i - 1].d : 0.01;
+    }
   }
-  return maxClear;
+
+  // All samples clear — full profile is LOS
+  return profile[n - 1].d;
 }
 
 // State
@@ -1119,19 +1492,18 @@ function invalidateVUCache(){
   VU_CACHE.vhf = null;
   VU_CACHE.uhf = null;
   hideAllVU();
-  // If currently on a VHF/UHF tab, auto-recompute immediately
   if(activeMode === 'vhf' || activeMode === 'uhf'){
-    computeTerrainCoverage(activeMode);
+    // On a VHF/UHF tab — show the Hata reference rings and prompt recompute
+    showVUCircles(activeMode);
     addTXMarker();
-  } else {
-    // Show pending-recompute hint on both panels for when user switches
-    ['vhf','uhf'].forEach(b=>{
-      const s = document.getElementById(b+'-status');
-      const btn = document.getElementById(b+'-computeBtn');
-      if(s){ s.style.display='block'; s.innerHTML='📍 Location changed — terrain will recompute on tab switch.'; }
-      if(btn) btn.disabled = false;
-    });
   }
+  // Show pending-recompute hint on both panels
+  ['vhf','uhf'].forEach(b=>{
+    const s = document.getElementById(b+'-status');
+    const btn = document.getElementById(b+'-computeBtn');
+    if(s){ s.style.display='block'; s.innerHTML='📍 Location changed — press ⛰ Compute to update terrain.'; }
+    if(btn) btn.disabled = false;
+  });
 }
 const VU_POLYS  = {};                       // L.polygon / L.circle keyed by layer id
 const VU_LABELS = {};                       // map range-label markers keyed by layer id
@@ -1452,9 +1824,10 @@ async function computeTerrainCoverage(band){
 
   const txTotalH = txElev + altM;
   const horizon  = fullHorizon(altM);
-  // Sample out to the furthest possible reach (10W open) so all power layers use same data
-  const openPowers = vuPowersComputed(band);
-  const maxRange = Math.min(horizon, openPowers.p10w * 1.15); // 15% margin beyond 10W
+  // Sample to the full radio horizon — this covers all power levels (10W, 5W, 1W)
+  // and ensures terrain data is available across the entire reachable area.
+  // Using 1.05× horizon gives a small margin for rounding.
+  const maxRange = horizon * 1.05;
 
   // Build all sample point locations (72 radials × 40 samples)
   const bearings = Array.from({length:NUM_RADIALS}, (_,i) => i*(360/NUM_RADIALS));
@@ -1513,7 +1886,9 @@ function drawVUPolys(band){
   const ant     = VU_ANT_TYPES.find(a=>a.id===VU_ANT[band]) || VU_ANT_TYPES[0];
   const bear    = VU_BEAR[band];
 
-  // Recompute LOS for every radial at the current antenna height — no API call needed
+  // Recompute terrain LOS for every radial at the current antenna height
+  // losRangeFromProfile now returns the FIRST-BLOCKED distance — the realistic
+  // coverage edge in each direction.
   const terrainLOS = profiles.map(prof => losRangeFromProfile(txTotalH, prof, freqMHz));
 
   // Remove existing layers
@@ -1523,53 +1898,67 @@ function drawVUPolys(band){
     if(VU_LABELS[ck])    { try{map.removeLayer(VU_LABELS[ck]);   }catch(e){} delete VU_LABELS[ck]; }
   });
 
-  const envPowers = vuPowersComputed(band); // includes antenna gain
+  // Per-power rendering
+  // Each power level has its own Hata limit (direction-independent propagation budget).
+  // Terrain LOS is geometric (direction-dependent).
+  // Per-radial effective range = min(hataLimit[pk], terrainLOS[ri]).
+  // For directional antennas: radials outside the beam half-power width get 0.
+  const envPowers = vuPowersComputed(band); // {p10w, p5w, p1w} — omni Hata max
+
   pkeys.forEach((pk,idx)=>{
     const ck        = cfg.ckeys[idx];
     const col       = cfg.colors[pk];
     const fo        = cfg.fop[pk];
-    const pRange    = envPowers[pk];
-    const smoothMax = Math.min(pRange, horizon);
+    const hataLimit = Math.min(envPowers[pk], horizon); // Hata radio budget cap
 
-    // Dashed Hata+antenna-limit ring (sector arc for directional, circle for omni)
-    const hCircle = ant.dir
-      ? L.polygon(sectorPts(txLat,txLon,smoothMax,bear,ant.bw),{
+    // Dashed reference ring — shows the smooth-earth Hata limit (no terrain)
+    // For directional antennas: sector arc; for omni: full circle
+    const hShape = ant.dir
+      ? L.polygon(sectorPts(txLat,txLon,hataLimit,bear,ant.bw),{
           color:col,fillColor:col,weight:1.5,opacity:.45,fillOpacity:.04,dashArray:'6 4'})
       : L.circle([txLat,txLon],{
-          radius:smoothMax*1000,color:col,fillColor:'transparent',
+          radius:hataLimit*1000,color:col,fillColor:'transparent',
           weight:1.5,opacity:.45,fillOpacity:0,dashArray:'6 4'});
-    hCircle.addTo(map);
-    VU_POLYS[ck+'-h'] = hCircle;
+    hShape.addTo(map);
+    VU_POLYS[ck+'-h'] = hShape;
 
-    // Terrain-aware polygon — mask by beam sector for directional antennas
-    const pts = bearings.map((brg,ri)=>{
-      const losKm = terrainLOS[ri];
-      let effectiveKm = Math.min(smoothMax, Math.max(0, losKm));
-      // Directional masking: radials outside the beam half-power width collapse to 0
+    // ── Terrain-aware polygon ──────────────────────────────────
+    // Each of the 72 radials gets its own effective range:
+    //   effectiveKm = min(hataLimit, terrainLOS[ri])
+    // For directional antennas: out-of-beam radials collapse to a tiny stub
+    // so the polygon closes neatly around the TX point.
+    const pts = bearings.map((brg, ri) => {
+      let effectiveKm = Math.min(hataLimit, Math.max(0.01, terrainLOS[ri]));
+
       if(ant.dir){
-        let delta = Math.abs(((brg - bear) + 540) % 360 - 180); // 0–180°
-        if(delta > ant.bw / 2) effectiveKm = 0;
+        // Angular distance from beam centre (0–180°)
+        const delta = Math.abs(((brg - bear) + 540) % 360 - 180);
+        if(delta > ant.bw / 2) effectiveKm = 0.005; // stub — closes polygon at TX
       }
-      return destPt(txLat, txLon, brg, Math.max(effectiveKm, 0.005));
+
+      return destPt(txLat, txLon, brg, effectiveKm);
     });
+    // Close the polygon ring
     pts.push(pts[0]);
 
     const poly = L.polygon(pts,{
       color:col, fillColor:col, weight:2,
-      opacity:.85, fillOpacity:fo, smoothFactor:2
+      opacity:.85, fillOpacity:fo, smoothFactor:1
     });
     const pLabel = pk==='p10w'?'10 W':pk==='p5w'?'5 W':'1 W';
     const htTag  = altM === HT_HEIGHT ? ' 📻 HT' : '';
     const antTag = `${ant.label} (${ant.gain>=0?'+':''}${ant.gain} dBd)`;
     const dirTag = ant.dir ? ` · ${bear}° ${compassDir(bear)}` : '';
-    poly.bindTooltip(`${band.toUpperCase()} ${pLabel}${htTag} · ${antTag}${dirTag} · ${VU_ENV[band]}`,{className:'ltt',direction:'top'});
+    poly.bindTooltip(`${band.toUpperCase()} ${pLabel}${htTag} · ${antTag}${dirTag} · ${VU_ENV[band]} · terrain-shaped`,{className:'ltt',direction:'top'});
     poly.addTo(map);
     VU_POLYS[ck] = poly;
     const li = document.getElementById('vli-'+ck);
     if(pk === 'p1w'){
       vuVisible[ck] = true;
       if(li) li.classList.remove('off');
-      addVULabel(ck, col, smoothMax, pLabel, txLat, txLon);
+      // Label at the direction of maximum terrain range for this power level
+      const maxKm = Math.max(...bearings.map((_,ri)=>Math.min(hataLimit, Math.max(0.01, terrainLOS[ri]))));
+      addVULabel(ck, col, maxKm, pLabel, txLat, txLon);
     } else {
       try{ map.removeLayer(poly); }catch(e){}
       vuVisible[ck] = false;
@@ -1648,6 +2037,11 @@ function hideAllVU(){
 }
 
 // ── Show Hata circles (pre-terrain fallback) ─────────────────
+// NOTE: This is called only when SRTM terrain data has NOT yet been fetched.
+// We draw the Hata smooth-earth limit as a dashed reference ring, and clearly
+// label it as the theoretical maximum without terrain shading.
+// We do NOT draw a filled circle — that would imply uniform coverage which is
+// physically wrong. The user must press "Compute Terrain Coverage" for realistic shape.
 function showVUCircles(band){
   const cfg    = VU_CFG[band];
   const altM   = VU_ALT[band];
@@ -1669,29 +2063,35 @@ function showVUCircles(band){
 
     let c;
     if(ant.dir){
+      // Directional: sector polygon as before
       c = L.polygon(sectorPts(S.lat,S.lon,smoothMax,bear,ant.bw),{
-        color:col,fillColor:col,weight:2,opacity:.82,fillOpacity:fo,dashArray:'7 4'});
+        color:col,fillColor:col,weight:2,opacity:.7,fillOpacity:fo*0.6,dashArray:'7 4'});
     } else {
+      // Omni: dashed ring only — NO filled circle.
+      // A filled circle implies uniform terrain which is never true.
+      // Use a low-opacity dashed ring to convey the theoretical Hata limit.
       c = L.circle([S.lat,S.lon],{
-        radius:smoothMax*1000,color:col,fillColor:col,
-        weight:2,opacity:.82,fillOpacity:fo,dashArray:'7 4'});
+        radius:smoothMax*1000,color:col,fillColor:'transparent',
+        weight:2,opacity:.6,fillOpacity:0,dashArray:'8 5'});
     }
-    c.bindTooltip(`${band.toUpperCase()} ${pwrLabel}${htTag}${dirTag} · env-adjusted · click ⛰ for terrain`,{className:'ltt',direction:'top'});
+    const tooltip = `${band.toUpperCase()} ${pwrLabel}${htTag}${dirTag} · Hata ${VU_ENV[band]} theoretical max (⛰ press Compute for terrain shape)`;
+    c.bindTooltip(tooltip,{className:'ltt',direction:'top'});
     VU_POLYS[ck]=c;
     const li=document.getElementById('vli-'+ck);
     if(pk === 'p1w'){
       c.addTo(map);
       vuVisible[ck]=true;
       if(li) li.classList.remove('off');
-      addVULabel(ck, col, smoothMax, pwrLabel, S.lat, S.lon);
+      addVULabel(ck, col, smoothMax, pwrLabel+'*', S.lat, S.lon);
     } else {
       vuVisible[ck]=false;
       if(li) li.classList.add('off');
     }
   });
 
-  const p1Circle=VU_POLYS[band==='vhf'?'v1w':'u1w'];
-  if(p1Circle) map.fitBounds(p1Circle.getBounds().pad(0.3));
+  const p1Key = band==='vhf'?'v1w':'u1w';
+  const p1Shape = VU_POLYS[p1Key];
+  if(p1Shape) map.fitBounds(p1Shape.getBounds().pad(0.3));
 }
 
 // ── TX marker helper ─────────────────────────────────────────
@@ -1732,7 +2132,7 @@ function switchMode(mode){
     hideAllVU();
     // Restore terrain polys if cached; otherwise compute immediately (no circle fallback)
     if(VU_CACHE[mode]) drawVUPolys(mode);
-    else computeTerrainCoverage(mode);  // terrain-only — no misleading circles shown
+    else showVUCircles(mode);
     addTXMarker();
   }
 }
