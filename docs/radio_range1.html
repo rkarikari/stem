@@ -84,7 +84,23 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acce
 .cond-btn.on{border-color:var(--accent);background:rgba(0,255,195,.05);color:var(--text);}
 .cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .cond-desc{font-size:.58rem;color:var(--dim);margin-left:auto;}
-.time-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px;}
+.time-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:8px;}
+
+/* ── RTC & foF2 Block ── */
+.rtc-block{background:#060e12;border:1px solid var(--border);padding:9px 11px;margin-bottom:10px;border-radius:2px;}
+.rtc-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:3px;}
+.rtc-clk{font-family:'Share Tech Mono',monospace;font-size:1.05rem;color:var(--accent);letter-spacing:.08em;}
+.rtc-loc-time{font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--dim);letter-spacing:.05em;}
+.rtc-meta{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);margin-bottom:7px;letter-spacing:.04em;}
+.foF2-row{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+.foF2-label{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;}
+.foF2-val{font-family:'Share Tech Mono',monospace;font-size:.95rem;color:#ffd93d;font-weight:700;min-width:60px;}
+.foF2-desc{font-size:.62rem;color:var(--dim);font-style:italic;flex:1;}
+.iono-phase-bar{position:relative;height:6px;background:#0d1f28;border-radius:3px;margin-bottom:3px;overflow:visible;}
+.iono-phase-fill{position:absolute;top:0;left:0;height:100%;border-radius:3px;transition:width .8s linear,background .8s linear;}
+.iono-phase-cursor{position:absolute;top:-4px;width:3px;height:14px;background:#fff;border-radius:1px;transform:translateX(-50%);transition:left .8s linear;box-shadow:0 0 4px #fff8;}
+.iono-phase-labels{display:flex;justify-content:space-between;font-size:.55rem;color:var(--dim);font-family:'Share Tech Mono',monospace;margin-bottom:6px;}
+
 .cond-hint{margin-top:8px;font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--dim);line-height:1.55;}
 
 /* Antenna */
@@ -274,15 +290,40 @@ option{background:#0b1820;}
       </div>
     </div>
 
-    <!-- CONDITIONS -->
+    <!-- CONDITIONS + RTC -->
     <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Propagation Conditions <span class="arr">▾</span></div>
+      <div class="sec-hdr" onclick="toggleSec(this)">◈ Ionospheric Conditions &amp; Time <span class="arr">▾</span></div>
       <div class="sec-body">
-        <div class="cond-list" id="condList"></div>
-        <div class="time-row">
-          <button class="btn on" id="btnDay"   onclick="setTime('day')">☀ DAYTIME</button>
-          <button class="btn"   id="btnNight" onclick="setTime('night')">☾ NIGHT</button>
+
+        <!-- Real-Time Clock -->
+        <div class="rtc-block">
+          <div class="rtc-row">
+            <div class="rtc-clk" id="rtcDisplay">--:--:-- UTC</div>
+            <div class="rtc-loc-time" id="rtcLocalDisplay">--:-- LT</div>
+          </div>
+          <div class="rtc-meta" id="rtcMeta">Initialising…</div>
+          <div class="foF2-row">
+            <span class="foF2-label">foF2</span>
+            <span class="foF2-val" id="foF2Display">-- MHz</span>
+            <span class="foF2-desc" id="foF2Desc"></span>
+          </div>
+          <div class="iono-phase-bar" id="ionoPhaseBar">
+            <div class="iono-phase-fill" id="ionoPhaseFill"></div>
+            <div class="iono-phase-cursor" id="ionoPhaseCursor"></div>
+          </div>
+          <div class="iono-phase-labels">
+            <span>00 Pre-dawn</span><span>06 Sunrise</span><span>12 Noon</span><span>18 Sunset</span><span>24</span>
+          </div>
         </div>
+
+        <!-- Auto / Manual toggle -->
+        <div class="time-row">
+          <button class="btn on" id="btnAuto"  onclick="setAutoTime(true)">⟳ AUTO</button>
+          <button class="btn"    id="btnDay"   onclick="setAutoTime(false);setTime('day')">☀ FORCE DAY</button>
+          <button class="btn"    id="btnNight" onclick="setAutoTime(false);setTime('night')">☾ FORCE NIGHT</button>
+        </div>
+
+        <div class="cond-list" id="condList"></div>
         <div class="cond-hint" id="condHint"></div>
       </div>
     </div>
@@ -595,7 +636,8 @@ option{background:#0b1820;}
 
 const BANDS = {
   '160m':{
-    label:'160m', freq:'1.8–2.0 MHz', color:'#ff6b9d', minW:1.0,
+    label:'160m', freq:'1.8–2.0 MHz', freqMHz:1.9, color:'#ff6b9d', minW:1.0,
+    dLayerThresh:0.25,  // D-layer fraction at which 160m NVIS is killed (very sensitive)
     propMode:{
       day:  'ZONE 1 only — D-layer completely absorbs 160m skywave · Groundwave ~150 km',
       night:'ZONE 1 GW 150 km · ZONE 2 NVIS 0–400 km · ZONE 3 F2 DX 100–2500 km',
@@ -606,7 +648,8 @@ const BANDS = {
     skipOuter: {day:null, night:2500},
   },
   '80m':{
-    label:'80m', freq:'3.5–4.0 MHz', color:'#ff9f43', minW:0.5,
+    label:'80m', freq:'3.5–4.0 MHz', freqMHz:3.7, color:'#ff9f43', minW:0.5,
+    dLayerThresh:0.70,  // 80m: significant D-layer needed before NVIS killed
     propMode:{
       day:  'ZONE 1 only — D-layer blocks 80m skywave in average daytime · GW ~80 km',
       night:'ZONE 1 GW 80 km · ZONE 2 NVIS 0–500 km · ZONE 3 F2 DX 200–3000 km',
@@ -617,7 +660,8 @@ const BANDS = {
     skipOuter: {day:null, night:3000},
   },
   '60m':{
-    label:'60m', freq:'5.3–5.4 MHz', color:'#ffd93d', minW:0.5,
+    label:'60m', freq:'5.3–5.4 MHz', freqMHz:5.35, color:'#ffd93d', minW:0.5,
+    dLayerThresh:0.92,  // 60m: very tolerant, D-layer has limited effect at 5 MHz
     propMode:{
       day:  'ZONE 1 GW 50 km · ZONE 2 NVIS 0–600 km · ZONE 3 E-skip 300–2000 km',
       night:'ZONE 1 GW 50 km · No NVIS (foF2 < 5.3 MHz) · ZONE 3 F2 skip 400–3000 km',
@@ -628,7 +672,8 @@ const BANDS = {
     skipOuter: {day:2000, night:3000},
   },
   '40m':{
-    label:'40m', freq:'7.0–7.2 MHz', color:'#6bcb77', minW:0.25,
+    label:'40m', freq:'7.0–7.2 MHz', freqMHz:7.1, color:'#6bcb77', minW:0.25,
+    dLayerThresh:0.97,  // 40m: D-layer barely absorbs at 7 MHz; foF2 is the main gating factor
     propMode:{
       day:  'ZONE 1 GW 30 km · ZONE 2 NVIS 0–600 km (tropical foF2 > 7 MHz) · ZONE 3 E-skip 500–3000 km',
       night:'ZONE 1 GW 30 km · No NVIS (foF2 < 7 MHz night) · ZONE 3 F2 skip 300–4000 km',
@@ -639,7 +684,8 @@ const BANDS = {
     skipOuter: {day:3000, night:4000},
   },
   '30m':{
-    label:'30m', freq:'10.1–10.15 MHz', color:'#4d96ff', minW:0.25,
+    label:'30m', freq:'10.1–10.15 MHz', freqMHz:10.1, color:'#4d96ff', minW:0.25,
+    dLayerThresh:0.99,  // 30m: essentially D-layer immune; NVIS gated by foF2 alone
     propMode:{
       day:  'ZONE 1 GW 15 km · No NVIS (at foF2 limit) · ZONE 3 F-skip 800–4000 km · CW+digital',
       night:'ZONE 1 GW 15 km · No NVIS · ZONE 3 F2 skip 500–4000 km · CW+digital',
@@ -650,7 +696,8 @@ const BANDS = {
     skipOuter: {day:4000, night:4000},
   },
   '20m':{
-    label:'20m', freq:'14.0–14.35 MHz', color:'#845ef7', minW:0.5,
+    label:'20m', freq:'14.0–14.35 MHz', freqMHz:14.175, color:'#845ef7', minW:0.5,
+    dLayerThresh:1.00,  // 20m: above typical foF2 — NVIS never available
     propMode:{
       day:  'ZONE 1 GW 8 km · No NVIS · ZONE 3 F2 skip 800–4500 km — reliable worldwide DX',
       night:'ZONE 1 GW 8 km · No NVIS · ZONE 3 F2 skip 500–4000 km — east-west paths open',
@@ -661,7 +708,8 @@ const BANDS = {
     skipOuter: {day:4500, night:4000},
   },
   '17m':{
-    label:'17m', freq:'18.0–18.2 MHz', color:'#f06595', minW:1.0,
+    label:'17m', freq:'18.0–18.2 MHz', freqMHz:18.1, color:'#f06595', minW:1.0,
+    dLayerThresh:1.00,
     propMode:{
       day:  'ZONE 1 GW 5 km · No NVIS · ZONE 3 F2 skip 1000–5000 km — solar dependent',
       night:'ZONE 1 GW 5 km · No NVIS · ZONE 3 F2 skip 700–4000 km (if F2 open)',
@@ -672,7 +720,8 @@ const BANDS = {
     skipOuter: {day:5000, night:4000},
   },
   '15m':{
-    label:'15m', freq:'21.0–21.45 MHz', color:'#cc5de8', minW:1.0,
+    label:'15m', freq:'21.0–21.45 MHz', freqMHz:21.2, color:'#cc5de8', minW:1.0,
+    dLayerThresh:1.00,
     propMode:{
       day:  'ZONE 1 GW 3 km · No NVIS · ZONE 3 F2 skip 1200–5000 km — solar cycle dependent',
       night:'ZONE 1 only — 15m closed at night (F2 MUF < 21 MHz) · GW 3 km',
@@ -683,7 +732,8 @@ const BANDS = {
     skipOuter: {day:5000, night:null},
   },
   '12m':{
-    label:'12m', freq:'24.89–24.99 MHz', color:'#74c0fc', minW:2.0,
+    label:'12m', freq:'24.89–24.99 MHz', freqMHz:24.9, color:'#74c0fc', minW:2.0,
+    dLayerThresh:1.00,
     propMode:{
       day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3 F2 skip 1500–5000 km — near solar peak only',
       night:'ZONE 1 only — 12m closed at night · GW 2 km',
@@ -694,7 +744,8 @@ const BANDS = {
     skipOuter: {day:5000, night:null},
   },
   '10m':{
-    label:'10m', freq:'28.0–29.7 MHz', color:'#a9e34b', minW:2.0,
+    label:'10m', freq:'28.0–29.7 MHz', freqMHz:28.5, color:'#a9e34b', minW:2.0,
+    dLayerThresh:1.00,
     propMode:{
       day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3 F2 skip 1800–5500 km — solar peak only',
       night:'ZONE 1 only — 10m dead at night (F2 MUF < 28 MHz) · GW 2 km',
@@ -741,8 +792,212 @@ const MAX_KM = 18000;
 const S = {
   lat:5.561, lon:-0.209, locName:'Accra, Ghana',
   band:'10m', power:2, cond:'average', time:'day',
-  ant:'inverted_v', bearing:0, clickMode:false
+  ant:'inverted_v', bearing:0, clickMode:false,
+  autoTime: true   // when true, time is derived from RTC + TX longitude
 };
+
+// ══════════════════════════════════════════════════════════════════
+// REAL-TIME CLOCK + DIURNAL foF2 MODEL
+// ══════════════════════════════════════════════════════════════════
+//
+// foF2 DIURNAL PROFILE — Equatorial West Africa (5–12°N lat, similar to Accra/Ibadan/Ouagadougou)
+// Based on: IRI-2007 comparisons, Ibadan ionosonde data (Oyekola 2011), Ouagadougou
+//           observations (Ouattara 2012), African equatorial foF2 studies (Akala 2011).
+// Solar activity: moderate (R12≈100, mid solar cycle — applicable average conditions).
+// Values are LOCAL TIME (LT = UTC + lon/15).
+//
+// Key features modelled per literature:
+//   - Pre-dawn minimum: ~3.5 MHz at 04:00–05:00 LT (minimum just before dawn, Sws.bom.gov.au)
+//   - Sunrise rise: rapid increase 06:00–09:00 LT (EUV flux ramps up)
+//   - Forenoon peak: ~9–10 MHz at ~10:00 LT
+//   - Midday bite-out: slight dip at ~12:00 LT (~8.5 MHz) — equatorial anomaly characteristic
+//   - Post-noon peak: ~10–11 MHz at ~14:00–15:00 LT (TEC max observed 14:00–16:00 LT)
+//   - Post-sunset enhancement: ~8 MHz at ~19:00–20:00 LT (PRE — Pre-Reversal Enhancement)
+//   - Night decline: gradual fall to minimum at 04:00 LT
+//   - Post-midnight secondary minimum: ~3.5–4.5 MHz (02:00–05:00 LT)
+//
+// Format: [LT_hour_0.0 to 24.0, foF2_MHz]
+const FOF2_PROFILE_LT = [
+  [0,  4.5],   // midnight — F2 declining but still present
+  [1,  4.2],
+  [2,  4.0],
+  [3,  3.8],
+  [4,  3.5],   // pre-dawn minimum (Sws: "minimum just before dawn")
+  [5,  3.7],   // pre-sunrise slight uptick from thermospheric winds
+  [6,  4.5],   // sunrise — D-layer forms, E-layer starts, F2 begins rising
+  [7,  6.5],   // rapid EUV-driven increase
+  [8,  8.0],
+  [9,  9.5],   // forenoon peak region
+  [10, 10.0],  // forenoon maximum (Ouagadougou data: morning max ~10 MHz)
+  [11, 9.5],
+  [12, 8.5],   // midday bite-out (characteristic equatorial feature — Ouattara 2012)
+  [13, 9.5],
+  [14, 10.5],  // post-noon peak — TEC max 14:00–16:00 LT (Addis Ababa GPS study)
+  [15, 10.5],
+  [16, 10.0],
+  [17, 9.0],   // declining afternoon
+  [18, 7.5],   // sunset — E and F1 disappear; F2 begins recombination
+  [19, 8.5],   // PRE: Post-Reversal Enhancement — brief ionospheric uplift
+  [20, 7.5],
+  [21, 6.5],
+  [22, 5.8],
+  [23, 5.2],
+  [24, 4.5],   // wraps to midnight
+];
+
+// D-layer absorption factor — reduces NVIS and skip on lower bands during daytime.
+// D-layer: forms ~06:30 LT, peaks ~12:00 LT, gone by ~18:30 LT.
+// Source: Sws.bom.gov.au: "E and F1 regions become transparent at sunset; F2 sustained at night"
+// D-layer absorption profile (0=none, 1=maximum absorption) by LT hour:
+const D_LAYER_PROFILE_LT = [
+  [0,  0.0],[1,  0.0],[2,  0.0],[3,  0.0],[4,  0.0],[5,  0.0],
+  [6,  0.05],[7, 0.3],[8,  0.6],[9,  0.8],[10, 0.9],[11, 0.95],
+  [12, 1.0],[13, 0.95],[14, 0.9],[15, 0.85],[16, 0.7],[17, 0.5],
+  [18, 0.2],[19, 0.0],[20, 0.0],[21, 0.0],[22, 0.0],[23, 0.0],[24, 0.0],
+];
+
+// Interpolate a profile table at a given LT hour
+function interpProfile(profile, ltHour){
+  const h = ((ltHour % 24) + 24) % 24;
+  for(let i=0;i<profile.length-1;i++){
+    if(h >= profile[i][0] && h < profile[i+1][0]){
+      const t = (h - profile[i][0]) / (profile[i+1][0] - profile[i][0]);
+      return profile[i][1] + t * (profile[i+1][1] - profile[i][1]);
+    }
+  }
+  return profile[0][1];
+}
+
+// Compute current local time (decimal hours) at TX longitude
+function txLocalTime(){
+  const now = new Date();
+  const utcH = now.getUTCHours() + now.getUTCMinutes()/60 + now.getUTCSeconds()/3600;
+  return ((utcH + S.lon/15) + 24) % 24;
+}
+
+// Current foF2 in MHz at TX location and time
+function currentFoF2(){
+  const lt = S.autoTime ? txLocalTime() : (S.time === 'day' ? 13.0 : 1.0);
+  return interpProfile(FOF2_PROFILE_LT, lt);
+}
+
+// Current D-layer absorption (0–1)
+function currentDlayer(){
+  const lt = S.autoTime ? txLocalTime() : (S.time === 'day' ? 12.0 : 1.0);
+  return interpProfile(D_LAYER_PROFILE_LT, lt);
+}
+
+// Derive day/night string for backwards-compat labelling
+function deriveTimeLabel(){
+  const lt = S.autoTime ? txLocalTime() : null;
+  if(lt === null) return S.time;
+  return (lt >= 6.0 && lt < 19.0) ? 'day' : 'night';
+}
+
+// ── RTC state ──
+let _rtcInterval = null;
+let _autoTimeEnabled = true;
+
+function setAutoTime(on){
+  _autoTimeEnabled = on;
+  S.autoTime = on;
+  document.getElementById('btnAuto').classList.toggle('on', on);
+  document.getElementById('btnDay').classList.toggle('on', !on && S.time==='day');
+  document.getElementById('btnNight').classList.toggle('on', !on && S.time==='night');
+  updateRTCDisplay();
+  rebuildLayers();
+}
+
+function tickRTC(){
+  updateRTCDisplay();
+  if(S.autoTime){
+    const newTime = deriveTimeLabel();
+    if(newTime !== S.time){
+      S.time = newTime;
+      rebuildLayers();
+    } else {
+      // Rebuild every minute to keep foF2-driven zones current
+      const s = new Date().getUTCSeconds();
+      if(s === 0) rebuildLayers();
+    }
+  }
+}
+
+function updateRTCDisplay(){
+  const now = new Date();
+  const utc = now.toUTCString().replace(/.*(\d{2}:\d{2}:\d{2}) GMT/, '$1');
+  const lt  = txLocalTime();
+  const ltH = Math.floor(lt);
+  const ltM = Math.floor((lt - ltH) * 60);
+  const foF2 = currentFoF2();
+  const dLayer = currentDlayer();
+  const pct = lt / 24;
+  const phase = deriveTimeLabel();
+
+  // UTC clock
+  const utcEl = document.getElementById('rtcDisplay');
+  if(utcEl) utcEl.textContent = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}:${String(now.getUTCSeconds()).padStart(2,'0')} UTC`;
+
+  // Local time at TX
+  const ltEl = document.getElementById('rtcLocalDisplay');
+  if(ltEl) ltEl.textContent = `${String(ltH).padStart(2,'0')}:${String(ltM).padStart(2,'0')} LT`;
+
+  // Meta row: date + auto/manual indicator
+  const metaEl = document.getElementById('rtcMeta');
+  if(metaEl){
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    metaEl.textContent = `${days[now.getUTCDay()]} ${now.getUTCDate()} ${months[now.getUTCMonth()]} ${now.getUTCFullYear()} · ${S.autoTime ? 'AUTO' : 'MANUAL'}`;
+  }
+
+  // foF2 display
+  const foF2El = document.getElementById('foF2Display');
+  if(foF2El) foF2El.textContent = foF2.toFixed(1) + ' MHz';
+
+  // foF2 description based on value and time
+  const foF2DescEl = document.getElementById('foF2Desc');
+  if(foF2DescEl){
+    let desc = '';
+    if(lt >= 3.5 && lt < 6.0) desc = 'pre-dawn minimum';
+    else if(lt >= 6.0 && lt < 9.0) desc = 'sunrise — rapid rise';
+    else if(lt >= 9.0 && lt < 11.5) desc = 'forenoon peak';
+    else if(lt >= 11.5 && lt < 13.0) desc = 'midday bite-out';
+    else if(lt >= 13.0 && lt < 16.5) desc = 'post-noon peak — TEC max';
+    else if(lt >= 16.5 && lt < 18.5) desc = 'afternoon decline';
+    else if(lt >= 18.5 && lt < 19.5) desc = 'pre-reversal enhancement';
+    else if(lt >= 19.5 && lt < 22.0) desc = 'post-sunset decline';
+    else desc = 'nighttime — F2 slow decay';
+    if(dLayer > 0.5) desc += ` · D-layer ${Math.round(dLayer*100)}%`;
+    foF2DescEl.textContent = desc;
+  }
+
+  // Phase bar
+  const fill = document.getElementById('ionoPhaseFill');
+  const cursor = document.getElementById('ionoPhaseCursor');
+  if(fill && cursor){
+    const barPct = (lt / 24 * 100).toFixed(1) + '%';
+    cursor.style.left = barPct;
+    const col = phase === 'day' ? '#ffd93d' : '#4d96ff';
+    fill.style.width = barPct;
+    fill.style.background = `linear-gradient(90deg, #1a3050, ${col})`;
+  }
+
+  // Sync day/night label if auto
+  if(S.autoTime){
+    const t = deriveTimeLabel();
+    if(t !== S.time){ S.time = t; }
+    document.getElementById('btnDay').classList.toggle('on', false);
+    document.getElementById('btnNight').classList.toggle('on', false);
+    document.getElementById('btnAuto').classList.toggle('on', true);
+  }
+}
+
+function startRTC(){
+  updateRTCDisplay();
+  _rtcInterval = setInterval(tickRTC, 1000);
+}
+
+
 
 // ══════════════════════════════════════════════
 // MAP
@@ -770,15 +1025,14 @@ document.head.appendChild(extraCSS);
 
 let cvLayers=[], txMk=null;
 
-// ══════════════════════════════════════════════
-// COMPUTATION
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// COMPUTATION — foF2-continuous propagation engine
+// ══════════════════════════════════════════════════════════════════
 
-// ── Power/condition scaling ───────────────────────────────────
+// ── Power/condition scaling ───────────────────────────────────────
 // ITU-R P.533: ionospheric path range ∝ √(P/100)
-// Groundwave: range ∝ (P/100)^0.3 (slower falloff vs power due to surface-wave geometry)
-// Conditions factor applies to ionospheric paths only (not groundwave).
-
+// Groundwave:  range ∝ (P/100)^0.3  (surface-wave geometry)
+// Conditions factor applies to ionospheric paths ONLY (not groundwave).
 function scaledIono(baseKm, powerW, condFactor){
   if(!baseKm || baseKm <= 0) return 0;
   return Math.min(MAX_KM, Math.round(baseKm * Math.sqrt(powerW/100) * condFactor));
@@ -788,23 +1042,124 @@ function scaledGW(baseKm, powerW){
   return Math.max(1, Math.round(baseKm * Math.pow(powerW/100, 0.3)));
 }
 
-// Backwards-compatible single range for summary panel (best ionospheric path)
+// ── Live propagation state derived from foF2 + D-layer ────────────
+// Returns an object describing all active zones for a given band right now.
+// This is the core physics function — everything else reads from this.
+function liveZones(band){
+  const b    = BANDS[band];
+  const foF2 = currentFoF2();
+  const dAbs = currentDlayer();   // 0–1 absorption factor
+  const lt   = S.autoTime ? txLocalTime() : (S.time==='day' ? 13.0 : 1.0);
+  const isDaytime = (lt >= 6.0 && lt < 19.0);
+
+  // ── Groundwave ────────────────────────────────────────────────
+  // Always present. Not affected by ionosphere.
+  // GW is essentially same day/night (surface wave), use day value.
+  const gwBase = b.gw.day !== undefined ? b.gw.day : b.gw;
+
+  // ── NVIS ──────────────────────────────────────────────────────
+  // Available when: band frequency < foF2  AND  D-layer doesn't fully absorb it.
+  // D-layer absorption by band: 160m fully absorbed when dAbs>0.3,
+  //   80m when dAbs>0.7, 60m when dAbs>0.9, 40m when dAbs>0.95.
+  // NVIS range shrinks continuously with foF2 headroom: range ∝ (foF2 - freq) / (foF2max - freq)
+  // NVIS range also shrinks as D-layer absorbs: multiply by (1 - dAbsFraction).
+  let nvisBase = null;  // km at 100W, average conditions
+  let nvisNote = '';
+  const freq = b.freqMHz;
+  const foF2headroom = foF2 - freq;
+
+  if(foF2headroom > 0){
+    // foF2 > band frequency — NVIS is physically possible
+    // D-layer absorption thresholds per band (absorption kills NVIS below threshold)
+    const dThresh = b.dLayerThresh;  // absorption fraction at which NVIS is killed
+    if(dAbs < dThresh){
+      // NVIS is available — compute effective range
+      // Base NVIS at 100W = 650 km × (foF2headroom / foF2) × (1 - dAbs/dThresh)^0.5
+      // 650 km is theoretical NVIS ceiling (ARRL Handbook)
+      const headroomFrac = Math.min(1, foF2headroom / Math.max(foF2, 1));
+      const dFactor = Math.pow(1 - (dAbs / dThresh), 0.5);
+      nvisBase = Math.round(650 * headroomFrac * dFactor);
+      nvisBase = Math.max(50, Math.min(650, nvisBase));
+      nvisNote = `foF2=${foF2.toFixed(1)} MHz > ${freq} MHz · D=${Math.round(dAbs*100)}%`;
+    } else {
+      nvisNote = `D-layer ${Math.round(dAbs*100)}% absorbs ${b.label} · NVIS suppressed`;
+    }
+  } else {
+    nvisNote = `foF2=${foF2.toFixed(1)} MHz < ${freq} MHz · NVIS not possible`;
+  }
+
+  // ── Skip zone & F-layer DX ────────────────────────────────────
+  // Skip inner: fixed geometric/ionospheric distance — no power scaling.
+  //   Varies with foF2 (higher foF2 → shorter skip for low bands).
+  //   Interpolated between day and night values based on actual LT.
+  // Skip outer: scales with power and conditions.
+  // High bands (15m+) close at night when foF2 < their MUF.
+  let skipInnerKm = null;
+  let skipOuterKm = null;
+  let skipNote    = '';
+
+  // Is F-layer skip available? Band MUF must be supportable.
+  // Approximate: skip available when foF2 > 0.7 × freq (oblique path MUF > vertical foF2)
+  // For 40m+: use E-layer skip by day, F2 by night.
+  const mufFactor = 0.65;  // typical oblique/secant factor for first-hop F2 path
+  const fSkipAvail = (foF2 * (1/mufFactor)) > freq;  // MUF at ~60° > band freq
+
+  // E-layer skip (day only, h~110km) contributes to 40m/60m/30m short skip by day
+  const eLayerActive = isDaytime && dAbs > 0.1;  // E-layer needs D-layer (daytime)
+
+  if(fSkipAvail || (eLayerActive && freq <= 10.1)){
+    // Interpolate skip inner between day/night values based on LT
+    const dayFrac = isDaytime ? Math.min(1, (lt - 6) / 6) : 0;  // 0=night, 1=full day
+    const siDay   = b.skipInner.day;
+    const siNight = b.skipInner.night;
+    if(siDay !== null && siNight !== null){
+      skipInnerKm = Math.round(siDay * dayFrac + siNight * (1 - dayFrac));
+    } else if(siDay !== null && isDaytime){
+      skipInnerKm = siDay;
+    } else if(siNight !== null && !isDaytime){
+      skipInnerKm = siNight;
+    }
+
+    // Skip outer: interpolate day/night
+    const soDay   = b.skipOuter.day;
+    const soNight = b.skipOuter.night;
+    if(soDay !== null && soNight !== null){
+      skipOuterKm = Math.round(soDay * dayFrac + soNight * (1 - dayFrac));
+    } else if(soDay !== null && isDaytime){
+      skipOuterKm = soDay;
+    } else if(soNight !== null && !isDaytime){
+      skipOuterKm = soNight;
+    }
+
+    // Scale skip outer by foF2 headroom on MUF (more ionisation → slightly more range)
+    if(skipOuterKm){
+      const mufMargin = Math.min(1.3, Math.max(0.6, (foF2 * (1/mufFactor)) / freq));
+      skipOuterKm = Math.round(skipOuterKm * Math.sqrt(mufMargin));
+    }
+    skipNote = `foF2=${foF2.toFixed(1)} MHz · MUF×secant ${(foF2/mufFactor).toFixed(1)} MHz`;
+  } else {
+    skipNote = `Band closed · foF2=${foF2.toFixed(1)} MHz too low for ${b.label} F-skip`;
+  }
+
+  const t = isDaytime ? 'day' : 'night';
+  return { gwBase, nvisBase, nvisNote, skipInnerKm, skipOuterKm, skipNote, foF2, dAbs, isDaytime, lt, t };
+}
+
+// Best single range for autoFit
 function calcRangeKm(powerW){
+  const z = liveZones(S.band);
   const b = BANDS[S.band];
   const c = CONDS.find(x=>x.id===S.cond);
   const a = ANTS[S.ant];
   if(powerW < b.minW) return 0;
   const gLin = Math.pow(10, a.gain/20);
-  const t = S.time;
-  // Prefer NVIS range if available, else skip outer
-  const nvis   = b.nvis[t]    ? scaledIono(b.nvis[t]    * gLin, powerW, c.factor) : 0;
-  const skip   = b.skipOuter[t]? scaledIono(b.skipOuter[t]* gLin, powerW, c.factor) : 0;
-  return Math.max(nvis, skip, scaledGW(b.gw[t], powerW));
+  const nvis = z.nvisBase  ? scaledIono(z.nvisBase  * gLin, powerW, c.factor) : 0;
+  const skip = z.skipOuterKm ? scaledIono(z.skipOuterKm * gLin, powerW, c.factor) : 0;
+  return Math.max(nvis, skip, scaledGW(z.gwBase, powerW));
 }
 
 function ringPowers(){
-  return [S.power, S.power/10, S.power/100, S.power/1000]
-    .filter(p=>p>=0.08);
+  return [S.power, S.power/10, S.power/100, S.power/1000].filter(p=>p>=0.08);
 }
 
 // ── Annulus polygon: ring from innerKm to outerKm ─────────────
@@ -845,13 +1200,15 @@ function rebuildLayers(){
   const ant  = ANTS[S.ant];
   const b    = BANDS[S.band];
   const c    = CONDS.find(x=>x.id===S.cond);
-  const t    = S.time;
   const gLin = Math.pow(10, ant.gain/20);
+  const z    = liveZones(S.band);   // live foF2-driven zone data
+  const col  = b.color;
+  const powers = ringPowers();
 
-  // Helper to add a layer to map and cvLayers
+  // Sync S.time for anything still using it
+  S.time = z.t;
+
   function addLayer(layer){ layer.addTo(map); cvLayers.push(layer); }
-
-  // Helper to add a distance label
   function addLabel(km, color, text, bearing=0){
     if(km < 1) return;
     const pt = destPt(S.lat, S.lon, bearing, km);
@@ -860,160 +1217,129 @@ function rebuildLayers(){
         html:`<div style="font-family:'Share Tech Mono',monospace;font-size:10px;
           color:${color};white-space:nowrap;text-shadow:0 0 6px #000,1px 1px 2px #000;
           transform:translate(-50%,-50%);pointer-events:none;letter-spacing:.04em;
-          background:rgba(6,12,14,.75);padding:1px 5px;border-left:2px solid ${color};">
+          background:rgba(6,12,14,.82);padding:1px 5px;border-left:2px solid ${color};">
           ${km>=1000?(km/1000).toFixed(1)+'k':km} km · ${text}</div>`
       }), interactive:false, zIndexOffset:500
     });
     lbl.addTo(map); cvLayers.push(lbl);
   }
 
-  const col = b.color;
-  const powers = ringPowers();
+  const ltH = Math.floor(z.lt);
+  const ltM = Math.floor((z.lt - ltH)*60);
+  const ltStr = `${String(ltH).padStart(2,'0')}:${String(ltM).padStart(2,'0')} LT`;
+  const phaseStr = z.isDaytime ? `☀ Day  ${ltStr}` : `☾ Night  ${ltStr}`;
 
   // ─────────────────────────────────────────────────────────────
-  // ZONE 1 — GROUNDWAVE (white dashed ring)
-  // Always present. Omni regardless of antenna (surface wave, polarisation-independent).
-  // Scales with power^0.3 per surface-wave geometry.
-  // Shown once at full power only — inner-most zone, always rendered.
+  // ZONE 1 — GROUNDWAVE  (white dashed ring, always present)
+  // ITU-R P.368 · surface wave · omni · power^0.3 scaling
   // ─────────────────────────────────────────────────────────────
-  const gwKm = scaledGW(b.gw[t], S.power);
+  const gwKm = scaledGW(z.gwBase, S.power);
   if(gwKm >= 1){
-    const gwColor = '#ffffff';
+    const gwColor = '#e8e8ff';
     const gwLayer = L.circle([S.lat,S.lon],{
       radius: gwKm*1000,
-      color: gwColor, fillColor: gwColor,
-      weight:2, opacity:.85, fillOpacity:.06,
-      dashArray:'6 4'
+      color:gwColor, fillColor:gwColor,
+      weight:2, opacity:.9, fillOpacity:.07, dashArray:'7 4'
     });
     gwLayer.bindTooltip(
-      `ZONE 1 · Groundwave · ${b.label} · ~${gwKm} km · ${t==='day'?'☀ Day':'☾ Night'}\n`+
-      `ITU-R P.368 · 100W · avg soil · horizontal dipole`,
+      `ZONE 1 · Groundwave · ${b.label} · ~${gwKm} km\n`+
+      `ITU-R P.368 · ${fmtPwr(S.power)} · avg soil · ${phaseStr}`,
       {className:'ltt',direction:'top'});
     addLayer(gwLayer);
-    addLabel(gwKm, gwColor, 'ZONE 1 · GW', 90);
+    addLabel(gwKm, gwColor, 'Z1·GW', 90);
   }
 
   // ─────────────────────────────────────────────────────────────
-  // ZONE 2 — NVIS (cyan filled disk, from GW outer edge to nvisKm)
-  // Only rendered when NVIS is available (nvis[t] !== null).
-  // Exclusive: rendered as annulus from gwKm to nvisKm (no overlap with GW zone).
-  // Multiple power rings shown (each as annulus).
-  // Antenna gain applies. Condition factor applies. Skip inner does NOT apply.
+  // ZONE 2 — NVIS  (cyan annulus, GW edge → nvisKm)
+  // Computed from live foF2: available when foF2 > band freq AND D-layer < threshold
+  // Multiple power rings, each as annulus starting at gwKm
   // ─────────────────────────────────────────────────────────────
-  const nvisBaseKm = b.nvis[t];
-  let maxNvisKm = 0;  // track for dead zone calculation
-  if(nvisBaseKm){
+  let maxNvisKm = 0;
+  if(z.nvisBase && S.power >= b.minW){
     const nvisColor = '#00ffc3';
     powers.forEach((p, pi)=>{
       if(p < b.minW) return;
-      const nvisKm = scaledIono(nvisBaseKm * gLin, p, c.factor);
+      const nvisKm = scaledIono(z.nvisBase * gLin, p, c.factor);
       if(nvisKm < 1) return;
       if(pi === 0) maxNvisKm = nvisKm;
-      const fo = [.20,.14,.09,.05][pi];
-      const innerEdge = Math.max(gwKm, 1); // NVIS annulus starts at GW outer edge
+      const fo = [.22,.15,.09,.05][pi];
+      const innerEdge = Math.max(gwKm, 1);
 
       let layer;
       if(ant.dir){
-        // Directional: sector annulus
         const outerPts = sectorPts(S.lat,S.lon,nvisKm,S.bearing,ant.bw);
-        const innerPts = innerEdge > 2
-          ? sectorPts(S.lat,S.lon,innerEdge,S.bearing,ant.bw).slice(1,-1).reverse()
-          : [];
-        layer = L.polygon(innerEdge > 2 ? [outerPts, innerPts] : [outerPts],{
-          color:nvisColor, fillColor:nvisColor,
-          weight:2, opacity:.9, fillOpacity:fo
-        });
+        const innerPts = innerEdge>2 ? sectorPts(S.lat,S.lon,innerEdge,S.bearing,ant.bw).slice(1,-1).reverse() : [];
+        layer = L.polygon(innerEdge>2?[outerPts,innerPts]:[outerPts],{
+          color:nvisColor,fillColor:nvisColor,weight:2,opacity:.9,fillOpacity:fo});
       } else {
-        layer = innerEdge > 2
+        layer = innerEdge>2
           ? L.polygon(annulusPts(S.lat,S.lon,innerEdge,nvisKm),{
-              color:nvisColor, fillColor:nvisColor,
-              weight:2, opacity:.9, fillOpacity:fo
-            })
-          : L.circle([S.lat,S.lon],{
-              radius:nvisKm*1000,
-              color:nvisColor, fillColor:nvisColor,
-              weight:2, opacity:.9, fillOpacity:fo
-            });
+              color:nvisColor,fillColor:nvisColor,weight:2,opacity:.9,fillOpacity:fo})
+          : L.circle([S.lat,S.lon],{radius:nvisKm*1000,
+              color:nvisColor,fillColor:nvisColor,weight:2,opacity:.9,fillOpacity:fo});
       }
       layer.bindTooltip(
-        `ZONE 2 · NVIS · ${fmtPwr(p)} · ${innerEdge}–${nvisKm} km · No skip zone gap\n`+
-        `Near-Vertical Incidence Skywave · foF2 > ${b.freq} · ${t==='day'?'☀ Day':'☾ Night'}`,
+        `ZONE 2 · NVIS · ${fmtPwr(p)} · ${innerEdge}–${nvisKm} km (no gap)\n`+
+        `${z.nvisNote}\n${phaseStr}`,
         {className:'ltt',direction:'top'});
       addLayer(layer);
-      if(pi===0) addLabel(nvisKm, nvisColor, 'ZONE 2 · NVIS', 315);
+      if(pi===0) addLabel(nvisKm, nvisColor, 'Z2·NVIS', 315);
     });
   }
 
   // ─────────────────────────────────────────────────────────────
-  // ZONES 3a & 3b — DEAD ZONE + F-LAYER DX RING
-  // Only rendered when skipOuter[t] is not null.
-  // skipInner is FIXED (geometric/ionospheric, does not scale with power).
-  // Dead zone (3a): from max(gwKm, maxNvisKm) to skipInner — exclusively no signal.
-  // DX ring  (3b): from skipInner to skipOuter — F2/E-layer first hop.
-  // skipOuter scales with power and conditions.
+  // ZONE 3a — DEAD ZONE  (dark hatched annulus)
+  // Gap between GW/NVIS outer edge and skip inner — no signal possible here
   // ─────────────────────────────────────────────────────────────
-  const skipInnerKm = b.skipInner[t];  // fixed, no power scaling
-  const skipOuterBase = b.skipOuter[t];
-
-  if(skipOuterBase){
-    // Render dead zone once (at full power — it's geometrically fixed)
-    if(skipInnerKm && skipInnerKm > 1){
-      const deadInner = Math.max(gwKm, maxNvisKm, 1);
-      const deadOuter = skipInnerKm;
-      if(deadOuter > deadInner + 20){
-        const deadPts = annulusPts(S.lat,S.lon,deadInner,deadOuter);
-        const deadLayer = L.polygon(deadPts,{
-          color:'#444444', fillColor:'#111111',
-          weight:1.5, opacity:.6, fillOpacity:.25,
-          dashArray:'5 3'
-        });
-        deadLayer.bindTooltip(
-          `ZONE 3a · Dead Zone (Skip Zone) · ${deadInner}–${deadOuter} km\n`+
-          `No signal via groundwave, NVIS, or F-layer skip · ${t==='day'?'☀ Day':'☾ Night'}`,
-          {className:'ltt',direction:'top'});
-        addLayer(deadLayer);
-        addLabel(Math.round((deadInner+deadOuter)/2), '#555555', 'ZONE 3a · DEAD', 180);
-      }
+  if(z.skipInnerKm && z.skipOuterKm){
+    const deadInner = Math.max(gwKm, maxNvisKm, 1);
+    const deadOuter = z.skipInnerKm;
+    if(deadOuter > deadInner + 20){
+      const deadLayer = L.polygon(annulusPts(S.lat,S.lon,deadInner,deadOuter),{
+        color:'#3a3a4a', fillColor:'#0d0d18',
+        weight:1.5, opacity:.7, fillOpacity:.30, dashArray:'5 3'
+      });
+      deadLayer.bindTooltip(
+        `ZONE 3a · Dead Zone (Skip Zone) · ${deadInner}–${deadOuter} km\n`+
+        `No signal via GW, NVIS, or F-skip · foF2=${z.foF2.toFixed(1)} MHz\n${phaseStr}`,
+        {className:'ltt',direction:'top'});
+      addLayer(deadLayer);
+      addLabel(Math.round((deadInner+deadOuter)/2), '#555577', 'Z3a·DEAD', 225);
     }
+  }
 
-    // DX ring — multiple power rings
-    powers.forEach((p, pi)=>{
+  // ─────────────────────────────────────────────────────────────
+  // ZONE 3b — F-LAYER DX RING  (band colour annulus)
+  // First-hop skip. skipInner fixed (geometry). skipOuter scales √P × conditions.
+  // Multiple power rings rendered.
+  // ─────────────────────────────────────────────────────────────
+  if(z.skipOuterKm && S.power >= b.minW){
+    const ringInner = z.skipInnerKm || 0;
+    powers.forEach((p,pi)=>{
       if(p < b.minW) return;
-      const skipOuter = scaledIono(skipOuterBase * gLin, p, c.factor);
+      const skipOuter = scaledIono(z.skipOuterKm * gLin, p, c.factor);
       if(skipOuter < 1) return;
-      const ringInner = skipInnerKm || 0;
-      const fo = [.18,.12,.08,.04][pi];
-      const dxColor = col;
+      const fo = [.20,.13,.08,.04][pi];
 
       let dxLayer;
       if(ant.dir){
         const outerPts = sectorPts(S.lat,S.lon,skipOuter,S.bearing,ant.bw);
-        const innerPts = ringInner > 10
-          ? sectorPts(S.lat,S.lon,ringInner,S.bearing,ant.bw).slice(1,-1).reverse()
-          : [];
-        dxLayer = L.polygon(ringInner > 10 ? [outerPts, innerPts] : [outerPts],{
-          color:dxColor, fillColor:dxColor,
-          weight:2, opacity:.9, fillOpacity:fo
-        });
+        const innerPts = ringInner>10 ? sectorPts(S.lat,S.lon,ringInner,S.bearing,ant.bw).slice(1,-1).reverse() : [];
+        dxLayer = L.polygon(ringInner>10?[outerPts,innerPts]:[outerPts],{
+          color:col,fillColor:col,weight:2,opacity:.9,fillOpacity:fo});
       } else {
-        dxLayer = ringInner > 10
+        dxLayer = ringInner>10
           ? L.polygon(annulusPts(S.lat,S.lon,ringInner,skipOuter),{
-              color:dxColor, fillColor:dxColor,
-              weight:2, opacity:.9, fillOpacity:fo
-            })
-          : L.circle([S.lat,S.lon],{
-              radius:skipOuter*1000,
-              color:dxColor, fillColor:dxColor,
-              weight:2, opacity:.9, fillOpacity:fo
-            });
+              color:col,fillColor:col,weight:2,opacity:.9,fillOpacity:fo})
+          : L.circle([S.lat,S.lon],{radius:skipOuter*1000,
+              color:col,fillColor:col,weight:2,opacity:.9,fillOpacity:fo});
       }
-      const innerLabel = ringInner > 10 ? `${ringInner}–` : '';
       dxLayer.bindTooltip(
-        `ZONE 3b · F-layer DX · ${fmtPwr(p)} · ${innerLabel}~${skipOuter} km\n`+
-        `First-hop skip · ${t==='day'?'☀ Day · F2/E-layer':'☾ Night · F2-layer'}`,
+        `ZONE 3b · F-layer DX · ${fmtPwr(p)} · ${ringInner>10?ringInner+'–':''}~${skipOuter} km\n`+
+        `${z.skipNote}\n${phaseStr}`,
         {className:'ltt',direction:'top'});
       addLayer(dxLayer);
-      if(pi===0) addLabel(skipOuter, dxColor, 'ZONE 3b · F-DX', 45);
+      if(pi===0) addLabel(skipOuter, col, 'Z3b·F-DX', 45);
     });
   }
 
@@ -1027,14 +1353,16 @@ function rebuildLayers(){
       <div style="position:absolute;left:7px;top:5px;font-family:'Share Tech Mono',monospace;font-size:9px;color:#00ffc3;white-space:nowrap;text-shadow:0 0 6px #00ffc3;letter-spacing:.05em;">TX</div>
     </div>`
   });
+  const c2 = CONDS.find(x=>x.id===S.cond);
   txMk=L.marker([S.lat,S.lon],{icon:ico,zIndexOffset:1000}).addTo(map)
     .bindPopup(`<div style="font-family:'Share Tech Mono',monospace;font-size:11px;padding:5px 2px;line-height:1.9;">
       <b style="color:#00ffc3">TX — ${esc(S.locName)}</b><br/>
       ${fmtCoord(S.lat,'NS')} &nbsp; ${fmtCoord(S.lon,'EW')}<br/>
       Band: ${b.label} &nbsp;·&nbsp; ${b.freq}<br/>
       Antenna: ${ANTS[S.ant].label}<br/>
-      Max Power: ${fmtPwr(S.power)}<br/>
-      Conditions: ${c.label} · ${t==='day'?'☀ Day':'☾ Night'}
+      Power: ${fmtPwr(S.power)} &nbsp;·&nbsp; ${c2.label}<br/>
+      foF2: ${z.foF2.toFixed(1)} MHz &nbsp;·&nbsp; ${phaseStr}<br/>
+      D-layer: ${Math.round(z.dAbs*100)}%
     </div>`);
 
   updateCovSummary();
@@ -1066,71 +1394,77 @@ function buildBands(){
 }
 
 function updateBandInfo(){
-  const b=BANDS[S.band];
-  const t=S.time;
-  const gw   = b.gw[t];
-  const nvis = b.nvis[t];
-  const skip = b.skipOuter[t];
-  const inner= b.skipInner[t];
-  document.getElementById('bandInfo').innerHTML=
-    `<span style="color:${b.color}">${b.label}</span> · ${b.freq}<br/>` +
-    `<span style="color:var(--dim)">${b.propMode[t]}</span><br/>` +
-    `Min power: ${b.minW}W · ${t==='day'?'☀ Day':'☾ Night'}`;
+  const b = BANDS[S.band];
+  const z = liveZones(S.band);
+  const foF2 = z.foF2.toFixed(1);
+  const nvisState = z.nvisBase ? `NVIS ${z.nvisBase} km` : 'No NVIS';
+  const skipState = z.skipOuterKm ? `F-skip ~${z.skipOuterKm} km` : 'F-skip closed';
+  document.getElementById('bandInfo').innerHTML =
+    `<span style="color:${b.color}">${b.label}</span> · ${b.freq} · foF2 ${foF2} MHz<br/>` +
+    `<span style="color:var(--dim)">${nvisState} · ${skipState}</span><br/>` +
+    `<span style="color:var(--dim)">${z.nvisNote}</span>`;
 }
 
 function updateCovSummary(){
-  const c=document.getElementById('covList');
-  c.innerHTML='';
-  const b=BANDS[S.band];
-  const cond=CONDS.find(x=>x.id===S.cond);
-  const t=S.time;
-  const gLin=Math.pow(10,ANTS[S.ant].gain/20);
+  const c = document.getElementById('covList');
+  c.innerHTML = '';
+  const b    = BANDS[S.band];
+  const cond = CONDS.find(x=>x.id===S.cond);
+  const z    = liveZones(S.band);
+  const gLin = Math.pow(10, ANTS[S.ant].gain/20);
 
-  function row(dotColor, label, kmText, tag){
-    const r=document.createElement('div');
-    r.className='cov-row';
-    r.innerHTML=`<span class="cv-dot" style="background:${dotColor}"></span>
+  function row(dotColor, label, kmText, tag, note=''){
+    const r = document.createElement('div');
+    r.className = 'cov-row';
+    r.innerHTML = `<span class="cv-dot" style="background:${dotColor}"></span>
       <span class="cv-pwr" style="width:80px;font-size:.72rem">${label}</span>
       <span class="cv-km">${kmText}</span>
       <span class="cv-geo">${tag}</span>`;
-    c.appendChild(r);
+    if(note){
+      const n = document.createElement('div');
+      n.style.cssText='font-size:.59rem;color:var(--dim);margin:-3px 0 3px 22px;';
+      n.textContent = note;
+      c.appendChild(r); c.appendChild(n);
+    } else { c.appendChild(r); }
   }
 
-  // Zone 1: Groundwave
-  const gw=scaledGW(b.gw[t],S.power);
-  row('#ffffff','Z1 · GW', gw>=1?`~${gw} km`:'N/A', gw>=1?geoTag(gw):'—');
+  // foF2 header row
+  const hdr = document.createElement('div');
+  hdr.style.cssText = 'font-family:"Share Tech Mono",monospace;font-size:.62rem;color:#ffd93d;margin-bottom:6px;';
+  const ltH=Math.floor(z.lt), ltM=Math.floor((z.lt-ltH)*60);
+  hdr.textContent = `foF2 ${z.foF2.toFixed(1)} MHz · D-layer ${Math.round(z.dAbs*100)}% · ${String(ltH).padStart(2,'0')}:${String(ltM).padStart(2,'0')} LT · ${z.isDaytime?'☀ Day':'☾ Night'}`;
+  c.appendChild(hdr);
 
-  // Zone 2: NVIS
-  if(b.nvis[t] && S.power>=b.minW){
-    const nv=scaledIono(b.nvis[t]*gLin,S.power,cond.factor);
-    row('#00ffc3','Z2 · NVIS',`${gw}–${nv} km`,geoTag(nv));
+  // Zone 1
+  const gw = scaledGW(z.gwBase, S.power);
+  row('#e8e8ff', 'Z1 · GW', gw>=1?`~${gw} km`:'N/A', gw>=1?geoTag(gw):'—');
+
+  // Zone 2
+  if(z.nvisBase && S.power >= b.minW){
+    const nv = scaledIono(z.nvisBase * gLin, S.power, cond.factor);
+    row('#00ffc3', 'Z2 · NVIS', `${gw}–${nv} km`, geoTag(nv), z.nvisNote);
   } else {
-    const reason = !b.nvis[t]
-      ? (t==='day'?'D-layer absorbs / above foF2':'foF2 < band freq at night')
-      : `Below min power (${b.minW}W)`;
-    row('#1a3a2a','Z2 · NVIS',reason,'—');
+    row('#1a3a2a', 'Z2 · NVIS', 'Unavailable', '—', z.nvisNote);
   }
 
-  // Zone 3a: Dead zone
-  const skipInner = b.skipInner[t];  // fixed, no power scaling
-  const maxNvis = b.nvis[t] && S.power>=b.minW
-    ? scaledIono(b.nvis[t]*gLin,S.power,cond.factor) : 0;
-  const deadInner = Math.max(gw,maxNvis,1);
-  if(skipInner && skipInner > deadInner+20){
-    row('#333333','Z3a · Dead',`${deadInner}–${skipInner} km`,'No signal');
-  } else if(!skipInner && !b.nvis[t] && !b.skipOuter[t]){
-    row('#333333','Z3a · Dead','Entire band dead this time/day','No signal');
+  // Zone 3a dead zone
+  const maxNvis = z.nvisBase && S.power>=b.minW ? scaledIono(z.nvisBase*gLin,S.power,cond.factor) : 0;
+  const deadInner = Math.max(gw, maxNvis, 1);
+  if(z.skipInnerKm && z.skipInnerKm > deadInner+20){
+    row('#2a2a3a', 'Z3a · Dead', `${deadInner}–${z.skipInnerKm} km`, 'No signal', '');
+  } else if(!z.skipOuterKm && !z.nvisBase){
+    row('#1a1a2a', 'Z3a · Dead', 'Entire band — no skywave', 'No signal', z.skipNote);
   }
 
-  // Zone 3b: F-layer DX
-  if(b.skipOuter[t] && S.power>=b.minW){
-    const outer=scaledIono(b.skipOuter[t]*gLin,S.power,cond.factor);
-    const inner=skipInner||0;
-    row(b.color,'Z3b · F-DX',`${inner>0?inner+'–':''}~${outer} km`,geoTag(outer));
-  } else if(b.skipOuter[t]){
-    row(b.color,'Z3b · F-DX',`Below min power (${b.minW}W)`,'—');
+  // Zone 3b
+  if(z.skipOuterKm && S.power >= b.minW){
+    const outer = scaledIono(z.skipOuterKm * gLin, S.power, cond.factor);
+    const inner = z.skipInnerKm || 0;
+    row(b.color, 'Z3b · F-DX', `${inner>0?inner+'–':''}~${outer} km`, geoTag(outer), z.skipNote);
+  } else if(z.skipOuterKm){
+    row(b.color, 'Z3b · F-DX', `Below min power (${b.minW}W)`, '—', '');
   } else {
-    row('#1a1a2a','Z3b · F-DX',t==='night'?'Band closed at night':'No F-skip this band','—');
+    row('#1a1a2a', 'Z3b · F-DX', 'Closed', '—', z.skipNote);
   }
 }
 
@@ -1150,13 +1484,13 @@ function buildConds(){
 }
 
 function updateCondHint(){
-  const c=CONDS.find(x=>x.id===S.cond);
-  const t=S.time;
-  document.getElementById('condHint').innerHTML=
-    `Factor ×${c.factor} applies to NVIS & F-DX ranges only · Groundwave unaffected<br/>`+
-    (t==='night'
-      ? '☾ Night: D-layer gone · low bands open for NVIS/F2 · high bands (15–10m) closed'
-      : '☀ Day: D-layer active · absorbs 160/80m · foF2~10 MHz tropical · 40/60m NVIS active');
+  const c = CONDS.find(x=>x.id===S.cond);
+  const z = liveZones(S.band);
+  document.getElementById('condHint').innerHTML =
+    `×${c.factor} on NVIS & F-DX only · GW unaffected · foF2 ${z.foF2.toFixed(1)} MHz now<br/>` +
+    (z.isDaytime
+      ? `☀ Day · D-layer ${Math.round(z.dAbs*100)}% · foF2 ${z.foF2.toFixed(1)} MHz`
+      : `☾ Night · D-layer gone · foF2 ${z.foF2.toFixed(1)} MHz`);
 }
 
 function buildAnts(){
@@ -1220,10 +1554,12 @@ function setPwr(w){
 function setPwrSlider(v){setPwr(s2p(v));}
 
 function setTime(t){
-  S.time=t;
-  document.getElementById('btnDay').classList.toggle('on',t==='day');
-  document.getElementById('btnNight').classList.toggle('on',t==='night');
-  updateCondHint();updateBandInfo();rebuildLayers();autoFit();
+  S.time = t;
+  S.autoTime = false;
+  document.getElementById('btnAuto').classList.remove('on');
+  document.getElementById('btnDay').classList.toggle('on', t==='day');
+  document.getElementById('btnNight').classList.toggle('on', t==='night');
+  updateCondHint(); updateBandInfo(); rebuildLayers(); autoFit();
 }
 
 function setAnt(k){S.ant=k;updateAntInfo();rebuildLayers();}
@@ -2157,6 +2493,9 @@ buildEnvGrid('uhf');
 // Build antenna selectors
 buildVUAntSel('vhf');
 buildVUAntSel('uhf');
+// Derive initial time from RTC
+S.time = deriveTimeLabel();
+startRTC();
 rebuildLayers();
 autoFit();
 </script>
