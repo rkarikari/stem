@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner — Accra</title>
+<title>Ham Radio Coverage Planner · v1.02</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -235,7 +235,7 @@ option{background:#0b1820;}
   <div id="hf-panel" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
   <div class="sb-head">
     <div class="sb-title">HF PROPAGATION PLANNER</div>
-    <div class="sb-sub">NVIS / Skywave Coverage · Empirical Model</div>
+    <div class="sb-sub">NVIS / Skywave Coverage · Empirical Model · <span id="appVer"></span></div>
   </div>
 
   <div class="sb-scroll">
@@ -311,8 +311,8 @@ option{background:#0b1820;}
             <div class="iono-phase-fill" id="ionoPhaseFill"></div>
             <div class="iono-phase-cursor" id="ionoPhaseCursor"></div>
           </div>
-          <div class="iono-phase-labels">
-            <span>00 Pre-dawn</span><span>06 Sunrise</span><span>12 Noon</span><span>18 Sunset</span><span>24</span>
+          <div class="iono-phase-labels" id="ionoPhaseLabels">
+            <span>00</span><span id="phLblSr">06 ☀</span><span>12 Noon</span><span id="phLblSs">18 ☾</span><span>24</span>
           </div>
         </div>
 
@@ -363,7 +363,8 @@ option{background:#0b1820;}
     <span style="color:var(--accent)">━</span> ZONE 3b · F-layer DX ring<br/>
     Zones are mutually exclusive · skipInner fixed (geometry) · skipOuter scales √P<br/>
     Sources: ITU-R P.368, P.533 · ARRL Handbook · electronics-notes.com<br/>
-    ⚠ Average conditions · actual ionosphere varies with solar cycle, season, time
+    ⚠ Average conditions · actual ionosphere varies with solar cycle, season, time<br/>
+    <span id="sbFootVer" style="color:#00ffc388"></span>
   </div>
   </div><!-- /hf-panel -->
 
@@ -572,6 +573,12 @@ option{background:#0b1820;}
 </div>
 
 <script>
+// ══════════════════════════════════════════════
+// VERSION
+// ══════════════════════════════════════════════
+const APP_VERSION = 'v1.02';
+const APP_DATE    = '2026-03-07';
+
 // ══════════════════════════════════════════════
 // DATA TABLES
 // ══════════════════════════════════════════════
@@ -797,66 +804,251 @@ const S = {
 };
 
 // ══════════════════════════════════════════════════════════════════
-// REAL-TIME CLOCK + DIURNAL foF2 MODEL
+// REAL-TIME CLOCK + GLOBAL LATITUDE-AWARE IONOSPHERIC MODEL
 // ══════════════════════════════════════════════════════════════════
 //
-// foF2 DIURNAL PROFILE — Equatorial West Africa (5–12°N lat, similar to Accra/Ibadan/Ouagadougou)
-// Based on: IRI-2007 comparisons, Ibadan ionosonde data (Oyekola 2011), Ouagadougou
-//           observations (Ouattara 2012), African equatorial foF2 studies (Akala 2011).
-// Solar activity: moderate (R12≈100, mid solar cycle — applicable average conditions).
-// Values are LOCAL TIME (LT = UTC + lon/15).
+// The model is latitude-zoned because the ionosphere differs fundamentally
+// by latitude. This app supports any global TX location.
 //
-// Key features modelled per literature:
-//   - Pre-dawn minimum: ~3.5 MHz at 04:00–05:00 LT (minimum just before dawn, Sws.bom.gov.au)
-//   - Sunrise rise: rapid increase 06:00–09:00 LT (EUV flux ramps up)
-//   - Forenoon peak: ~9–10 MHz at ~10:00 LT
-//   - Midday bite-out: slight dip at ~12:00 LT (~8.5 MHz) — equatorial anomaly characteristic
-//   - Post-noon peak: ~10–11 MHz at ~14:00–15:00 LT (TEC max observed 14:00–16:00 LT)
-//   - Post-sunset enhancement: ~8 MHz at ~19:00–20:00 LT (PRE — Pre-Reversal Enhancement)
-//   - Night decline: gradual fall to minimum at 04:00 LT
-//   - Post-midnight secondary minimum: ~3.5–4.5 MHz (02:00–05:00 LT)
+// THREE LATITUDE ZONES (by geographic |lat|):
 //
-// Format: [LT_hour_0.0 to 24.0, foF2_MHz]
-const FOF2_PROFILE_LT = [
-  [0,  4.5],   // midnight — F2 declining but still present
-  [1,  4.2],
-  [2,  4.0],
-  [3,  3.8],
-  [4,  3.5],   // pre-dawn minimum (Sws: "minimum just before dawn")
-  [5,  3.7],   // pre-sunrise slight uptick from thermospheric winds
-  [6,  4.5],   // sunrise — D-layer forms, E-layer starts, F2 begins rising
-  [7,  6.5],   // rapid EUV-driven increase
-  [8,  8.0],
-  [9,  9.5],   // forenoon peak region
-  [10, 10.0],  // forenoon maximum (Ouagadougou data: morning max ~10 MHz)
-  [11, 9.5],
-  [12, 8.5],   // midday bite-out (characteristic equatorial feature — Ouattara 2012)
-  [13, 9.5],
-  [14, 10.5],  // post-noon peak — TEC max 14:00–16:00 LT (Addis Ababa GPS study)
+//   EQUATORIAL  (|lat| < 20°):
+//     Peak foF2 ~10–12 MHz day (R12≈100). Midday bite-out (equatorial fountain).
+//     PRE (Pre-Reversal Enhancement) at ~18:00 LT. Strong D-layer.
+//     M(3000)F2 anti-correlated with hmF2: ~3.6 night, ~2.9 midday.
+//     Sources: Ouagadougou ionosonde (Oyekola 2011, Ouattara 2012),
+//              Ibadan (Akala 2011), Jicamarca Peru (Adebesin 2014).
+//
+//   MID-LATITUDE  (20° ≤ |lat| < 55°):
+//     Peak foF2 ~8–10 MHz day. No midday bite-out. No PRE.
+//     Winter anomaly (foF2 in winter > summer at noon). Night ~3–5 MHz.
+//     M(3000)F2 ~3.0–3.3 day, ~3.1–3.5 night (less anti-corr. than equatorial).
+//     Sources: Rome 41.8°N, Boulder 40°N, Kokubunji 35.7°N (Laštovička 2023).
+//              foF2 low/mid: 3–12 MHz quiet conditions (Adebesin et al. 2010).
+//
+//   HIGH-LATITUDE  (|lat| ≥ 55°):
+//     Peak foF2 ~5–7 MHz day. Night ~2–4 MHz. Solar zenith angle dominant.
+//     No PRE. Strongly seasonal (polar summer/winter extremes).
+//     M(3000)F2 ~3.2–3.6 (higher due to lower hmF2 at high lat).
+//     Sources: Sodankyla 67.4°N, Juliusruh 54.6°N (Laštovička 2023),
+//              high lat foF2: 3–7 MHz (Adebesin et al. 2010).
+//
+// Solar activity: R12≈100 (moderate, mid-cycle). Annual average (all seasons).
+// Values are LOCAL TIME (LT = UTC + TX_lon/15°).
+// Sunrise/sunset estimated from TX latitude (simplified solar geometry).
+// ──────────────────────────────────────────────────────────────────
+
+// ── Latitude zone classification ──────────────────────────────────
+function latZone(lat){
+  const a = Math.abs(lat);
+  if(a < 20)  return 'equatorial';
+  if(a < 55)  return 'midlat';
+  return 'highlat';
+}
+
+// ── Approximate solar day length and sunrise/sunset in LT ─────────
+// Uses a simplified annual-average formula (ignores seasonal variation).
+// For a simple planner, annual-average day length is the honest default.
+// Returns {sunriseLT, sunsetLT, dayLengthH}
+function solarTimes(lat){
+  // Annual average sunrise/sunset by latitude (simplified from NOAA tables)
+  // Equatorial latitudes have ~12h days year-round.
+  // Poleward, summer/winter extremes average to ~12h, but the DIURNAL PATTERN
+  // shifts significantly. We use annual-mean day length by latitude band.
+  // Source: NOAA ESRL solar calculator averages, standard table approximation.
+  const a = Math.abs(lat);
+  let dayH;
+  if(a <= 5)        dayH = 12.0;
+  else if(a <= 15)  dayH = 12.1;
+  else if(a <= 25)  dayH = 12.3;
+  else if(a <= 35)  dayH = 12.6;
+  else if(a <= 45)  dayH = 13.0;
+  else if(a <= 55)  dayH = 13.5;
+  else if(a <= 65)  dayH = 14.5;
+  else              dayH = 16.0;   // polar region — summer average daylight dominates
+  const sunriseLT = 12.0 - dayH / 2;
+  const sunsetLT  = 12.0 + dayH / 2;
+  return { sunriseLT, sunsetLT, dayLengthH: dayH };
+}
+
+// ── foF2 diurnal profiles by latitude zone ────────────────────────
+// All profiles are in LOCAL SOLAR TIME. Keyed by latZone().
+// Reference anchor points calibrated to ionosonde data, then normalised
+// so that time-of-day is expressed relative to solar noon (12:00 LT),
+// which is invariant by zone. The profiles below use clock-hour LT.
+//
+// EQUATORIAL profile (|lat|<20°, R12≈100, annual avg):
+//   Based on Ouagadougou ionosonde (12.4°N), Ibadan (7.4°N), Jicamarca (12°S).
+const FOF2_EQ = [
+  [0,   4.8],   // midnight — F2 declining
+  [1,   4.5],
+  [2,   4.2],
+  [3,   4.0],
+  [4,   3.8],
+  [5,   3.5],   // pre-dawn minimum (SWS.bom.gov.au: minimum just before sunrise)
+  [6,   4.2],   // sunrise ~06:00 LT equatorial — EUV begins
+  [7,   6.5],   // rapid photoionisation
+  [8,   8.5],
+  [9,   9.8],
+  [10, 10.0],   // forenoon peak (Ouagadougou data)
+  [11,  9.5],
+  [12,  8.5],   // midday bite-out — equatorial fountain effect (Ouattara 2012)
+  [13,  9.5],
+  [14, 10.5],   // post-noon TEC maximum (14:00–16:00 LT, Akala 2011 GPS study)
   [15, 10.5],
-  [16, 10.0],
-  [17, 9.0],   // declining afternoon
-  [18, 7.5],   // sunset — E and F1 disappear; F2 begins recombination
-  [19, 8.5],   // PRE: Post-Reversal Enhancement — brief ionospheric uplift
-  [20, 7.5],
-  [21, 6.5],
-  [22, 5.8],
-  [23, 5.2],
-  [24, 4.5],   // wraps to midnight
+  [16,  9.8],
+  [17,  8.8],   // afternoon decline
+  [18,  9.0],   // evening peak / PRE onset (second foF2 max ~18:00 LT, Ouattara 2012)
+  [19,  7.8],   // post-PRE decline
+  [20,  6.8],
+  [21,  6.2],
+  [22,  5.6],
+  [23,  5.2],
+  [24,  4.8],
 ];
 
-// D-layer absorption factor — reduces NVIS and skip on lower bands during daytime.
-// D-layer: forms ~06:30 LT, peaks ~12:00 LT, gone by ~18:30 LT.
-// Source: Sws.bom.gov.au: "E and F1 regions become transparent at sunset; F2 sustained at night"
-// D-layer absorption profile (0=none, 1=maximum absorption) by LT hour:
-const D_LAYER_PROFILE_LT = [
-  [0,  0.0],[1,  0.0],[2,  0.0],[3,  0.0],[4,  0.0],[5,  0.0],
-  [6,  0.05],[7, 0.3],[8,  0.6],[9,  0.8],[10, 0.9],[11, 0.95],
-  [12, 1.0],[13, 0.95],[14, 0.9],[15, 0.85],[16, 0.7],[17, 0.5],
-  [18, 0.2],[19, 0.0],[20, 0.0],[21, 0.0],[22, 0.0],[23, 0.0],[24, 0.0],
+// MID-LATITUDE profile (20°≤|lat|<55°, R12≈100, annual avg):
+//   Based on Rome 41.8°N, Boulder 40°N, Kokubunji 35.7°N data.
+//   Sources: Laštovička 2023 (Space Weather), IRI-2016 typical output.
+//   No midday bite-out. Single smooth daytime peak. No PRE.
+//   Night values higher than equatorial due to less recombination at night.
+const FOF2_MID = [
+  [0,   3.5],   // midnight
+  [1,   3.2],
+  [2,   3.0],
+  [3,   2.8],
+  [4,   2.7],   // pre-dawn minimum
+  [5,   2.8],
+  [6,   3.2],   // sunrise (mid-lat: ~07:00 avg, but using solar-time LT)
+  [7,   5.0],
+  [8,   7.0],
+  [9,   8.5],
+  [10,  9.5],   // forenoon rise
+  [11, 10.0],
+  [12, 10.0],   // broad midday plateau — no bite-out at mid-lat
+  [13, 10.0],
+  [14,  9.8],
+  [15,  9.2],   // afternoon decline
+  [16,  8.2],
+  [17,  7.0],
+  [18,  5.5],   // sunset: rapid F2 decline (no PRE at mid-lat)
+  [19,  4.5],
+  [20,  4.0],
+  [21,  3.8],
+  [22,  3.6],
+  [23,  3.5],
+  [24,  3.5],
 ];
 
-// Interpolate a profile table at a given LT hour
+// HIGH-LATITUDE profile (|lat|≥55°, R12≈100, annual avg):
+//   Based on Sodankyla 67.4°N, Juliusruh 54.6°N data.
+//   Sources: Laštovička 2023, IRI model high-lat output.
+//   Strongly solar-zenith-angle driven. Lower absolute values.
+//   Annual average — polar summer/winter extremes both present.
+const FOF2_HIGH = [
+  [0,   2.5],   // midnight
+  [1,   2.3],
+  [2,   2.1],
+  [3,   2.0],
+  [4,   1.9],   // pre-dawn minimum
+  [5,   2.0],
+  [6,   2.5],   // gradual sunrise (high lat: slow solar angle change)
+  [7,   3.5],
+  [8,   4.8],
+  [9,   5.8],
+  [10,  6.2],
+  [11,  6.5],
+  [12,  6.5],   // broad daytime plateau (no single sharp peak)
+  [13,  6.5],
+  [14,  6.2],
+  [15,  5.8],
+  [16,  5.0],
+  [17,  4.0],
+  [18,  3.2],   // sunset: F2 decline
+  [19,  3.0],
+  [20,  2.8],
+  [21,  2.7],
+  [22,  2.6],
+  [23,  2.5],
+  [24,  2.5],
+];
+
+// Select foF2 profile by TX latitude
+function foF2Profile(lat){ 
+  const z = latZone(lat);
+  if(z==='equatorial') return FOF2_EQ;
+  if(z==='midlat')     return FOF2_MID;
+  return FOF2_HIGH;
+}
+
+// ── D-layer absorption profiles by latitude zone ──────────────────
+// D-layer duration tracks solar elevation. Longer at equatorial (12h),
+// shorter at high lat in winter average (~8h). Uses LT hour.
+// All profiles normalised to local solar noon = 12:00 LT.
+
+const DLAYER_EQ = [   // equatorial: 12h day, strong D-layer
+  [0,0],[5,0],[6,0.05],[7,0.35],[8,0.65],[9,0.82],[10,0.90],[11,0.96],
+  [12,1.0],[13,0.96],[14,0.90],[15,0.85],[16,0.72],[17,0.52],
+  [18,0.28],[18.5,0.12],[19,0.02],[19.5,0],[24,0],
+];
+
+const DLAYER_MID = [  // mid-lat: ~13h average day, moderate D-layer
+  [0,0],[5.5,0],[6.5,0.05],[7.5,0.30],[8.5,0.58],[9.5,0.76],[10.5,0.88],[11.5,0.95],
+  [12,1.0],[12.5,0.95],[13.5,0.88],[14.5,0.82],[15.5,0.70],[16.5,0.52],
+  [17.5,0.32],[18.5,0.14],[19,0.04],[19.5,0],[24,0],
+];
+
+const DLAYER_HIGH = [ // high-lat: ~14.5h average day, weaker D-layer (lower solar elevation)
+  [0,0],[6,0],[7,0.04],[8,0.22],[9,0.45],[10,0.62],[11,0.74],[11.5,0.80],
+  [12,0.82],[12.5,0.80],[13,0.74],[14,0.65],[15,0.55],[16,0.42],
+  [17,0.28],[18,0.15],[19,0.05],[20,0.01],[20.5,0],[24,0],
+];
+
+function dLayerProfile(lat){
+  const z = latZone(lat);
+  if(z==='equatorial') return DLAYER_EQ;
+  if(z==='midlat')     return DLAYER_MID;
+  return DLAYER_HIGH;
+}
+
+// ── M(3000)F2 profiles by latitude zone ───────────────────────────
+// Anti-correlation with hmF2 is strongest at equatorial latitudes.
+// At mid-latitudes, less pronounced but still present.
+// At high latitudes, M(3000)F2 is higher (lower hmF2) with less variation.
+// Sources: Ouagadougou (Oyekola 2010), IRI model output by latitude.
+
+const M3K_EQ = [      // equatorial: strong anti-corr with hmF2
+  [0,3.55],[1,3.58],[2,3.60],[3,3.58],[4,3.52],[5,3.45],
+  [6,3.35],[7,3.18],[8,3.08],[9,3.00],[10,2.95],
+  [11,2.90],[12,2.88],[13,2.90],[14,2.92],[15,2.95],
+  [16,3.00],[17,3.10],[18,3.25],[19,3.38],[20,3.45],
+  [21,3.50],[22,3.55],[23,3.57],[24,3.55],
+];
+
+const M3K_MID = [     // mid-lat: moderate anti-corr, less range
+  [0,3.30],[1,3.32],[2,3.35],[3,3.35],[4,3.32],[5,3.28],
+  [6,3.20],[7,3.10],[8,3.05],[9,3.02],[10,2.98],
+  [11,2.95],[12,2.95],[13,2.95],[14,2.98],[15,3.00],
+  [16,3.05],[17,3.12],[18,3.20],[19,3.28],[20,3.32],
+  [21,3.33],[22,3.33],[23,3.32],[24,3.30],
+];
+
+const M3K_HIGH = [    // high-lat: high M3k (low hmF2), little variation
+  [0,3.55],[1,3.57],[2,3.58],[3,3.58],[4,3.57],[5,3.55],
+  [6,3.50],[7,3.42],[8,3.35],[9,3.30],[10,3.25],
+  [11,3.22],[12,3.20],[13,3.22],[14,3.25],[15,3.28],
+  [16,3.32],[17,3.38],[18,3.45],[19,3.50],[20,3.53],
+  [21,3.55],[22,3.56],[23,3.57],[24,3.55],
+];
+
+function m3kProfile(lat){
+  const z = latZone(lat);
+  if(z==='equatorial') return M3K_EQ;
+  if(z==='midlat')     return M3K_MID;
+  return M3K_HIGH;
+}
+
+// ── Interpolate a profile table at a given LT hour ────────────────
 function interpProfile(profile, ltHour){
   const h = ((ltHour % 24) + 24) % 24;
   for(let i=0;i<profile.length-1;i++){
@@ -868,30 +1060,66 @@ function interpProfile(profile, ltHour){
   return profile[0][1];
 }
 
-// Compute current local time (decimal hours) at TX longitude
+// ── Compute current local time (decimal hours) at TX longitude ────
 function txLocalTime(){
   const now = new Date();
   const utcH = now.getUTCHours() + now.getUTCMinutes()/60 + now.getUTCSeconds()/3600;
   return ((utcH + S.lon/15) + 24) % 24;
 }
 
-// Current foF2 in MHz at TX location and time
+// ── foF2 and D-layer using TX latitude zone ───────────────────────
 function currentFoF2(){
   const lt = S.autoTime ? txLocalTime() : (S.time === 'day' ? 13.0 : 1.0);
-  return interpProfile(FOF2_PROFILE_LT, lt);
+  return interpProfile(foF2Profile(S.lat), lt);
 }
 
-// Current D-layer absorption (0–1)
 function currentDlayer(){
   const lt = S.autoTime ? txLocalTime() : (S.time === 'day' ? 12.0 : 1.0);
-  return interpProfile(D_LAYER_PROFILE_LT, lt);
+  return interpProfile(dLayerProfile(S.lat), lt);
 }
 
-// Derive day/night string for backwards-compat labelling
+// ── Day/night boundary based on TX latitude solar geometry ────────
+// Uses solarTimes() which approximates annual-average sunrise/sunset by lat.
 function deriveTimeLabel(){
-  const lt = S.autoTime ? txLocalTime() : null;
-  if(lt === null) return S.time;
-  return (lt >= 6.0 && lt < 19.0) ? 'day' : 'night';
+  if(!S.autoTime) return S.time;
+  const lt = txLocalTime();
+  const st = solarTimes(S.lat);
+  return (lt >= st.sunriseLT && lt < st.sunsetLT) ? 'day' : 'night';
+}
+
+// ── Human-readable foF2 phase description — latitude-aware ────────
+function foF2PhaseDesc(lt, lat, dLayer){
+  const z  = latZone(lat);
+  const st = solarTimes(lat);
+  const sr = st.sunriseLT, ss = st.sunsetLT;
+
+  let desc = '';
+  if(z === 'equatorial'){
+    if     (lt >= sr-1   && lt < sr    ) desc = 'pre-dawn minimum';
+    else if(lt >= sr     && lt < sr+3  ) desc = 'sunrise — rapid EUV rise';
+    else if(lt >= sr+3   && lt < 11.5  ) desc = 'forenoon peak';
+    else if(lt >= 11.5   && lt < 13.0  ) desc = 'midday bite-out (equatorial)';
+    else if(lt >= 13.0   && lt < ss-1.5) desc = 'post-noon TEC maximum';
+    else if(lt >= ss-1.5 && lt < ss-0.5) desc = 'evening peak / PRE onset';
+    else if(lt >= ss-0.5 && lt < ss+2.5) desc = 'post-sunset decline';
+    else desc = 'nighttime F2 decay';
+  } else if(z === 'midlat'){
+    if     (lt >= sr-1   && lt < sr    ) desc = 'pre-dawn minimum';
+    else if(lt >= sr     && lt < sr+2  ) desc = 'sunrise — F2 rising';
+    else if(lt >= sr+2   && lt < 14.0  ) desc = 'daytime peak';
+    else if(lt >= 14.0   && lt < ss    ) desc = 'afternoon decline';
+    else if(lt >= ss     && lt < ss+2  ) desc = 'post-sunset decline';
+    else desc = 'nighttime F2 decay';
+  } else {
+    if     (lt >= sr-1   && lt < sr    ) desc = 'pre-dawn minimum';
+    else if(lt >= sr     && lt < sr+3  ) desc = 'solar rise — slow F2 increase';
+    else if(lt >= sr+3   && lt < ss-2  ) desc = 'daytime plateau';
+    else if(lt >= ss-2   && lt < ss    ) desc = 'pre-sunset decline';
+    else if(lt >= ss     && lt < ss+2  ) desc = 'post-sunset decline';
+    else desc = 'nighttime F2 (low — high lat)';
+  }
+  if(dLayer > 0.4) desc += ` · D-layer ${Math.round(dLayer*100)}%`;
+  return desc;
 }
 
 // ── RTC state ──
@@ -954,22 +1182,22 @@ function updateRTCDisplay(){
   const foF2El = document.getElementById('foF2Display');
   if(foF2El) foF2El.textContent = foF2.toFixed(1) + ' MHz';
 
-  // foF2 description based on value and time
+  // foF2 description based on value and LT
   const foF2DescEl = document.getElementById('foF2Desc');
   if(foF2DescEl){
-    let desc = '';
-    if(lt >= 3.5 && lt < 6.0) desc = 'pre-dawn minimum';
-    else if(lt >= 6.0 && lt < 9.0) desc = 'sunrise — rapid rise';
-    else if(lt >= 9.0 && lt < 11.5) desc = 'forenoon peak';
-    else if(lt >= 11.5 && lt < 13.0) desc = 'midday bite-out';
-    else if(lt >= 13.0 && lt < 16.5) desc = 'post-noon peak — TEC max';
-    else if(lt >= 16.5 && lt < 18.5) desc = 'afternoon decline';
-    else if(lt >= 18.5 && lt < 19.5) desc = 'pre-reversal enhancement';
-    else if(lt >= 19.5 && lt < 22.0) desc = 'post-sunset decline';
-    else desc = 'nighttime — F2 slow decay';
-    if(dLayer > 0.5) desc += ` · D-layer ${Math.round(dLayer*100)}%`;
-    foF2DescEl.textContent = desc;
+    const z   = liveZones(S.band);
+    const ltD = S.autoTime ? lt : (S.time==='day' ? 13.0 : 1.0);
+    const desc = foF2PhaseDesc(ltD, S.lat, dLayer);
+    const muf  = z.muf3000 ? ` · MUF(3000)=${z.muf3000.toFixed(1)} MHz` : '';
+    foF2DescEl.textContent = desc + muf;
   }
+
+  // Update phase bar sunrise/sunset labels with latitude-specific times
+  const stL = solarTimes(S.lat);
+  const srEl = document.getElementById('phLblSr');
+  const ssEl = document.getElementById('phLblSs');
+  if(srEl) srEl.textContent = stL.sunriseLT.toFixed(0).padStart(2,'0') + ' ☀';
+  if(ssEl) ssEl.textContent = stL.sunsetLT.toFixed(0).padStart(2,'0') + ' ☾';
 
   // Phase bar
   const fill = document.getElementById('ionoPhaseFill');
@@ -1044,105 +1272,118 @@ function scaledGW(baseKm, powerW){
 
 // ── Live propagation state derived from foF2 + D-layer ────────────
 // Returns an object describing all active zones for a given band right now.
-// This is the core physics function — everything else reads from this.
+// Uses latitude-zone-aware profiles for foF2, D-layer, and M(3000)F2.
+// All solar day/night boundaries derived from solarTimes(S.lat) —
+// NOT hardcoded equatorial values.
+//
+// KEY PHYSICS:
+// • M(3000)F2 = MUF(3000km)/foF2 (ITU-R P.533). F2-skip available when
+//   foF2 × M(3000)F2 > band_freq. Zone profiles by latitude (eq/mid/high).
+// • NVIS: foF2 > band_freq AND D-layer < threshold. Range 50–650 km.
+// • Skip inner: no power scaling (geometric). Smoothly interpolated day↔night.
+// • Skip outer: power and conditions scale only (no additional foF2 correction).
 function liveZones(band){
   const b    = BANDS[band];
   const foF2 = currentFoF2();
-  const dAbs = currentDlayer();   // 0–1 absorption factor
+  const dAbs = currentDlayer();
   const lt   = S.autoTime ? txLocalTime() : (S.time==='day' ? 13.0 : 1.0);
-  const isDaytime = (lt >= 6.0 && lt < 19.0);
 
-  // ── Groundwave ────────────────────────────────────────────────
-  // Always present. Not affected by ionosphere.
-  // GW is essentially same day/night (surface wave), use day value.
+  // Latitude-aware solar day boundaries
+  const st        = solarTimes(S.lat);
+  const isDaytime = (lt >= st.sunriseLT && lt < st.sunsetLT);
+  const eLayerPresent = (lt >= st.sunriseLT + 1.0 && lt < st.sunsetLT - 0.5);
+
+  // ── Groundwave ─────────────────────────────────────────────────
   const gwBase = b.gw.day !== undefined ? b.gw.day : b.gw;
 
-  // ── NVIS ──────────────────────────────────────────────────────
-  // Available when: band frequency < foF2  AND  D-layer doesn't fully absorb it.
-  // D-layer absorption by band: 160m fully absorbed when dAbs>0.3,
-  //   80m when dAbs>0.7, 60m when dAbs>0.9, 40m when dAbs>0.95.
-  // NVIS range shrinks continuously with foF2 headroom: range ∝ (foF2 - freq) / (foF2max - freq)
-  // NVIS range also shrinks as D-layer absorbs: multiply by (1 - dAbsFraction).
-  let nvisBase = null;  // km at 100W, average conditions
+  // ── M(3000)F2 factor — latitude-zone-aware ────────────────────
+  // Source profiles: M3K_EQ (equatorial, Oyekola 2010), M3K_MID (mid-lat,
+  // IRI/Laštovička 2023), M3K_HIGH (high-lat, Juliusruh/Sodankyla data).
+  const m3000 = interpProfile(m3kProfile(S.lat), lt);
+  const muf3000 = foF2 * m3000;
+
+  // ── NVIS ───────────────────────────────────────────────────────
+  // Available when: (a) foF2 > band_freq (vertical incidence CAN reflect)
+  //                 (b) D-layer absorption < band threshold
+  // NVIS base range (km @ 100W, avg conditions):
+  //   Scales with headroom = foF2 - freq_MHz. Below 0.5 MHz headroom → unreliable.
+  //   550 km × clamp((headroom - 0.5) / 5.0, 0, 1) + 50 km minimum floor.
+  //   650 km hard ceiling (ARRL Handbook, G0ISW/QSL.net).
+  let nvisBase = null;
   let nvisNote = '';
   const freq = b.freqMHz;
-  const foF2headroom = foF2 - freq;
+  const headroom = foF2 - freq;
 
-  if(foF2headroom > 0){
-    // foF2 > band frequency — NVIS is physically possible
-    // D-layer absorption thresholds per band (absorption kills NVIS below threshold)
-    const dThresh = b.dLayerThresh;  // absorption fraction at which NVIS is killed
+  if(headroom > 0){
+    const dThresh = b.dLayerThresh;
     if(dAbs < dThresh){
-      // NVIS is available — compute effective range
-      // Base NVIS at 100W = 650 km × (foF2headroom / foF2) × (1 - dAbs/dThresh)^0.5
-      // 650 km is theoretical NVIS ceiling (ARRL Handbook)
-      const headroomFrac = Math.min(1, foF2headroom / Math.max(foF2, 1));
-      const dFactor = Math.pow(1 - (dAbs / dThresh), 0.5);
-      nvisBase = Math.round(650 * headroomFrac * dFactor);
+      // Linear scale: 50 km at 0.5 MHz headroom, up to 650 km at ~6 MHz headroom
+      const hFrac = Math.min(1, Math.max(0, (headroom - 0.5) / 5.5));
+      const dFactor = Math.sqrt(1 - (dAbs / dThresh));  // D-layer degrades NVIS
+      nvisBase = Math.round(50 + 600 * hFrac * dFactor);
       nvisBase = Math.max(50, Math.min(650, nvisBase));
-      nvisNote = `foF2=${foF2.toFixed(1)} MHz > ${freq} MHz · D=${Math.round(dAbs*100)}%`;
+      nvisNote = `foF2 ${foF2.toFixed(1)}−${freq}=${headroom.toFixed(1)} MHz headroom · D-layer ${Math.round(dAbs*100)}%`;
     } else {
       nvisNote = `D-layer ${Math.round(dAbs*100)}% absorbs ${b.label} · NVIS suppressed`;
     }
   } else {
-    nvisNote = `foF2=${foF2.toFixed(1)} MHz < ${freq} MHz · NVIS not possible`;
+    nvisNote = `foF2 ${foF2.toFixed(1)} MHz < ${freq} MHz · NVIS not possible`;
   }
 
-  // ── Skip zone & F-layer DX ────────────────────────────────────
-  // Skip inner: fixed geometric/ionospheric distance — no power scaling.
-  //   Varies with foF2 (higher foF2 → shorter skip for low bands).
-  //   Interpolated between day and night values based on actual LT.
-  // Skip outer: scales with power and conditions.
-  // High bands (15m+) close at night when foF2 < their MUF.
+  // ── Skip zone & F-layer DX ─────────────────────────────────────
+  // F2 skip available when MUF(3000km) = foF2 × M(3000)F2 > band freq.
+  // This is the correct ITU-R P.533 test (not a raw secant factor).
+  // E-layer skip (daytime only) provides regional skip on 40m/30m/60m
+  // when E-layer is present (daytime: lt 07:00–18:00 LT).
   let skipInnerKm = null;
   let skipOuterKm = null;
   let skipNote    = '';
 
-  // Is F-layer skip available? Band MUF must be supportable.
-  // Approximate: skip available when foF2 > 0.7 × freq (oblique path MUF > vertical foF2)
-  // For 40m+: use E-layer skip by day, F2 by night.
-  const mufFactor = 0.65;  // typical oblique/secant factor for first-hop F2 path
-  const fSkipAvail = (foF2 * (1/mufFactor)) > freq;  // MUF at ~60° > band freq
+  // eLayerPresent defined above alongside isDaytime (latitude-aware)
+  const f2SkipAvail = muf3000 > freq;
+  const eSkipAvail  = eLayerPresent && freq <= 10.5 && foF2 > 2.0;
 
-  // E-layer skip (day only, h~110km) contributes to 40m/60m/30m short skip by day
-  const eLayerActive = isDaytime && dAbs > 0.1;  // E-layer needs D-layer (daytime)
-
-  if(fSkipAvail || (eLayerActive && freq <= 10.1)){
-    // Interpolate skip inner between day/night values based on LT
-    const dayFrac = isDaytime ? Math.min(1, (lt - 6) / 6) : 0;  // 0=night, 1=full day
+  if(f2SkipAvail || eSkipAvail){
+    const totalDay  = st.sunsetLT - st.sunriseLT;
+    const siDayFrac = isDaytime
+      ? Math.min(1, Math.max(0, (lt - st.sunriseLT) / totalDay))
+      : 0;
     const siDay   = b.skipInner.day;
     const siNight = b.skipInner.night;
-    if(siDay !== null && siNight !== null){
-      skipInnerKm = Math.round(siDay * dayFrac + siNight * (1 - dayFrac));
-    } else if(siDay !== null && isDaytime){
-      skipInnerKm = siDay;
-    } else if(siNight !== null && !isDaytime){
-      skipInnerKm = siNight;
-    }
 
-    // Skip outer: interpolate day/night
-    const soDay   = b.skipOuter.day;
-    const soNight = b.skipOuter.night;
-    if(soDay !== null && soNight !== null){
-      skipOuterKm = Math.round(soDay * dayFrac + soNight * (1 - dayFrac));
-    } else if(soDay !== null && isDaytime){
-      skipOuterKm = soDay;
-    } else if(soNight !== null && !isDaytime){
-      skipOuterKm = soNight;
-    }
+    if(f2SkipAvail){
+      // F2 skip: interpolate day/night inner and outer
+      if(siDay !== null && siNight !== null){
+        skipInnerKm = Math.round(siDay * siDayFrac + siNight * (1 - siDayFrac));
+      } else if(siDay !== null && isDaytime){
+        skipInnerKm = siDay;
+      } else if(siNight !== null && !isDaytime){
+        skipInnerKm = siNight;
+      }
 
-    // Scale skip outer by foF2 headroom on MUF (more ionisation → slightly more range)
-    if(skipOuterKm){
-      const mufMargin = Math.min(1.3, Math.max(0.6, (foF2 * (1/mufFactor)) / freq));
-      skipOuterKm = Math.round(skipOuterKm * Math.sqrt(mufMargin));
+      const soDay   = b.skipOuter.day;
+      const soNight = b.skipOuter.night;
+      if(soDay !== null && soNight !== null){
+        skipOuterKm = Math.round(soDay * siDayFrac + soNight * (1 - siDayFrac));
+      } else if(soDay !== null && isDaytime){
+        skipOuterKm = soDay;
+      } else if(soNight !== null && !isDaytime){
+        skipOuterKm = soNight;
+      }
+      skipNote = `MUF(3000)=${muf3000.toFixed(1)} MHz (foF2×M3k: ${foF2.toFixed(1)}×${m3000.toFixed(2)}) > ${freq} MHz ✓`;
+    } else {
+      // E-layer only skip (daytime, lower bands)
+      skipInnerKm = b.skipInner.day || 500;
+      skipOuterKm = 2000;  // E-layer max single hop ~2000 km
+      skipNote = `E-layer skip only · foF2 ${foF2.toFixed(1)} MHz · MUF(3000) ${muf3000.toFixed(1)} MHz`;
     }
-    skipNote = `foF2=${foF2.toFixed(1)} MHz · MUF×secant ${(foF2/mufFactor).toFixed(1)} MHz`;
   } else {
-    skipNote = `Band closed · foF2=${foF2.toFixed(1)} MHz too low for ${b.label} F-skip`;
+    skipNote = `Band closed · MUF(3000) ${muf3000.toFixed(1)} MHz < ${freq} MHz`;
   }
 
   const t = isDaytime ? 'day' : 'night';
-  return { gwBase, nvisBase, nvisNote, skipInnerKm, skipOuterKm, skipNote, foF2, dAbs, isDaytime, lt, t };
+  return { gwBase, nvisBase, nvisNote, skipInnerKm, skipOuterKm, skipNote,
+           foF2, dAbs, isDaytime, lt, t, muf3000, m3000 };
 }
 
 // Best single range for autoFit
@@ -1361,8 +1602,8 @@ function rebuildLayers(){
       Band: ${b.label} &nbsp;·&nbsp; ${b.freq}<br/>
       Antenna: ${ANTS[S.ant].label}<br/>
       Power: ${fmtPwr(S.power)} &nbsp;·&nbsp; ${c2.label}<br/>
-      foF2: ${z.foF2.toFixed(1)} MHz &nbsp;·&nbsp; ${phaseStr}<br/>
-      D-layer: ${Math.round(z.dAbs*100)}%
+      foF2: ${z.foF2.toFixed(1)} MHz · MUF(3000)=${z.muf3000.toFixed(1)} MHz<br/>
+      Zone: ${ {'equatorial':'Equatorial','midlat':'Mid-latitude','highlat':'High-latitude'}[latZone(S.lat)] } · M(3000)F2=${z.m3000.toFixed(2)} · D-layer: ${Math.round(z.dAbs*100)}%
     </div>`);
 
   updateCovSummary();
@@ -1486,11 +1727,14 @@ function buildConds(){
 function updateCondHint(){
   const c = CONDS.find(x=>x.id===S.cond);
   const z = liveZones(S.band);
+  const zoneLabel = {'equatorial':'Equatorial (|lat|<20°)','midlat':'Mid-latitude (20–55°)','highlat':'High-latitude (>55°)'}[latZone(S.lat)];
+  const st = solarTimes(S.lat);
   document.getElementById('condHint').innerHTML =
-    `×${c.factor} on NVIS & F-DX only · GW unaffected · foF2 ${z.foF2.toFixed(1)} MHz now<br/>` +
+    `×${c.factor} on NVIS & F-DX ranges · GW unaffected · foF2 ${z.foF2.toFixed(1)} MHz · MUF(3000)=${z.muf3000.toFixed(1)} MHz<br/>` +
+    `Iono zone: ${zoneLabel} · Sunrise ${st.sunriseLT.toFixed(1)} LT · Sunset ${st.sunsetLT.toFixed(1)} LT<br/>` +
     (z.isDaytime
-      ? `☀ Day · D-layer ${Math.round(z.dAbs*100)}% · foF2 ${z.foF2.toFixed(1)} MHz`
-      : `☾ Night · D-layer gone · foF2 ${z.foF2.toFixed(1)} MHz`);
+      ? `☀ Day · D-layer ${Math.round(z.dAbs*100)}% · M(3000)F2=${z.m3000.toFixed(2)}`
+      : `☾ Night · D-layer absent · M(3000)F2=${z.m3000.toFixed(2)}`);
 }
 
 function buildAnts(){
@@ -2477,6 +2721,13 @@ function switchMode(mode){
 // INIT
 // ══════════════════════════════════════════════
 
+// Inject version strings
+(function(){
+  const v = document.getElementById('appVer');
+  if(v) v.textContent = APP_VERSION;
+  const f = document.getElementById('sbFootVer');
+  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Equatorial West Africa foF2 · Ouagadougou ionosonde`;
+})();
 buildBands();
 buildConds();
 buildAnts();
