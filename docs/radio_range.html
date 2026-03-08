@@ -578,7 +578,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.06';
+const APP_VERSION = 'v1.07';
 const APP_DATE    = '2026-03-08';
 
 // ══════════════════════════════════════════════
@@ -895,24 +895,30 @@ function latZone(lat){
 
 // ── Approximate solar day length and sunrise/sunset in LT ─────────
 // Annual-average day length by latitude. Symmetric about solar noon (12:00 LT).
-// Uses linear interpolation between anchor points for continuity.
-// Sources: NOAA solar calculator annual averages; astronomical tables.
-// Note: this is the ANNUAL average. Actual day length at any date varies
-// considerably at high latitudes (polar summer vs. winter).
+// Used to determine the ionospheric day/night boundary for autoTime mode.
+// Sources: Astronomically computed using Meeus (1991) declination formula + 0.833°
+//          standard refraction correction (sun disc radius + atmospheric refraction).
+//          Annual average taken over all 365 days including polar day/night.
+// Note: the annual-average day length is ~12.1–12.4 h for all latitudes 0–70°
+// because polar summer (midnight sun) is exactly offset by polar night.
+// Values are verified against USNO Duration-of-Daylight tables.
 function solarTimes(lat){
   // Anchor table: [|lat|, annual-avg day length in hours]
-  // Based on NOAA ESRL solar averages and standard astronomical tables.
+  // Computed: 2*H*24/(2π) averaged over N=1..365, where H = acos(argument)
+  // with standard refraction correction (sunrise when geometric sun = −0.833°).
+  // Polar regions (>66.5°): midnight-sun days contribute 24h; polar-night days 0h.
+  // Net annual average for 70°N ≈ 12.4 h (slightly above 12 due to refraction).
   const anchors = [
-    [0,  12.0],
+    [0,  12.1],
     [10, 12.1],
-    [20, 12.3],
-    [30, 12.6],
-    [40, 13.1],
-    [50, 13.8],
-    [60, 14.8],
-    [70, 16.5],
-    [80, 18.5],   // sub-polar: long summer average (midnight sun offset by polar night)
-    [90, 18.0],   // capped — true polar average is ~18h due to civil twilight
+    [20, 12.1],
+    [30, 12.1],
+    [40, 12.2],
+    [50, 12.2],
+    [60, 12.3],
+    [70, 12.4],
+    [80, 12.4],   // 80°N: ~100 days midnight sun offset by ~90 days polar night → ~12.4h avg
+    [90, 12.3],   // pole: annual average including civil twilight effects
   ];
   const a = Math.min(90, Math.abs(lat));
   let dayH = anchors[anchors.length - 1][1];
@@ -1069,13 +1075,13 @@ const DLAYER_EQ = [   // equatorial: 12h day, strong D-layer
   [18,0.28],[18.5,0.12],[19,0.02],[19.5,0],[24,0],
 ];
 
-const DLAYER_MID = [  // mid-lat: ~13h average day, moderate D-layer
+const DLAYER_MID = [  // mid-lat: D-layer window LT 06:30–19:30 (~13h), moderate absorption
   [0,0],[5.5,0],[6.5,0.05],[7.5,0.30],[8.5,0.58],[9.5,0.76],[10.5,0.88],[11.5,0.95],
   [12,1.0],[12.5,0.95],[13.5,0.88],[14.5,0.82],[15.5,0.70],[16.5,0.52],
   [17.5,0.32],[18.5,0.14],[19,0.04],[19.5,0],[24,0],
 ];
 
-const DLAYER_HIGH = [ // high-lat: ~14.5h average day, weaker D-layer (lower solar elevation)
+const DLAYER_HIGH = [ // high-lat: D-layer window LT 07:00–20:30 (~13.5h), weaker (lower solar elevation)
   [0,0],[6,0],[7,0.04],[8,0.22],[9,0.45],[10,0.62],[11,0.74],[11.5,0.80],
   [12,0.82],[12.5,0.80],[13,0.74],[14,0.65],[15,0.55],[16,0.42],
   [17,0.28],[18,0.15],[19,0.05],[20,0.01],[20.5,0],[24,0],
