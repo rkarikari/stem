@@ -461,7 +461,8 @@ option{background:#0b1820;}
     </div>
     <div class="vu-foot">
       VHF 144–146 MHz · 72 radials · SRTM 90m · Geometric LOS terrain model<br/>
-      Okumura-Hata/COST-231 env density · ⚠ 90m DEM — sub-building features not resolved
+      Okumura-Hata/COST-231 env density · ⚠ 90m DEM — sub-building features not resolved<br/>
+      ⚠ Hata calibrated for hB 30–200 m — results below 10 m AGL are extrapolated (optimistic)
     </div>
   </div><!-- /vhf-panel -->
 
@@ -558,7 +559,8 @@ option{background:#0b1820;}
     </div>
     <div class="vu-foot">
       UHF 430–440 MHz · 72 radials · SRTM 90m · Geometric LOS terrain model<br/>
-      Okumura-Hata/COST-231 env density · ⚠ 90m DEM — sub-building features not resolved
+      Okumura-Hata/COST-231 env density · ⚠ 90m DEM — sub-building features not resolved<br/>
+      ⚠ Hata calibrated for hB 30–200 m — results below 10 m AGL are extrapolated (optimistic)
     </div>
   </div><!-- /uhf-panel -->
 
@@ -576,8 +578,8 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.05';
-const APP_DATE    = '2026-03-07';
+const APP_VERSION = 'v1.06';
+const APP_DATE    = '2026-03-08';
 
 // ══════════════════════════════════════════════
 // DATA TABLES
@@ -593,7 +595,7 @@ const APP_DATE    = '2026-03-07';
 //   Surface wave. Always present, day and night. Frequency-dependent attenuation.
 //   Source: ITU-R P.368, 100W ERP, horizontal dipole/inverted-V, avg soil (σ=5 mS/m).
 //   Wire antennas are poor GW radiators vs. verticals — values below reflect that.
-//   @ 100W: 160m~150 km, 80m~80 km, 60m~50 km, 40m~30 km, 30m~15 km, 20m~8 km, 10m~2 km.
+//   @ 100W: 160m~90 km (horiz. wire; vertical monopole ~150 km), 80m~60 km, 60m~50 km, 40m~30 km, 30m~15 km, 20m~8 km, 10m~2 km.
 //
 // ZONE 2 — NVIS (cyan, filled disk from GW edge to nvisKm)
 //   Near-Vertical Incidence Skywave. Signal arrives at 0–650 km with NO skip zone gap.
@@ -605,7 +607,9 @@ const APP_DATE    = '2026-03-07';
 //     → 60m (5.3 MHz): Below foF2, D-layer less severe. NVIS = 600 km.
 //     → 40m (7 MHz): Below foF2. NVIS = 600 km.
 //     → 30m (10 MHz): At foF2 limit — unreliable. NVIS = null.
-//   NIGHTTIME: foF2 drops to ≈ 3–4 MHz (D-layer gone, F2 weaker).
+//   NIGHTTIME: foF2 drops as D-layer disappears and F2 recombines.
+//     Equatorial: ~4–6 MHz (Appleton anomaly influx keeps F2 elevated).
+//     Mid-latitude: ~3–5 MHz.  High-latitude: ~2–4 MHz.
 //     → 160m (1.8 MHz): Valid. NVIS = 400 km.
 //     → 80m (3.5 MHz): Valid. NVIS = 500 km.
 //     → 60m+ : foF2 < freq → NVIS fails. null.
@@ -642,16 +646,32 @@ const APP_DATE    = '2026-03-07';
 //          G0ISW/QSL.net, VU2NSB skip zone article, N4UFP HF propagation slides.
 
 const BANDS = {
+  // skipGeomMax: maximum F2 single-hop distance (km) set purely by ionospheric height and
+  // Earth curvature. Antenna gain and power do NOT extend this; they only affect whether
+  // the station can CLOSE THE LINK within this geometric range.
+  // Sources: SWS.bom.gov.au: F-region max hop 4000 km at 0° elevation, 300 km height;
+  //          Electronics-Notes: "max skip ~5000 km for F2"; ITU-R P.533.
+  // E-layer max hop ~2000 km (100 km height). F2 nominal max ~4000–4500 km.
+  // Higher bands (17m–10m) can occasionally reach ~5000 km under high solar flux; used as cap.
   '160m':{
     label:'160m', freq:'1.8–2.0 MHz', freqMHz:1.9, color:'#ff6b9d', minW:1.0,
     dLayerThresh:0.25,
+    skipGeomMax: 3000, // F2 night only; low-freq F2 virtual height is lower → shorter max hop
     propMode:{
-      day:  'ZONE 1 only — D-layer completely absorbs 160m skywave · Groundwave ~150 km',
-      night:'ZONE 1 GW 150 km · ZONE 2 NVIS 0–400 km · ZONE 3 F2 DX 100–2500 km',
+      day:  'ZONE 1 only — D-layer completely absorbs 160m skywave · Groundwave ~90 km',
+      night:'ZONE 1 GW 90 km · ZONE 2 NVIS 0–400 km · ZONE 3 F2 DX 100–2500 km',
     },
     // ITU-R P.368: groundwave is time-invariant (surface wave, depends only on freq & soil).
     // @ 100W, avg soil (σ=5 mS/m), horizontal wire antenna reference.
-    gw:        150,
+    // NOTE: ITU-R P.368 curves are defined for a short vertical monopole. A horizontal
+    // dipole radiates ~10–20 dB less groundwave than a vertical (horizontal polarisation
+    // couples poorly to the surface wave mode). 90 km reflects this realistic reduction
+    // from the ~150 km vertical-monopole value for 1.9 MHz / 100W / avg soil.
+    gw:        90,
+    // NOTE: nvis, skipInner, skipOuter below are REFERENCE DOCUMENTATION only.
+    // Live computation in liveZones() uses foF2 profiles, dLayerThresh, and skipGeomMax.
+    // skipInner.day/night IS used in liveZones() for siDayFrac interpolation.
+    // nvis is NOT used — NVIS range is computed continuously from live foF2.
     nvis:      {day:null, night:400},
     skipInner: {day:null, night:100},
     skipOuter: {day:null, night:2500},
@@ -659,11 +679,15 @@ const BANDS = {
   '80m':{
     label:'80m', freq:'3.5–4.0 MHz', freqMHz:3.7, color:'#ff9f43', minW:0.5,
     dLayerThresh:0.70,
+    skipGeomMax: 3500, // F2 night; slightly more than 160m due to higher virtual height
     propMode:{
-      day:  'ZONE 1 only — D-layer blocks 80m skywave in average daytime · GW ~80 km',
-      night:'ZONE 1 GW 80 km · ZONE 2 NVIS 0–500 km · ZONE 3 F2 DX 200–3000 km',
+      day:  'ZONE 1 only — D-layer blocks 80m skywave in average daytime · GW ~60 km',
+      night:'ZONE 1 GW 60 km · ZONE 2 NVIS 0–500 km · ZONE 3 F2 DX 200–3000 km',
     },
-    gw:        80,
+    // ITU-R P.368: vertical monopole @3.5 MHz/100W/avg soil gives ~100–120 km GW.
+    // Horizontal dipole couples ~10–15 dB less into the surface wave mode.
+    // 60 km reflects this realistic reduction, consistent with the 160m correction.
+    gw:        60,
     nvis:      {day:null, night:500},
     skipInner: {day:null, night:200},
     skipOuter: {day:null, night:3000},
@@ -671,6 +695,7 @@ const BANDS = {
   '60m':{
     label:'60m', freq:'5.3–5.4 MHz', freqMHz:5.35, color:'#ffd93d', minW:0.5,
     dLayerThresh:0.92,
+    skipGeomMax: 4000, // E-layer day: 2000 km; F2 night: up to 4000 km
     propMode:{
       day:  'ZONE 1 GW 50 km · ZONE 2 NVIS 0–600 km · ZONE 3 E-skip 300–2000 km',
       night:'ZONE 1 GW 50 km · No NVIS (foF2 < 5.3 MHz) · ZONE 3 F2 skip 400–3000 km',
@@ -683,6 +708,7 @@ const BANDS = {
   '40m':{
     label:'40m', freq:'7.0–7.2 MHz', freqMHz:7.1, color:'#6bcb77', minW:0.25,
     dLayerThresh:0.97,
+    skipGeomMax: 4500, // F2 day/night: up to 4000–4500 km
     propMode:{
       day:  'ZONE 1 GW 30 km · ZONE 2 NVIS 0–600 km (tropical foF2 > 7 MHz) · ZONE 3 E-skip 500–3000 km',
       night:'ZONE 1 GW 30 km · No NVIS (foF2 < 7 MHz night) · ZONE 3 F2 skip 300–4000 km',
@@ -695,6 +721,7 @@ const BANDS = {
   '30m':{
     label:'30m', freq:'10.1–10.15 MHz', freqMHz:10.1, color:'#4d96ff', minW:0.25,
     dLayerThresh:0.99,
+    skipGeomMax: 4500,
     propMode:{
       day:  'ZONE 1 GW 15 km · No NVIS (at foF2 limit) · ZONE 3 F-skip 800–4000 km · CW+digital',
       night:'ZONE 1 GW 15 km · No NVIS · ZONE 3 F2 skip 500–4000 km · CW+digital',
@@ -707,6 +734,7 @@ const BANDS = {
   '20m':{
     label:'20m', freq:'14.0–14.35 MHz', freqMHz:14.175, color:'#845ef7', minW:0.5,
     dLayerThresh:1.00,
+    skipGeomMax: 5000,
     propMode:{
       day:  'ZONE 1 GW 8 km · No NVIS · ZONE 3 F2 skip 800–4500 km — reliable worldwide DX',
       night:'ZONE 1 GW 8 km · No NVIS · ZONE 3 F2 skip 500–4000 km — east-west paths open',
@@ -719,6 +747,7 @@ const BANDS = {
   '17m':{
     label:'17m', freq:'18.0–18.2 MHz', freqMHz:18.1, color:'#f06595', minW:1.0,
     dLayerThresh:1.00,
+    skipGeomMax: 5000,
     propMode:{
       day:  'ZONE 1 GW 5 km · No NVIS · ZONE 3 F2 skip 1000–5000 km — solar dependent',
       night:'ZONE 1 GW 5 km · No NVIS · ZONE 3 F2 skip 700–4000 km (if F2 open)',
@@ -731,6 +760,7 @@ const BANDS = {
   '15m':{
     label:'15m', freq:'21.0–21.45 MHz', freqMHz:21.2, color:'#cc5de8', minW:1.0,
     dLayerThresh:1.00,
+    skipGeomMax: 5000,
     propMode:{
       day:  'ZONE 1 GW 3 km · No NVIS · ZONE 3 F2 skip 1200–5000 km — solar cycle dependent',
       night:'ZONE 1 only — 15m closed at night (F2 MUF < 21 MHz) · GW 3 km',
@@ -743,6 +773,7 @@ const BANDS = {
   '12m':{
     label:'12m', freq:'24.89–24.99 MHz', freqMHz:24.9, color:'#74c0fc', minW:2.0,
     dLayerThresh:1.00,
+    skipGeomMax: 5000,
     propMode:{
       day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3 F2 skip 1500–5000 km — near solar peak only',
       night:'ZONE 1 only — 12m closed at night · GW 2 km',
@@ -755,6 +786,7 @@ const BANDS = {
   '10m':{
     label:'10m', freq:'28.0–29.7 MHz', freqMHz:28.5, color:'#a9e34b', minW:2.0,
     dLayerThresh:1.00,
+    skipGeomMax: 5500,
     propMode:{
       day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3 F2 skip 1800–5500 km — solar peak only',
       night:'ZONE 1 only — 10m dead at night (F2 MUF < 28 MHz) · GW 2 km',
@@ -795,7 +827,7 @@ const ANTS = {
 };
 
 const CONDS = [
-  {id:'disturbed',label:'Disturbed',  desc:'K≥5 · Solar storm',         factor:0.28, color:'#ff4444'},
+  {id:'disturbed',label:'Disturbed',  desc:'K=5–6 · Moderate storm · −11 dB (K≥7 extreme storm = total blackout)',         factor:0.28, color:'#ff4444'},
   {id:'poor',     label:'Poor',       desc:'K=3–4 · High absorption',    factor:0.52, color:'#ff9900'},
   {id:'average',  label:'Average',    desc:'K=1–2 · Normal conditions',  factor:1.00, color:'#ffe033'},
   {id:'good',     label:'Good',       desc:'K=0–1 · Quiet ionosphere',   factor:1.45, color:'#6bcb77'},
@@ -1353,7 +1385,7 @@ function liveZones(band){
   //                 (b) D-layer absorption < band threshold
   // NVIS base range (km @ 100W, avg conditions):
   //   Scales with headroom = foF2 - freq_MHz. Below 0.5 MHz headroom → unreliable.
-  //   550 km × clamp((headroom - 0.5) / 5.0, 0, 1) + 50 km minimum floor.
+  //   600 km × clamp((headroom - 0.5) / 5.5, 0, 1) + 50 km minimum floor.
   //   650 km hard ceiling (ARRL Handbook, G0ISW/QSL.net).
   let nvisBase = null;
   let nvisNote = '';
@@ -1363,7 +1395,12 @@ function liveZones(band){
   if(headroom > 0){
     const dThresh = b.dLayerThresh;
     if(dAbs < dThresh){
-      // Linear scale: 50 km at 0.5 MHz headroom, up to 650 km at ~6 MHz headroom
+      // Linear scale: 50 km at 0.5 MHz headroom, up to 650 km at ~6 MHz headroom.
+      // NVIS geometry ceiling: 650 km is a HARD physical limit set by the angle at which
+      // near-vertical rays re-enter the atmosphere — no amount of antenna gain or power
+      // can exceed this. Sources: Wikipedia NVIS, ARRL Handbook, ITU-R P.533.
+      // nvisBase is capped here; scaledIono() will further apply √P and condFactor,
+      // but the NVIS ring must also be capped at 650 km after that scaling.
       const hFrac = Math.min(1, Math.max(0, (headroom - 0.5) / 5.5));
       const dFactor = Math.sqrt(1 - (dAbs / dThresh));  // D-layer degrades NVIS
       nvisBase = Math.round(50 + 600 * hFrac * dFactor);
@@ -1387,11 +1424,19 @@ function liveZones(band){
 
   // eLayerPresent defined above alongside isDaytime (latitude-aware)
   const f2SkipAvail = muf3000 > freq;
+  // E-layer skip: fires when F2 is closed AND daytime E-layer is present.
+  // foF2 > 2.0 is a proxy for "ionosphere minimally active" — the app does not
+  // model foE (E-layer critical frequency, typically 3–5 MHz daytime) directly.
+  // True E-layer skip requires foE or sporadic-E MUF > operating frequency.
+  // This approximation is low-impact: eSkipAvail only fires when MUF(3000) < freq,
+  // a rare daytime condition that mainly affects 60 m during disturbed ionosphere.
   const eSkipAvail  = eLayerPresent && freq <= 10.5 && foF2 > 2.0;
 
   if(f2SkipAvail || eSkipAvail){
-    const totalDay  = st.sunsetLT - st.sunriseLT;
-    // skipInner transitions from night to day value as the F2 layer rises after sunrise.
+    // skipInner transitions smoothly from night to day value as the F2 layer rises
+    // after sunrise. A logistic (sigmoid) centred on sunrise+2h captures the rapid
+    // structural change without the old linear-ramp error. siDayFrac ≈ 0 at night,
+    // ≈ 1 from mid-morning onward.
     // The F2 layer reaches full daytime virtual height and skip distance by ~2–3h after
     // sunrise, then holds through the day. A logistic (sigmoid) centred on sunrise+2h
     // with a steep k gives a rapid transition, avoiding the previous error of a linear
@@ -1429,18 +1474,27 @@ function liveZones(band){
       }
       skipNote = `MUF(3000)=${muf3000.toFixed(1)} MHz (foF2×M3k: ${foF2.toFixed(1)}×${m3000.toFixed(2)}) > ${freq} MHz ✓`;
     } else {
-      // E-layer only skip (daytime, lower bands)
+      // E-layer only skip (daytime, lower bands).
+      // E-layer max single hop ~2300 km (geometric: E-layer at ~105 km altitude).
+      // Sources: SWS.bom.gov.au; electronics-notes.com; empirical Es DX database.
       skipInnerKm = b.skipInner.day || 500;
-      skipOuterKm = 2000;  // E-layer max single hop ~2000 km
+      skipOuterKm = 2000;  // E-layer base at 100W/dipole
       skipNote = `E-layer skip only · foF2 ${foF2.toFixed(1)} MHz · MUF(3000) ${muf3000.toFixed(1)} MHz`;
     }
   } else {
     skipNote = `Band closed · MUF(3000) ${muf3000.toFixed(1)} MHz < ${freq} MHz`;
   }
 
+  // skipGeomKm: hard geometric ceiling for current skip mode.
+  // E-layer: ~2300 km max single hop (E region at 95–110 km altitude).
+  // F2-layer: b.skipGeomMax (varies by band, 3000–5500 km).
+  // Used in rebuildLayers() and calcRangeKm() to cap antenna-gain-scaled skipOuter.
+  const isELayerOnly = (f2SkipAvail === false && eSkipAvail === true);
+  const skipGeomKm = skipOuterKm ? (isELayerOnly ? 2300 : b.skipGeomMax) : null;
+
   const t = isDaytime ? 'day' : 'night';
   return { gwBase, nvisBase, nvisNote, skipInnerKm, skipOuterKm, skipNote,
-           foF2, dAbs, isDaytime, lt, t, muf3000, m3000 };
+           foF2, dAbs, isDaytime, lt, t, muf3000, m3000, skipGeomKm };
 }
 
 // Best single range for autoFit
@@ -1451,8 +1505,8 @@ function calcRangeKm(powerW){
   const a = ANTS[S.ant];
   if(powerW < b.minW) return 0;
   const gLin = Math.pow(10, a.gain/20);
-  const nvis = z.nvisBase  ? scaledIono(z.nvisBase  * gLin, powerW, c.factor) : 0;
-  const skip = z.skipOuterKm ? scaledIono(z.skipOuterKm * gLin, powerW, c.factor) : 0;
+  const nvis = z.nvisBase  ? Math.min(650, scaledIono(z.nvisBase  * gLin, powerW, c.factor)) : 0;
+  const skip = z.skipOuterKm ? Math.min(z.skipGeomKm || b.skipGeomMax, scaledIono(z.skipOuterKm * gLin, powerW, c.factor)) : 0;
   return Math.max(nvis, skip, scaledGW(z.gwBase, powerW));
 }
 
@@ -1557,7 +1611,9 @@ function rebuildLayers(){
     const nvisColor = '#00ffc3';
     powers.forEach((p, pi)=>{
       if(p < b.minW) return;
-      const nvisKm = scaledIono(z.nvisBase * gLin, p, c.factor);
+      // NVIS geometry ceiling: 650 km is hard regardless of power, antenna, or conditions.
+      // scaledIono applies √P and condFactor; we then clamp to 650 km.
+      const nvisKm = Math.min(650, scaledIono(z.nvisBase * gLin, p, c.factor));
       if(nvisKm < 1) return;
       if(pi === 0) maxNvisKm = nvisKm;
       const fo = [.22,.15,.09,.05][pi];
@@ -1609,13 +1665,18 @@ function rebuildLayers(){
   // ─────────────────────────────────────────────────────────────
   // ZONE 3b — F-LAYER DX RING  (band colour annulus)
   // First-hop skip. skipInner fixed (geometry). skipOuter scales √P × conditions.
-  // Multiple power rings rendered.
+  // Antenna gain (gLin) DOES apply: a worse antenna (rubber duck) genuinely reduces
+  // the usable outer edge; a better antenna extends it — but only up to the hard
+  // geometric 1-hop ceiling (b.skipGeomMax), set by ionospheric height and Earth
+  // curvature. No amount of antenna gain can move the ionosphere further away.
+  // Sources: SWS.bom.gov.au: F-region max hop 4000 km; Electronics-Notes: ~5000 km.
   // ─────────────────────────────────────────────────────────────
   if(z.skipOuterKm && S.power >= b.minW){
     const ringInner = z.skipInnerKm || 0;
     powers.forEach((p,pi)=>{
       if(p < b.minW) return;
-      const skipOuter = scaledIono(z.skipOuterKm * gLin, p, c.factor);
+      // Apply √P, conditions, and antenna gain, then hard-cap at geometric maximum.
+      const skipOuter = Math.min(z.skipGeomKm || b.skipGeomMax, scaledIono(z.skipOuterKm * gLin, p, c.factor));
       if(skipOuter < 1) return;
       const fo = [.20,.13,.08,.04][pi];
 
@@ -1739,14 +1800,14 @@ function updateCovSummary(){
 
   // Zone 2
   if(z.nvisBase && S.power >= b.minW){
-    const nv = scaledIono(z.nvisBase * gLin, S.power, cond.factor);
+    const nv = Math.min(650, scaledIono(z.nvisBase * gLin, S.power, cond.factor));
     row('#00ffc3', 'Z2 · NVIS', `${gw}–${nv} km`, geoTag(nv), z.nvisNote);
   } else {
     row('#1a3a2a', 'Z2 · NVIS', 'Unavailable', '—', z.nvisNote);
   }
 
   // Zone 3a dead zone
-  const maxNvis = z.nvisBase && S.power>=b.minW ? scaledIono(z.nvisBase*gLin,S.power,cond.factor) : 0;
+  const maxNvis = z.nvisBase && S.power>=b.minW ? Math.min(650, scaledIono(z.nvisBase*gLin,S.power,cond.factor)) : 0;
   const deadInner = Math.max(gw, maxNvis, 1);
   if(z.skipInnerKm && z.skipInnerKm > deadInner+20){
     row('#2a2a3a', 'Z3a · Dead', `${deadInner}–${z.skipInnerKm} km`, 'No signal', '');
@@ -1756,7 +1817,7 @@ function updateCovSummary(){
 
   // Zone 3b
   if(z.skipOuterKm && S.power >= b.minW){
-    const outer = scaledIono(z.skipOuterKm * gLin, S.power, cond.factor);
+    const outer = Math.min(z.skipGeomKm || b.skipGeomMax, scaledIono(z.skipOuterKm * gLin, S.power, cond.factor));
     const inner = z.skipInnerKm || 0;
     row(b.color, 'Z3b · F-DX', `${inner>0?inner+'–':''}~${outer} km`, geoTag(outer), z.skipNote);
   } else if(z.skipOuterKm){
@@ -1983,7 +2044,8 @@ const NUM_SAMPLES = 40;   // 40 points per radial — finer resolution on slopes
 const EFF_EARTH_R  = 8495; // km  (4/3 × 6371 — standard atmosphere k-factor)
 
 // Radio horizon (one-way) km for height h metres
-function rHorizon(h){ return 4.12 * Math.sqrt(Math.max(0, h)); }
+// sqrt(2 × Re_eff / 1000) = sqrt(2 × 8494.67 / 1000) = 4.1218 km/√m
+function rHorizon(h){ return 4.1218 * Math.sqrt(Math.max(0, h)); }
 // Full horizon TX (h1) + RX (h2=2m default)
 function fullHorizon(h1, h2=2){ return rHorizon(h1) + rHorizon(h2); }
 // Earth bulge correction in metres at distance dKm along a path of total length DKm
@@ -2033,40 +2095,33 @@ function losRangeFromProfile(txH, profile, _freqMHz){
   const n = profile.length;
   if(n === 0) return 0;
 
-  // We scan outward from TX and find the FIRST sample that is terrain-blocked.
-  // That is the realistic coverage edge for this radial bearing — once a ridge
-  // blocks the LOS, signal in that direction is lost regardless of what lies beyond.
+  // Algorithm: O(n²) full rescan.
+  // For each candidate RX point i, check every intermediate sample j < i to see
+  // whether it obstructs the straight LOS line from TX to that RX point.
+  // Earth-bulge raises apparent obstacle height at each intermediate point j using
+  // the parabolic formula: bulge = d_j × (D_i − d_j) / (2 × Re).
+  // At the RX endpoint itself (d = D) this formula correctly evaluates to zero —
+  // the endpoint sits on the ground at its SRTM elevation; no bulge is added there.
   //
-  // We keep a running "max obstacle angle" (elevation angle from TX) so that
-  // each successive sample is checked against the worst obstruction seen so far.
-  // This correctly handles: flat land → rise → ridge → shadowed valley.
+  // RX height: rxH = rxElev (SRTM MSL) + 2 m AGL (handheld receiver). No bulge term.
+  // This is correct: the parabolic bulge formula is only for INTERMEDIATE obstacles.
   //
-  // txH = TX antenna height above MSL (terrain_elev + AGL)
-
-  // Elevation angle (radians above horizontal) from TX to a point
-  // using a flat-earth approximation valid for the short distances involved.
-  // Earth-bulge correction raises apparent obstacle height; we fold that in here.
-
-  let maxObstacleAngle = -Infinity; // steepest obstacle angle seen so far
+  // txH = TX antenna height above MSL (terrain_elev + antenna AGL)
 
   for(let i = 0; i < n; i++){
     const {d: D, elev: rxElev} = profile[i];
     if(D <= 0) continue;
 
-    // Earth-bulge at this point (distance D along path of total length D = itself)
-    // For intermediate obstacles we'll re-check in the obstruction scan below.
-    // Here compute the effective RX height (MSL) accounting for earth curvature
-    const rxBulge = 1000 * D * D / (2 * EFF_EARTH_R); // bulge at endpoint itself
-    const rxH = rxElev + rxBulge + 2; // 2m AGL handheld
-
-    // Elevation angle from TX to this RX point (positive = above horizontal)
-    const rxAngle = (rxH - txH) / (D * 1000); // dimensionless slope
+    // RX height above MSL: SRTM elevation + 2 m handheld AGL.
+    // No earth-bulge term here — bulge applies only to intermediate obstacles.
+    const rxH = rxElev + 2;
 
     // Check if any intermediate obstacle (j < i) blocks the LOS to point i
     let blocked = false;
     for(let j = 0; j < i; j++){
       const {d, elev: obsElev} = profile[j];
-      // Earth-bulge at intermediate point on a path of total length D
+      // Earth-bulge at intermediate point j on a path of total length D:
+      // raises the apparent top of the obstacle to account for earth's curvature.
       const bulge = 1000 * d * (D - d) / (2 * EFF_EARTH_R);
       const obsTop = obsElev + bulge;
       // LOS height at distance d (linear interpolation from TX to RX)
@@ -2110,8 +2165,9 @@ function setAlt(band, val){
   const htLabel = h === HT_HEIGHT ? '📻 HT — ' : '';
   const r10 = vuPowersComputed(band).p10w;
   const txElevStr = VU_CACHE[band] ? ` · TX ${Math.round(VU_CACHE[band].txElev)}m ASL` : '';
+  const hataWarn  = h < 10 ? ' ⚠ hB<10m: Hata extrapolated — optimistic upper bound' : '';
   document.getElementById(band+'-horizonInfo').textContent =
-    `${htLabel}${display}m AGL${txElevStr} · Hata ${VU_ENV[band]}: 1W ~${vuPowersComputed(band).p1w.toFixed(1)} km · 10W ~${r10.toFixed(1)} km`;
+    `${htLabel}${display}m AGL${txElevStr} · Hata ${VU_ENV[band]}: 1W ~${vuPowersComputed(band).p1w.toFixed(1)} km · 10W ~${r10.toFixed(1)} km${hataWarn}`;
 
   // Update range labels using Hata engine (env+altitude aware)
   updateRangeLabels(band);
@@ -2177,9 +2233,16 @@ function removeVULabel(ck){
 // ══════════════════════════════════════════════
 // HATA PROPAGATION ENGINE
 // Okumura-Hata (1980) / COST-231 — ITU-R P.529
-// Valid: f 150–1500 MHz, hB 1.5–200 m, d 0.1–100 km
+// Calibrated range: f 150–1500 MHz, hB 30–200 m, d 0.1–100 km
+// ⚠ This app operates hB as low as 1.5 m (HT/handheld). That is far outside the
+//   Hata calibration envelope (hB min = 30 m). The model is EXTRAPOLATED at low
+//   antenna heights — it will OVERESTIMATE coverage (underestimate path loss) because
+//   the log₁₀(hB) term becomes small, reducing the effective path-loss coefficient.
+//   Results at hB < 10 m should be treated as optimistic upper bounds only.
+// Reference: Hata (1980) is calibrated to a λ/2 dipole (dBd system).
+//   TX antenna gain is applied in dBd. No additional RX gain term is used:
+//   Hata's CH correction at hM=1.5 m already represents a standard 1.5 m whip (≈ 0 dBd).
 // RX sensitivity: −117 dBm (NFM, decent HT)
-// TX antenna: rubber duck 0 dBi; RX whip: 2 dBi
 // ══════════════════════════════════════════════
 
 const HATA_RX_SENS = -117; // dBm
@@ -2199,7 +2262,7 @@ function _hata_LU(f, hB, hM, d) {
 }
 function hataLoss(env, f, hB, hM, d) {
   const LU = _hata_LU(f, hB, hM, d);
-  if (env === 'ultra_urban') return LU + 6.0; // +6 dB dense highrise penalty (Erceg/empirical)
+  if (env === 'ultra_urban') return LU + 6.0; // +6 dB dense highrise penalty (Erceg/empirical; COST-231 standard Cm=+3 dB — this doubles that for extreme CBD canyon environments)
   if (env === 'urban')       return LU;
   if (env === 'suburban')    return LU - 2*Math.pow(Math.log10(f/28),2) - 5.4;
   if (env === 'rural')       return LU - 4.78*Math.pow(Math.log10(f),2) + 18.33*Math.log10(f) - 40.94 + 8;
@@ -2210,8 +2273,11 @@ function hataLoss(env, f, hB, hM, d) {
 // Solve max range for given tx power, env, freq, antenna height, antenna gain
 function hataMaxRange(env, freqMHz, hB_m, txW, antGainDbd=0, maxD=200) {
   const txdBm  = 10 * Math.log10(txW * 1000);
-  // Antenna gain shifts EIRP: +gain_dBd = extended link budget
-  const budget = txdBm + antGainDbd + 2 - HATA_RX_SENS; // gain dBd + 2 dBi RX whip
+  // Hata (1980) is calibrated to a λ/2 dipole reference (dBd system).
+  // antGainDbd is the TX antenna gain in dBd — correct reference for this model.
+  // No RX gain term is added: Hata's CH correction at hM=1.5 m already represents
+  // a standard 1.5 m whip (≈ 0 dBd). Adding extra RX dBi would overstate the budget.
+  const budget = txdBm + antGainDbd - HATA_RX_SENS;
   const hM = 1.5; // receiver at 1.5 m (HT)
   let lo = 0.05, hi = maxD;
   for (let i = 0; i < 80; i++) {
@@ -2235,7 +2301,7 @@ function hataMaxRange(env, freqMHz, hB_m, txW, antGainDbd=0, maxD=200) {
 const ENV_TYPES = [
   {
     id: 'ultra_urban', label: 'Ultra-Urban', short: 'Ultra\nUrban',
-    desc: 'Dense highrise CBD, skyscraper canyons. +6 dB over Hata urban. Severe multipath & shadowing.',
+    desc: 'Dense highrise CBD, skyscraper canyons. +6 dB over Hata urban (empirical extension; COST-231 standard metropolitan correction is only +3 dB). Severe multipath & shadowing.',
     example: 'Accra CBD · Victoria Island Lagos · Nairobi CBD · Sandton Johannesburg',
     color: '#ff4444'
   },
