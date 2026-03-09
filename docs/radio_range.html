@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.15</title>
+<title>Ham Radio Coverage Planner · v1.16</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -356,14 +356,25 @@ option{background:#0b1820;}
 
   </div><!-- sb-scroll -->
 
-  <div class="sb-foot">
-    <span style="color:#ffffff;font-weight:bold">━</span> ZONE 1 · Groundwave (ITU-R P.368) &nbsp;
-    <span style="color:#00ffc3;font-weight:bold">━</span> ZONE 2 · NVIS 0–650 km filled &nbsp;<br/>
-    <span style="color:#444">▒</span> ZONE 3a · Dead zone (skip zone) &nbsp;
-    <span style="color:var(--accent)">━</span> ZONE 3b · F-layer DX ring<br/>
-    Zones are mutually exclusive · skipInner fixed (geometry) · skipOuter scales √P<br/>
-    Sources: ITU-R P.368, P.533 · ARRL Handbook · electronics-notes.com<br/>
-    ⚠ Average conditions · actual ionosphere varies with solar cycle, season, time<br/>
+  <!-- Collapsible legend / notes — collapsed by default -->
+  <div class="sec" style="border-bottom:none;flex-shrink:0;">
+    <div class="sec-hdr collapsed" onclick="toggleSec(this)" style="background:#06100d;font-size:.55rem;padding:6px 14px;letter-spacing:.12em;">
+      ◈ Legend &amp; Notes <span class="arr">▾</span>
+    </div>
+    <div class="sec-body hidden" style="padding:8px 14px;background:#080f12;font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--dim);line-height:1.7;">
+      <span style="color:#ffffff;font-weight:bold">━</span> ZONE 1 · Groundwave (ITU-R P.368) &nbsp;
+      <span style="color:#00ffc3;font-weight:bold">━</span> ZONE 2 · NVIS 0–650 km filled &nbsp;<br/>
+      <span style="color:#444">▒</span> ZONE 3a · Dead zone (skip zone) &nbsp;
+      <span style="color:var(--accent)">━</span> ZONE 3b · F-layer DX ring<br/>
+      <span style="color:var(--accent);opacity:.7">╌╌</span> ZONE 3c · 2-hop DX &nbsp;
+      <span style="color:var(--accent);opacity:.5">╌ ╌</span> ZONE 3d · 3-hop &nbsp;
+      <span style="color:var(--accent);opacity:.4">·  ·</span> ZONE 3e · 4-hop<br/>
+      Zones are mutually exclusive · skipInner fixed (geometry) · skipOuter scales √P<br/>
+      Sources: ITU-R P.368, P.533 · ARRL Handbook · electronics-notes.com<br/>
+      ⚠ Average conditions · actual ionosphere varies with solar cycle, season, time
+    </div>
+  </div>
+  <div class="sb-foot" style="padding:5px 14px;">
     <span id="sbFootVer" style="color:#00ffc388"></span>
   </div>
   </div><!-- /hf-panel -->
@@ -578,7 +589,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.15';
+const APP_VERSION = 'v1.16';
 const APP_DATE    = '2026-03-09';
 
 // ══════════════════════════════════════════════

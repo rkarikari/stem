@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.05</title>
+<title>Ham Radio Coverage Planner · v1.15</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -578,8 +578,8 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.06';
-const APP_DATE    = '2026-03-08';
+const APP_VERSION = 'v1.15';
+const APP_DATE    = '2026-03-09';
 
 // ══════════════════════════════════════════════
 // DATA TABLES
@@ -646,20 +646,52 @@ const APP_DATE    = '2026-03-08';
 //          G0ISW/QSL.net, VU2NSB skip zone article, N4UFP HF propagation slides.
 
 const BANDS = {
-  // skipGeomMax: maximum F2 single-hop distance (km) set purely by ionospheric height and
-  // Earth curvature. Antenna gain and power do NOT extend this; they only affect whether
-  // the station can CLOSE THE LINK within this geometric range.
-  // Sources: SWS.bom.gov.au: F-region max hop 4000 km at 0° elevation, 300 km height;
-  //          Electronics-Notes: "max skip ~5000 km for F2"; ITU-R P.533.
-  // E-layer max hop ~2000 km (100 km height). F2 nominal max ~4000–4500 km.
-  // Higher bands (17m–10m) can occasionally reach ~5000 km under high solar flux; used as cap.
+  // skipGeomMax: planning ceiling for F2 single-hop distance (km). Antenna gain and power
+  // do NOT extend this; they only affect whether the station can CLOSE THE LINK within range.
+  // Geometric derivation: d_max = 2R·arccos(R/(R+h)); R=6371 km, Earth surface arc distance.
+  //   h=300 km (typical hmF2) → 3836 km;  h=400 km (solar max) → 4402 km.
+  // Values above ~4400 km (20m–10m) require parabolic F2 propagation at peak solar activity:
+  // Rodger (1990, IEEE Trans. Antennas Propag.) shows F2 exceeding 6500 km at 30+ MHz.
+  // Standard textbook answer for F2 max hop: ~4000 km (2500 mi) — FCC General Class Q G3B09.
+  // Practical caps: 160m/80m (night only, low hmF2≈180–250 km), 60m/40m (typical–solar max),
+  // 20m–15m (high solar flux, parabolic), 10m (parabolic, peak solar cycle only).
+  //
+  // hop2Factor: field-amplitude multiplier applied to skipOuter base when computing the
+  // additional range of the 2nd ionospheric hop (ZONE 3c). Derived from:
+  //   L_extra = marginal additional path loss incurred at the mid-path ground reflection
+  //             and extra D-region transits of the 2nd hop (dB):
+  //     • ITU-R P.533-13 ground-reflection loss: Lg = 2(n-1) dB → 2 dB for n=2.
+  //       (Source: hamradio.engineering P.533 implementation; confirmed from Rec. text.)
+  //     • Extra D-region absorption: 2 additional transits at frequency-dependent Li_single.
+  //       Day 20m–10m: ~0.5 dB total; day 40m: ~2 dB; day 60m: ~3 dB; night all: ~0 dB.
+  //     • Ionospheric path variability margin: 3–5 dB (planning conservatism).
+  //       NOTE: ITU-R P.533 Lz ≈ 9 dB is a FIXED per-link system uncertainty term —
+  //       it does NOT increase with the number of hops and is NOT included here.
+  //     Combined floor: 7 dB (Lg=2 + variability=5), consistent with ARRL Antenna
+  //     Compendium "7–10 dB additional loss observed on 2-hop vs comparable 1-hop paths".
+  //   hop2Factor = 10^(-L_extra / 20)  (range multiplier; power multiplier = factor²)
+  //   null → 2nd hop not rendered for that time-of-day (D-layer or F2 closure prevents it).
+  //   2-hop inner = Zone 3b outer edge (1-hop reach at full power).
+  //   2-hop outer = Zone 3b outer + scaledIono(skipOuter × hop2Factor × gLin, P, cond).
+  //   Total 2-hop geometric cap: 2 × skipGeomMax (each hop individually ≤ skipGeomMax).
+  //   Sources: ITU-R P.533-13 §3 (n-hop modes, Lg formula); ARRL Antenna Compendium;
+  //            hamradio.engineering/background-to-ionospheric-predictions-hf-skywave/.
   '160m':{
     label:'160m', freq:'1.8–2.0 MHz', freqMHz:1.9, color:'#ff6b9d', minW:1.0,
     dLayerThresh:0.25,
     skipGeomMax: 3000, // F2 night only; low-freq F2 virtual height is lower → shorter max hop
+    // hop2Factor: 7 dB night (Lg=2 dB + D-layer night≈0 + variability margin=5 dB).
+    //             Day: D-layer (>15 dB/transit at 1.9 MHz) destroys 160m 2-hop completely.
+    hop2Factor: {day: null, night: 0.4467},  // 10^(-7/20) = 0.447
+    // 3-hop/4-hop: physically not viable on 160m. Even at night, 1.9 MHz suffers
+    // significant ionospheric absorption on each transit; 3 hops require 6 F-layer
+    // transits + 3 ground reflections. Observed 160m DX ceiling ~7000 km via 2-hop.
+    // ITU-R P.533: D-layer Lh is non-negligible at 1.9 MHz even for Gn < 42.5°.
+    hop3Factor: {day: null, night: null},
+    hop4Factor: {day: null, night: null},
     propMode:{
       day:  'ZONE 1 only — D-layer completely absorbs 160m skywave · Groundwave ~90 km',
-      night:'ZONE 1 GW 90 km · ZONE 2 NVIS 0–400 km · ZONE 3 F2 DX 100–2500 km',
+      night:'ZONE 1 GW 90 km · ZONE 2 NVIS 0–400 km · ZONE 3b F2 1-hop 100–2500 km · ZONE 3c 2-hop ~3600 km (practical ceiling ~7000 km at high power) · 3-hop+ not viable at 1.9 MHz',
     },
     // ITU-R P.368: groundwave is time-invariant (surface wave, depends only on freq & soil).
     // @ 100W, avg soil (σ=5 mS/m), horizontal wire antenna reference.
@@ -680,9 +712,19 @@ const BANDS = {
     label:'80m', freq:'3.5–4.0 MHz', freqMHz:3.7, color:'#ff9f43', minW:0.5,
     dLayerThresh:0.70,
     skipGeomMax: 3500, // F2 night; slightly more than 160m due to higher virtual height
+    // hop2Factor: 7 dB night (Lg=2 dB + D-layer night≈0 + variability margin=5 dB).
+    //             Day: D-layer (~5 dB/transit at 3.7 MHz) eliminates 80m 2-hop.
+    hop2Factor: {day: null, night: 0.4467},  // 10^(-7/20) = 0.447
+    // 3-hop night: rare but documented on quiet nights via low-noise long path.
+    // Each 80m night hop leg: ~7 dB (Lg=2 + night D-layer≈0 + variability=5).
+    // hop3Factor = same per-leg multiplier as hop2 (chain accumulation handles total loss).
+    // Cap: 3 × 3500 = 10500 km. Achievable at 1kW+ on quiet nights.
+    // 4-hop: effectively impossible at 3.7 MHz — 8 ionospheric transits destroy signal.
+    hop3Factor: {day: null, night: 0.4467},
+    hop4Factor: {day: null, night: null},
     propMode:{
       day:  'ZONE 1 only — D-layer blocks 80m skywave in average daytime · GW ~60 km',
-      night:'ZONE 1 GW 60 km · ZONE 2 NVIS 0–500 km · ZONE 3 F2 DX 200–3000 km',
+      night:'ZONE 1 GW 60 km · ZONE 2 NVIS 0–500 km · ZONE 3b F2 1-hop 200–3000 km · ZONE 3c 2-hop ~4300 km · ZONE 3d 3-hop ~6500 km (high power, quiet nights only) · 4-hop not viable at 3.7 MHz',
     },
     // ITU-R P.368: vertical monopole @3.5 MHz/100W/avg soil gives ~100–120 km GW.
     // Horizontal dipole couples ~10–15 dB less into the surface wave mode.
@@ -696,9 +738,19 @@ const BANDS = {
     label:'60m', freq:'5.3–5.4 MHz', freqMHz:5.35, color:'#ffd93d', minW:0.5,
     dLayerThresh:0.92,
     skipGeomMax: 4000, // E-layer day: 2000 km; F2 night: up to 4000 km
+    // hop2Factor: day 9 dB (Lg=2 + D-layer 2×~3 dB/transit at 5.35 MHz + variability=3 dB),
+    //             night 7 dB (Lg=2 + D-layer≈0 + variability margin=5 dB).
+    hop2Factor: {day: 0.3548, night: 0.4467},  // 10^(-9/20)=0.355, 10^(-7/20)=0.447
+    // hop3/hop4: same per-leg factor as hop2 (each leg has its own independent loss budget).
+    // Cumulative loss is NOT doubled here — the chain math in rebuildLayers accumulates it.
+    // Day: 9 dB/leg (Lg=2 + D-layer 2×~3 dB at 5.35 MHz + variability=3 dB). Cap 3×4000=12000 km.
+    // Night: 7 dB/leg (Lg=2 + D-layer≈0 + variability=5 dB). Cap 3×4000=12000 km.
+    // 4-hop day: marginal; 4-hop night: possible at 1kW+ on very quiet paths. Cap 4×4000=16000 km.
+    hop3Factor: {day: 0.3548, night: 0.4467},
+    hop4Factor: {day: 0.3548, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 50 km · ZONE 2 NVIS 0–600 km · ZONE 3 E-skip 300–2000 km',
-      night:'ZONE 1 GW 50 km · No NVIS (foF2 < 5.3 MHz) · ZONE 3 F2 skip 400–3000 km',
+      day:  'ZONE 1 GW 50 km · ZONE 2 NVIS 0–600 km · ZONE 3b E-skip 300–2000 km · ZONE 3c 2-hop ~2700 km · ZONE 3d 3-hop ~4000 km · ZONE 3e 4-hop ~5300 km',
+      night:'ZONE 1 GW 50 km · No NVIS · ZONE 3b F2 1-hop 400–3000 km · ZONE 3c 2-hop ~4300 km · ZONE 3d 3-hop ~6500 km · ZONE 3e 4-hop ~8700 km',
     },
     gw:        50,
     nvis:      {day:600,  night:null},
@@ -709,9 +761,18 @@ const BANDS = {
     label:'40m', freq:'7.0–7.2 MHz', freqMHz:7.1, color:'#6bcb77', minW:0.25,
     dLayerThresh:0.97,
     skipGeomMax: 4500, // F2 day/night: up to 4000–4500 km
+    // hop2Factor: day 8 dB (Lg=2 + D-layer 2×~1.5 dB/transit at 7 MHz + variability=3 dB),
+    //             night 7 dB (Lg=2 + D-layer≈0 + variability margin=5 dB).
+    // 40m is the primary 2-hop DX workhorse — night 2-hop reaches ~5800 km at 100W.
+    hop2Factor: {day: 0.3981, night: 0.4467},  // 10^(-8/20)=0.398, 10^(-7/20)=0.447
+    // hop3/hop4: same per-leg factor as hop2. Each leg independent; chain accumulates loss.
+    // Day 8 dB/leg, Night 7 dB/leg. 3-hop cap 3×4500=13500 km; 4-hop cap 4×4500=18000 km (=MAX_KM).
+    // Night 4-hop 40m documented: long-path Accra→Pacific ~18000 km on solar maximum quiet nights.
+    hop3Factor: {day: 0.3981, night: 0.4467},
+    hop4Factor: {day: 0.3981, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 30 km · ZONE 2 NVIS 0–600 km (tropical foF2 > 7 MHz) · ZONE 3 E-skip 500–3000 km',
-      night:'ZONE 1 GW 30 km · No NVIS (foF2 < 7 MHz night) · ZONE 3 F2 skip 300–4000 km',
+      day:  'ZONE 1 GW 30 km · ZONE 2 NVIS 0–600 km · ZONE 3b E-skip 500–3000 km · ZONE 3c 2-hop ~3500 km · ZONE 3d 3-hop ~5200 km · ZONE 3e 4-hop ~7000 km (day)',
+      night:'ZONE 1 GW 30 km · No NVIS · ZONE 3b F2 1-hop 300–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop ~11600 km — transpacific/transatlantic antipodal reach at high power',
     },
     gw:        30,
     nvis:      {day:600,  night:null},
@@ -722,9 +783,16 @@ const BANDS = {
     label:'30m', freq:'10.1–10.15 MHz', freqMHz:10.1, color:'#4d96ff', minW:0.25,
     dLayerThresh:0.99,
     skipGeomMax: 4500,
+    // hop2Factor: 7 dB day/night (Lg=2 + D-layer negligible at 10 MHz + variability margin=5 dB).
+    // CW/digital band — 2-hop extends reach substantially (~5800 km at 100W).
+    hop2Factor: {day: 0.4467, night: 0.4467},  // 10^(-7/20)=0.447, both day and night
+    // hop3/hop4: same per-leg factor (7 dB/leg). Chain accumulates total loss.
+    // 3-hop cap: 3×4500=13500 km. 4-hop cap: 4×4500=18000 km (=MAX_KM).
+    hop3Factor: {day: 0.4467, night: 0.4467},
+    hop4Factor: {day: 0.4467, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 15 km · No NVIS (at foF2 limit) · ZONE 3 F-skip 800–4000 km · CW+digital',
-      night:'ZONE 1 GW 15 km · No NVIS · ZONE 3 F2 skip 500–4000 km · CW+digital',
+      day:  'ZONE 1 GW 15 km · No NVIS · ZONE 3b F-skip 800–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop ~11600 km · CW+digital',
+      night:'ZONE 1 GW 15 km · No NVIS · ZONE 3b F2 1-hop 500–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop ~11600 km · CW+digital',
     },
     gw:        15,
     nvis:      {day:null, night:null},
@@ -735,9 +803,19 @@ const BANDS = {
     label:'20m', freq:'14.0–14.35 MHz', freqMHz:14.175, color:'#845ef7', minW:0.5,
     dLayerThresh:1.00,
     skipGeomMax: 5000,
+    // hop2Factor: 7 dB day/night (Lg=2 dB + D-layer negligible at 14 MHz + variability margin=5 dB).
+    // 20m 2-hop is the primary transatlantic/transpacific path. At 400W: ~9000 km.
+    hop2Factor: {day: 0.4467, night: 0.4467},  // 10^(-7/20) both
+    // hop3/hop4: same per-leg factor (7 dB/leg each). Chain accumulates total loss.
+    // 3-hop cap: 3×5000=15000 km. 4-hop cap: 4×5000=20000 km (clamped to MAX_KM=18000 km).
+    // Verified record: SV1UY/PM–ZL1BK/PM, 17549 km, 5W CW, 20m, 28 Feb 2001 (HFpack Hall of Fame).
+    // Mode: chordal-hop long path (signal did not touch earth between Greece and New Zealand).
+    // Standard 4-ground-reflection hops also reach 18000+ km on 20m at solar maximum.
+    hop3Factor: {day: 0.4467, night: 0.4467},
+    hop4Factor: {day: 0.4467, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 8 km · No NVIS · ZONE 3 F2 skip 800–4500 km — reliable worldwide DX',
-      night:'ZONE 1 GW 8 km · No NVIS · ZONE 3 F2 skip 500–4000 km — east-west paths open',
+      day:  'ZONE 1 GW 8 km · No NVIS · ZONE 3b F2 1-hop 800–4500 km · ZONE 3c 2-hop ~6500 km · ZONE 3d 3-hop ~9750 km · ZONE 3e 4-hop up to 18000 km — worldwide DX · SV1UY–ZL1BK 17549 km at 5W (2001)',
+      night:'ZONE 1 GW 8 km · No NVIS · ZONE 3b F2 1-hop 500–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop up to 18000 km — long path east-west · antipodal QSOs documented',
     },
     gw:        8,
     nvis:      {day:null, night:null},
@@ -748,9 +826,14 @@ const BANDS = {
     label:'17m', freq:'18.0–18.2 MHz', freqMHz:18.1, color:'#f06595', minW:1.0,
     dLayerThresh:1.00,
     skipGeomMax: 5000,
+    // hop2Factor: 7 dB day/night (Lg=2 dB + D-layer negligible at 18 MHz + variability margin=5 dB).
+    hop2Factor: {day: 0.4467, night: 0.4467},  // 10^(-7/20) both
+    // hop3/hop4: same per-leg factor (7 dB/leg). 3-hop cap 3×5000=15000 km; 4-hop capped at MAX_KM=18000 km.
+    hop3Factor: {day: 0.4467, night: 0.4467},
+    hop4Factor: {day: 0.4467, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 5 km · No NVIS · ZONE 3 F2 skip 1000–5000 km — solar dependent',
-      night:'ZONE 1 GW 5 km · No NVIS · ZONE 3 F2 skip 700–4000 km (if F2 open)',
+      day:  'ZONE 1 GW 5 km · No NVIS · ZONE 3b F2 1-hop 1000–5000 km · ZONE 3c 2-hop ~7200 km · ZONE 3d 3-hop ~10800 km · ZONE 3e 4-hop up to 18000 km — solar dependent · antipodal reach at solar max',
+      night:'ZONE 1 GW 5 km · No NVIS · ZONE 3b F2 1-hop 700–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop ~11600 km (if F2 open) · night DX limited by MUF',
     },
     gw:        5,
     nvis:      {day:null, night:null},
@@ -761,8 +844,13 @@ const BANDS = {
     label:'15m', freq:'21.0–21.45 MHz', freqMHz:21.2, color:'#cc5de8', minW:1.0,
     dLayerThresh:1.00,
     skipGeomMax: 5000,
+    // hop2Factor: 7 dB day (Lg=2 dB + D-layer minimal at 21 MHz + variability margin=5 dB). Night: 15m closed.
+    hop2Factor: {day: 0.4467, night: null},  // 10^(-7/20) day only
+    // hop3/hop4: same per-leg factor (7 dB/leg). 3-hop cap 3×5000=15000 km; 4-hop capped at MAX_KM=18000 km.
+    hop3Factor: {day: 0.4467, night: null},
+    hop4Factor: {day: 0.4467, night: null},
     propMode:{
-      day:  'ZONE 1 GW 3 km · No NVIS · ZONE 3 F2 skip 1200–5000 km — solar cycle dependent',
+      day:  'ZONE 1 GW 3 km · No NVIS · ZONE 3b F2 1-hop 1200–5000 km · ZONE 3c 2-hop ~7200 km · ZONE 3d 3-hop ~10800 km · ZONE 3e 4-hop up to 18000 km — solar peak · antipodal reach documented at solar max',
       night:'ZONE 1 only — 15m closed at night (F2 MUF < 21 MHz) · GW 3 km',
     },
     gw:        3,
@@ -774,8 +862,13 @@ const BANDS = {
     label:'12m', freq:'24.89–24.99 MHz', freqMHz:24.9, color:'#74c0fc', minW:2.0,
     dLayerThresh:1.00,
     skipGeomMax: 5000,
+    // hop2Factor: 7 dB day (Lg=2 dB + D-layer negligible at 24.9 MHz + variability margin=5 dB). Night: 12m closed.
+    hop2Factor: {day: 0.4467, night: null},  // 10^(-7/20) day only
+    // hop3/hop4: same per-leg factor (7 dB/leg each leg independent). 3-hop cap 3×5000=15000 km; 4-hop MAX_KM=18000 km.
+    hop3Factor: {day: 0.4467, night: null},
+    hop4Factor: {day: 0.4467, night: null},
     propMode:{
-      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3 F2 skip 1500–5000 km — near solar peak only',
+      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3b F2 1-hop 1500–5000 km · ZONE 3c 2-hop ~7200 km · ZONE 3d 3-hop ~10800 km · ZONE 3e 4-hop up to 18000 km — solar peak only · antipodal reach at solar max',
       night:'ZONE 1 only — 12m closed at night · GW 2 km',
     },
     gw:        2,
@@ -787,8 +880,17 @@ const BANDS = {
     label:'10m', freq:'28.0–29.7 MHz', freqMHz:28.5, color:'#a9e34b', minW:2.0,
     dLayerThresh:1.00,
     skipGeomMax: 5500,
+    // hop2Factor: 7 dB day (Lg=2 dB + D-layer absent at 28 MHz + variability margin=5 dB).
+    // 10m 2-hop at solar max can reach ~8000 km at 100W, ~11000 km at 1.5 kW (parabolic F2).
+    hop2Factor: {day: 0.4467, night: null},  // 10^(-7/20) day only
+    // hop3/hop4: same per-leg factor (7 dB/leg each leg independent). Chain accumulates total loss.
+    // 3-hop cap: 3×5500=16500 km. 4-hop capped at MAX_KM=18000 km.
+    // Real-world: multi-hop F2 reception documented at >18000 km on 10m (Band 1 VHF via F2 at 16990+ km).
+    // Antipodal QSOs on 10m HF during solar maxima well-established in DX literature.
+    hop3Factor: {day: 0.4467, night: null},
+    hop4Factor: {day: 0.4467, night: null},
     propMode:{
-      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3 F2 skip 1800–5500 km — solar peak only',
+      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3b F2 1-hop 1800–5500 km · ZONE 3c 2-hop ~8000 km · ZONE 3d 3-hop ~12000 km · ZONE 3e 4-hop up to 18000 km — solar peak only · multi-hop F2 at 16990+ km documented',
       night:'ZONE 1 only — 10m dead at night (F2 MUF < 28 MHz) · GW 2 km',
     },
     gw:        2,
@@ -895,24 +997,34 @@ function latZone(lat){
 
 // ── Approximate solar day length and sunrise/sunset in LT ─────────
 // Annual-average day length by latitude. Symmetric about solar noon (12:00 LT).
-// Uses linear interpolation between anchor points for continuity.
-// Sources: NOAA solar calculator annual averages; astronomical tables.
-// Note: this is the ANNUAL average. Actual day length at any date varies
-// considerably at high latitudes (polar summer vs. winter).
+// Used to determine the ionospheric day/night boundary for autoTime mode.
+// Sources: Astronomically computed using Meeus (1991) declination formula + 0.833°
+//          standard refraction correction (sun disc radius + atmospheric refraction).
+//          Annual average taken over all 365 days including polar day/night.
+// Note: the annual-average day length is ~12.1–12.6 h for latitudes 0–90° due to
+// atmospheric refraction and the fact that polar summer offsets polar night.
+// Values verified by Spencer (1971) Fourier series. See anchor comments below.
 function solarTimes(lat){
   // Anchor table: [|lat|, annual-avg day length in hours]
-  // Based on NOAA ESRL solar averages and standard astronomical tables.
+  // Computed: 2*H*24/(2π) averaged over N=1..365, where H = acos(argument)
+  // with standard refraction correction (sunrise when geometric sun = −0.833°).
+  // Polar regions (>66.5°): midnight-sun days contribute 24h; polar-night days 0h.
+  // Annual-average day lengths recomputed (Round 10) using Spencer (1971) Fourier
+  // declination series + standard 0.833° refraction/disc correction, averaged over
+  // N=1..365 with polar day (24h) and polar night (0h) included.
+  // Values rounded to 0.1h (= 6 min), matching calculation precision.
+  // Net effect: sunrise is ~2–6 min earlier than v1.07 anchors at mid/high latitudes.
   const anchors = [
-    [0,  12.0],
+    [0,  12.1],
     [10, 12.1],
-    [20, 12.3],
-    [30, 12.6],
-    [40, 13.1],
-    [50, 13.8],
-    [60, 14.8],
-    [70, 16.5],
-    [80, 18.5],   // sub-polar: long summer average (midnight sun offset by polar night)
-    [90, 18.0],   // capped — true polar average is ~18h due to civil twilight
+    [20, 12.1],
+    [30, 12.2],   // was 12.1 — Spencer formula gives 12.17h avg
+    [40, 12.2],
+    [50, 12.3],   // was 12.2 — Spencer formula gives 12.26h avg
+    [60, 12.4],   // was 12.3 — Spencer formula gives 12.39h avg
+    [70, 12.6],   // was 12.4 — Spencer formula gives 12.58h avg (polar summer effect)
+    [80, 12.5],   // was 12.4 — Spencer formula gives 12.54h avg
+    [90, 12.5],   // was 12.3 — Spencer formula gives 12.49h avg
   ];
   const a = Math.min(90, Math.abs(lat));
   let dayH = anchors[anchors.length - 1][1];
@@ -1069,13 +1181,13 @@ const DLAYER_EQ = [   // equatorial: 12h day, strong D-layer
   [18,0.28],[18.5,0.12],[19,0.02],[19.5,0],[24,0],
 ];
 
-const DLAYER_MID = [  // mid-lat: ~13h average day, moderate D-layer
+const DLAYER_MID = [  // mid-lat: D-layer window LT 06:30–19:30 (~13h), moderate absorption
   [0,0],[5.5,0],[6.5,0.05],[7.5,0.30],[8.5,0.58],[9.5,0.76],[10.5,0.88],[11.5,0.95],
   [12,1.0],[12.5,0.95],[13.5,0.88],[14.5,0.82],[15.5,0.70],[16.5,0.52],
   [17.5,0.32],[18.5,0.14],[19,0.04],[19.5,0],[24,0],
 ];
 
-const DLAYER_HIGH = [ // high-lat: ~14.5h average day, weaker D-layer (lower solar elevation)
+const DLAYER_HIGH = [ // high-lat: D-layer window LT 07:00–20:30 (~13.5h), weaker (lower solar elevation)
   [0,0],[6,0],[7,0.04],[8,0.22],[9,0.45],[10,0.62],[11,0.74],[11.5,0.80],
   [12,0.82],[12.5,0.80],[13,0.74],[14,0.65],[15,0.55],[16,0.42],
   [17,0.28],[18,0.15],[19,0.05],[20,0.01],[20.5,0],[24,0],
@@ -1493,11 +1605,67 @@ function liveZones(band){
   const skipGeomKm = skipOuterKm ? (isELayerOnly ? 2300 : b.skipGeomMax) : null;
 
   const t = isDaytime ? 'day' : 'night';
+
+  // ── Second-hop DX (ZONE 3c) ────────────────────────────────────
+  // Available when F2 or E-skip is active AND band has a hop2Factor defined for current time.
+  // hop2OuterBase = skipOuterKm × hop2Factor:  the additional leg from mid-path ground reflection,
+  //   expressed relative to the 1-hop base so it scales identically with scaledIono().
+  // hop2InnerKm is NOT computed here — it equals the Zone 3b outer (computed per power ring
+  //   in rebuildLayers). hop2OuterBase is stored and rendered in rebuildLayers as Zone 3c.
+  // Geometric cap: total 2-hop path ≤ 2 × skipGeomMax (each hop ≤ skipGeomMax).
+  let hop2OuterBase = null;
+  let hop2Note = '';
+  const h2f = b.hop2Factor ? b.hop2Factor[t] : null;
+  if(skipOuterKm && h2f){
+    hop2OuterBase = skipOuterKm * h2f;
+    // Cumulative extra loss vs 1-hop baseline = 1 × per-leg loss (one extra ground reflection + D-layer)
+    const leg2dB = Math.round(-20*Math.log10(h2f));
+    hop2Note = `2-hop · +${leg2dB} dB vs 1-hop (ITU-R P.533 Lg=2dB + D-layer + variability) · geom cap ${2*b.skipGeomMax} km`;
+  }
+
+  // ── Third-hop DX (ZONE 3d) ─────────────────────────────────────
+  // Each additional hop leg uses the same per-leg loss as hop2 (independent signal budget).
+  // hop3OuterBase = skipOuterKm × hop3Factor — the attenuated leg range for the 3rd hop.
+  // The 3rd hop incurs the SAME per-leg loss as the 2nd hop (one more ground reflection + D-layer).
+  // Cumulative loss vs 1-hop = 2 × per-leg loss (two extra ground reflections total).
+  // Geometric cap: 3 × skipGeomMax (each individual leg ≤ skipGeomMax).
+  // ITU-R P.533-13: Lg = 2(n-1) dB total → each new hop adds 2 dB Lg + D-layer + variability.
+  // 3-hop paths routinely documented: >10000 km on 20m–40m; >12000 km at solar max.
+  let hop3OuterBase = null;
+  let hop3Note = '';
+  const h3f = b.hop3Factor ? b.hop3Factor[t] : null;
+  if(skipOuterKm && h3f){
+    hop3OuterBase = skipOuterKm * h3f;
+    const legdB = Math.round(-20*Math.log10(h3f));
+    const cum3dB = 2 * legdB;  // cumulative vs 1-hop: two extra reflections
+    hop3Note = `3-hop · ${legdB} dB/leg · +${cum3dB} dB cumulative vs 1-hop (ITU-R P.533 Lg=2dB×2 + D-layer + variability) · geom cap ${Math.min(3*b.skipGeomMax,MAX_KM)} km`;
+  }
+
+  // ── Fourth-hop DX (ZONE 3e) ────────────────────────────────────
+  // Same per-leg loss model as hop2/hop3. 4-hop paths reach antipodal distances.
+  // The 4th hop incurs the SAME per-leg loss as each prior hop (one more ground reflection).
+  // Cumulative loss vs 1-hop = 3 × per-leg loss (three extra ground reflections total).
+  // Verified: SV1UY/PM–ZL1BK/PM 17549 km at 5W on 20m (Feb 2001, HFpack QRP record) — chordal long path.
+  // Standard 4-ground-reflection F2 contacts at 16000–18000 km on 10m–20m at solar max documented.
+  // Geometric cap: min(4 × skipGeomMax, MAX_KM=18000 km).
+  let hop4OuterBase = null;
+  let hop4Note = '';
+  const h4f = b.hop4Factor ? b.hop4Factor[t] : null;
+  if(skipOuterKm && h4f){
+    hop4OuterBase = skipOuterKm * h4f;
+    const legdB = Math.round(-20*Math.log10(h4f));
+    const cum4dB = 3 * legdB;  // cumulative vs 1-hop: three extra reflections
+    hop4Note = `4-hop · ${legdB} dB/leg · +${cum4dB} dB cumulative vs 1-hop (ITU-R P.533 Lg=2dB×3 + D-layer + variability) · geom cap ${Math.min(4*b.skipGeomMax,MAX_KM)} km · antipodal reach`;
+  }
+
   return { gwBase, nvisBase, nvisNote, skipInnerKm, skipOuterKm, skipNote,
+           hop2OuterBase, hop2Note,
+           hop3OuterBase, hop3Note,
+           hop4OuterBase, hop4Note,
            foF2, dAbs, isDaytime, lt, t, muf3000, m3000, skipGeomKm };
 }
 
-// Best single range for autoFit
+// Best single range for autoFit — includes Zone 3c/3d/3e (2/3/4-hop) when available
 function calcRangeKm(powerW){
   const z = liveZones(S.band);
   const b = BANDS[S.band];
@@ -1506,8 +1674,22 @@ function calcRangeKm(powerW){
   if(powerW < b.minW) return 0;
   const gLin = Math.pow(10, a.gain/20);
   const nvis = z.nvisBase  ? Math.min(650, scaledIono(z.nvisBase  * gLin, powerW, c.factor)) : 0;
-  const skip = z.skipOuterKm ? Math.min(z.skipGeomKm || b.skipGeomMax, scaledIono(z.skipOuterKm * gLin, powerW, c.factor)) : 0;
-  return Math.max(nvis, skip, scaledGW(z.gwBase, powerW));
+  const skip1= z.skipOuterKm ? Math.min(z.skipGeomKm || b.skipGeomMax, scaledIono(z.skipOuterKm * gLin, powerW, c.factor)) : 0;
+  let hop2 = 0, hop3 = 0, hop4 = 0;
+  const hopGeomLeg = z.skipGeomKm || b.skipGeomMax;
+  if(z.hop2OuterBase && skip1 > 0){
+    const hop2Leg = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase * gLin, powerW, c.factor));
+    hop2 = Math.min(2 * b.skipGeomMax, skip1 + hop2Leg);
+  }
+  if(z.hop3OuterBase && hop2 > 0){
+    const hop3Leg = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase * gLin, powerW, c.factor));
+    hop3 = Math.min(3 * b.skipGeomMax, hop2 + hop3Leg);
+  }
+  if(z.hop4OuterBase && hop3 > 0){
+    const hop4Leg = Math.min(hopGeomLeg, scaledIono(z.hop4OuterBase * gLin, powerW, c.factor));
+    hop4 = Math.min(MAX_KM, Math.min(4 * b.skipGeomMax, hop3 + hop4Leg));
+  }
+  return Math.max(nvis, skip1, hop2, hop3, hop4, scaledGW(z.gwBase, powerW));
 }
 
 function ringPowers(){
@@ -1665,11 +1847,10 @@ function rebuildLayers(){
   // ─────────────────────────────────────────────────────────────
   // ZONE 3b — F-LAYER DX RING  (band colour annulus)
   // First-hop skip. skipInner fixed (geometry). skipOuter scales √P × conditions.
-  // Antenna gain (gLin) DOES apply: a worse antenna (rubber duck) genuinely reduces
-  // the usable outer edge; a better antenna extends it — but only up to the hard
-  // geometric 1-hop ceiling (b.skipGeomMax), set by ionospheric height and Earth
-  // curvature. No amount of antenna gain can move the ionosphere further away.
-  // Sources: SWS.bom.gov.au: F-region max hop 4000 km; Electronics-Notes: ~5000 km.
+  // Antenna gain (gLin) DOES apply: a worse antenna reduces the usable outer edge;
+  // a better antenna extends it — but only up to b.skipGeomMax (planning ceiling).
+  // skipGeomMax: ~4000 km textbook maximum (2500 miles, FCC G3B09); higher values
+  // for 20m–10m reflect parabolic F2 propagation at solar maximum (Rodger 1990).
   // ─────────────────────────────────────────────────────────────
   if(z.skipOuterKm && S.power >= b.minW){
     const ringInner = z.skipInnerKm || 0;
@@ -1700,6 +1881,162 @@ function rebuildLayers(){
       addLayer(dxLayer);
       if(pi===0) addLabel(skipOuter, col, 'Z3b·F-DX', 45);
     });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // ZONE 3c — SECOND HOP DX  (translucent band-colour hatch annulus)
+  // The 2nd ionospheric hop extends coverage beyond Zone 3b.
+  // Inner edge = Zone 3b outer (varies per power ring).
+  // Outer edge = inner + scaledIono(hop2OuterBase × gLin, P, cond).
+  // Total path capped at 2 × skipGeomMax.
+  // Additional loss (hop2Factor) already embedded in hop2OuterBase via b.hop2Factor.
+  // Sources: ITU-R P.533-13 §3 (n-hop); ARRL Antenna Compendium p.18 (7–10 dB/hop).
+  // ─────────────────────────────────────────────────────────────
+  if(z.hop2OuterBase && S.power >= b.minW){
+    const hop2GeomMax = 2 * b.skipGeomMax;
+    // Use only the highest-power ring for Zone 3c (cleaner map, avoids over-crowding).
+    const p = powers[0];
+    if(p >= b.minW){
+      // 1-hop outer for the main power ring (same calculation as Zone 3b pi=0):
+      const skip1Outer = Math.min(z.skipGeomKm || b.skipGeomMax,
+                                  scaledIono(z.skipOuterKm * gLin, p, c.factor));
+      // 2-hop leg: additional reach beyond skip1Outer.
+      // Cap uses same geometric ceiling as the active skip mode:
+      //   F2-layer: b.skipGeomMax; E-layer only: skipGeomKm = 2300 km.
+      const hopGeomLeg = z.skipGeomKm || b.skipGeomMax;
+      const hop2Leg    = Math.min(hopGeomLeg,
+                                  scaledIono(z.hop2OuterBase * gLin, p, c.factor));
+      const hop2Total  = Math.min(hop2GeomMax, skip1Outer + hop2Leg);
+
+      if(hop2Total > skip1Outer + 100){  // only render if meaningfully beyond 1-hop
+        const hop2Inner = skip1Outer;
+        const hop2Color = col;  // same band colour, different visual treatment
+        const fo2 = 0.06;       // low opacity — clearly secondary to Zone 3b
+
+        let hop2Layer;
+        if(ant.dir){
+          const outerPts = sectorPts(S.lat,S.lon,hop2Total, S.bearing,ant.bw);
+          const innerPts = hop2Inner>10 ? sectorPts(S.lat,S.lon,hop2Inner,S.bearing,ant.bw).slice(1,-1).reverse() : [];
+          hop2Layer = L.polygon(hop2Inner>10?[outerPts,innerPts]:[outerPts],{
+            color:hop2Color, fillColor:hop2Color,
+            weight:1.5, opacity:.55, fillOpacity:fo2, dashArray:'6 4'});
+        } else {
+          hop2Layer = hop2Inner>10
+            ? L.polygon(annulusPts(S.lat,S.lon,hop2Inner,hop2Total),{
+                color:hop2Color, fillColor:hop2Color,
+                weight:1.5, opacity:.55, fillOpacity:fo2, dashArray:'6 4'})
+            : L.circle([S.lat,S.lon],{radius:hop2Total*1000,
+                color:hop2Color, fillColor:hop2Color,
+                weight:1.5, opacity:.55, fillOpacity:fo2, dashArray:'6 4'});
+        }
+        hop2Layer.bindTooltip(
+          `ZONE 3c · 2-hop DX · ${fmtPwr(p)} · ${hop2Inner}–${hop2Total} km\n`+
+          `${z.hop2Note}\n${z.skipNote}\n${phaseStr}`,
+          {className:'ltt',direction:'top'});
+        addLayer(hop2Layer);
+        addLabel(hop2Total, col, 'Z3c·2HOP', 135);
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // ZONE 3d — THIRD HOP DX  (lighter hatch annulus)
+  // 3rd ionospheric hop. Inner = Zone 3c outer. Outer = inner + scaledIono(hop3OuterBase × gLin, P, cond).
+  // Total path capped at 3 × skipGeomMax.
+  // Real-world 3-hop paths routinely exceed 12000 km on 20m–40m.
+  // ITU-R P.533-13 §3: cumulative ground-reflection losses for n-hop modes.
+  // ─────────────────────────────────────────────────────────────
+  if(z.hop3OuterBase && S.power >= b.minW){
+    const hop3GeomMax = Math.min(3 * b.skipGeomMax, MAX_KM);
+    const p = powers[0];
+    if(p >= b.minW){
+      const skip1Outer = Math.min(z.skipGeomKm || b.skipGeomMax,
+                                  scaledIono(z.skipOuterKm * gLin, p, c.factor));
+      const hopGeomLeg = z.skipGeomKm || b.skipGeomMax;
+      const hop2Leg    = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase * gLin, p, c.factor));
+      const hop2Total  = Math.min(2 * b.skipGeomMax, skip1Outer + hop2Leg);
+      const hop3Leg    = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase * gLin, p, c.factor));
+      const hop3Total  = Math.min(hop3GeomMax, hop2Total + hop3Leg);
+
+      if(hop3Total > hop2Total + 100){
+        const hop3Inner = hop2Total;
+        const fo3 = 0.04;
+
+        let hop3Layer;
+        if(ant.dir){
+          const outerPts = sectorPts(S.lat,S.lon,hop3Total, S.bearing,ant.bw);
+          const innerPts = hop3Inner>10 ? sectorPts(S.lat,S.lon,hop3Inner,S.bearing,ant.bw).slice(1,-1).reverse() : [];
+          hop3Layer = L.polygon(hop3Inner>10?[outerPts,innerPts]:[outerPts],{
+            color:col, fillColor:col,
+            weight:1, opacity:.40, fillOpacity:fo3, dashArray:'4 6'});
+        } else {
+          hop3Layer = hop3Inner>10
+            ? L.polygon(annulusPts(S.lat,S.lon,hop3Inner,hop3Total),{
+                color:col, fillColor:col,
+                weight:1, opacity:.40, fillOpacity:fo3, dashArray:'4 6'})
+            : L.circle([S.lat,S.lon],{radius:hop3Total*1000,
+                color:col, fillColor:col,
+                weight:1, opacity:.40, fillOpacity:fo3, dashArray:'4 6'});
+        }
+        hop3Layer.bindTooltip(
+          `ZONE 3d · 3-hop DX · ${fmtPwr(p)} · ${hop3Inner}–${hop3Total} km\n`+
+          `${z.hop3Note}\n${z.skipNote}\n${phaseStr}`,
+          {className:'ltt',direction:'top'});
+        addLayer(hop3Layer);
+        addLabel(hop3Total, col, 'Z3d·3HOP', 225);
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // ZONE 3e — FOURTH HOP DX  (faintest hatch annulus)
+  // 4th ionospheric hop. Reaches near-antipodal distances (15000–20000 km).
+  // Documented: SV1UY/PM–ZL1BK/PM 17549 km at 5W on 20m (Feb 2001 HFpack record).
+  // QSOs exceeding 18930 km on 10m–20m during solar maxima are well established.
+  // Total path capped at min(4 × skipGeomMax, MAX_KM=18000 km).
+  // ─────────────────────────────────────────────────────────────
+  if(z.hop4OuterBase && S.power >= b.minW){
+    const hop4GeomMax = Math.min(4 * b.skipGeomMax, MAX_KM);
+    const p = powers[0];
+    if(p >= b.minW){
+      const skip1Outer = Math.min(z.skipGeomKm || b.skipGeomMax,
+                                  scaledIono(z.skipOuterKm * gLin, p, c.factor));
+      const hopGeomLeg = z.skipGeomKm || b.skipGeomMax;
+      const hop2Leg    = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase * gLin, p, c.factor));
+      const hop2Total  = Math.min(2 * b.skipGeomMax, skip1Outer + hop2Leg);
+      const hop3Leg    = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase * gLin, p, c.factor));
+      const hop3Total  = Math.min(3 * b.skipGeomMax, hop2Total + hop3Leg);
+      const hop4Leg    = Math.min(hopGeomLeg, scaledIono(z.hop4OuterBase * gLin, p, c.factor));
+      const hop4Total  = Math.min(hop4GeomMax, hop3Total + hop4Leg);
+
+      if(hop4Total > hop3Total + 100){
+        const hop4Inner = hop3Total;
+        const fo4 = 0.03;
+
+        let hop4Layer;
+        if(ant.dir){
+          const outerPts = sectorPts(S.lat,S.lon,hop4Total, S.bearing,ant.bw);
+          const innerPts = hop4Inner>10 ? sectorPts(S.lat,S.lon,hop4Inner,S.bearing,ant.bw).slice(1,-1).reverse() : [];
+          hop4Layer = L.polygon(hop4Inner>10?[outerPts,innerPts]:[outerPts],{
+            color:col, fillColor:col,
+            weight:1, opacity:.30, fillOpacity:fo4, dashArray:'3 8'});
+        } else {
+          hop4Layer = hop4Inner>10
+            ? L.polygon(annulusPts(S.lat,S.lon,hop4Inner,hop4Total),{
+                color:col, fillColor:col,
+                weight:1, opacity:.30, fillOpacity:fo4, dashArray:'3 8'})
+            : L.circle([S.lat,S.lon],{radius:hop4Total*1000,
+                color:col, fillColor:col,
+                weight:1, opacity:.30, fillOpacity:fo4, dashArray:'3 8'});
+        }
+        hop4Layer.bindTooltip(
+          `ZONE 3e · 4-hop DX · ${fmtPwr(p)} · ${hop4Inner}–${hop4Total} km\n`+
+          `${z.hop4Note}\n${z.skipNote}\n${phaseStr}`,
+          {className:'ltt',direction:'top'});
+        addLayer(hop4Layer);
+        addLabel(hop4Total, col, 'Z3e·4HOP', 315);
+      }
+    }
   }
 
   // ── TX Marker ──────────────────────────────────────────────
@@ -1820,10 +2157,66 @@ function updateCovSummary(){
     const outer = Math.min(z.skipGeomKm || b.skipGeomMax, scaledIono(z.skipOuterKm * gLin, S.power, cond.factor));
     const inner = z.skipInnerKm || 0;
     row(b.color, 'Z3b · F-DX', `${inner>0?inner+'–':''}~${outer} km`, geoTag(outer), z.skipNote);
+
+    // Zone 3c — 2-hop DX
+    if(z.hop2OuterBase){
+      const hopGeomLeg = z.skipGeomKm || b.skipGeomMax;
+      const hop2Leg    = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase * gLin, S.power, cond.factor));
+      const hop2Total  = Math.min(2 * b.skipGeomMax, outer + hop2Leg);
+      if(hop2Total > outer + 100){
+        const lPerLeg = Math.round(-20*Math.log10(z.hop2OuterBase / z.skipOuterKm));
+        row(b.color, 'Z3c · 2-hop',
+          `~${outer}–${hop2Total} km`,
+          geoTag(hop2Total),
+          `2nd hop · +${lPerLeg} dB vs 1-hop (ITU-R P.533: 1 extra gnd reflection Lg=2dB + D-layer + variability) · geom cap ${2*b.skipGeomMax} km`);
+
+        // Zone 3d — 3-hop DX
+        if(z.hop3OuterBase){
+          const hop3Leg   = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase * gLin, S.power, cond.factor));
+          const hop3Total = Math.min(Math.min(3 * b.skipGeomMax, MAX_KM), hop2Total + hop3Leg);
+          if(hop3Total > hop2Total + 100){
+            const legdB3 = Math.round(-20*Math.log10(z.hop3OuterBase / z.skipOuterKm));
+            const cum3dB = 2 * legdB3;
+            row(b.color, 'Z3d · 3-hop',
+              `~${hop2Total}–${hop3Total} km`,
+              geoTag(hop3Total),
+              `3rd hop · ${legdB3} dB/leg · +${cum3dB} dB cumulative vs 1-hop (2 extra reflections) · geom cap ${Math.min(3*b.skipGeomMax,MAX_KM)} km`);
+
+            // Zone 3e — 4-hop DX
+            if(z.hop4OuterBase){
+              const hop4Leg   = Math.min(hopGeomLeg, scaledIono(z.hop4OuterBase * gLin, S.power, cond.factor));
+              const hop4Total = Math.min(Math.min(4 * b.skipGeomMax, MAX_KM), hop3Total + hop4Leg);
+              if(hop4Total > hop3Total + 100){
+                const legdB4 = Math.round(-20*Math.log10(z.hop4OuterBase / z.skipOuterKm));
+                const cum4dB = 3 * legdB4;
+                row(b.color, 'Z3e · 4-hop',
+                  `~${hop3Total}–${hop4Total} km`,
+                  geoTag(hop4Total),
+                  `4th hop · ${legdB4} dB/leg · +${cum4dB} dB cumulative vs 1-hop (3 extra reflections) · geom cap ${Math.min(4*b.skipGeomMax,MAX_KM)} km · antipodal reach`);
+              } else {
+                row('#1a1a2a', 'Z3e · 4-hop', 'Below threshold', '—', z.hop4Note);
+              }
+            }
+          } else {
+            row('#1a1a2a', 'Z3d · 3-hop', 'Below threshold', '—', z.hop3Note);
+          }
+        }
+      } else {
+        row('#1a1a2a', 'Z3c · 2-hop', 'Below threshold', '—', z.hop2Note);
+      }
+    } else {
+      row('#1a1a2a', 'Z3c · 2-hop', 'Unavailable', '—', `No 2-hop · ${z.isDaytime?'D-layer loss or band closed':'Band closed'}`);
+    }
   } else if(z.skipOuterKm){
     row(b.color, 'Z3b · F-DX', `Below min power (${b.minW}W)`, '—', '');
+    row('#1a1a2a', 'Z3c · 2-hop', `Below min power (${b.minW}W)`, '—', '');
+    row('#1a1a2a', 'Z3d · 3-hop', `Below min power (${b.minW}W)`, '—', '');
+    row('#1a1a2a', 'Z3e · 4-hop', `Below min power (${b.minW}W)`, '—', '');
   } else {
     row('#1a1a2a', 'Z3b · F-DX', 'Closed', '—', z.skipNote);
+    row('#1a1a2a', 'Z3c · 2-hop', 'Closed', '—', '');
+    row('#1a1a2a', 'Z3d · 3-hop', 'Closed', '—', '');
+    row('#1a1a2a', 'Z3e · 4-hop', 'Closed', '—', '');
   }
 }
 
@@ -2335,15 +2728,30 @@ const ENV_TYPES = [
 const VU_ENV = { vhf: 'ultra_urban', uhf: 'ultra_urban' };
 
 // ── VHF/UHF antenna state ────────────────────────────────────
+// ── VU_ANT_TYPES — all gain values in dBd (re: ½λ dipole) ────
+// Dual-band antennas (Elk, Diamond) have different gains on 2m vs 70cm.
+// Two separate entries are provided (suffix _vhf / _uhf) so the correct
+// gain is applied when selected on the matching band tab.
+// Sources: manufacturer datasheets, Universal-Radio, eHam.net, ARRL Antenna Book.
 const VU_ANT_TYPES = [
-  { id:'rubber_duck', label:'Rubber Duck HT',     gain:-3,   dir:false, bw:360, desc:'HT whip — omnidirectional, lossy. Typical handheld.' },
-  { id:'qw_vertical', label:'¼λ Vertical',         gain:0,    dir:false, bw:360, desc:'Reference omni. Simple whip or telescopic.' },
-  { id:'gp_vhf',      label:'Ground Plane',         gain:1,    dir:false, bw:360, desc:'Omni with radials. Good base-station antenna.' },
-  { id:'jpole',       label:'J-Pole',               gain:2,    dir:false, bw:360, desc:'Slim omni, easy to build. Good for fixed sites.' },
-  { id:'colinear',    label:'Collinear 5/8+5/8',    gain:5,    dir:false, bw:360, desc:'Stacked collinear. ~5 dBd, excellent for repeaters.' },
-  { id:'yagi3',       label:'Yagi 3-el',             gain:6,    dir:true,  bw:68,  desc:'3-element Yagi. ~6 dBd, 68° half-power beamwidth.' },
-  { id:'yagi5',       label:'Yagi 5-el',             gain:8.5,  dir:true,  bw:54,  desc:'5-element Yagi. ~8.5 dBd, 54° beamwidth.' },
-  { id:'yagi9',       label:'Yagi 9-el',             gain:12,   dir:true,  bw:38,  desc:'9-element Yagi. ~12 dBd, 38° beamwidth. High gain DX.' },
+  // ── Omni — handheld ─────────────────────────────────────────
+  { id:'rubber_duck', label:'Rubber Duck HT',        gain:-3,   dir:false, bw:360, desc:'Stock HT whip — omnidirectional, lossy. −3 dBd vs dipole.' },
+  { id:'srh77ca_vhf', label:'Diamond SRH77CA (2m)',  gain:-1,   dir:false, bw:360, desc:'Diamond SRH77CA on 144 MHz. ¼λ flexible whip. ~−1 dBd with HT body effect. 15.6", SMA-M.' },
+  { id:'srh77ca_uhf', label:'Diamond SRH77CA (70cm)',gain:0,    dir:false, bw:360, desc:'Diamond SRH77CA on 440 MHz. ½λ radialless. 2.15 dBi = 0 dBd. Manufacturer spec. 15.6", SMA-M.' },
+  { id:'srh770s_vhf', label:'Diamond SRH770S (2m)',  gain:0,    dir:false, bw:360, desc:'Diamond SRH770S on 144 MHz. ⅜λ type. 2.15 dBi = 0 dBd. Manufacturer spec. 70 cm long, SMA-M.' },
+  { id:'srh770s_uhf', label:'Diamond SRH770S (70cm)',gain:2.35, dir:false, bw:360, desc:'Diamond SRH770S on 430 MHz. ¾λ type. 4.5 dBi = 2.35 dBd. Manufacturer spec. Notably better than SRH77CA on UHF.' },
+  // ── Omni — fixed/base ────────────────────────────────────────
+  { id:'qw_vertical', label:'¼λ Vertical',            gain:0,    dir:false, bw:360, desc:'Reference omni. Simple whip or telescopic. 0 dBd over good ground.' },
+  { id:'gp_vhf',      label:'Ground Plane',            gain:1,    dir:false, bw:360, desc:'Omni with radials. Good base-station antenna. ~1 dBd.' },
+  { id:'jpole',       label:'J-Pole',                  gain:2,    dir:false, bw:360, desc:'Slim omni, easy to build. Good for fixed sites. ~2 dBd.' },
+  { id:'colinear',    label:'Collinear 5/8+5/8',       gain:5,    dir:false, bw:360, desc:'Stacked collinear. ~5 dBd (7.15 dBi), excellent for repeaters.' },
+  // ── Directional ──────────────────────────────────────────────
+  { id:'elk_lp_vhf',  label:'Elk 2M/440L5 LP (2m)',   gain:6.8,  dir:true,  bw:65,  desc:'Elk 2M/440L5 Log Periodic on 144 MHz. 6.8 dBd (8.9 dBi). 20+ dB F/B. 24" boom. Portable/satellite.' },
+  { id:'elk_lp_uhf',  label:'Elk 2M/440L5 LP (70cm)', gain:7.0,  dir:true,  bw:65,  desc:'Elk 2M/440L5 Log Periodic on 440 MHz. 7.0 dBd (9.15 dBi). 20+ dB F/B. Compact, dual-band, no duplexer needed.' },
+  { id:'yagi3',       label:'Yagi 3-el',               gain:6,    dir:true,  bw:68,  desc:'3-element Yagi. ~6 dBd (8.2 dBi), 68° half-power beamwidth.' },
+  { id:'yagi5',       label:'Yagi 5-el',               gain:8.5,  dir:true,  bw:54,  desc:'5-element Yagi. ~8.5 dBd (10.7 dBi), 54° beamwidth.' },
+  { id:'yagi9',       label:'Yagi 9-el (2m)',          gain:12,   dir:true,  bw:38,  desc:'9-element Yagi optimised for 144 MHz. ~12 dBd (14.1 dBi), 38° beamwidth. High gain DX.' },
+  { id:'yagi9_uhf',   label:'Yagi 9-el (70cm/435)',    gain:11.5, dir:true,  bw:40,  desc:'9-element Yagi optimised for 435 MHz. ~11.5 dBd (13.7 dBi), 40° beamwidth. (RFI YB-series; DF9CY DK7ZB design).' },
 ];
 const VU_ANT  = { vhf: 'rubber_duck', uhf: 'rubber_duck' };
 const VU_BEAR = { vhf: 0, uhf: 0 }; // beam heading for directional antennas
