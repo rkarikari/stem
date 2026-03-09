@@ -578,8 +578,8 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.09';
-const APP_DATE    = '2026-03-09';
+const APP_VERSION = 'v1.07';
+const APP_DATE    = '2026-03-08';
 
 // ══════════════════════════════════════════════
 // DATA TABLES
@@ -899,30 +899,26 @@ function latZone(lat){
 // Sources: Astronomically computed using Meeus (1991) declination formula + 0.833°
 //          standard refraction correction (sun disc radius + atmospheric refraction).
 //          Annual average taken over all 365 days including polar day/night.
-// Note: the annual-average day length is ~12.1–12.6 h for latitudes 0–90° due to
-// atmospheric refraction and the fact that polar summer offsets polar night.
-// Values verified by Spencer (1971) Fourier series. See anchor comments below.
+// Note: the annual-average day length is ~12.1–12.4 h for all latitudes 0–70°
+// because polar summer (midnight sun) is exactly offset by polar night.
+// Values are verified against USNO Duration-of-Daylight tables.
 function solarTimes(lat){
   // Anchor table: [|lat|, annual-avg day length in hours]
   // Computed: 2*H*24/(2π) averaged over N=1..365, where H = acos(argument)
   // with standard refraction correction (sunrise when geometric sun = −0.833°).
   // Polar regions (>66.5°): midnight-sun days contribute 24h; polar-night days 0h.
-  // Annual-average day lengths recomputed (Round 10) using Spencer (1971) Fourier
-  // declination series + standard 0.833° refraction/disc correction, averaged over
-  // N=1..365 with polar day (24h) and polar night (0h) included.
-  // Values rounded to 0.1h (= 6 min), matching calculation precision.
-  // Net effect: sunrise is ~2–6 min earlier than v1.07 anchors at mid/high latitudes.
+  // Net annual average for 70°N ≈ 12.4 h (slightly above 12 due to refraction).
   const anchors = [
     [0,  12.1],
     [10, 12.1],
     [20, 12.1],
-    [30, 12.2],   // was 12.1 — Spencer formula gives 12.17h avg
+    [30, 12.1],
     [40, 12.2],
-    [50, 12.3],   // was 12.2 — Spencer formula gives 12.26h avg
-    [60, 12.4],   // was 12.3 — Spencer formula gives 12.39h avg
-    [70, 12.6],   // was 12.4 — Spencer formula gives 12.58h avg (polar summer effect)
-    [80, 12.5],   // was 12.4 — Spencer formula gives 12.54h avg
-    [90, 12.5],   // was 12.3 — Spencer formula gives 12.49h avg
+    [50, 12.2],
+    [60, 12.3],
+    [70, 12.4],
+    [80, 12.4],   // 80°N: ~100 days midnight sun offset by ~90 days polar night → ~12.4h avg
+    [90, 12.3],   // pole: annual average including civil twilight effects
   ];
   const a = Math.min(90, Math.abs(lat));
   let dayH = anchors[anchors.length - 1][1];
@@ -2345,30 +2341,15 @@ const ENV_TYPES = [
 const VU_ENV = { vhf: 'ultra_urban', uhf: 'ultra_urban' };
 
 // ── VHF/UHF antenna state ────────────────────────────────────
-// ── VU_ANT_TYPES — all gain values in dBd (re: ½λ dipole) ────
-// Dual-band antennas (Elk, Diamond) have different gains on 2m vs 70cm.
-// Two separate entries are provided (suffix _vhf / _uhf) so the correct
-// gain is applied when selected on the matching band tab.
-// Sources: manufacturer datasheets, Universal-Radio, eHam.net, ARRL Antenna Book.
 const VU_ANT_TYPES = [
-  // ── Omni — handheld ─────────────────────────────────────────
-  { id:'rubber_duck', label:'Rubber Duck HT',        gain:-3,   dir:false, bw:360, desc:'Stock HT whip — omnidirectional, lossy. −3 dBd vs dipole.' },
-  { id:'srh77ca_vhf', label:'Diamond SRH77CA (2m)',  gain:-1,   dir:false, bw:360, desc:'Diamond SRH77CA on 144 MHz. ¼λ flexible whip. ~−1 dBd with HT body effect. 15.6", SMA-M.' },
-  { id:'srh77ca_uhf', label:'Diamond SRH77CA (70cm)',gain:0,    dir:false, bw:360, desc:'Diamond SRH77CA on 440 MHz. ½λ radialless. 2.15 dBi = 0 dBd. Manufacturer spec. 15.6", SMA-M.' },
-  { id:'srh770s_vhf', label:'Diamond SRH770S (2m)',  gain:0,    dir:false, bw:360, desc:'Diamond SRH770S on 144 MHz. ⅜λ type. 2.15 dBi = 0 dBd. Manufacturer spec. 70 cm long, SMA-M.' },
-  { id:'srh770s_uhf', label:'Diamond SRH770S (70cm)',gain:2.35, dir:false, bw:360, desc:'Diamond SRH770S on 430 MHz. ¾λ type. 4.5 dBi = 2.35 dBd. Manufacturer spec. Notably better than SRH77CA on UHF.' },
-  // ── Omni — fixed/base ────────────────────────────────────────
-  { id:'qw_vertical', label:'¼λ Vertical',            gain:0,    dir:false, bw:360, desc:'Reference omni. Simple whip or telescopic. 0 dBd over good ground.' },
-  { id:'gp_vhf',      label:'Ground Plane',            gain:1,    dir:false, bw:360, desc:'Omni with radials. Good base-station antenna. ~1 dBd.' },
-  { id:'jpole',       label:'J-Pole',                  gain:2,    dir:false, bw:360, desc:'Slim omni, easy to build. Good for fixed sites. ~2 dBd.' },
-  { id:'colinear',    label:'Collinear 5/8+5/8',       gain:5,    dir:false, bw:360, desc:'Stacked collinear. ~5 dBd (7.15 dBi), excellent for repeaters.' },
-  // ── Directional ──────────────────────────────────────────────
-  { id:'elk_lp_vhf',  label:'Elk 2M/440L5 LP (2m)',   gain:6.8,  dir:true,  bw:65,  desc:'Elk 2M/440L5 Log Periodic on 144 MHz. 6.8 dBd (8.9 dBi). 20+ dB F/B. 24" boom. Portable/satellite.' },
-  { id:'elk_lp_uhf',  label:'Elk 2M/440L5 LP (70cm)', gain:7.0,  dir:true,  bw:65,  desc:'Elk 2M/440L5 Log Periodic on 440 MHz. 7.0 dBd (9.15 dBi). 20+ dB F/B. Compact, dual-band, no duplexer needed.' },
-  { id:'yagi3',       label:'Yagi 3-el',               gain:6,    dir:true,  bw:68,  desc:'3-element Yagi. ~6 dBd (8.2 dBi), 68° half-power beamwidth.' },
-  { id:'yagi5',       label:'Yagi 5-el',               gain:8.5,  dir:true,  bw:54,  desc:'5-element Yagi. ~8.5 dBd (10.7 dBi), 54° beamwidth.' },
-  { id:'yagi9',       label:'Yagi 9-el (2m)',          gain:12,   dir:true,  bw:38,  desc:'9-element Yagi optimised for 144 MHz. ~12 dBd (14.1 dBi), 38° beamwidth. High gain DX.' },
-  { id:'yagi9_uhf',   label:'Yagi 9-el (70cm/435)',    gain:11.5, dir:true,  bw:40,  desc:'9-element Yagi optimised for 435 MHz. ~11.5 dBd (13.7 dBi), 40° beamwidth. (RFI YB-series; DF9CY DK7ZB design).' },
+  { id:'rubber_duck', label:'Rubber Duck HT',     gain:-3,   dir:false, bw:360, desc:'HT whip — omnidirectional, lossy. Typical handheld.' },
+  { id:'qw_vertical', label:'¼λ Vertical',         gain:0,    dir:false, bw:360, desc:'Reference omni. Simple whip or telescopic.' },
+  { id:'gp_vhf',      label:'Ground Plane',         gain:1,    dir:false, bw:360, desc:'Omni with radials. Good base-station antenna.' },
+  { id:'jpole',       label:'J-Pole',               gain:2,    dir:false, bw:360, desc:'Slim omni, easy to build. Good for fixed sites.' },
+  { id:'colinear',    label:'Collinear 5/8+5/8',    gain:5,    dir:false, bw:360, desc:'Stacked collinear. ~5 dBd, excellent for repeaters.' },
+  { id:'yagi3',       label:'Yagi 3-el',             gain:6,    dir:true,  bw:68,  desc:'3-element Yagi. ~6 dBd, 68° half-power beamwidth.' },
+  { id:'yagi5',       label:'Yagi 5-el',             gain:8.5,  dir:true,  bw:54,  desc:'5-element Yagi. ~8.5 dBd, 54° beamwidth.' },
+  { id:'yagi9',       label:'Yagi 9-el',             gain:12,   dir:true,  bw:38,  desc:'9-element Yagi. ~12 dBd, 38° beamwidth. High gain DX.' },
 ];
 const VU_ANT  = { vhf: 'rubber_duck', uhf: 'rubber_duck' };
 const VU_BEAR = { vhf: 0, uhf: 0 }; // beam heading for directional antennas
