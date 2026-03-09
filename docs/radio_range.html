@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.17</title>
+<title>Ham Radio Coverage Planner · v1.19</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -590,7 +590,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.17';
+const APP_VERSION = 'v1.19';
 const APP_DATE    = '2026-03-09';
 
 // ══════════════════════════════════════════════
@@ -1515,11 +1515,15 @@ function scaledGW(baseKm, powerW){
 // Receive antenna: assumed same type as TX for symmetrical QSO planning.
 // Noise floor / SNR not modeled — S-unit is signal level only (receiver input).
 //
-// S-unit calibration (IARU Region 1 Technical Recommendation R.1, 1981):
-//   S9 HF = −73 dBm (50 µV @ 50Ω). Each S-unit = 6 dB.
+// S-unit calibration (IARU Region 1 Technical Recommendation R.1, Brighton 1981):
+//   S9 HF = −73 dBm (50 µV @ 50 Ω). Each S-unit = 6 dB.
 //   S_float = 9 + (P_rx_dBm − (−73)) / 6 = 9 + (P_rx_dBm + 73) / 6
+//   S8 = −79 dBm · S7 = −85 dBm · S1 = −121 dBm (verified)
 //   Display: S1–S9, then "S9+NdB" for signals above S9.
-//   Below S1 shown as "< S1" (noise level territory).
+//   S9+ reporting: < 3 dB over → plain "S9" (below practical half-step resolution);
+//     3–9 dB over → "S9+5dB" or "S9+5dB" (nearest 5 dB step);
+//     ≥ 10 dB over → "S9+NdB" rounded to nearest 10 dB (standard ham convention, cap 60 dB).
+//   Below S1 shown as "< S1" (below noise floor territory).
 
 const HMF2 = 275; // km — typical F2 virtual height (day/night average)
 
@@ -1610,7 +1614,11 @@ function gwLinkBudgetDBm(distKm, freqMHz, powerW, antGaindBd) {
 }
 
 function toSunit(dBm) {
-  // IARU Region 1 R.1: S9 HF = −73 dBm, 6 dB/S-unit.
+  // IARU Region 1 R.1 (Brighton 1981): S9 HF = −73 dBm, 6 dB/S-unit.
+  // S8 = −79 dBm, S7 = −85 dBm … S1 = −121 dBm.
+  // Above S9: "S9+NdB" rounded to nearest 10 dB for ≥10 dB over,
+  // or nearest 5 dB for 3–9 dB over. Signals < 3 dB over S9 display as 'S9'
+  // (within half a 5-dB reporting step — indistinguishable on a practical S-meter).
   if (dBm === null || isNaN(dBm)) return '—';
   const sFloat = 9 + (dBm + 73) / 6;
   if (sFloat < 1) return '<S1';
@@ -1618,11 +1626,17 @@ function toSunit(dBm) {
     const sInt = Math.round(sFloat);
     return `S${Math.max(1, Math.min(9, sInt))}`;
   }
-  // Above S9: report as S9 + NdB
-  const over = Math.round((sFloat - 9) * 6);
-  if (over < 5) return 'S9';  // round down below 5 dB over
-  const rounded = Math.round(over / 5) * 5; // round to nearest 5 dB
-  return `S9+${Math.min(60, rounded)}`;
+  // Above S9: compute exact dB over S9
+  const overDB = (sFloat - 9) * 6;           // exact dB above S9
+  if (overDB < 3) return 'S9';               // < 3 dB over → plain S9 (below half-step)
+  if (overDB < 10) {
+    // 3–9 dB over: round to nearest 5 dB step
+    const rounded = Math.round(overDB / 5) * 5;
+    return `S9+${Math.max(5, rounded)}dB`;
+  }
+  // ≥ 10 dB over: round to nearest 10 dB step (standard ham convention)
+  const rounded = Math.round(overDB / 10) * 10;
+  return `S9+${Math.min(60, rounded)}dB`;
 }
 
 function sigColor(dBm) {
@@ -2053,7 +2067,7 @@ function rebuildLayers(){
               color:col,fillColor:col,weight:2,opacity:.9,fillOpacity:fo});
       }
       dxLayer.bindTooltip(
-        `ZONE 3b · F-layer DX · ${fmtPwr(p)} · ${ringInner>10?ringInner+'–':''}~${skipOuter} km · ${toSunit(linkBudgetDBm(Math.round(((ringInner||0)+skipOuter)/2)||skipOuter, 1, b.freqMHz, p, ANTS[S.ant].gain, c.factor, z.dAbs))}\n`+
+        `ZONE 3b · F-layer DX · ${fmtPwr(p)} · ${ringInner>10?ringInner+'–':''}~${skipOuter} km · ${toSunit(linkBudgetDBm(skipOuter, 1, b.freqMHz, p, ANTS[S.ant].gain, c.factor, z.dAbs))}\n`+
         `${z.skipNote}\n${phaseStr}`,
         {className:'ltt',direction:'top'});
       addLayer(dxLayer);
@@ -2108,7 +2122,7 @@ function rebuildLayers(){
                 weight:1.5, opacity:.55, fillOpacity:fo2, dashArray:'6 4'});
         }
         hop2Layer.bindTooltip(
-          `ZONE 3c · 2-hop DX · ${fmtPwr(p)} · ${hop2Inner}–${hop2Total} km · ${toSunit(linkBudgetDBm(Math.round((hop2Inner+hop2Total)/2), 2, b.freqMHz, p, ANTS[S.ant].gain, c.factor, z.dAbs))}\n`+
+          `ZONE 3c · 2-hop DX · ${fmtPwr(p)} · ${hop2Inner}–${hop2Total} km · ${toSunit(linkBudgetDBm(hop2Total, 2, b.freqMHz, p, ANTS[S.ant].gain, c.factor, z.dAbs))}\n`+
           `${z.hop2Note}\n${z.skipNote}\n${phaseStr}`,
           {className:'ltt',direction:'top'});
         addLayer(hop2Layer);
@@ -2157,7 +2171,7 @@ function rebuildLayers(){
                 weight:1, opacity:.40, fillOpacity:fo3, dashArray:'4 6'});
         }
         hop3Layer.bindTooltip(
-          `ZONE 3d · 3-hop DX · ${fmtPwr(p)} · ${hop3Inner}–${hop3Total} km · ${toSunit(linkBudgetDBm(Math.round((hop3Inner+hop3Total)/2), 3, b.freqMHz, p, ANTS[S.ant].gain, c.factor, z.dAbs))}\n`+
+          `ZONE 3d · 3-hop DX · ${fmtPwr(p)} · ${hop3Inner}–${hop3Total} km · ${toSunit(linkBudgetDBm(hop3Total, 3, b.freqMHz, p, ANTS[S.ant].gain, c.factor, z.dAbs))}\n`+
           `${z.hop3Note}\n${z.skipNote}\n${phaseStr}`,
           {className:'ltt',direction:'top'});
         addLayer(hop3Layer);
@@ -2208,7 +2222,7 @@ function rebuildLayers(){
                 weight:1, opacity:.30, fillOpacity:fo4, dashArray:'3 8'});
         }
         hop4Layer.bindTooltip(
-          `ZONE 3e · 4-hop DX · ${fmtPwr(p)} · ${hop4Inner}–${hop4Total} km · ${toSunit(linkBudgetDBm(Math.round((hop4Inner+hop4Total)/2), 4, b.freqMHz, p, ANTS[S.ant].gain, c.factor, z.dAbs))}\n`+
+          `ZONE 3e · 4-hop DX · ${fmtPwr(p)} · ${hop4Inner}–${hop4Total} km · ${toSunit(linkBudgetDBm(hop4Total, 4, b.freqMHz, p, ANTS[S.ant].gain, c.factor, z.dAbs))}\n`+
           `${z.hop4Note}\n${z.skipNote}\n${phaseStr}`,
           {className:'ltt',direction:'top'});
         addLayer(hop4Layer);
@@ -2322,19 +2336,16 @@ function updateCovSummary(){
     + `<span style="font-size:.54rem;color:var(--dim);letter-spacing:.06em">SIG&nbsp;&nbsp;&nbsp;DIST</span>`;
   c.appendChild(hdr);
 
-  // Zone 1 — Groundwave
+  // Zone 1 — Groundwave: S-unit at outer edge (weakest / most realistic planning point)
   const gw = scaledGW(z.gwBase, S.power);
-  const gwMid = gw > 1 ? Math.round(gw * 0.6) : 0; // representative mid-range
-  const gwSig = gw > 1 ? gwLinkBudgetDBm(gwMid, freq, S.power, ant.gain) : null;
+  const gwSig = gw > 1 ? gwLinkBudgetDBm(gw, freq, S.power, ant.gain) : null;
   row('#e8e8ff', 'Z1 · GW', gw>=1?`~${gw} km`:'N/A', gw>=1?geoTag(gw):'—', '', gwSig);
 
-  // Zone 2 — NVIS
+  // Zone 2 — NVIS: S-unit at outer edge (worst case for planning)
   if(z.nvisBase && S.power >= b.minW){
     const nv = Math.min(650, scaledIono(z.nvisBase * gLin, S.power, cond.factor));
-    const nvisMid = Math.round((gw + nv) / 2);
-    // NVIS: single-hop near-vertical — use 1 hop but high incidence angle
-    // FSPL for NVIS is short slant path; use distKm=nvisMid with nHops=1
-    const nvisSig = skyS(Math.max(50, nvisMid), 1);
+    // NVIS outer edge: single near-vertical hop, full range distance
+    const nvisSig = skyS(Math.max(50, nv), 1);
     row('#00ffc3', 'Z2 · NVIS', `${gw}–${nv} km`, geoTag(nv), z.nvisNote, nvisSig);
   } else {
     row('#1a3a2a', 'Z2 · NVIS', 'Unavailable', '—', z.nvisNote);
@@ -2353,9 +2364,8 @@ function updateCovSummary(){
   if(z.skipOuterKm && S.power >= b.minW){
     const outer = Math.min(z.skipGeomKm || b.skipGeomMax, scaledIono(z.skipOuterKm * gLin, S.power, cond.factor));
     const inner = z.skipInnerKm || 0;
-    // Signal at outer edge (worst case) — representative point
-    const z3bMid = Math.round((inner + outer) / 2) || outer;
-    const z3bSig = skyS(z3bMid, 1);
+    // Zone 3b — F-layer DX: S-unit at outer edge (weakest signal, realistic planning)
+    const z3bSig = skyS(outer, 1);
     row(b.color, 'Z3b · F-DX', `${inner>0?inner+'–':''}~${outer} km`, geoTag(outer), z.skipNote, z3bSig);
 
     // Zone 3c — 2-hop DX
@@ -2365,8 +2375,7 @@ function updateCovSummary(){
       const hop2Total  = Math.min(2 * b.skipGeomMax, outer + hop2Leg);
       if(hop2Total > outer + 100){
         const lPerLeg = Math.round(-20*Math.log10(z.hop2OuterBase / z.skipOuterKm));
-        const z3cMid  = Math.round((outer + hop2Total) / 2);
-        const z3cSig  = skyS(z3cMid, 2);
+        const z3cSig  = skyS(hop2Total, 2);
         row(b.color, 'Z3c · 2-hop',
           `~${outer}–${hop2Total} km`,
           geoTag(hop2Total),
@@ -2380,8 +2389,7 @@ function updateCovSummary(){
           if(hop3Total > hop2Total + 100){
             const legdB3 = Math.round(-20*Math.log10(z.hop3OuterBase / z.skipOuterKm));
             const cum3dB = 2 * legdB3;
-            const z3dMid = Math.round((hop2Total + hop3Total) / 2);
-            const z3dSig = skyS(z3dMid, 3);
+            const z3dSig = skyS(hop3Total, 3);
             row(b.color, 'Z3d · 3-hop',
               `~${hop2Total}–${hop3Total} km`,
               geoTag(hop3Total),
@@ -2395,8 +2403,7 @@ function updateCovSummary(){
               if(hop4Total > hop3Total + 100){
                 const legdB4 = Math.round(-20*Math.log10(z.hop4OuterBase / z.skipOuterKm));
                 const cum4dB = 3 * legdB4;
-                const z3eMid = Math.round((hop3Total + hop4Total) / 2);
-                const z3eSig = skyS(z3eMid, 4);
+                const z3eSig = skyS(hop4Total, 4);
                 row(b.color, 'Z3e · 4-hop',
                   `~${hop3Total}–${hop4Total} km`,
                   geoTag(hop4Total),
