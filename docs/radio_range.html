@@ -646,7 +646,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v2.05';
+const APP_VERSION = 'v2.06';
 const APP_DATE    = '2026-03-10';
 
 // ══════════════════════════════════════════════
@@ -3535,9 +3535,9 @@ function updateCovSummary(){
     const nv = Math.min(650, scaledIono(z.nvisBase * gLin, S.power, cond.factor));
     // NVIS outer edge: single near-vertical hop, full range distance
     const nvisSig = skyS(Math.max(50, nv), 1);
-    row('#00ffc3', 'Z2 · NVIS', `${gw}–${nv} km`, geoTag(nv), z.nvisNote, nvisSig);
+    row('#00ffc3', 'Z2 · NVIS', `${gw}–${nv} km`, geoTag(nv), '', nvisSig);
   } else {
-    row('#1a3a2a', 'Z2 · NVIS', 'Unavailable', '—', z.nvisNote);
+    row('#1a3a2a', 'Z2 · NVIS', 'Unavailable', '—', '');
   }
 
   // Zone 3a — Dead zone (no S-unit — no signal)
@@ -3546,7 +3546,7 @@ function updateCovSummary(){
   if(z.skipInnerKm && z.skipInnerKm > deadInner+20){
     row('#2a2a3a', 'Z3a · Dead', `${deadInner}–${z.skipInnerKm} km`, 'No signal', '');
   } else if(!z.skipOuterKm && !z.nvisBase){
-    row('#1a1a2a', 'Z3a · Dead', 'Entire band — no skywave', 'No signal', z.skipNote);
+    row('#1a1a2a', 'Z3a · Dead', 'Entire band — no skywave', 'No signal', '');
   }
 
   // Zone 3b — F-layer DX (1 hop)
@@ -3556,7 +3556,7 @@ function updateCovSummary(){
     // Zone 3b — F-layer DX: P.533 link budget at outer edge (1-hop baseline for cascade)
     const z3bSig = skyS(outer, 1);
     z3bSigDBm = z3bSig;
-    row(b.color, 'Z3b · F-DX', `${inner>0?inner+'–':''}~${outer} km`, geoTag(outer), z.skipNote, z3bSig);
+    row(b.color, 'Z3b · F-DX', `${inner>0?inner+'–':''}~${outer} km`, geoTag(outer), '', z3bSig);
 
     // Zone 3c — 2-hop DX
     if(z.hop2OuterBase){
@@ -3564,12 +3564,11 @@ function updateCovSummary(){
       const hop2Leg    = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase * gLin, S.power, cond.factor));
       const hop2Total  = Math.min(2 * b.skipGeomMax, outer + hop2Leg);
       if(hop2Total > outer + 100){
-        const lPerLeg = Math.round(-20*Math.log10(z.hop2OuterBase / z.skipOuterKm));
         const z3cSig  = hopSig(z3bSigDBm, z.hop2OuterBase, z.skipOuterKm);
         row(b.color, 'Z3c · 2-hop',
           `~${outer}–${hop2Total} km`,
           geoTag(hop2Total),
-          `2nd hop · −${lPerLeg} dB vs Z3b`,
+          '',
           z3cSig);
 
         // Zone 3d — 3-hop DX
@@ -3577,13 +3576,11 @@ function updateCovSummary(){
           const hop3Leg   = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase * gLin, S.power, cond.factor));
           const hop3Total = Math.min(Math.min(3 * b.skipGeomMax, MAX_KM), hop2Total + hop3Leg);
           if(hop3Total > hop2Total + 100){
-            const legdB3 = Math.round(-20*Math.log10(z.hop3OuterBase / z.skipOuterKm));
-            const cum3dB = 2 * legdB3;
             const z3dSig = hopSig(z3cSig, z.hop3OuterBase, z.skipOuterKm);
             row(b.color, 'Z3d · 3-hop',
               `~${hop2Total}–${hop3Total} km`,
               geoTag(hop3Total),
-              `3rd hop · −${legdB3} dB vs Z3c · −${cum3dB} dB cumul vs Z3b`,
+              '',
               z3dSig);
 
             // Zone 3e — 4-hop DX
@@ -3591,27 +3588,25 @@ function updateCovSummary(){
               const hop4Leg   = Math.min(hopGeomLeg, scaledIono(z.hop4OuterBase * gLin, S.power, cond.factor));
               const hop4Total = Math.min(Math.min(4 * b.skipGeomMax, MAX_KM), hop3Total + hop4Leg);
               if(hop4Total > hop3Total + 100){
-                const legdB4 = Math.round(-20*Math.log10(z.hop4OuterBase / z.skipOuterKm));
-                const cum4dB = 3 * legdB4;
                 const z3eSig = hopSig(z3dSig, z.hop4OuterBase, z.skipOuterKm);
                 row(b.color, 'Z3e · 4-hop',
                   `~${hop3Total}–${hop4Total} km`,
                   geoTag(hop4Total),
-                  `4th hop · −${legdB4} dB vs Z3d · −${cum4dB} dB cumul vs Z3b`,
+                  '',
                   z3eSig);
               } else {
-                row('#1a1a2a', 'Z3e · 4-hop', 'Below threshold', '—', z.hop4Note);
+                row('#1a1a2a', 'Z3e · 4-hop', 'Below threshold', '—', '');
               }
             }
           } else {
-            row('#1a1a2a', 'Z3d · 3-hop', 'Below threshold', '—', z.hop3Note);
+            row('#1a1a2a', 'Z3d · 3-hop', 'Below threshold', '—', '');
           }
         }
       } else {
-        row('#1a1a2a', 'Z3c · 2-hop', 'Below threshold', '—', z.hop2Note);
+        row('#1a1a2a', 'Z3c · 2-hop', 'Below threshold', '—', '');
       }
     } else {
-      row('#1a1a2a', 'Z3c · 2-hop', 'Unavailable', '—', `No 2-hop · ${z.isDaytime?'D-layer loss or band closed':'Band closed'}`);
+      row('#1a1a2a', 'Z3c · 2-hop', 'Unavailable', '—', '');
     }
   } else if(z.skipOuterKm){
     row(b.color, 'Z3b · F-DX', `Below min power (${b.minW}W)`, '—', '');
