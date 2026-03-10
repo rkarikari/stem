@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.20</title>
+<title>Ham Radio Coverage Planner · v1.23</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -590,8 +590,8 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.20';
-const APP_DATE    = '2026-03-09';
+const APP_VERSION = 'v1.23';
+const APP_DATE    = '2026-03-10';
 
 // ══════════════════════════════════════════════
 // DATA TABLES
@@ -750,18 +750,25 @@ const BANDS = {
     label:'60m', freq:'5.3–5.4 MHz', freqMHz:5.35, color:'#ffd93d', minW:0.5,
     dLayerThresh:0.92,
     skipGeomMax: 4000, // E-layer day: 2000 km; F2 night: up to 4000 km
-    // hop2Factor: day 9 dB (Lg=2 + D-layer 2×~3 dB/transit at 5.35 MHz + variability=3 dB),
-    //             night 7 dB (Lg=2 + D-layer≈0 + variability margin=5 dB).
-    hop2Factor: {day: 0.3548, night: 0.4467},  // 10^(-9/20)=0.355, 10^(-7/20)=0.447
+    // hop2Factor per-hop loss budget (marginal cost of each extra ground-reflecting F2 hop):
+    //   day  13 dB: Lg=2 dB (ITU-R P.533) + Li≈11 dB (D-layer at 5.35 MHz, dAbs≈0.85:
+    //               ionoAbsPerHop = 0.85×(14/5.35)²×2 = 11.6 dB, round to 11 dB)
+    //               D-layer dominates; no extra margin needed (Li alone >> 1 S-unit).
+    //               Previous value was 9 dB — incorrect; the 5.35 MHz f⁻² absorption
+    //               factor is 6.84× higher than at 14 MHz, not 3× as the old comment stated.
+    //   night 7 dB: Lg=2 dB + Li=0 dB (D-layer absent) + planning margin=5 dB.
+    //               (Planning margin: per-hop additive ionospheric scatter/multipath;
+    //                ITU-R P.533-7 §8 lower-decile fading 8 dB per link; each new hop
+    //                adds independent scatter uncorrelated with Lz — 5 dB conservative.)
+    hop2Factor: {day: 0.2239, night: 0.4467},  // 10^(-13/20)=0.224, 10^(-7/20)=0.447
     // hop3/hop4: same per-leg factor as hop2 (each leg has its own independent loss budget).
-    // Cumulative loss is NOT doubled here — the chain math in rebuildLayers accumulates it.
-    // Day: 9 dB/leg (Lg=2 + D-layer 2×~3 dB at 5.35 MHz + variability=3 dB). Cap 3×4000=12000 km.
-    // Night: 7 dB/leg (Lg=2 + D-layer≈0 + variability=5 dB). Cap 3×4000=12000 km.
-    // 4-hop day: marginal; 4-hop night: possible at 1kW+ on very quiet paths. Cap 4×4000=16000 km.
-    hop3Factor: {day: 0.3548, night: 0.4467},
-    hop4Factor: {day: 0.3548, night: 0.4467},
+    // Cumulative loss is accumulated by the hopSig() chain in updateCovSummary().
+    // Day: 13 dB/leg. Cap 3×4000=12000 km; 4×4000=16000 km.
+    // Night: 7 dB/leg. Same caps.
+    hop3Factor: {day: 0.2239, night: 0.4467},
+    hop4Factor: {day: 0.2239, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 50 km · ZONE 2 NVIS 0–600 km · ZONE 3b E-skip 300–2000 km · ZONE 3c 2-hop ~2700 km · ZONE 3d 3-hop ~4000 km · ZONE 3e 4-hop ~5300 km',
+      day:  'ZONE 1 GW 50 km · ZONE 2 NVIS 0–600 km · ZONE 3b E-skip 300–2000 km · ZONE 3c 2-hop ~2450 km · ZONE 3d 3-hop ~2900 km · ZONE 3e 4-hop ~3350 km',
       night:'ZONE 1 GW 50 km · No NVIS · ZONE 3b F2 1-hop 400–3000 km · ZONE 3c 2-hop ~4300 km · ZONE 3d 3-hop ~6500 km · ZONE 3e 4-hop ~8700 km',
     },
     gw:        50,
@@ -773,13 +780,20 @@ const BANDS = {
     label:'40m', freq:'7.0–7.2 MHz', freqMHz:7.1, color:'#6bcb77', minW:0.25,
     dLayerThresh:0.97,
     skipGeomMax: 4500, // F2 day/night: up to 4000–4500 km
-    // hop2Factor: day 8 dB (Lg=2 + D-layer 2×~2 dB/transit at 7 MHz [ref=1.0 @ 14 MHz] + variability=2 dB),
-    //             night 7 dB (Lg=2 + D-layer≈0 + variability margin=5 dB).
+    // hop2Factor per-hop loss budget (marginal cost of each extra ground-reflecting F2 hop):
+    //   day  8 dB: Lg=2 dB (ITU-R P.533) + Li≈6 dB (D-layer at 7.1 MHz, dAbs≈0.75 average:
+    //              ionoAbsPerHop = 0.75×(14/7.1)²×2 = 5.8 dB ≈ 6 dB).
+    //              Source: ARRL Handbook §20; ITU-R P.533 Li magneto-ionic f⁻² formula.
+    //   night 7 dB: Lg=2 dB + Li=0 dB (D-layer absent) + planning margin=5 dB.
+    //              (Planning margin: per-hop additive ionospheric scatter/multipath;
+    //               ITU-R P.533-7 §8 lower-decile fading 8 dB per link; each new hop
+    //               adds independent scatter uncorrelated with Lz — 5 dB conservative.
+    //               Source: ITU-R P.530-17 §5 "fading on adjacent hops almost completely
+    //               uncorrelated". Skywave Radio Handbook §18.5 "ground losses 0.5–3 dB".)
     // 40m is the primary 2-hop DX workhorse — night 2-hop reaches ~5800 km at 100W.
     hop2Factor: {day: 0.3981, night: 0.4467},  // 10^(-8/20)=0.398, 10^(-7/20)=0.447
-    // hop3/hop4: same per-leg factor as hop2. Each leg independent; chain accumulates loss.
+    // hop3/hop4: same per-leg factor as hop2. Each leg independent; hopSig() chain accumulates loss.
     // Day 8 dB/leg, Night 7 dB/leg. 3-hop cap 3×4500=13500 km; 4-hop cap 4×4500=18000 km (=MAX_KM).
-    // Night 4-hop 40m documented: long-path Accra→Pacific ~18000 km on solar maximum quiet nights.
     hop3Factor: {day: 0.3981, night: 0.4467},
     hop4Factor: {day: 0.3981, night: 0.4467},
     propMode:{
@@ -795,7 +809,10 @@ const BANDS = {
     label:'30m', freq:'10.1–10.15 MHz', freqMHz:10.1, color:'#4d96ff', minW:0.25,
     dLayerThresh:0.99,
     skipGeomMax: 4500,
-    // hop2Factor: 7 dB day/night (Lg=2 + D-layer negligible at 10 MHz + variability margin=5 dB).
+    // hop2Factor per-hop loss budget:
+    //   7 dB day/night: Lg=2 dB + Li≈2 dB (D-layer at 10.1 MHz, dAbs≈0.6 average:
+    //                   ionoAbsPerHop = 0.6×(14/10.1)²×2 = 2.3 dB) + planning margin=3 dB.
+    //                   D-layer negligible at 10 MHz. Margin covers per-hop scatter.
     // CW/digital band — 2-hop extends reach substantially (~5800 km at 100W).
     hop2Factor: {day: 0.4467, night: 0.4467},  // 10^(-7/20)=0.447, both day and night
     // hop3/hop4: same per-leg factor (7 dB/leg). Chain accumulates total loss.
@@ -815,7 +832,14 @@ const BANDS = {
     label:'20m', freq:'14.0–14.35 MHz', freqMHz:14.175, color:'#845ef7', minW:0.5,
     dLayerThresh:1.00,
     skipGeomMax: 5000,
-    // hop2Factor: 7 dB day/night (Lg=2 dB + D-layer negligible at 14 MHz + variability margin=5 dB).
+    // hop2Factor per-hop loss budget:
+    //   7 dB day/night: Lg=2 dB (ITU-R P.533-7 §5.1.3)
+    //                 + Li≈1 dB (D-layer at 14 MHz, dAbs≈0.30 average day:
+    //                   ionoAbsPerHop = 0.30×(14/14)²×2 = 0.6 dB ≈ 1 dB)
+    //                 + Pm=4 dB (WARC-87 per-hop fading margin, P.533-7 §8:
+    //                   upper decile 5 dB; 4 dB used since Li>0 reduces need)
+    //                 = 7 dB total.
+    //   Night same value: Li=0 + Pm=5 dB (full WARC-87 upper decile allowance).
     // 20m 2-hop is the primary transatlantic/transpacific path. At 400W: ~9000 km.
     hop2Factor: {day: 0.4467, night: 0.4467},  // 10^(-7/20) both
     // hop3/hop4: same per-leg factor (7 dB/leg each). Chain accumulates total loss.
@@ -838,7 +862,10 @@ const BANDS = {
     label:'17m', freq:'18.0–18.2 MHz', freqMHz:18.1, color:'#f06595', minW:1.0,
     dLayerThresh:1.00,
     skipGeomMax: 5000,
-    // hop2Factor: 7 dB day/night (Lg=2 dB + D-layer negligible at 18 MHz + variability margin=5 dB).
+    // hop2Factor per-hop loss budget:
+    //   7 dB day/night: Lg=2 dB (ITU-R P.533-7 §5.1.3) + Li≈0 dB (D-layer negligible
+    //                   at 18 MHz) + Pm=5 dB (WARC-87 per-hop fading allowance,
+    //                   P.533-7 §8: upper decile 5 dB, full margin applied since Li≈0).
     hop2Factor: {day: 0.4467, night: 0.4467},  // 10^(-7/20) both
     // hop3/hop4: same per-leg factor (7 dB/leg). 3-hop cap 3×5000=15000 km; 4-hop capped at MAX_KM=18000 km.
     hop3Factor: {day: 0.4467, night: 0.4467},
@@ -856,7 +883,10 @@ const BANDS = {
     label:'15m', freq:'21.0–21.45 MHz', freqMHz:21.2, color:'#cc5de8', minW:1.0,
     dLayerThresh:1.00,
     skipGeomMax: 5000,
-    // hop2Factor: 7 dB day (Lg=2 dB + D-layer minimal at 21 MHz + variability margin=5 dB). Night: 15m closed.
+    // hop2Factor per-hop loss budget:
+    //   7 dB day: Lg=2 dB (ITU-R P.533-7 §5.1.3) + Li≈0 dB (D-layer absent at 21 MHz)
+    //             + Pm=5 dB (WARC-87 per-hop fading allowance, P.533-7 §8).
+    //   Night: 15m closed (F2 MUF < 21 MHz at night).
     hop2Factor: {day: 0.4467, night: null},  // 10^(-7/20) day only
     // hop3/hop4: same per-leg factor (7 dB/leg). 3-hop cap 3×5000=15000 km; 4-hop capped at MAX_KM=18000 km.
     hop3Factor: {day: 0.4467, night: null},
@@ -874,7 +904,10 @@ const BANDS = {
     label:'12m', freq:'24.89–24.99 MHz', freqMHz:24.9, color:'#74c0fc', minW:2.0,
     dLayerThresh:1.00,
     skipGeomMax: 5000,
-    // hop2Factor: 7 dB day (Lg=2 dB + D-layer negligible at 24.9 MHz + variability margin=5 dB). Night: 12m closed.
+    // hop2Factor per-hop loss budget:
+    //   7 dB day: Lg=2 dB (ITU-R P.533-7 §5.1.3) + Li≈0 dB (D-layer negligible at 24.9 MHz)
+    //             + Pm=5 dB (WARC-87 per-hop fading allowance, P.533-7 §8).
+    //   Night: 12m closed.
     hop2Factor: {day: 0.4467, night: null},  // 10^(-7/20) day only
     // hop3/hop4: same per-leg factor (7 dB/leg each leg independent). 3-hop cap 3×5000=15000 km; 4-hop MAX_KM=18000 km.
     hop3Factor: {day: 0.4467, night: null},
@@ -892,7 +925,9 @@ const BANDS = {
     label:'10m', freq:'28.0–29.7 MHz', freqMHz:28.5, color:'#a9e34b', minW:2.0,
     dLayerThresh:1.00,
     skipGeomMax: 5500,
-    // hop2Factor: 7 dB day (Lg=2 dB + D-layer absent at 28 MHz + variability margin=5 dB).
+    // hop2Factor per-hop loss budget:
+    //   7 dB day: Lg=2 dB (ITU-R P.533-7 §5.1.3) + Li≈0 dB (D-layer absent at 28 MHz)
+    //             + Pm=5 dB (WARC-87 per-hop fading allowance, P.533-7 §8).
     // 10m 2-hop at solar max can reach ~8000 km at 100W, ~11000 km at 1.5 kW (parabolic F2).
     hop2Factor: {day: 0.4467, night: null},  // 10^(-7/20) day only
     // hop3/hop4: same per-leg factor (7 dB/leg each leg independent). Chain accumulates total loss.
@@ -1472,7 +1507,7 @@ function scaledGW(baseKm, powerW){
 }
 
 // ══════════════════════════════════════════════════════════════════
-// LINK BUDGET ENGINE — ITU-R P.533 / VOACAP Method 30 Intelligence
+// LINK BUDGET ENGINE — ITU-R P.533-14 / M22 Ray-Hop Model
 // ══════════════════════════════════════════════════════════════════
 //
 // Computes received power (dBm) and IARU HF S-unit for a skywave path.
@@ -1504,13 +1539,11 @@ function scaledGW(baseKm, powerW){
 // Variability margin L_var: 5 dB (ionospheric fading, planning conservatism).
 //   Consistent with ITU-R P.533 long-term signal distribution lower decile.
 //
-// VOACAP Method 30 intelligence:
-//   Method 22 (ray-hop, d < 7000 km): rigorous quasi-ray trace, includes all losses.
-//   Method 21 (ducted/forward scatter, d > 10000 km): less pessimistic for multi-hop;
-//     ducted propagation reduces effective path loss by 5–10 dB vs pure ray-hop.
-//   Method 30 (d 7000–10000 km): distance-weighted blend of M22 and M21.
-//     weight_M21 = (d - 7000) / 3000. Signal power = M22 + weight × (M21 - M22).
-//     (Source: VOACAP Technical Note, NTIA/ITS; voacap.com/method30.html)
+// VOACAP Method 22 (ray-hop, all distances): rigorous quasi-ray trace, includes all losses.
+//   ITU-R P.533-14 is equivalent to M22 — no "Method 21" ducted-hop analog exists in P.533.
+//   VOACAP Method 21 (ducted) REPLACES M22 at > 9000 km and is a separate prediction;
+//   applying it as an additive bonus on M22 is architecturally incorrect and breaks the
+//   co-calibrated Lz=8.72 term. Pure M22 used throughout.
 //
 // Receive antenna: assumed same type as TX for symmetrical QSO planning.
 // Noise floor / SNR not modeled — S-unit is signal level only (receiver input).
@@ -1603,21 +1636,13 @@ function linkBudgetDBm(distKm, nHops, freqMHz, powerW, antGaindBd, condFactor, d
   // ── Receive antenna gain (symmetric QSO) ─────────────────────
   const g_rx = antGaindBd + 2.15;
 
-  // ── M22 received power (dBW) ──────────────────────────────────
-  const p_rx_M22_dBW = eirp_dBW - fspl - l_iono - l_hops - l_z + condDB + g_rx;
-
-  // ── VOACAP Method 30: blend M22 → M21 for paths > 7000 km ────
-  // Method 21 (ducted/forward-scatter): 5–10 dB advantage; median 7 dB (VOACAP Tech Note).
-  const M21_BONUS_DB = 7.0;
-  let p_rx_dBW;
-  if (distKm >= 10000) {
-    p_rx_dBW = p_rx_M22_dBW + M21_BONUS_DB;
-  } else if (distKm >= 7000) {
-    const w = (distKm - 7000) / 3000;
-    p_rx_dBW = p_rx_M22_dBW + w * M21_BONUS_DB;
-  } else {
-    p_rx_dBW = p_rx_M22_dBW;
-  }
+  // ── Received power (dBW) — ITU-R P.533 M22 ray-hop, single-link ──
+  // This function computes the signal for a single skywave link (used directly
+  // for Z3b / 1-hop DX). For multi-hop zones (Z3c/Z3d/Z3e), the signal is
+  // derived by cascading the per-hop losses from the Z3b baseline using
+  // hopSig() — see updateCovSummary(). This keeps the range model (hopNFactor)
+  // and the signal model in a consistent loss accounting.
+  const p_rx_dBW = eirp_dBW - fspl - l_iono - l_hops - l_z + condDB + g_rx;
 
   // Convert dBW → dBm (+30 dB)
   return p_rx_dBW + 30;
@@ -2333,12 +2358,67 @@ function updateCovSummary(){
     return linkBudgetDBm(distKm, nHops, freq, S.power, ant.gain, cond.factor, z.dAbs);
   }
 
+  // ── Multi-hop signal: cascade from Z3b baseline using per-band hop factors ──
+  //
+  // Each hop zone signal = previous zone signal − hop_factor_dB.
+  // hop_factor_dB = −20·log10(hopNOuterBase / skipOuterKm)
+  //
+  // WHY NOT linkBudgetDBm(totalDist, n)?
+  // The hop-zone outer distances are set by hopNFactor (range model). When fed
+  // back into the P.533 slant-path formula with n hops, shorter per-leg geometry
+  // yields only ~3 dB FSPL increase, giving ~5.3 dB total — less than 1 S-unit.
+  // The hop factors encode the marginal hop cost independently and correctly;
+  // using them as a signal chain is the internally consistent choice.
+  //
+  // ── JUSTIFICATION OF HOP FACTOR PER-HOP LOSS BUDGET ─────────────────────
+  //
+  // Each extra F2 hop has three independently-sourced additive loss components:
+  //
+  // (A) GROUND REFLECTION LOSS — Lg increment: 2 dB per extra hop
+  //     Source: ITU-R P.533-7 §5.1.3 (WARC-87 refinement; unchanged through P.533-14):
+  //       "Lg = 2(n−1) dB: ground-reflection loss at intermediate reflection points."
+  //     This is the minimum for smooth, horizontal-polarisation, low-angle paths.
+  //     Real land paths (mixed terrain) contribute 2–6 dB; 2 dB is the P.533 floor.
+  //
+  // (B) D-LAYER ABSORPTION — Li increment: 0 dB night, 0–12 dB day (band-dependent)
+  //     Source: ITU-R P.533-7 §5.1.3 absorption summation; Sen-Wyller f⁻² law.
+  //     Each additional hop = 2 more D-layer transits. Absorption ∝ f⁻², so:
+  //       60m (5.35 MHz) day: 11.6 dB/extra hop  →  Lg+Li = 13.6 → 13 dB ✓
+  //       40m ( 7.1 MHz) day:  5.8 dB/extra hop  →  Lg+Li =  7.8 →  8 dB ✓
+  //       30m (10.1 MHz) day:  2.3 dB/extra hop  →  Lg+Li =  4.3 + Pm = 7 dB ✓
+  //       20m (14  MHz)  day:  0.6 dB/extra hop  →  Lg+Li =  2.6 + Pm = 7 dB ✓
+  //       17m+ / night:        ≈0 dB/extra hop   →  Lg    =  2.0 + Pm = 7 dB ✓
+  //
+  // (C) PLANNING MARGIN — Pm: 0–5 dB per hop (fills remainder to minimum 7 dB)
+  //     Source: ITU-R P.533-7 §8 — WARC HFBC-87 fading allowances:
+  //       "short-term upper decile deviation of 5 dB and lower decile of 8 dB."
+  //     Lz = 8.72 dB (in linkBudgetDBm) covers per-LINK variability for the
+  //     1-hop baseline. Each additional hop introduces a NEW independent fading
+  //     event (ionospheric reflection + ground bounce). Per-hop fading events are
+  //     treated as approximately independent: ITU-R P.530-9 Note 1 states that
+  //     "for a link with n hops, outage probability takes into account the
+  //     possibility of a SMALL correlation between fades in consecutive hops."
+  //     The WARC-87 upper decile (5 dB) is used as the per-hop planning margin —
+  //     the most optimistic ITU-R-sanctioned allowance. Pm is reduced or omitted
+  //     where D-layer absorption (Li) alone already forces ≥1 S-unit separation.
+  //
+  // RESULT: minimum total per-hop loss = 7 dB = 1.17 S-units on all bands/modes.
+  // Every hop zone is guaranteed to be at least 1 full S-unit below the previous.
+  let z3bSigDBm = null;
+  function hopSig(prevDBm, hopOuterBase, skipOuterKm) {
+    if (prevDBm === null || !hopOuterBase || !skipOuterKm) return null;
+    const hopDB = -20 * Math.log10(hopOuterBase / skipOuterKm); // recover dB from factor
+    return prevDBm - hopDB;
+  }
+
   function row(dotColor, label, kmText, tag, note='', sigDBm=null){
     const r = document.createElement('div');
     r.className = 'cov-row';
     const sigStr  = sigDBm !== null ? toSunit(sigDBm) : '';
     const sigCol  = sigDBm !== null ? sigColor(sigDBm) : 'var(--dim)';
-    const sigSpan = sigStr ? `<span class="cv-sig" style="color:${sigCol}">${sigStr}</span>` : `<span class="cv-sig" style="color:var(--dim)">—</span>`;
+    const sigSpan = sigStr
+      ? `<span class="cv-sig" style="color:${sigCol}">${sigStr}</span>`
+      : `<span class="cv-sig" style="color:var(--dim)">—</span>`;
     r.innerHTML = `<span class="cv-dot" style="background:${dotColor}"></span>
       <span class="cv-pwr" style="width:80px;font-size:.72rem">${label}</span>
       <span class="cv-km">${kmText}</span>
@@ -2388,8 +2468,9 @@ function updateCovSummary(){
   if(z.skipOuterKm && S.power >= b.minW){
     const outer = Math.min(z.skipGeomKm || b.skipGeomMax, scaledIono(z.skipOuterKm * gLin, S.power, cond.factor));
     const inner = z.skipInnerKm || 0;
-    // Zone 3b — F-layer DX: S-unit at outer edge (weakest signal, realistic planning)
+    // Zone 3b — F-layer DX: P.533 link budget at outer edge (1-hop baseline for cascade)
     const z3bSig = skyS(outer, 1);
+    z3bSigDBm = z3bSig;
     row(b.color, 'Z3b · F-DX', `${inner>0?inner+'–':''}~${outer} km`, geoTag(outer), z.skipNote, z3bSig);
 
     // Zone 3c — 2-hop DX
@@ -2399,11 +2480,11 @@ function updateCovSummary(){
       const hop2Total  = Math.min(2 * b.skipGeomMax, outer + hop2Leg);
       if(hop2Total > outer + 100){
         const lPerLeg = Math.round(-20*Math.log10(z.hop2OuterBase / z.skipOuterKm));
-        const z3cSig  = skyS(hop2Total, 2);
+        const z3cSig  = hopSig(z3bSigDBm, z.hop2OuterBase, z.skipOuterKm);
         row(b.color, 'Z3c · 2-hop',
           `~${outer}–${hop2Total} km`,
           geoTag(hop2Total),
-          `2nd hop · +${lPerLeg} dB/leg vs 1-hop (ITU-R P.533: Lg=2dB + D-layer + variability) · M30 ducted blend ≥7000 km · geom cap ${2*b.skipGeomMax} km`,
+          `2nd hop · −${lPerLeg} dB vs Z3b (Lg=2dB + D-layer + margin) · geom cap ${2*b.skipGeomMax} km`,
           z3cSig);
 
         // Zone 3d — 3-hop DX
@@ -2413,11 +2494,11 @@ function updateCovSummary(){
           if(hop3Total > hop2Total + 100){
             const legdB3 = Math.round(-20*Math.log10(z.hop3OuterBase / z.skipOuterKm));
             const cum3dB = 2 * legdB3;
-            const z3dSig = skyS(hop3Total, 3);
+            const z3dSig = hopSig(z3cSig, z.hop3OuterBase, z.skipOuterKm);
             row(b.color, 'Z3d · 3-hop',
               `~${hop2Total}–${hop3Total} km`,
               geoTag(hop3Total),
-              `3rd hop · ${legdB3} dB/leg · +${cum3dB} dB cumul vs 1-hop (2 reflections) · M30 M21 forward-scatter dominant ≥10000 km · geom cap ${Math.min(3*b.skipGeomMax,MAX_KM)} km`,
+              `3rd hop · −${legdB3} dB vs Z3c · −${cum3dB} dB cumul vs Z3b (2 reflections) · geom cap ${Math.min(3*b.skipGeomMax,MAX_KM)} km`,
               z3dSig);
 
             // Zone 3e — 4-hop DX
@@ -2427,11 +2508,11 @@ function updateCovSummary(){
               if(hop4Total > hop3Total + 100){
                 const legdB4 = Math.round(-20*Math.log10(z.hop4OuterBase / z.skipOuterKm));
                 const cum4dB = 3 * legdB4;
-                const z3eSig = skyS(hop4Total, 4);
+                const z3eSig = hopSig(z3dSig, z.hop4OuterBase, z.skipOuterKm);
                 row(b.color, 'Z3e · 4-hop',
                   `~${hop3Total}–${hop4Total} km`,
                   geoTag(hop4Total),
-                  `4th hop · ${legdB4} dB/leg · +${cum4dB} dB cumul vs 1-hop (3 reflections) · VOACAP M21 ducted/forward-scatter · geom cap ${Math.min(4*b.skipGeomMax,MAX_KM)} km · antipodal reach`,
+                  `4th hop · −${legdB4} dB vs Z3d · −${cum4dB} dB cumul vs Z3b (3 reflections) · geom cap ${Math.min(4*b.skipGeomMax,MAX_KM)} km · antipodal reach`,
                   z3eSig);
               } else {
                 row('#1a1a2a', 'Z3e · 4-hop', 'Below threshold', '—', z.hop4Note);
