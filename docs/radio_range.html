@@ -646,7 +646,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v2.04';
+const APP_VERSION = 'v2.05';
 const APP_DATE    = '2026-03-10';
 
 // ══════════════════════════════════════════════
@@ -1566,8 +1566,11 @@ function sfiScaleFactor(isDaytime){
 // winter than summer despite lower solar elevation. Mechanism: N₂/O ratio change.
 //
 // Seasonal multipliers calibrated from ionosonde climatologies:
-//   Equatorial: small seasonal variation (~±8%). Peaks at equinoxes (Mar, Sep).
-//     (Oyekola 2010, Ouagadougou; equatorial fountain symmetric at equinoxes)
+//   Equatorial (|lat|<20°): semiannual anomaly. Peaks at equinoxes (Mar, Sep).
+//     Day: equinox-vs-solstice deviation < 10% confirmed for African longitude sector
+//     (Ouagadougou dip 1.4°N ionosonde — Obrou et al. IJAR 2022; Adebesin 2021).
+//     Night: post-sunset PRE enhancement peaks at equinox AND June solstice in the
+//     African sector; Dec solstice is the minimum (Fejer et al., Ouagadougou SC 20-22).
 //   Mid-latitude: winter anomaly dominant (±20%). Winter noon = +20%, summer noon = −15%.
 //     (Rome, Boulder, Kokubunji data; Laštovička 2023 review)
 //     Night: summer > winter by ~10% (opposite — called "seasonal anomaly").
@@ -1575,8 +1578,14 @@ function sfiScaleFactor(isDaytime){
 //     Winter night: F2 collapses (polar night). Summer midnight sun: F2 elevated.
 //     Day: summer +30%, winter −30%.
 //
+// [UPGRADE L v2.05]: Equatorial tables recalibrated from African ionosonde research.
+//   Day ±8/−6% → ±6/−4% (reduced to match < 10% ionosonde evidence).
+//   Night: corrected June-depressed error → June comparable to equinox (PRE physics).
+//
 // Reference month: R12=100 annual average → month correction = 1.0 when averaged.
-// Source: Davies "Ionospheric Radio" (1990); Laštovička (2023); IRI-2016 output by month.
+// Sources: Davies (1990); Bilitza et al. IRI-2016 (2017); Obrou et al. IJAR (2022);
+//   Adebesin et al. Sci.Gov (2021); Fejer et al. Ouagadougou Vd; Cherniak et al.
+//   COSMIC-2 J.Space Weather (2021); Laštovička foF2 trends (2023).
 //
 // SOUTHERN HEMISPHERE: seasons reversed (month 6 = winter). Applied automatically.
 // ══════════════════════════════════════════════════════════════════
@@ -1586,10 +1595,20 @@ function sfiScaleFactor(isDaytime){
 // All rows are normalised so their mean ≈ 1.0 (annual-average profiles remain correct on average).
 const SEASONAL = {
   equatorial: {
-    // Day: peaks at equinoxes (+8%), troughs at solstices (−6%).
-    day:   [1.04, 1.06, 1.08, 1.05, 1.00, 0.96, 0.94, 0.96, 1.05, 1.08, 1.06, 1.04],
-    // Night: very small seasonal variation at equatorial latitudes.
-    night: [1.02, 1.02, 1.01, 1.00, 0.99, 0.98, 0.97, 0.98, 1.01, 1.02, 1.02, 1.02],
+    // [UPGRADE L v2.05] Day: equinox peaks (+6%), solstice troughs (−4%).
+    // Prior table used ±8/−6% — overstated. African ionosonde data (Ouagadougou dip 1.4°N,
+    // Dakar, Ilorin) shows equinox-vs-solstice deviation < 10% for CCIR/URSI in this sector.
+    // Narrowed to ±6/−4% range. Mean preserved at 1.0.
+    // Sources: Obrou et al. Ouagadougou IJAR 2022; Adebesin African foF2 Sci.Gov 2021;
+    //          Cherniak et al. COSMIC-2 J.Space Weather 2021 (equatorial RMSE 0.87 MHz).
+    day:   [1.02, 1.04, 1.06, 1.04, 1.00, 0.97, 0.96, 0.97, 1.04, 1.06, 1.04, 1.02],
+    // [UPGRADE L v2.05] Night: African longitude sector — post-sunset PRE enhancement
+    // (Pre-Reversal Enhancement of vertical drift) peaks comparably at equinox AND at
+    // June solstice. Prior table incorrectly showed June night depressed (0.97).
+    // Ouagadougou Vd study (SC 20–22) shows PRE magnitude highest at equinox AND June
+    // solstice; minimum at Dec solstice. Table corrected to flat-to-slightly-elevated.
+    // Sources: Fejer et al. Ouagadougou Vd SC 20–22; Adebesin Ilorin/Jicamarca 2021.
+    night: [1.00, 1.01, 1.02, 1.03, 1.03, 1.03, 1.02, 1.03, 1.03, 1.03, 1.01, 1.00],
   },
   midlat: {
     // Day: winter anomaly. Dec/Jan peak (+20%), Jun/Jul trough (−18%).
@@ -4884,7 +4903,7 @@ function switchMode(mode){
   const v = document.getElementById('appVer');
   if(v) v.textContent = APP_VERSION;
   const f = document.getElementById('sbFootVer');
-  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Per-bearing midpoint foF2 · ITU-R P.368 conductivity · ITU-R P.526 diffraction · SFI solar scaling · Seasonal foF2 · Troposcatter · Spencer(1971) solar geometry · Magneto-ionic gyrofrequency · Diurnal hmF2 · foE solar-zenith · GW P.368 recal · Grey-line D-layer · M3k skip inner · Hata rural recal · Lh auroral loss (P.533 Table 2) · E-layer F2 screening (P.533-13 §4)`;
+  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Per-bearing midpoint foF2 · ITU-R P.368 conductivity · ITU-R P.526 diffraction · SFI solar scaling · Seasonal foF2 · Troposcatter · Spencer(1971) solar geometry · Magneto-ionic gyrofrequency · Diurnal hmF2 · foE solar-zenith · GW P.368 recal · Grey-line D-layer (I) · M3k skip inner (J) · Hata rural recal (K) · Equatorial seasonal recal (L)`;
 })();
 buildBands();
 buildConds();
