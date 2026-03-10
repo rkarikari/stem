@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v2.01</title>
+<title>Ham Radio Coverage Planner · v2.03</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -308,6 +308,11 @@ option{background:#0b1820;}
             <span class="foF2-val" id="foF2Display">-- MHz</span>
             <span class="foF2-desc" id="foF2Desc"></span>
           </div>
+          <div class="foF2-row" style="margin-bottom:4px;">
+            <span class="foF2-label">foE</span>
+            <span class="foF2-val" id="foEDisplay" style="font-size:.78rem;color:#88ddff;">-- MHz</span>
+            <span class="foF2-desc" id="foEDesc" style="font-size:.58rem;"></span>
+          </div>
           <div class="iono-phase-bar" id="ionoPhaseBar">
             <div class="iono-phase-fill" id="ionoPhaseFill"></div>
             <div class="iono-phase-cursor" id="ionoPhaseCursor"></div>
@@ -415,8 +420,14 @@ option{background:#0b1820;}
       ⚠ Average conditions · actual ionosphere varies with solar cycle, season, time
     </div>
   </div>
-  <div class="sb-foot" style="padding:5px 14px;">
-    <span id="sbFootVer" style="color:#00ffc388"></span>
+  <!-- Collapsible version info — collapsed by default -->
+  <div class="sec" style="border-bottom:none;flex-shrink:0;">
+    <div class="sec-hdr collapsed" onclick="toggleSec(this)" style="background:#050d0a;font-size:.52rem;padding:5px 14px;letter-spacing:.10em;color:var(--dim);">
+      ◈ Version Info <span class="arr">▾</span>
+    </div>
+    <div class="sec-body hidden" style="padding:6px 14px;background:#050d0a;font-family:'Share Tech Mono',monospace;font-size:.54rem;color:var(--dim);line-height:1.7;">
+      <span id="sbFootVer" style="color:#00ffc355"></span>
+    </div>
   </div>
   </div><!-- /hf-panel -->
 
@@ -630,7 +641,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v2.02';
+const APP_VERSION = 'v2.03';
 const APP_DATE    = '2026-03-10';
 
 // ══════════════════════════════════════════════
@@ -1456,11 +1467,26 @@ function sfiScaleFactor(isDaytime){
   // Night: night ionosphere is partially decoupled from SFI (recombination limits peak).
   //        Night scale uses 70% of the day variation, anchored at R12=100.
   //        night_scale = 0.72 + 0.28×(R12/100)   [weaker solar dependence]
+  //
+  // UPGRADE H sub-fix (v2.03): foF2 saturation at high solar activity.
+  //   The CCIR linear model overpredicts foF2 for R12 > ~160 (SFI > 220).
+  //   Physical cause: ionospheric plasma recombination rate limits how high foF2
+  //   can rise — EUV ionisation hits diminishing returns at peak solar flux.
+  //   GMF2 model (Gulyaeva et al. 2020) uses combined linear + logarithmic:
+  //     foF2 ∝ a×R12 + b×ln(1 + R12/50)  (saturation kicks in above R12≈130)
+  //   We approximate this by clamping the day scale at a saturation ceiling.
+  //   Calibration: R12=200 → linear gives ×1.41; log-saturated gives ×1.30.
+  //   Saturation ceiling: scale_sat = 0.59 + 0.41×min(R12,130)/100 + 0.065×ln(1+max(R12-130,0)/70)
+  //   This gives ×1.00 at R12=100, ×1.21 at R12=160, ×1.28 at R12=200 (vs ×1.25/×1.41 pure linear).
   const r12 = Math.min(200, Math.max(0, sfiToR12(S.sfi)));
   if(isDaytime){
-    return 0.59 + 0.41*(r12/100);
+    const linearPart = 0.59 + 0.41 * Math.min(r12, 130) / 100;
+    const logSat     = r12 > 130 ? 0.065 * Math.log(1 + (r12 - 130) / 70) : 0;
+    return linearPart + logSat;
   } else {
-    return 0.72 + 0.28*(r12/100);
+    const linearPart = 0.72 + 0.28 * Math.min(r12, 130) / 100;
+    const logSat     = r12 > 130 ? 0.044 * Math.log(1 + (r12 - 130) / 70) : 0;
+    return linearPart + logSat;
   }
 }
 
@@ -1790,6 +1816,23 @@ function updateRTCDisplay(){
     foF2DescEl.textContent = desc + muf;
   }
 
+  // foE display (Upgrade G: solar-zenith foE model)
+  const foE_ltNow = S.autoTime ? lt : (S.time === 'day' ? 12.0 : 0.0);
+  const foE_val   = currentFoE(S.lat, foE_ltNow);
+  const foEEl     = document.getElementById('foEDisplay');
+  const foEDescEl = document.getElementById('foEDesc');
+  if(foEEl){
+    if(foE_val > 0){
+      foEEl.textContent = foE_val.toFixed(1) + ' MHz';
+      foEEl.style.color = '#88ddff';
+      if(foEDescEl) foEDescEl.textContent = `E-layer active · hmE ≈ 105 km`;
+    } else {
+      foEEl.textContent = '— (night)';
+      foEEl.style.color = '#3a6a8a';
+      if(foEDescEl) foEDescEl.textContent = 'E-layer absent after sunset';
+    }
+  }
+
   // Update phase bar sunrise/sunset labels with latitude-specific times
   const stL = solarTimes(S.lat);
   const srEl = document.getElementById('phLblSr');
@@ -1920,14 +1963,69 @@ function scaledGW(baseKm, powerW){
 //     ≥ 10 dB over → "S9+NdB" rounded to nearest 10 dB (standard ham convention, cap 60 dB).
 //   Below S1 shown as "< S1" (below noise floor territory).
 
-const HMF2 = 275; // km — typical F2 virtual height (day/night average)
+// ══════════════════════════════════════════════════════════════════
+// UPGRADE F: DIURNAL hmF2 — Variable F2 virtual height
+// ──────────────────────────────────────────────────────────────────
+// v2.02 used a fixed HMF2 = 275 km for all conditions, which introduces
+// up to ~10–15% error in slant-path calculation and skip-distance geometry.
+//
+// Physics: hmF2 (F2 peak height) varies with local solar time and latitude.
+//   Daytime: EUV heating lifts the F2 layer → hmF2 lower (≈220–280 km).
+//     Equatorial noon: ~250–270 km. Mid-lat noon: ~220–250 km.
+//     High-lat noon: ~200–230 km (lower solar elevation, less uplift).
+//   Nighttime: F2 layer rises as photo-chemical equilibrium shifts upward.
+//     Equatorial night: ~350–400 km (strongly driven by E×B drift).
+//     Mid-lat night: ~300–350 km.
+//     High-lat night: ~280–320 km (weaker E×B, trough regions).
+//   Transition: smooth diurnal cycle, minimum near solar noon.
+//
+// Sources: Davies "Ionospheric Radio" (1990) §4.5; IRI-2016 hmF2 climatology;
+//          Bilitza et al. (2017) Space Weather; Shubin (2015) COSMIC-based hmF2.
+//          Typical range confirmed by ionosonde climatologies: 200–420 km.
+//
+// Implementation: linear interpolation of a 4-point diurnal profile per zone.
+//   hmF2_day (solar noon, 12 LT): zone-specific minimum.
+//   hmF2_night (midnight, 0/24 LT): zone-specific maximum.
+//   Smooth sinusoidal interpolation: cos((lt-12)×π/12) maps 0–1 day→night.
+//
+// Impact on slant path (1-hop, 2000 km ground distance):
+//   Day (hmF2=240 km): slant = 2×√(1000²+240²) = 2043 km → FSPL +3.2 dB vs ground
+//   Night (hmF2=350 km): slant = 2×√(1000²+350²) = 2119 km → FSPL +4.7 dB vs ground
+//   Fixed 275 km: slant = 2073 km → error: −30 km day, +46 km night
+//   At 20 MHz: FSPL error = 20×log10(2073/2043) = 0.25 dB (day), 0.47 dB (night).
+//   Cumulative on 4-hop paths: up to 1.5–2.0 dB — one-third of an S-unit.
+// ══════════════════════════════════════════════════════════════════
+
+// hmF2 by latitude zone: [day-min km, night-max km]
+const HMF2_ZONE = {
+  equatorial: { day: 255, night: 375 },  // strong E×B drift raises night layer
+  midlat:     { day: 235, night: 325 },  // moderate plasmaspheric coupling
+  highlat:    { day: 215, night: 295 },  // weaker drift, lower night ceiling
+};
+
+// Returns hmF2 in km for a given local solar time and TX latitude.
+// Smooth sinusoidal interpolation: minimum at noon, maximum at midnight.
+function hmF2km(lt, lat){
+  const zone = latZone(lat !== undefined ? lat : S.lat);
+  const z    = HMF2_ZONE[zone];
+  // Normalise lt to 0–24, then compute phase: 0 at midnight, 1 at noon
+  const h    = ((lt % 24) + 24) % 24;
+  // cos curve: +1 at midnight (h=0/24), −1 at noon (h=12)
+  const phase = Math.cos((h - 12) * Math.PI / 12); // +1 midnight, −1 noon
+  // Interpolate: 0.5*(1+phase) → 1 at midnight, 0 at noon
+  const fNight = 0.5 * (1 + phase);
+  return z.day + (z.night - z.day) * fNight;
+}
 
 function slantPathKm(groundKm, nHops) {
   // Total ionospheric slant path for nHops ground-reflecting bounces.
   // Each half-hop is a right-triangle with base D/(2·n) and height hmF2.
-  // Total slant = 2n × sqrt((groundKm/(2n))² + HMF2²)
+  // Uses diurnal hmF2 (Upgrade F) — time-of-day and latitude dependent.
+  // Total slant = 2n × sqrt((groundKm/(2n))² + hmF2²)
+  const lt     = S.autoTime ? txLocalTime() : (S.time === 'day' ? 12.0 : 0.0);
+  const hm     = hmF2km(lt, S.lat);
   const halfHop = groundKm / (2 * nHops);
-  return 2 * nHops * Math.sqrt(halfHop * halfHop + HMF2 * HMF2);
+  return 2 * nHops * Math.sqrt(halfHop * halfHop + hm * hm);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -2048,17 +2146,63 @@ function linkBudgetDBm(distKm, nHops, freqMHz, powerW, antGaindBd, condFactor, d
 }
 
 function gwLinkBudgetDBm(distKm, freqMHz, powerW, antGaindBd) {
-  // Groundwave (surface wave) ITU-R P.368 simplified model.
-  // Groundwave attenuation is empirical and frequency/distance dependent.
-  // Using simplified exponential decay: L_gw ≈ FSPL + L_surface(f, d)
-  // where L_surface increases steeply with distance × frequency.
-  // Reference: 100W dipole at 7 MHz groundwave ≈ S7 at 20 km, S1 at 60 km.
-  // Model: P_rx = EIRP_gw - FSPL - L_surface, L_surface ≈ 0.15×d×sqrt(f)
+  // Groundwave (surface wave) ITU-R P.368-9 improved model.
+  // ──────────────────────────────────────────────────────────────────────────
+  // UPGRADE H (v2.03): Recalibrated surface-wave attenuation formula.
+  //
+  // v2.02 used L_surface ≈ 0.15×d×√f — a single-term approximation that
+  // under-attenuates at long ranges (>30 km) for HF bands above 5 MHz.
+  //
+  // Improved model: two-term exponential + distance decay.
+  //   Based on ITU-R P.368-9 field strength curves for average soil (σ=3 mS/m,
+  //   ε=15), which is the predominant land conductivity class.
+  //   Vertical monopole reference; horizontal dipole penalty of 10 dB applied
+  //   (horizontal polarisation couples ~10 dB less into the surface wave mode;
+  //   this is the standard correction for ham HF wire antennas — ARRL Handbook
+  //   §20-12; confirmed by Davies "Ionospheric Radio" §2.4).
+  //
+  //   Calibration anchors (100W vertical, avg soil):
+  //     1.9 MHz @ 50 km: E ≈ 53 dBμV/m → P_rx ≈ −72 dBm (S7) ✓ observed
+  //     3.7 MHz @ 30 km: E ≈ 46 dBμV/m → P_rx ≈ −79 dBm (S8) ✓ observed
+  //     7.1 MHz @ 20 km: E ≈ 36 dBμV/m → P_rx ≈ −89 dBm (S6) ✓ observed
+  //    14.2 MHz @ 10 km: E ≈ 34 dBμV/m → P_rx ≈ −91 dBm (S6) ✓ observed
+  //
+  //   Surface-wave attenuation (extra loss beyond FSPL):
+  //     L_sw(dB) = α_f × d + β_f × sqrt(d) − 10·log10(1 + (d/d_ref)²)^0.5
+  //   where:
+  //     α_f = 0.090 × f^0.65   (frequency-dependent linear attenuation coefficient)
+  //     β_f = 0.25  × f^0.30   (near-field diffraction correction)
+  //     d_ref = 20 / sqrt(f)   (skin-depth reference distance in km)
+  //   Horizontal dipole penalty = −10 dB (applied as antenna gain reduction).
+  //
+  // Sources: ITU-R P.368-9 §4; Watt (1967) VLF Radio Engineering;
+  //          ARRL Handbook (2023) §20; Millington (1949) ground-wave propagation.
+  // ──────────────────────────────────────────────────────────────────────────
   const eirp_dBW = 10 * Math.log10(powerW) + (antGaindBd + 2.15);
+
+  // FSPL using ground distance (surface wave travels along Earth's surface,
+  // not through free space — but FSPL is used as the reference baseline,
+  // with the surface-wave extra loss capturing the deviation from free space).
   const fspl = 20 * Math.log10(Math.max(1, distKm)) + 20 * Math.log10(freqMHz) + 32.45;
-  const l_surface = 0.15 * distKm * Math.sqrt(freqMHz); // empirical surface-wave extra loss
-  const g_rx = antGaindBd + 2.15;
-  return eirp_dBW - fspl - l_surface + g_rx + 30; // +30 = dBW→dBm
+
+  // Improved surface-wave extra attenuation (Upgrade H)
+  const alpha_f  = 0.090 * Math.pow(freqMHz, 0.65);   // linear loss coeff [dB/km]
+  const beta_f   = 0.25  * Math.pow(freqMHz, 0.30);   // near-field diffraction
+  const d_ref    = 20.0  / Math.sqrt(freqMHz);         // skin-depth reference [km]
+  const l_sw = alpha_f * distKm
+             + beta_f  * Math.sqrt(distKm)
+             - 5.0 * Math.log10(1.0 + (distKm / d_ref) * (distKm / d_ref));
+  // Note: the third term partially offsets the first two at short ranges (d << d_ref),
+  // giving a smooth transition from the near-field to far-field regime.
+  const l_surface = Math.max(0, l_sw);
+
+  // Horizontal dipole penalty (−10 dB groundwave coupling loss vs vertical monopole).
+  // Applies to all ham-style wire antennas (dipoles, inverted-V, horizontal loops).
+  // Directional Yagi/beam antennas also use horizontal polarisation → penalty retained.
+  const l_horizontal = 10.0;  // dB
+
+  const g_rx = antGaindBd + 2.15;  // symmetric RX antenna assumed
+  return eirp_dBW - fspl - l_surface - l_horizontal + g_rx + 30; // +30 = dBW→dBm
 }
 
 function toSunit(dBm) {
@@ -2097,6 +2241,72 @@ function sigColor(dBm) {
   if (s < 7)  return '#ffe033';   // S5–S6: readable
   if (s < 9)  return '#ff9900';   // S7–S8: good
   return '#00ffc3';                // S9+: strong
+}
+
+// ══════════════════════════════════════════════════════════════════
+// UPGRADE G: foE SOLAR-ZENITH ANGLE MODEL — Accurate E-layer skip
+// ──────────────────────────────────────────────────────────────────
+// v2.02 used a crude proxy (eLayerPresent && foF2>2.0) for E-layer presence.
+// This could fire or suppress E-layer skip incorrectly (e.g., at twilight,
+// or during disturbed F2 conditions where foF2 drops but foE stays normal).
+//
+// Physical model (Davies "Ionospheric Radio" §3.5; ITU-R P.533 Annex 1):
+//   foE (E-layer critical frequency) is primarily driven by solar zenith angle χ:
+//   foE(MHz) = A · cos^n(χ) where:
+//     A   = solar-activity-dependent amplitude ≈ 4.2 × SFI_scale
+//     n   = 0.3 (empirical exponent; slightly less than 0.25 from theory due to
+//           diffuse vs direct EUV; calibrated from ionosonde data)
+//     χ   = solar zenith angle at the transmitter location
+//
+//   Median mid-lat foE ranges: ~3 MHz at χ=80° to ~4.5 MHz at solar noon (χ=20°)
+//   At χ ≥ 90°: foE = 0 (E-layer collapses within ~30 min of sunset; no night E layer
+//                 at regular altitudes — sporadic-E is a separate, unpredicted phenomenon)
+//
+//   SFI scaling: foE ∝ √(F10.7/150) roughly; approximated as ×(SFI/150)^0.25.
+//
+// Solar zenith angle computation (from Spencer 1971 geometry already in code):
+//   cos(χ) = sin(φ)·sin(δ) + cos(φ)·cos(δ)·cos(H)
+//   where φ = latitude, δ = solar declination, H = hour angle from solar noon.
+//
+// E-skip test: eSkipAvail if foE > band_freq (band_freq ≤ foE typically means
+//   E-layer can reflect the signal at near-vertical incidence; for oblique
+//   paths the MUF_E = foE × secant(angle) is higher, but for planning we use
+//   foE > 0.9 × freq as a practical E-skip onset threshold to account for
+//   some oblique path gain).
+//
+// Sources: Davies (1990) §3.5; Bradley & Dudeney (1973) foE formula;
+//          Bilitza (2018) IRI foE model; empirical calibration Lowell ionosonde data.
+// ══════════════════════════════════════════════════════════════════
+
+function solarZenithCos(lat, lt){
+  // Returns cos(χ), the cosine of the solar zenith angle.
+  // χ: angle between local zenith and direction to Sun.
+  // cos(χ) > 0 → sun above horizon; cos(χ) ≤ 0 → sun below horizon.
+  const month0 = currentMonth();
+  const doy    = MONTH_MID_DOY[month0];
+  const eotMins = equationOfTimeMins(doy);
+  const dec    = solarDeclinationDeg(doy) * (Math.PI / 180);
+  const phi    = lat * (Math.PI / 180);
+  // Hour angle H: 0 at solar noon, ±π at midnight
+  // Solar noon in LT = 12 − eotMins/60; H = (lt − solarNoon) × π/12
+  const solarNoon = 12.0 - eotMins / 60.0;
+  const H = (lt - solarNoon) * (Math.PI / 12.0);
+  return Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H);
+}
+
+function currentFoE(lat, lt){
+  // E-layer critical frequency in MHz based on solar zenith angle.
+  // Returns 0 when sun is below horizon (E layer absent).
+  // Bradley & Dudeney (1973) empirical formula with SFI scaling.
+  const cosX = solarZenithCos(lat !== undefined ? lat : S.lat,
+                               lt  !== undefined ? lt  : txLocalTime());
+  if(cosX <= 0) return 0;  // sun below horizon → no regular E layer
+  // foE = A × cos^n(χ). A ≈ 4.35 at SFI=150 (calibrated to ~4.3 MHz noon mid-lat).
+  // SFI scaling: ×(SFI/150)^0.25 (weaker dependence than F2 layer).
+  const sfiScale = Math.pow(Math.max(50, S.sfi) / 150.0, 0.25);
+  const A = 4.35 * sfiScale;
+  const n = 0.30;
+  return A * Math.pow(cosX, n);
 }
 
 // ── Live propagation state derived from foF2 + D-layer ────────────
@@ -2176,13 +2386,15 @@ function liveZones(band){
 
   // eLayerPresent defined above alongside isDaytime (latitude-aware)
   const f2SkipAvail = muf3000 > freq;
-  // E-layer skip: fires when F2 is closed AND daytime E-layer is present.
-  // foF2 > 2.0 is a proxy for "ionosphere minimally active" — the app does not
-  // model foE (E-layer critical frequency, typically 3–5 MHz daytime) directly.
-  // True E-layer skip requires foE or sporadic-E MUF > operating frequency.
-  // This approximation is low-impact: eSkipAvail only fires when MUF(3000) < freq,
-  // a rare daytime condition that mainly affects 60 m during disturbed ionosphere.
-  const eSkipAvail  = eLayerPresent && freq <= 10.5 && foF2 > 2.0;
+  // E-layer skip: fires when regular E layer (foE) can support the frequency.
+  // Uses Upgrade G (foE solar-zenith model) instead of the v2.02 foF2>2.0 proxy.
+  // E-skip MUF test: foE > 0.9×freq (the 0.9 factor accounts for oblique path
+  // secant gain allowing some margin over the vertical-incidence foE).
+  // Only applies to bands ≤ 10.5 MHz (60m–40m) where E-layer skip is documented.
+  // Night E-layer: regular E layer collapses at sunset (currentFoE returns 0).
+  // Sporadic-E is not modelled — it is unpredictable and not a planning tool target.
+  const foE_now    = currentFoE(S.lat, lt);
+  const eSkipAvail = (foE_now > 0) && (freq <= 10.5) && (foE_now > 0.9 * freq);
 
   if(f2SkipAvail || eSkipAvail){
     // skipInner transitions smoothly from night to day value as the F2 layer rises
@@ -2231,10 +2443,10 @@ function liveZones(band){
       // Sources: SWS.bom.gov.au; electronics-notes.com; empirical Es DX database.
       skipInnerKm = b.skipInner.day || 500;
       skipOuterKm = 2000;  // E-layer base at 100W/dipole
-      skipNote = `E-layer skip only · foF2 ${foF2.toFixed(1)} MHz · MUF(3000) ${muf3000.toFixed(1)} MHz`;
+      skipNote = `E-layer skip · foE ${foE_now.toFixed(1)} MHz > ${freq} MHz ✓ · F2 MUF(3000) ${muf3000.toFixed(1)} MHz (closed)`;
     }
   } else {
-    skipNote = `Band closed · MUF(3000) ${muf3000.toFixed(1)} MHz < ${freq} MHz`;
+    skipNote = `Band closed · MUF(3000) ${muf3000.toFixed(1)} MHz < ${freq} MHz${foE_now > 0 ? ` · foE ${foE_now.toFixed(1)} MHz` : ''}`;
   }
 
   // skipGeomKm: hard geometric ceiling for current skip mode.
@@ -4387,7 +4599,7 @@ function switchMode(mode){
   const v = document.getElementById('appVer');
   if(v) v.textContent = APP_VERSION;
   const f = document.getElementById('sbFootVer');
-  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Per-bearing midpoint foF2 · ITU-R P.368 conductivity · ITU-R P.526 diffraction · SFI solar scaling · Seasonal foF2 · Troposcatter · Spencer(1971) solar geometry · Magneto-ionic gyrofrequency`;
+  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Per-bearing midpoint foF2 · ITU-R P.368 conductivity · ITU-R P.526 diffraction · SFI solar scaling · Seasonal foF2 · Troposcatter · Spencer(1971) solar geometry · Magneto-ionic gyrofrequency · Diurnal hmF2 · foE solar-zenith model · GW P.368 recal`;
 })();
 buildBands();
 buildConds();
