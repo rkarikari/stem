@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v2.01</title>
+<title>Ham Radio Coverage Planner · v2.0</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -329,46 +329,6 @@ option{background:#0b1820;}
       </div>
     </div>
 
-    <!-- SOLAR ACTIVITY & SEASON -->
-    <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Solar Activity &amp; Season <span class="arr">▾</span></div>
-      <div class="sec-body">
-
-        <!-- SFI -->
-        <label>Solar Flux Index (SFI / F10.7)</label>
-        <div class="pwr-row" style="margin-bottom:4px;">
-          <div>
-            <div class="pwr-big" id="sfiBig" style="color:#ffcc44;">150</div>
-            <div class="pwr-unit">SFI</div>
-          </div>
-          <input type="number" class="pwr-in" id="sfiIn" value="150" min="50" max="300" step="1"
-            oninput="setSFI(this.value)" style="color:#ffcc44;"/>
-        </div>
-        <input type="range" id="sfiSlider" min="50" max="300" value="150" oninput="setSFI(this.value)"/>
-        <div class="pwr-scale"><span>50</span><span>100</span><span>150</span><span>200</span><span>300</span></div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;">
-          <button class="btn btn-xs" onclick="setSFI(70)"  title="Solar minimum (R12≈10)">Min (70)</button>
-          <button class="btn btn-xs" onclick="setSFI(120)" title="Low activity (R12≈75)">Low (120)</button>
-          <button class="btn btn-xs" onclick="setSFI(150)" title="Moderate, R12≈100 (profile baseline)">Avg (150)</button>
-          <button class="btn btn-xs" onclick="setSFI(220)" title="Solar max (R12≈160)">Max (220)</button>
-        </div>
-        <div class="cond-hint" id="sfiHint" style="margin-top:6px;"></div>
-
-        <!-- Month -->
-        <label style="margin-top:12px;display:block;">Season / Month</label>
-        <select id="monthSel" onchange="setMonth(parseInt(this.value))" style="width:100%;margin-top:4px;">
-          <option value="-1">⟳ Auto (current month)</option>
-          <option value="0">January</option><option value="1">February</option>
-          <option value="2">March</option><option value="3">April</option>
-          <option value="4">May</option><option value="5">June</option>
-          <option value="6">July</option><option value="7">August</option>
-          <option value="8">September</option><option value="9">October</option>
-          <option value="10">November</option><option value="11">December</option>
-        </select>
-        <div class="cond-hint" id="seasonHint" style="margin-top:6px;"></div>
-      </div>
-    </div>
-
     <!-- ANTENNA -->
     <div class="sec">
       <div class="sec-hdr" onclick="toggleSec(this)">◈ Antenna <span class="arr">▾</span></div>
@@ -508,7 +468,7 @@ option{background:#0b1820;}
       </div>
 
       <div class="vu-note">
-        <strong>Model:</strong> 180 radials × 50 SRTM 90m samples (2° resolution). ITU-R P.526-15 knife-edge diffraction: signal diffracts over obstacles up to 20 dB loss rather than stopping dead. Hata/COST-231 clutter budget caps each radial independently. <strong>Polygon</strong> = terrain+diffraction shaped coverage. <strong>Dashed ring</strong> = theoretical smooth-earth Hata limit. <strong style="color:#44aaff">Blue dashed ring</strong> = troposcatter DX limit (ITU-R P.617/Collins · always-on beyond-LOS mode · 10W · SSB/CW).
+        <strong>Model:</strong> 180 radials × 50 SRTM 90m samples (2° resolution). ITU-R P.526-15 knife-edge diffraction: signal diffracts over obstacles up to 20 dB loss rather than stopping dead. Hata/COST-231 clutter budget caps each radial independently. <strong>Polygon</strong> = terrain+diffraction shaped coverage. <strong>Dashed ring</strong> = theoretical smooth-earth Hata limit.
       </div>
     </div>
     <div class="vu-foot">
@@ -606,7 +566,7 @@ option{background:#0b1820;}
       </div>
 
       <div class="vu-note">
-        <strong>Model:</strong> 180 radials × 50 SRTM 90m samples (2° resolution). ITU-R P.526-15 knife-edge diffraction replaces hard LOS binary stop. UHF (435 MHz) Hata loss is ~9 dB higher than VHF per km. <strong>Polygon</strong> = terrain+diffraction shaped coverage. <strong>Dashed ring</strong> = smooth-earth limit. <strong style="color:#cc88ff">Violet dashed ring</strong> = troposcatter DX limit (ITU-R P.617/Collins · UHF ~35% shorter range than VHF).
+        <strong>Model:</strong> 180 radials × 50 SRTM 90m samples (2° resolution). ITU-R P.526-15 knife-edge diffraction replaces hard LOS binary stop. UHF (435 MHz) Hata loss is ~9 dB higher than VHF per km. <strong>Polygon</strong> = terrain+diffraction shaped coverage. <strong>Dashed ring</strong> = smooth-earth limit.
       </div>
     </div>
     <div class="vu-foot">
@@ -630,7 +590,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v2.01';
+const APP_VERSION = 'v2.0';
 const APP_DATE    = '2026-03-10';
 
 // ══════════════════════════════════════════════
@@ -1036,9 +996,7 @@ const S = {
   lat:5.561, lon:-0.209, locName:'Accra, Ghana',
   band:'10m', power:2, cond:'average', time:'day',
   ant:'inverted_v', bearing:0, clickMode:false,
-  autoTime: true,   // when true, time is derived from RTC + TX longitude
-  sfi: 150,         // Solar Flux Index (SFI/F10.7). Range 50–300. Default 150 ≈ solar cycle 25 peak.
-  month: -1         // -1 = auto (current UTC month), 0–11 = forced month (Jan=0, Dec=11)
+  autoTime: true   // when true, time is derived from RTC + TX longitude
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -1348,10 +1306,7 @@ function txLocalTime(){
 // ── foF2 and D-layer using TX latitude zone ───────────────────────
 function currentFoF2(){
   const lt = S.autoTime ? txLocalTime() : (S.time === 'day' ? 13.0 : 1.0);
-  const st = solarTimes(S.lat);
-  const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
-  const raw = interpProfile(foF2Profile(S.lat), lt);
-  return scaledFoF2(raw, isDay, S.lat);
+  return interpProfile(foF2Profile(S.lat), lt);
 }
 
 function currentDlayer(){
@@ -1360,128 +1315,7 @@ function currentDlayer(){
 }
 
 // ══════════════════════════════════════════════════════════════════
-// UPGRADE A: SOLAR FLUX INDEX (SFI) SCALING — Real-world solar-cycle foF2
-// ──────────────────────────────────────────────────────────────────────────
-// The foF2 profiles (FOF2_EQ/MID/HIGH) are calibrated for R12≈100 (SFI≈150),
-// a moderate-activity year. Real foF2 scales with solar activity because UV/EUV
-// ionisation is the primary F2-layer driver.
-//
-// Physical basis (ITU-R P.371-7, hamradio.engineering):
-//   foF2 is empirically stored in CCIR/URSI coefficient tables at R12=0 and R12=100.
-//   The linear interpolation formula used by VOACAP/ITU-R P.533:
-//     foF2(R12) = foF2(0) + (foF2(100) - foF2(0)) × (R12/100)
-//   Simplified: foF2 ∝ roughly 0.6 + 0.4×(R12/100) normalised to R12=100.
-//   At R12=0 (deep minimum, SFI≈65):  foF2 ≈ 60–65% of R12=100 value.
-//   At R12=160 (solar max, SFI≈220):  foF2 ≈ 125–130% of R12=100 value.
-//   At R12=200 (exceptional, SFI≈280): foF2 ≈ 140% of R12=100 value.
-//
-// SFI → R12 conversion (ITU-R P.371-7 eq.1):
-//   Φ = 63.7 + 0.728·R12 + 0.00089·R12²   (Φ = SFI in solar flux units)
-//   Solved by bisection for R12.
-//   Calibration: SFI=150 → R12≈100, SFI=220 → R12≈160, SFI=65 → R12≈0.
-//
-// Profiles are calibrated for R12=100 → SFI≈150. Scale = foF2(R12)/foF2(100).
-// Using the CCIR linear model:
-//   scale(R12) = (0.59 + 0.41 × R12/100)   [empirical fit, mid-lat noon anchor]
-//                                            [≈1.0 at R12=100, ≈0.59 at R12=0, ≈1.25 at R12=160]
-// Night scaling is weaker (~70% of day effect) as recombination limits F2 rise.
-// ══════════════════════════════════════════════════════════════════
-
-function sfiToR12(sfi){
-  // Bisection solve of: sfi = 63.7 + 0.728·R12 + 0.00089·R12²
-  let lo = 0, hi = 300;
-  for(let i = 0; i < 40; i++){
-    const mid = (lo + hi) / 2;
-    const phi = 63.7 + 0.728*mid + 0.00089*mid*mid;
-    if(phi < sfi) lo = mid; else hi = mid;
-  }
-  return (lo + hi) / 2;
-}
-
-function sfiScaleFactor(isDaytime){
-  // Returns foF2 multiplier relative to R12=100 baseline profiles.
-  // Day:   scale = 0.59 + 0.41×(R12/100)    [CCIR two-level model, mid-lat anchor]
-  // Night: night ionosphere is partially decoupled from SFI (recombination limits peak).
-  //        Night scale uses 70% of the day variation, anchored at R12=100.
-  //        night_scale = 0.72 + 0.28×(R12/100)   [weaker solar dependence]
-  const r12 = Math.min(200, Math.max(0, sfiToR12(S.sfi)));
-  if(isDaytime){
-    return 0.59 + 0.41*(r12/100);
-  } else {
-    return 0.72 + 0.28*(r12/100);
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════
-// UPGRADE B: SEASONAL foF2 CORRECTION — Winter anomaly & summer depression
-// ──────────────────────────────────────────────────────────────────────────
-// The annual-average profiles miss the 15–25% seasonal variation in daytime foF2
-// at mid-latitudes. Key effect: WINTER ANOMALY — daytime foF2 is HIGHER in
-// winter than summer despite lower solar elevation. Mechanism: N₂/O ratio change.
-//
-// Seasonal multipliers calibrated from ionosonde climatologies:
-//   Equatorial: small seasonal variation (~±8%). Peaks at equinoxes (Mar, Sep).
-//     (Oyekola 2010, Ouagadougou; equatorial fountain symmetric at equinoxes)
-//   Mid-latitude: winter anomaly dominant (±20%). Winter noon = +20%, summer noon = −15%.
-//     (Rome, Boulder, Kokubunji data; Laštovička 2023 review)
-//     Night: summer > winter by ~10% (opposite — called "seasonal anomaly").
-//   High-latitude: strongly driven by solar zenith angle → summer day >> winter day.
-//     Winter night: F2 collapses (polar night). Summer midnight sun: F2 elevated.
-//     Day: summer +30%, winter −30%.
-//
-// Reference month: R12=100 annual average → month correction = 1.0 when averaged.
-// Source: Davies "Ionospheric Radio" (1990); Laštovička (2023); IRI-2016 output by month.
-//
-// SOUTHERN HEMISPHERE: seasons reversed (month 6 = winter). Applied automatically.
-// ══════════════════════════════════════════════════════════════════
-
-// Monthly DAY / NIGHT foF2 scale factors per latitude zone.
-// Index 0=Jan, 1=Feb, … 11=Dec. Values are multipliers on the profile value.
-// All rows are normalised so their mean ≈ 1.0 (annual-average profiles remain correct on average).
-const SEASONAL = {
-  equatorial: {
-    // Day: peaks at equinoxes (+8%), troughs at solstices (−6%).
-    day:   [1.04, 1.06, 1.08, 1.05, 1.00, 0.96, 0.94, 0.96, 1.05, 1.08, 1.06, 1.04],
-    // Night: very small seasonal variation at equatorial latitudes.
-    night: [1.02, 1.02, 1.01, 1.00, 0.99, 0.98, 0.97, 0.98, 1.01, 1.02, 1.02, 1.02],
-  },
-  midlat: {
-    // Day: winter anomaly. Dec/Jan peak (+20%), Jun/Jul trough (−18%).
-    day:   [1.20, 1.18, 1.08, 0.98, 0.88, 0.83, 0.82, 0.85, 0.96, 1.06, 1.16, 1.22],
-    // Night: seasonal anomaly (opposite of day) — summer slightly higher than winter.
-    night: [0.93, 0.94, 0.97, 1.02, 1.06, 1.09, 1.10, 1.08, 1.04, 1.00, 0.95, 0.92],
-  },
-  highlat: {
-    // Day: strongly solar-zenith-angle driven. Summer >> winter.
-    day:   [0.72, 0.78, 0.90, 1.05, 1.18, 1.28, 1.30, 1.25, 1.10, 0.95, 0.80, 0.70],
-    // Night: polar summer keeps foF2 elevated. Polar winter: very low.
-    night: [0.78, 0.80, 0.90, 1.00, 1.10, 1.20, 1.22, 1.18, 1.08, 0.96, 0.84, 0.78],
-  },
-};
-
-function currentMonth(){
-  // Returns 0–11 (Jan=0, Dec=11). Uses S.month if forced, else real UTC month.
-  return S.month >= 0 ? S.month : new Date().getUTCMonth();
-}
-
-function seasonalScale(lat, isDaytime){
-  // Returns seasonal foF2 multiplier for this latitude zone and current month.
-  // Southern hemisphere: month offset by 6 (seasons reversed).
-  const zone = latZone(lat);
-  let month = currentMonth();
-  if(lat < 0) month = (month + 6) % 12;   // Southern hemisphere: flip seasons
-  const tbl = SEASONAL[zone];
-  return isDaytime ? tbl.day[month] : tbl.night[month];
-}
-
-// ── Combined foF2 scale (SFI × seasonal) applied to profile values ─
-// Used wherever foF2 is read from the profile tables.
-function scaledFoF2(rawProfileValue, isDaytime, lat){
-  const sf = sfiScaleFactor(isDaytime) * seasonalScale(lat, isDaytime);
-  return rawProfileValue * sf;
-}
-
-
+// UPGRADE 1: PER-BEARING MIDPOINT foF2 — Directionally-asymmetric HF zones
 // ──────────────────────────────────────────────────────────────────────────
 // Instead of one scalar foF2 at the TX, every bearing gets its OWN foF2
 // evaluated at the ionospheric reflection midpoint for that path.
@@ -1524,10 +1358,7 @@ function localSolarTimeAt(lonDeg){
 // If ltOverride is provided, use it; otherwise derive from longitude
 function foF2At(lat, lon, ltOverride){
   const lt = (ltOverride !== undefined) ? ltOverride : localSolarTimeAt(lon);
-  const st = solarTimes(lat);
-  const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
-  const raw = interpProfile(foF2Profile(lat), lt);
-  return scaledFoF2(raw, isDay, lat);
+  return interpProfile(foF2Profile(lat), lt);
 }
 
 // M(3000)F2 at an arbitrary lat/lon
@@ -3052,9 +2883,6 @@ function updateCondHint(){
     (z.isDaytime
       ? `☀ Day · D-layer ${Math.round(z.dAbs*100)}% · M(3000)F2=${z.m3000.toFixed(2)}`
       : `☾ Night · D-layer absent · M(3000)F2=${z.m3000.toFixed(2)}`);
-  // Also refresh solar/seasonal hints
-  if(document.getElementById('sfiHint'))   updateSFIHint();
-  if(document.getElementById('seasonHint')) updateSeasonHint();
 }
 
 function buildAnts(){
@@ -3127,58 +2955,6 @@ function setTime(t){
 }
 
 function setAnt(k){S.ant=k;updateAntInfo();rebuildLayers();}
-
-function setSFI(v){
-  v = Math.max(50, Math.min(300, parseFloat(v) || 150));
-  S.sfi = v;
-  document.getElementById('sfiBig').textContent = Math.round(v);
-  document.getElementById('sfiIn').value = Math.round(v);
-  document.getElementById('sfiSlider').value = v;
-  updateSFIHint();
-  updateSeasonHint();
-  rebuildLayers();
-}
-
-function updateSFIHint(){
-  const r12 = Math.round(sfiToR12(S.sfi));
-  const lt  = S.autoTime ? txLocalTime() : (S.time==='day' ? 13.0 : 1.0);
-  const st  = solarTimes(S.lat);
-  const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
-  const sf  = sfiScaleFactor(isDay);
-  const foF2 = currentFoF2();
-  let label = '';
-  if(S.sfi < 90)        label = '☀ Solar minimum — MUF severely reduced';
-  else if(S.sfi < 120)  label = '☀ Low activity — HF bands marginal';
-  else if(S.sfi < 160)  label = '☀ Moderate — average conditions';
-  else if(S.sfi < 210)  label = '☀ Active — DX bands open reliably';
-  else                  label = '☀ Solar max — exceptional DX, 10m worldwide';
-  document.getElementById('sfiHint').textContent =
-    `R12≈${r12} · foF2 scale ×${sf.toFixed(2)} · foF2=${foF2.toFixed(1)} MHz · ${label}`;
-}
-
-function setMonth(m){
-  S.month = m;
-  // Update dropdown to match
-  const sel = document.getElementById('monthSel');
-  if(sel) sel.value = m;
-  updateSeasonHint();
-  rebuildLayers();
-}
-
-function updateSeasonHint(){
-  const lt  = S.autoTime ? txLocalTime() : (S.time==='day' ? 13.0 : 1.0);
-  const st  = solarTimes(S.lat);
-  const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
-  const ss  = seasonalScale(S.lat, isDay);
-  const month = currentMonth();
-  const mNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const zone = latZone(S.lat);
-  const hemi = S.lat < 0 ? 'S.Hemi' : 'N.Hemi';
-  const anomNote = (zone==='midlat' && isDay && (month<=1 || month>=10)) ? ' · Winter anomaly active' : '';
-  document.getElementById('seasonHint').textContent =
-    `${mNames[month]} · ${hemi} · ${zone} · season scale ×${ss.toFixed(2)}${anomNote}`;
-}
-
 
 function setBear(v){
   S.bearing=parseInt(v);
@@ -3888,56 +3664,6 @@ async function computeTerrainCoverage(band){
   btnEl.disabled = false;
 }
 
-// ══════════════════════════════════════════════════════════════════
-// UPGRADE C: TROPOSCATTER ZONE — Beyond-LOS reliable VHF/UHF propagation
-// ──────────────────────────────────────────────────────────────────────────
-// Troposcatter is the dominant mode for VHF/UHF DX beyond the radio horizon.
-// Turbulent eddies in the troposphere (Kolmogorov spectrum, ITU-R P.617-4) scatter
-// a tiny fraction of energy toward the receiver beyond the horizon.
-//
-// Physics model: Collins/Yeh empirical formula calibrated to actual troposcatter links.
-// L_ts(d) = Lf + 20·log10(θ·d) + L_scatter(f)
-// where θ = scatter angle (rad) = max(0, (d/Re_eff) - θ_tx - θ_rx)
-//   θ_tx, θ_rx = horizon elevation angles (positive upward) at each end.
-// For ham radio planning (symmetric QSO, same antenna height both ends):
-//   θ = d / Re_eff  (two-station simplified, flat-path approximation)
-//
-// Simplified calibration (from KA1GT/W3SZ troposcatter data):
-//   Reference: 144 MHz, 10W, 0 dBd omni, horizon at both ends, 300 km → path loss ≈ 190 dB
-//   RX sensitivity: −117 dBm. Link budget = EIRP − L_ts − L_gas + G_rx.
-//
-// Empirical troposcatter range formula used here:
-//   L_ts(dKm, fMHz) = 100 + 40·log10(dKm) + 20·log10(fMHz/144) [dB, basic scatter loss]
-//   (Anchored: 144 MHz, 300 km → 100 + 40·log10(300) + 0 = 100 + 99.5 = ~190 dB ✓)
-//
-// Range is found by bisection: max distance where link budget > 0.
-// Results: 10W / 0 dBd / 144 MHz / −117 dBm:
-//   Omni dipole (0 dBd): ~280 km.
-//   10 dB Yagi: ~450 km.
-//   Consistent with published amateur troposcatter experience (OZ1RH, W3SZ).
-//
-// UHF (435 MHz): 20·log10(435/144) = +9.6 dB extra loss → range reduced by ~35%.
-// References: KA1GT (bobatkins.com/radio/troposcatter.html); W3SZ ARRL East VHF 2014;
-//             OZ1RH "Troposcatter inside and out" (qsl.net/oz1rh);
-//             ITU-R P.617-4; Roda (1988); Collins formula (Panter 1972).
-// ══════════════════════════════════════════════════════════════════
-
-function troposcatterMaxKm(band, txW, antGainDbd){
-  // Empirical troposcatter link budget — solve for max range.
-  const fMHz = band === 'vhf' ? 145 : 435;
-  const txdBm = 10 * Math.log10(txW * 1000);
-  const gTx   = antGainDbd;          // TX gain in dBd
-  const gRx   = antGainDbd;          // symmetric QSO — assume same antenna at RX
-  const rxSens = HATA_RX_SENS;       // −117 dBm
-  const budget = txdBm + gTx + gRx - rxSens;
-  // Scatter loss model: L_ts = 100 + 40·log10(d_km) + 20·log10(f_MHz/144)
-  const fAdj = 20 * Math.log10(fMHz / 144);
-  // Solve: budget = 100 + 40·log10(d) + fAdj  →  d = 10^((budget - 100 - fAdj)/40)
-  const dKm = Math.pow(10, (budget - 100 - fAdj) / 40);
-  // Clamp to physical limits: troposcatter works 100–1000 km
-  return Math.max(100, Math.min(1000, dKm));
-}
-
 // ── Draw (or redraw) VU polygons from cached LOS data ────────
 function drawVUPolys(band){
   const cache = VU_CACHE[band];
@@ -4032,46 +3758,6 @@ function drawVUPolys(band){
       if(li) li.classList.add('off');
     }
   });
-
-  // ── Troposcatter zone (dashed ring, beyond-LOS reliable propagation) ──────────
-  // Remove old troposcatter layer if present
-  const tsKey = band + '-tropo';
-  if(VU_POLYS[tsKey]){ try{ map.removeLayer(VU_POLYS[tsKey]); }catch(e){} }
-  if(VU_LABELS[tsKey]){ try{ map.removeLayer(VU_LABELS[tsKey]); }catch(e){} delete VU_LABELS[tsKey]; }
-  const tsCol = band === 'vhf' ? '#44aaff' : '#cc88ff';
-  // Use the highest power level (p10w) and current antenna for tropo range
-  const tsKm = troposcatterMaxKm(band, 10, ant.gain);
-  // Only show troposcatter if it extends beyond the Hata terrain limit for 10W
-  const hataLim10w = envPowers.p10w;
-  if(tsKm > hataLim10w * 1.3){  // only when tropo adds meaningfully
-    const tsRing = L.circle([txLat, txLon], {
-      radius: tsKm * 1000,
-      color: tsCol, fill: false,
-      weight: 2, opacity: 0.65, dashArray: '3 8'
-    });
-    tsRing.bindTooltip(
-      `Troposcatter · ${band.toUpperCase()} ${(band==='vhf'?145:435)} MHz · 10W · ${ant.label}\n` +
-      `Max reliable beyond-LOS DX: ~${Math.round(tsKm)} km (ITU-R P.617 / Collins model)\n` +
-      `Mode: turbulent-eddy scatter in upper troposphere · always present, path loss ≈190+ dB\n` +
-      `Requires: good antenna, SSB/CW, low noise · QSB present · typical DX 150–700 km`,
-      {className:'ltt', direction:'top'}
-    );
-    tsRing.addTo(map);
-    VU_POLYS[tsKey] = tsRing;
-    // Label
-    const lp = destPt(txLat, txLon, 270, tsKm);
-    const lbl = L.marker(lp, {
-      icon: L.divIcon({
-        className:'', iconAnchor:[0,0],
-        html:`<div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:${tsCol};
-          white-space:nowrap;text-shadow:0 0 6px #000;transform:translate(-50%,-50%);
-          pointer-events:none;background:rgba(6,12,14,.8);padding:1px 5px;
-          border-left:2px solid ${tsCol};">~${Math.round(tsKm)} km · Troposcatter</div>`
-      }), interactive:false, zIndexOffset:400
-    });
-    lbl.addTo(map);
-    VU_LABELS[tsKey] = lbl;
-  }
 
   updateRangeLabels(band);
 }
@@ -4199,40 +3885,6 @@ function showVUCircles(band){
   const p1Key = band==='vhf'?'v1w':'u1w';
   const p1Shape = VU_POLYS[p1Key];
   if(p1Shape) map.fitBounds(p1Shape.getBounds().pad(0.3));
-
-  // ── Troposcatter reference ring ────────────────────────────────
-  const tsKey = band + '-tropo';
-  if(VU_POLYS[tsKey]){ try{map.removeLayer(VU_POLYS[tsKey]);}catch(e){} }
-  if(VU_LABELS[tsKey]){ try{map.removeLayer(VU_LABELS[tsKey]);}catch(e){} delete VU_LABELS[tsKey]; }
-  const tsCol = band === 'vhf' ? '#44aaff' : '#cc88ff';
-  const tsKm = troposcatterMaxKm(band, 10, ant.gain);
-  const hataLim10w = Math.min(envPowers.p10w, horizon);
-  if(tsKm > hataLim10w * 1.3){
-    const tsRing = L.circle([S.lat, S.lon], {
-      radius: tsKm * 1000, color: tsCol, fill: false,
-      weight: 2, opacity: 0.55, dashArray: '3 9'
-    });
-    tsRing.bindTooltip(
-      `Troposcatter · ${band.toUpperCase()} ${(band==='vhf'?145:435)} MHz · 10W · ${ant.label}\n` +
-      `Max reliable beyond-LOS DX: ~${Math.round(tsKm)} km (ITU-R P.617 / Collins model)\n` +
-      `Always-on scatter mode · SSB/CW · QSB present · 150–700 km typical amateur range`,
-      {className:'ltt', direction:'top'}
-    );
-    tsRing.addTo(map);
-    VU_POLYS[tsKey] = tsRing;
-    const lp = destPt(S.lat, S.lon, 270, tsKm);
-    const lbl = L.marker(lp, {
-      icon: L.divIcon({
-        className:'', iconAnchor:[0,0],
-        html:`<div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:${tsCol};
-          white-space:nowrap;text-shadow:0 0 6px #000;transform:translate(-50%,-50%);
-          pointer-events:none;background:rgba(6,12,14,.8);padding:1px 5px;
-          border-left:2px solid ${tsCol};">~${Math.round(tsKm)} km · Troposcatter*</div>`
-      }), interactive:false, zIndexOffset:400
-    });
-    lbl.addTo(map);
-    VU_LABELS[tsKey] = lbl;
-  }
 }
 
 // ── TX marker helper ─────────────────────────────────────────
@@ -4287,7 +3939,7 @@ function switchMode(mode){
   const v = document.getElementById('appVer');
   if(v) v.textContent = APP_VERSION;
   const f = document.getElementById('sbFootVer');
-  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Per-bearing midpoint foF2 · ITU-R P.368 conductivity · ITU-R P.526 diffraction · SFI solar scaling · Seasonal foF2 · Troposcatter`;
+  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Per-bearing midpoint foF2 · ITU-R P.368 conductivity · ITU-R P.526 knife-edge diffraction`;
 })();
 buildBands();
 buildConds();
@@ -4296,11 +3948,6 @@ buildPwrPresets();
 document.getElementById('pwrSlider').value=p2s(S.power);
 document.getElementById('latIn').value=S.lat;
 document.getElementById('lonIn').value=S.lon;
-// Initialise SFI and season controls
-setSFI(S.sfi);
-// Set month selector to auto
-(function(){ const sel=document.getElementById('monthSel'); if(sel) sel.value='-1'; })();
-updateSeasonHint();
 // Initialise VHF/UHF panels to 1.5m HT state
 setAlt('vhf', 1.5);
 setAlt('uhf', 1.5);
