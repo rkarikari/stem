@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.23</title>
+<title>Ham Radio Coverage Planner · v1.24</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -590,7 +590,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.23';
+const APP_VERSION = 'v1.24';
 const APP_DATE    = '2026-03-10';
 
 // ══════════════════════════════════════════════
@@ -1859,9 +1859,8 @@ function liveZones(band){
   const h2f = b.hop2Factor ? b.hop2Factor[t] : null;
   if(skipOuterKm && h2f){
     hop2OuterBase = skipOuterKm * h2f;
-    // Cumulative extra loss vs 1-hop baseline = 1 × per-leg loss (one extra ground reflection + D-layer)
     const leg2dB = Math.round(-20*Math.log10(h2f));
-    hop2Note = `2-hop · +${leg2dB} dB vs 1-hop (ITU-R P.533 Lg=2dB + D-layer + variability) · geom cap ${2*b.skipGeomMax} km`;
+    hop2Note = `2-hop · −${leg2dB} dB vs Z3b`;
   }
 
   // ── Third-hop DX (ZONE 3d) ─────────────────────────────────────
@@ -1878,8 +1877,8 @@ function liveZones(band){
   if(skipOuterKm && h3f){
     hop3OuterBase = skipOuterKm * h3f;
     const legdB = Math.round(-20*Math.log10(h3f));
-    const cum3dB = 2 * legdB;  // cumulative vs 1-hop: two extra reflections
-    hop3Note = `3-hop · ${legdB} dB/leg · +${cum3dB} dB cumulative vs 1-hop (ITU-R P.533 Lg=2dB×2 + D-layer + variability) · geom cap ${Math.min(3*b.skipGeomMax,MAX_KM)} km`;
+    const cum3dB = 2 * legdB;
+    hop3Note = `3-hop · −${legdB} dB vs Z3c · −${cum3dB} dB cumul vs Z3b`;
   }
 
   // ── Fourth-hop DX (ZONE 3e) ────────────────────────────────────
@@ -1895,8 +1894,8 @@ function liveZones(band){
   if(skipOuterKm && h4f){
     hop4OuterBase = skipOuterKm * h4f;
     const legdB = Math.round(-20*Math.log10(h4f));
-    const cum4dB = 3 * legdB;  // cumulative vs 1-hop: three extra reflections
-    hop4Note = `4-hop · ${legdB} dB/leg · +${cum4dB} dB cumulative vs 1-hop (ITU-R P.533 Lg=2dB×3 + D-layer + variability) · geom cap ${Math.min(4*b.skipGeomMax,MAX_KM)} km · antipodal reach`;
+    const cum4dB = 3 * legdB;
+    hop4Note = `4-hop · −${legdB} dB vs Z3d · −${cum4dB} dB cumul vs Z3b`;
   }
 
   return { gwBase, nvisBase, nvisNote, skipInnerKm, skipOuterKm, skipNote,
@@ -2484,7 +2483,7 @@ function updateCovSummary(){
         row(b.color, 'Z3c · 2-hop',
           `~${outer}–${hop2Total} km`,
           geoTag(hop2Total),
-          `2nd hop · −${lPerLeg} dB vs Z3b (Lg=2dB + D-layer + margin) · geom cap ${2*b.skipGeomMax} km`,
+          `2nd hop · −${lPerLeg} dB vs Z3b`,
           z3cSig);
 
         // Zone 3d — 3-hop DX
@@ -2498,7 +2497,7 @@ function updateCovSummary(){
             row(b.color, 'Z3d · 3-hop',
               `~${hop2Total}–${hop3Total} km`,
               geoTag(hop3Total),
-              `3rd hop · −${legdB3} dB vs Z3c · −${cum3dB} dB cumul vs Z3b (2 reflections) · geom cap ${Math.min(3*b.skipGeomMax,MAX_KM)} km`,
+              `3rd hop · −${legdB3} dB vs Z3c · −${cum3dB} dB cumul vs Z3b`,
               z3dSig);
 
             // Zone 3e — 4-hop DX
@@ -2512,7 +2511,7 @@ function updateCovSummary(){
                 row(b.color, 'Z3e · 4-hop',
                   `~${hop3Total}–${hop4Total} km`,
                   geoTag(hop4Total),
-                  `4th hop · −${legdB4} dB vs Z3d · −${cum4dB} dB cumul vs Z3b (3 reflections) · geom cap ${Math.min(4*b.skipGeomMax,MAX_KM)} km · antipodal reach`,
+                  `4th hop · −${legdB4} dB vs Z3d · −${cum4dB} dB cumul vs Z3b`,
                   z3eSig);
               } else {
                 row('#1a1a2a', 'Z3e · 4-hop', 'Below threshold', '—', z.hop4Note);
