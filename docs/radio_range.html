@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.041 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.042 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -805,7 +805,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.041';
+const APP_VERSION = 'v1.042';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -823,6 +823,119 @@ const LIVE = {
   dxMarkers: [],
   spotLines: [],
   dxLines: [],
+
+// ── Callsign prefix → approximate lat/lon ────────────────────
+// Compact DXCC prefix table: longest-match wins.
+// Covers ~95% of DX cluster traffic. Returns [lat, lon] or null.
+const DXCC_PREFIX = (function(){
+  // [prefix, lat, lon]  — sorted longest-first for greedy match
+  const raw = [
+    ['VK9X',-10.4,105.6],['VK9C',-12.2,96.8],['VK9M',-23.5,154.0],
+    ['VK9N',-29.0,167.9],['VK9W',-31.5,159.1],['ZL8',-29.0,-178.0],
+    ['ZL9',-52.5,-169.0],['ZL',-41.3,174.8],['VK',-25.3,133.8],
+    ['JD1',[35.0,142.0]],['JA',[36.2,138.3]],['HL',[37.5,127.9]],
+    ['BV',[23.7,121.0]],['BY',[35.9,104.2]],['VR2',[22.3,114.2]],
+    ['VS6',[22.3,114.2]],['4S7',[7.9,80.7]],['VU',[20.6,79.1]],
+    ['A4',[23.6,58.6]],['A5',[27.5,90.4]],['A6',[24.5,54.4]],
+    ['A7',[25.3,51.2]],['A9',[26.0,50.6]],['4X',[31.8,35.2]],
+    ['4Z',[31.8,35.2]],['9K',[29.3,47.7]],['YK',[34.8,38.9]],
+    ['OD5',[33.9,35.5]],['9Y',[10.7,-61.5]],['8P',[13.2,-59.6]],
+    ['VP9',[32.3,-64.8]],['KP4',[18.2,-66.5]],['KP2',[18.3,-64.9]],
+    ['FG',[16.3,-61.6]],['FM',[14.6,-61.0]],['J3',[12.1,-61.7]],
+    ['J7',[15.3,-61.4]],['J8',[13.3,-61.2]],['V2',[17.1,-61.8]],
+    ['V4',[17.4,-62.8]],['VP2M',[16.7,-62.2]],['VP2E',[17.7,-62.2]],
+    ['VP2V',[18.4,-64.6]],['ZF',[19.3,-81.4]],['6Y',[18.1,-77.3]],
+    ['VP5',[21.8,-72.0]],['HH',[18.9,-72.3]],['HI',[19.0,-70.7]],
+    ['PJ4',[12.2,-68.3]],['PJ2',[12.1,-68.9]],['NP3',[18.2,-66.5]],
+    ['TI',[9.7,-83.8]],['HP',[8.9,-79.5]],['HO',[8.9,-79.5]],
+    ['YN',[12.1,-86.3]],['TG',[15.8,-90.2]],['HR',[14.1,-87.2]],
+    ['YS',[13.8,-88.9]],['V3',[17.3,-88.5]],['HQ',[14.1,-87.2]],
+    ['XE',[23.6,-102.5]],['XF',[23.6,-110.0]],['KL7',[64.2,-153.4]],
+    ['KH6',[20.7,-157.0]],['W',[37.1,-95.7]],['K',[37.1,-95.7]],
+    ['N',[37.1,-95.7]],['AA',[37.1,-95.7]],['AB',[37.1,-95.7]],
+    ['AC',[37.1,-95.7]],['AD',[37.1,-95.7]],['AE',[37.1,-95.7]],
+    ['AF',[37.1,-95.7]],['AG',[37.1,-95.7]],['AH',[37.1,-95.7]],
+    ['AI',[37.1,-95.7]],['AJ',[37.1,-95.7]],['AK',[37.1,-95.7]],
+    ['VE',[56.1,-106.4]],['VA',[56.1,-106.4]],['VY',[63.0,-136.0]],
+    ['XA',[23.6,-102.5]],['PY',-14.2,-51.9],['CE',-33.5,-70.7],
+    ['LU',-34.6,-58.4],['CX',-32.5,-55.8],['PZ',[5.9,-55.2]],
+    ['PY0F',[-3.8,-32.4]],['PY0T',[-20.5,-28.8]],['9Y4',[10.7,-61.5]],
+    ['OA',-9.2,-75.0],['HC',-1.8,-78.2],['HK',[4.6,-74.1]],
+    ['YV',[8.0,-66.6]],['GY',[4.9,-58.9]],['GW',[52.5,-3.5]],
+    ['GJ',[49.2,-2.1]],['GD',[54.2,-4.5]],['GU',[49.5,-2.6]],
+    ['G',[52.8,-1.7]],['EI',[53.3,-8.2]],['F',[46.2,2.2]],
+    ['ON',[50.8,4.5]],['PA',[52.1,5.3]],['LX',[49.8,6.1]],
+    ['HB9',[47.0,8.2]],['OE',[47.5,13.3]],['DL',[51.2,10.5]],
+    ['DA',[51.2,10.5]],['DB',[51.2,10.5]],['DC',[51.2,10.5]],
+    ['DD',[51.2,10.5]],['DE',[51.2,10.5]],['DF',[51.2,10.5]],
+    ['DG',[51.2,10.5]],['DH',[51.2,10.5]],['DJ',[51.2,10.5]],
+    ['DK',[51.2,10.5]],['DL',[51.2,10.5]],['DM',[51.2,10.5]],
+    ['DN',[51.2,10.5]],['DO',[51.2,10.5]],['DP',[51.2,10.5]],
+    ['DR',[51.2,10.5]],
+    ['SM',[60.1,18.6]],['LA',[60.5,8.5]],['OZ',[56.3,9.5]],
+    ['OH',[64.0,26.0]],['TF',[65.0,-18.6]],['SP',[52.0,19.4]],
+    ['OK',[49.8,15.5]],['OM',[48.7,19.7]],['OL',[49.8,15.5]],
+    ['YO',[45.9,24.9]],['LZ',[42.7,25.5]],['SV',[39.1,21.8]],
+    ['SY',[39.1,21.8]],['TA',[38.9,35.2]],['TC',[38.9,35.2]],
+    ['LY',[55.2,23.9]],['YL',[56.9,24.1]],['ES',[58.6,25.0]],
+    ['RK',[60.0,100.0]],['RA',[60.0,100.0]],['RB',[60.0,100.0]],
+    ['RC',[60.0,100.0]],['RD',[60.0,100.0]],['RE',[60.0,100.0]],
+    ['RF',[60.0,100.0]],['RG',[60.0,100.0]],['R',[60.0,100.0]],
+    ['UA',[60.0,100.0]],['UB',[60.0,100.0]],['UC',[60.0,100.0]],
+    ['UD',[60.0,100.0]],['UE',[60.0,100.0]],['UF',[60.0,100.0]],
+    ['UG',[60.0,100.0]],['UK',[41.4,64.6]],['UN',[48.0,67.0]],
+    ['EW',[53.5,28.0]],['UR',[49.0,31.0]],['UT',[49.0,31.0]],
+    ['UX',[49.0,31.0]],['UY',[49.0,31.0]],['UZ',[49.0,31.0]],
+    ['ER',[47.0,28.5]],['YU',[44.0,21.0]],['YT',[44.0,21.0]],
+    ['YU',[44.0,21.0]],['E7',[44.2,17.5]],['9A',[45.1,16.4]],
+    ['S5',[46.1,14.8]],['Z3',[41.6,21.7]],['ZA',[41.3,20.0]],
+    ['HA',[47.2,19.4]],['HG',[47.2,19.4]],['IT9',[37.6,14.0]],
+    ['IW',[43.0,12.6]],['IZ',[43.0,12.6]],['I',[43.0,12.6]],
+    ['9H',[35.9,14.5]],['IS0',[39.2,9.1]],['4U1',[48.2,16.4]],
+    ['EA6',[39.6,3.0]],['EA8',[28.3,-15.6]],['EA9',[35.9,-5.4]],
+    ['EA',[40.5,-3.7]],['EB',[40.5,-3.7]],['EC',[40.5,-3.7]],
+    ['ED',[40.5,-3.7]],['EE',[40.5,-3.7]],['EF',[40.5,-3.7]],
+    ['EG',[40.5,-3.7]],['EH',[40.5,-3.7]],
+    ['CT9',[32.8,-17.0]],['CT',[39.6,-8.0]],['CQ',[39.6,-8.0]],
+    ['CN',[31.8,-7.1]],['EA8',[28.3,-15.6]],['3V',[33.9,9.6]],
+    ['7X',[28.0,2.6]],['5A',[26.3,17.2]],['SU',[26.8,30.8]],
+    ['ST',[15.6,32.5]],['5Z',[0.0,38.0]],['5X',[1.4,32.3]],
+    ['5H',-6.4,35.0],['9J',-13.1,27.9],['ZS',-29.0,25.1],
+    ['ZR',-29.0,25.1],['ZT',-29.0,25.1],['ZU',-29.0,25.1],
+    ['V5',-22.3,17.1],['A2',-22.3,24.7],['Z2',-20.0,30.0],
+    ['7Q',-13.3,34.3],['C9',-18.3,35.5],['3B8',-20.3,57.6],
+    ['VQ9',-7.3,72.4],['FR',-21.1,55.5],['FT',-49.4,70.0],
+    ['TZ',[12.7,-8.0]],['5V',[8.6,0.8]],['9L',[8.5,-13.2]],
+    ['EL',[6.4,-9.4]],['9G',[7.9,-1.0]],['5N',[9.1,8.7]],
+    ['TY',[9.3,2.3]],['XT2',[12.4,-1.5]],['6W',[14.5,-14.5]],
+    ['TU',[7.5,-5.5]],['D2',-11.2,17.9],['TR',-0.8,11.8],
+    ['TJ',[3.9,11.5]],['5U',[13.5,2.1]],['TT',[15.5,18.7]],
+    ['ET',[9.1,40.5]],['5B4',[35.1,33.4]],['P2',-6.3,143.9],
+    ['YB',-0.8,113.9],['9M',[3.8,108.0]],['DU',[12.9,121.8]],
+    ['HS',[15.9,100.9]],['VU2',[20.6,79.1]],['4W',-8.9,125.7],
+    ['XU',[12.6,105.0]],['XV',[16.5,107.6]],['XW',[17.9,102.6]],
+    ['A3',-21.2,-175.2],['E5',-21.2,-159.8],['KH4',[28.2,-177.4]],
+    ['KH3',[28.2,-177.4]],['AH8',-14.3,-170.7],['ZK1',-21.2,-159.8],
+  ];
+  // Build object: prefix → [lat, lon], sort keys by length desc for greedy match
+  const map = {};
+  raw.forEach(([pfx, lat, lon]) => {
+    if(Array.isArray(lat)){ map[pfx] = lat; }    // passed as [lat,lon] array
+    else { map[pfx] = [lat, lon]; }
+  });
+  return map;
+})();
+
+function callsignToLatLon(call){
+  if(!call) return null;
+  const c = call.toUpperCase().replace(/[\/].*/, '');  // strip /P /M etc
+  // Greedy longest-prefix match
+  for(let len = Math.min(c.length, 5); len >= 1; len--){
+    const pfx = c.slice(0, len);
+    if(DXCC_PREFIX[pfx]) return DXCC_PREFIX[pfx];
+  }
+  return null;
+}
 };
 
 // Band colour lookup (matching HF bands colour palette)
@@ -5380,43 +5493,54 @@ function fetchPSKReporter(){
 //   3. thingproxy       — /fetch/<url>              returns raw content
 // If all proxies fail: show clear error with F12 suggestion.
 async function _pskFetchHTTP(call, btn, badge){
-  if(badge){ badge.className='live-badge'; badge.textContent='Fetching…'; }
+  if(badge){ badge.className='live-badge'; badge.textContent='Fetching\u2026'; }
 
   const elapsed = Date.now() - _pskLastHttp;
   if(elapsed < 5*60*1000){
     const wait = Math.ceil((5*60*1000 - elapsed)/1000);
-    if(badge){ badge.className='live-badge warn'; badge.textContent=`Rate limited — wait ${wait}s`; }
-    if(btn){ btn.textContent='↻'; btn.disabled=false; }
+    if(badge){ badge.className='live-badge warn'; badge.textContent=`Rate limited \u2014 wait ${wait}s`; }
+    if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
     return;
   }
 
-  try{
-    // callsign= returns spots where this call is EITHER sender OR receiver (last 1hr)
-    const pskUrl = `https://retrieve.pskreporter.info/query`
-      + `?callsign=${encodeURIComponent(call)}&flowStartSeconds=-3600&nolocator=0`;
-    const enc    = encodeURIComponent(pskUrl);
+  const pskUrl = `https://retrieve.pskreporter.info/query`
+    + `?callsign=${encodeURIComponent(call)}&flowStartSeconds=-3600&nolocator=0`;
+  const enc = encodeURIComponent(pskUrl);
 
-    const proxies = [
-      { url: `https://corsproxy.io/?url=${enc}`,            name: 'corsproxy.io' },
-      { url: `https://api.allorigins.win/raw?url=${enc}`,   name: 'allorigins'   },
-      { url: `https://thingproxy.freeboard.io/fetch/${pskUrl}`, name: 'thingproxy' },
-    ];
-
-    let xml = null;
-    for(const proxy of proxies){
-      try{
-        if(badge) badge.textContent = `Trying ${proxy.name}…`;
-        const ctrl = new AbortController();
-        const tid  = setTimeout(() => ctrl.abort(), 10000);
-        const resp = await fetch(proxy.url, {signal: ctrl.signal}).finally(() => clearTimeout(tid));
-        if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const text = await resp.text();
-        if(text && text.includes('<')){ xml = text; break; }
-        console.warn('PSK proxy unexpected:', proxy.name, text.slice(0, 120));
-      } catch(e){ console.warn('PSK proxy failed:', proxy.name, e.message); }
+  // Fetch helpers
+  async function tryFetch(url, label, timeoutMs=10000){
+    if(badge) badge.textContent = `${label}\u2026`;
+    const ctrl = new AbortController();
+    const tid  = setTimeout(()=>ctrl.abort(), timeoutMs);
+    try{
+      const resp = await fetch(url, {signal:ctrl.signal}).finally(()=>clearTimeout(tid));
+      if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const text = await resp.text();
+      if(text && text.includes('<')) return text;
+      console.warn('PSK unexpected response from', label, text.slice(0,120));
+      return null;
+    } catch(e){
+      console.warn('PSK fetch failed:', label, e.message);
+      return null;
     }
+  }
 
-    if(!xml) throw new Error('All CORS proxies failed — check console (F12)');
+  let xml = null;
+
+  // 1. Direct fetch — works when opened as file:// or with CORS extension
+  xml = await tryFetch(pskUrl, 'Direct fetch', 8000);
+
+  // 2. corsproxy.io
+  if(!xml) xml = await tryFetch(`https://corsproxy.io/?url=${enc}`, 'corsproxy.io');
+
+  // 3. allorigins
+  if(!xml) xml = await tryFetch(`https://api.allorigins.win/raw?url=${enc}`, 'allorigins');
+
+  // 4. thingproxy
+  if(!xml) xml = await tryFetch(`https://thingproxy.freeboard.io/fetch/${pskUrl}`, 'thingproxy');
+
+  try{
+    if(!xml) throw new Error('All fetch methods failed \u2014 PSKReporter may block CORS proxies. Try opening F12 \u2192 Console.');
     _pskLastHttp = Date.now();
 
     const doc  = new DOMParser().parseFromString(xml, 'text/xml');
@@ -5452,23 +5576,19 @@ async function _pskFetchHTTP(call, btn, badge){
     _pskMqttBuffer = [...spots];
     renderSpotList(spots, 'spotList', 'spotsCount', 'psk-badge', LIVE.spotBandFilter);
     if(LIVE.spotsVisible) drawSpotMarkers();
-    const mapped = spots.filter(s => {
-      if(s.dx_lat===null && s.de_lat===null) return false;
-      const d1 = s.dx_lat!==null ? haversineKm(S.lat,S.lon,s.dx_lat,s.dx_lon) : Infinity;
-      const d2 = s.de_lat!==null ? haversineKm(S.lat,S.lon,s.de_lat,s.de_lon) : Infinity;
-      return Math.min(d1,d2) <= MAX_SPOT_KM;
-    }).length;
-    const label = `PSKReporter · ${spots.length} spots · ${mapped} near TX`;
+    const label = spots.length === 0
+      ? `PSKReporter \u00b7 0 spots for ${call} (last 1h)`
+      : `PSKReporter \u00b7 ${spots.length} spots for ${call}`;
     if(badge){ badge.className='live-badge'; badge.textContent=label; }
 
   } catch(err){
-    console.warn('PSKReporter HTTP error:', err);
+    console.warn('PSKReporter error:', err);
     const msg = err.message || 'Unknown error';
     if(badge){ badge.className='live-badge err'; badge.textContent=`PSK: ${msg}`; }
     const sl = document.getElementById('spotList');
-    if(sl) sl.innerHTML = `<div class="spots-empty" style="color:#f87">⚠ ${msg}<br><small>Open F12 → Console for details</small></div>`;
+    if(sl) sl.innerHTML = `<div class="spots-empty" style="color:#f87">\u26a0 ${msg}</div>`;
   } finally {
-    if(btn){ btn.textContent='↻'; btn.disabled=false; }
+    if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
   }
 }
 
@@ -5604,119 +5724,6 @@ function _pskFlushToUI(){
   if(LIVE.spotsVisible) drawSpotMarkers();
 }
 
-
-// ── Callsign prefix → approximate lat/lon ────────────────────
-// Compact DXCC prefix table: longest-match wins.
-// Covers ~95% of DX cluster traffic. Returns [lat, lon] or null.
-const DXCC_PREFIX = (function(){
-  // [prefix, lat, lon]  — sorted longest-first for greedy match
-  const raw = [
-    ['VK9X',-10.4,105.6],['VK9C',-12.2,96.8],['VK9M',-23.5,154.0],
-    ['VK9N',-29.0,167.9],['VK9W',-31.5,159.1],['ZL8',-29.0,-178.0],
-    ['ZL9',-52.5,-169.0],['ZL',-41.3,174.8],['VK',-25.3,133.8],
-    ['JD1',[35.0,142.0]],['JA',[36.2,138.3]],['HL',[37.5,127.9]],
-    ['BV',[23.7,121.0]],['BY',[35.9,104.2]],['VR2',[22.3,114.2]],
-    ['VS6',[22.3,114.2]],['4S7',[7.9,80.7]],['VU',[20.6,79.1]],
-    ['A4',[23.6,58.6]],['A5',[27.5,90.4]],['A6',[24.5,54.4]],
-    ['A7',[25.3,51.2]],['A9',[26.0,50.6]],['4X',[31.8,35.2]],
-    ['4Z',[31.8,35.2]],['9K',[29.3,47.7]],['YK',[34.8,38.9]],
-    ['OD5',[33.9,35.5]],['9Y',[10.7,-61.5]],['8P',[13.2,-59.6]],
-    ['VP9',[32.3,-64.8]],['KP4',[18.2,-66.5]],['KP2',[18.3,-64.9]],
-    ['FG',[16.3,-61.6]],['FM',[14.6,-61.0]],['J3',[12.1,-61.7]],
-    ['J7',[15.3,-61.4]],['J8',[13.3,-61.2]],['V2',[17.1,-61.8]],
-    ['V4',[17.4,-62.8]],['VP2M',[16.7,-62.2]],['VP2E',[17.7,-62.2]],
-    ['VP2V',[18.4,-64.6]],['ZF',[19.3,-81.4]],['6Y',[18.1,-77.3]],
-    ['VP5',[21.8,-72.0]],['HH',[18.9,-72.3]],['HI',[19.0,-70.7]],
-    ['PJ4',[12.2,-68.3]],['PJ2',[12.1,-68.9]],['NP3',[18.2,-66.5]],
-    ['TI',[9.7,-83.8]],['HP',[8.9,-79.5]],['HO',[8.9,-79.5]],
-    ['YN',[12.1,-86.3]],['TG',[15.8,-90.2]],['HR',[14.1,-87.2]],
-    ['YS',[13.8,-88.9]],['V3',[17.3,-88.5]],['HQ',[14.1,-87.2]],
-    ['XE',[23.6,-102.5]],['XF',[23.6,-110.0]],['KL7',[64.2,-153.4]],
-    ['KH6',[20.7,-157.0]],['W',[37.1,-95.7]],['K',[37.1,-95.7]],
-    ['N',[37.1,-95.7]],['AA',[37.1,-95.7]],['AB',[37.1,-95.7]],
-    ['AC',[37.1,-95.7]],['AD',[37.1,-95.7]],['AE',[37.1,-95.7]],
-    ['AF',[37.1,-95.7]],['AG',[37.1,-95.7]],['AH',[37.1,-95.7]],
-    ['AI',[37.1,-95.7]],['AJ',[37.1,-95.7]],['AK',[37.1,-95.7]],
-    ['VE',[56.1,-106.4]],['VA',[56.1,-106.4]],['VY',[63.0,-136.0]],
-    ['XA',[23.6,-102.5]],['PY',-14.2,-51.9],['CE',-33.5,-70.7],
-    ['LU',-34.6,-58.4],['CX',-32.5,-55.8],['PZ',[5.9,-55.2]],
-    ['PY0F',[-3.8,-32.4]],['PY0T',[-20.5,-28.8]],['9Y4',[10.7,-61.5]],
-    ['OA',-9.2,-75.0],['HC',-1.8,-78.2],['HK',[4.6,-74.1]],
-    ['YV',[8.0,-66.6]],['GY',[4.9,-58.9]],['GW',[52.5,-3.5]],
-    ['GJ',[49.2,-2.1]],['GD',[54.2,-4.5]],['GU',[49.5,-2.6]],
-    ['G',[52.8,-1.7]],['EI',[53.3,-8.2]],['F',[46.2,2.2]],
-    ['ON',[50.8,4.5]],['PA',[52.1,5.3]],['LX',[49.8,6.1]],
-    ['HB9',[47.0,8.2]],['OE',[47.5,13.3]],['DL',[51.2,10.5]],
-    ['DA',[51.2,10.5]],['DB',[51.2,10.5]],['DC',[51.2,10.5]],
-    ['DD',[51.2,10.5]],['DE',[51.2,10.5]],['DF',[51.2,10.5]],
-    ['DG',[51.2,10.5]],['DH',[51.2,10.5]],['DJ',[51.2,10.5]],
-    ['DK',[51.2,10.5]],['DL',[51.2,10.5]],['DM',[51.2,10.5]],
-    ['DN',[51.2,10.5]],['DO',[51.2,10.5]],['DP',[51.2,10.5]],
-    ['DR',[51.2,10.5]],
-    ['SM',[60.1,18.6]],['LA',[60.5,8.5]],['OZ',[56.3,9.5]],
-    ['OH',[64.0,26.0]],['TF',[65.0,-18.6]],['SP',[52.0,19.4]],
-    ['OK',[49.8,15.5]],['OM',[48.7,19.7]],['OL',[49.8,15.5]],
-    ['YO',[45.9,24.9]],['LZ',[42.7,25.5]],['SV',[39.1,21.8]],
-    ['SY',[39.1,21.8]],['TA',[38.9,35.2]],['TC',[38.9,35.2]],
-    ['LY',[55.2,23.9]],['YL',[56.9,24.1]],['ES',[58.6,25.0]],
-    ['RK',[60.0,100.0]],['RA',[60.0,100.0]],['RB',[60.0,100.0]],
-    ['RC',[60.0,100.0]],['RD',[60.0,100.0]],['RE',[60.0,100.0]],
-    ['RF',[60.0,100.0]],['RG',[60.0,100.0]],['R',[60.0,100.0]],
-    ['UA',[60.0,100.0]],['UB',[60.0,100.0]],['UC',[60.0,100.0]],
-    ['UD',[60.0,100.0]],['UE',[60.0,100.0]],['UF',[60.0,100.0]],
-    ['UG',[60.0,100.0]],['UK',[41.4,64.6]],['UN',[48.0,67.0]],
-    ['EW',[53.5,28.0]],['UR',[49.0,31.0]],['UT',[49.0,31.0]],
-    ['UX',[49.0,31.0]],['UY',[49.0,31.0]],['UZ',[49.0,31.0]],
-    ['ER',[47.0,28.5]],['YU',[44.0,21.0]],['YT',[44.0,21.0]],
-    ['YU',[44.0,21.0]],['E7',[44.2,17.5]],['9A',[45.1,16.4]],
-    ['S5',[46.1,14.8]],['Z3',[41.6,21.7]],['ZA',[41.3,20.0]],
-    ['HA',[47.2,19.4]],['HG',[47.2,19.4]],['IT9',[37.6,14.0]],
-    ['IW',[43.0,12.6]],['IZ',[43.0,12.6]],['I',[43.0,12.6]],
-    ['9H',[35.9,14.5]],['IS0',[39.2,9.1]],['4U1',[48.2,16.4]],
-    ['EA6',[39.6,3.0]],['EA8',[28.3,-15.6]],['EA9',[35.9,-5.4]],
-    ['EA',[40.5,-3.7]],['EB',[40.5,-3.7]],['EC',[40.5,-3.7]],
-    ['ED',[40.5,-3.7]],['EE',[40.5,-3.7]],['EF',[40.5,-3.7]],
-    ['EG',[40.5,-3.7]],['EH',[40.5,-3.7]],
-    ['CT9',[32.8,-17.0]],['CT',[39.6,-8.0]],['CQ',[39.6,-8.0]],
-    ['CN',[31.8,-7.1]],['EA8',[28.3,-15.6]],['3V',[33.9,9.6]],
-    ['7X',[28.0,2.6]],['5A',[26.3,17.2]],['SU',[26.8,30.8]],
-    ['ST',[15.6,32.5]],['5Z',[0.0,38.0]],['5X',[1.4,32.3]],
-    ['5H',-6.4,35.0],['9J',-13.1,27.9],['ZS',-29.0,25.1],
-    ['ZR',-29.0,25.1],['ZT',-29.0,25.1],['ZU',-29.0,25.1],
-    ['V5',-22.3,17.1],['A2',-22.3,24.7],['Z2',-20.0,30.0],
-    ['7Q',-13.3,34.3],['C9',-18.3,35.5],['3B8',-20.3,57.6],
-    ['VQ9',-7.3,72.4],['FR',-21.1,55.5],['FT',-49.4,70.0],
-    ['TZ',[12.7,-8.0]],['5V',[8.6,0.8]],['9L',[8.5,-13.2]],
-    ['EL',[6.4,-9.4]],['9G',[7.9,-1.0]],['5N',[9.1,8.7]],
-    ['TY',[9.3,2.3]],['XT2',[12.4,-1.5]],['6W',[14.5,-14.5]],
-    ['TU',[7.5,-5.5]],['D2',-11.2,17.9],['TR',-0.8,11.8],
-    ['TJ',[3.9,11.5]],['5U',[13.5,2.1]],['TT',[15.5,18.7]],
-    ['ET',[9.1,40.5]],['5B4',[35.1,33.4]],['P2',-6.3,143.9],
-    ['YB',-0.8,113.9],['9M',[3.8,108.0]],['DU',[12.9,121.8]],
-    ['HS',[15.9,100.9]],['VU2',[20.6,79.1]],['4W',-8.9,125.7],
-    ['XU',[12.6,105.0]],['XV',[16.5,107.6]],['XW',[17.9,102.6]],
-    ['A3',-21.2,-175.2],['E5',-21.2,-159.8],['KH4',[28.2,-177.4]],
-    ['KH3',[28.2,-177.4]],['AH8',-14.3,-170.7],['ZK1',-21.2,-159.8],
-  ];
-  // Build object: prefix → [lat, lon], sort keys by length desc for greedy match
-  const map = {};
-  raw.forEach(([pfx, lat, lon]) => {
-    if(Array.isArray(lat)){ map[pfx] = lat; }    // passed as [lat,lon] array
-    else { map[pfx] = [lat, lon]; }
-  });
-  return map;
-})();
-
-function callsignToLatLon(call){
-  if(!call) return null;
-  const c = call.toUpperCase().replace(/[\/].*/, '');  // strip /P /M etc
-  // Greedy longest-prefix match
-  for(let len = Math.min(c.length, 5); len >= 1; len--){
-    const pfx = c.slice(0, len);
-    if(DXCC_PREFIX[pfx]) return DXCC_PREFIX[pfx];
-  }
-  return null;
-}
 
 // ── DX Cluster via HamQTH dxc_csv.php ────────────────────────
 // Real format (^ delimited, confirmed from live endpoint):
