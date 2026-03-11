@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v3.0 · Live Data</title>
+<title>Ham Radio Coverage Planner · v3.1 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -502,7 +502,7 @@ option{background:#0b1820;}
         <!-- DX Cluster block -->
         <div class="rtd-block">
           <div class="rtd-title">
-            <span>🌐 DX CLUSTER (dxwatch.com)</span>
+            <span>🌐 DX CLUSTER (HamQTH)</span>
             <div style="display:flex;gap:4px;">
               <button class="btn btn-xs" onclick="fetchDXCluster()" id="dxRefreshBtn" title="Refresh DX cluster">↻</button>
               <button class="btn btn-xs" id="dxToggleBtn" onclick="toggleDXLayer()" title="Show/hide DX spots on map">👁</button>
@@ -798,7 +798,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v3.0';
+const APP_VERSION = 'v3.1';
 const APP_DATE    = '2026-03-11';
 
 // ══════════════════════════════════════════════
@@ -5080,9 +5080,11 @@ startLiveDataRefresh();
 rebuildLayers();
 autoFit();
 // ══════════════════════════════════════════════════════════════════
-// LIVE DATA MODULE — v3.0
-// Sources: NOAA Space Weather (SFI + Kp), PSKReporter, dxwatch.com
-// All fetches via CORS-safe endpoints (NOAA JSON, allorigins proxy)
+// LIVE DATA MODULE — v3.1
+// Sources:
+//   Solar  — NOAA SWPC  (direct CORS, correct product endpoints)
+//   Spots  — PSKReporter MQTT over WSS  (mqtt.pskreporter.info:1886)
+//   DX     — HamQTH dxc_csv.php  (public CSV, direct CORS)
 // ══════════════════════════════════════════════════════════════════
 
 // ── Live state ────────────────────────────────────────────────
@@ -5126,45 +5128,41 @@ function bandFromFreq(freqKHz){
 
 // ── NOAA Space Weather ────────────────────────────────────────
 // NOAA provides JSON APIs without CORS restrictions:
-//   SFI:  https://services.swpc.noaa.gov/json/solar-geophysical-activity-summary.json
-//   Kp:   https://services.swpc.noaa.gov/json/planetary_k_index_1m.json (1-min data)
-//   Also: https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json
+// NOAA SWPC — correct product endpoints (used by DXLook, have Access-Control-Allow-Origin: *)
+//   SFI:  https://services.swpc.noaa.gov/products/summary/10cm-flux.json
+//           → {"Flux":"155","TimeStamp":"2026-03-11 12:00:00"}
+//   Kp:   https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json
+//           → [["time_tag","Kp","Kp_index",...], ["2026-03-11 12:00:00","2.00",2,...], ...]
 async function fetchLiveSolar(){
   const btn = document.getElementById('solarRefreshBtn');
   if(btn){ btn.textContent='…'; btn.disabled=true; }
   try{
     // Fetch both endpoints in parallel
     const [sfiResp, kpResp] = await Promise.all([
-      fetch('https://services.swpc.noaa.gov/json/solar-geophysical-activity-summary.json'),
-      fetch('https://services.swpc.noaa.gov/json/planetary_k_index_1m.json')
+      fetch('https://services.swpc.noaa.gov/products/summary/10cm-flux.json'),
+      fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json')
     ]);
 
-    // SFI from NOAA solar-geophysical-activity-summary
+    // SFI — single JSON object: {Flux:"155", TimeStamp:"2026-03-11 12:00:00"}
     let sfiVal = null, sfiDesc = '';
     if(sfiResp.ok){
       const sfiData = await sfiResp.json();
-      // The array contains multiple records; find the one with radiation_10cm (SFI)
-      // Data format: [{radiation_10cm: 123, ...}]
-      if(Array.isArray(sfiData) && sfiData.length > 0){
-        // Some records may have null; find the last non-null
-        for(let i = sfiData.length-1; i >= 0; i--){
-          if(sfiData[i].radiation_10cm != null){
-            sfiVal = parseFloat(sfiData[i].radiation_10cm);
-            sfiDesc = sfiData[i].time_tag || '';
-            break;
-          }
-        }
+      if(sfiData && sfiData.Flux != null){
+        sfiVal = parseFloat(sfiData.Flux);
+        sfiDesc = sfiData.TimeStamp || '';
       }
     }
 
-    // Kp from planetary K-index 1-minute data
+    // Kp — array of arrays, first row is headers, remaining are data rows (newest last)
+    // Format: [["time_tag","Kp","Kp_index","A_Running","Station_Count"],["2026-..","2.00",2,...],...]
     let kpVal = null;
     if(kpResp.ok){
       const kpData = await kpResp.json();
-      if(Array.isArray(kpData) && kpData.length > 0){
-        // Last entry is most recent
+      if(Array.isArray(kpData) && kpData.length > 1){
+        // Skip header row (index 0), get last data row
         const last = kpData[kpData.length - 1];
-        kpVal = parseFloat(last.kp_index || last.Kp || last.kp || 0);
+        // last[1] = Kp string, last[2] = Kp_index integer
+        kpVal = parseFloat(last[1] ?? last[2] ?? 0);
       }
     }
 
@@ -5237,8 +5235,8 @@ function updateSolarUI(sfi, kp, timeTag){
   // Note
   const noteEl = document.getElementById('live-solar-note');
   if(noteEl) noteEl.textContent = sfi
-    ? `SFI source: NOAA F10.7 daily · Kp: planetary K-index 1-min · Model baseline SFI=150`
-    : `NOAA services.swpc.noaa.gov · Data may be delayed up to 15 min`;
+    ? `SFI source: NOAA F10.7 daily (10cm-flux.json) · Kp: planetary K-index · Model baseline SFI=150`
+    : `NOAA services.swpc.noaa.gov · products/summary/10cm-flux.json`;
 }
 
 function setSolarBadge(type, text){
@@ -5278,148 +5276,226 @@ function autoSyncCondFromKp(kp){
 }
 
 // ── PSKReporter ───────────────────────────────────────────────
-// PSKReporter has a public query API. Due to CORS we route via allorigins.win proxy.
-// Endpoint: https://pskreporter.info/cgi-bin/pskquery5.pl?encap=0&modify=0&mode=FT8&callsign=XX&rronly=1&flow=reporter
-// For open fetch (no callsign), we fetch recent spots near TX lat/lon.
-// PSK API also supports: senderCallsign, receiverCallsign, frange=14000000-14350000
-async function fetchPSKReporter(){
-  const btn = document.getElementById('pskRefreshBtn');
-  if(btn){ btn.textContent='…'; btn.disabled=true; }
-  const badge = document.getElementById('psk-badge');
-  if(badge){ badge.className='live-badge'; badge.textContent='Fetching…'; }
+// ── PSKReporter via MQTT over WebSocket ───────────────────────
+// PSKReporter exposes a public MQTT broker at mqtt.pskreporter.info.
+// Browser-safe: connect via WSS (port 1886) using MQTT.js from CDN.
+// Topic format: pskr/filter/v2/{band}/{mode}/{sc}/{rc}/{sl}/{rl}/{sa}/{ra}
+// Payload: JSON {sq, f, md, rp, t, t_tx, sc, sl, rc, rl, sa, ra, b}
+// No authentication required. No CORS issue (WebSocket protocol).
+//
+// For callsign-filtered mode: subscribe to pskr/filter/v2/+/+/{call}/#
+// For band-filtered mode: subscribe to pskr/filter/v2/{band}/+/+/+/+/+/+/+
+// For open feed: subscribe to pskr/filter/v2/20m/FT8/# (limit to avoid flood)
 
-  try{
-    const callInput = document.getElementById('pskCallIn').value.trim().toUpperCase();
-    // Build PSKReporter URL
-    // We use frange to limit to HF bands (1.8 MHz - 30 MHz)
-    let pskUrl = `https://pskreporter.info/cgi-bin/pskquery5.pl?encap=0&modify=0&frange=1800000-29700000&rronly=1`;
-    if(callInput){
-      // Search as either sender or receiver
-      pskUrl += `&callsign=${encodeURIComponent(callInput)}`;
-    } else {
-      // Fetch spots with receiver near TX location — using a broad query
-      pskUrl += `&senderCallsign=&rronly=1`;
-    }
-    // Route through allorigins proxy to bypass CORS
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(pskUrl)}`;
+let _pskMqttClient = null;
+let _pskMqttBuffer = []; // rolling buffer of recent spots
+const PSK_MAX_BUFFER = 200;
 
-    const resp = await fetch(proxyUrl, {signal: AbortSignal.timeout(12000)});
-    if(!resp.ok) throw new Error('HTTP ' + resp.status);
-    const wrapper = await resp.json();
-    const xmlText = wrapper.contents;
-    if(!xmlText || xmlText.length < 50) throw new Error('Empty response');
-
-    // Parse the XML
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-    const receptions = xmlDoc.querySelectorAll('receptionReport');
-
-    const spots = [];
-    const now = Date.now();
-    receptions.forEach(r => {
-      const senderCallsign   = r.getAttribute('senderCallsign')   || '';
-      const receiverCallsign = r.getAttribute('receiverCallsign') || '';
-      const freq             = parseFloat(r.getAttribute('frequency')  || 0);
-      const sNR              = parseFloat(r.getAttribute('sNR')         || 0);
-      const mode             = r.getAttribute('mode') || '';
-      const flowStartSeconds = parseInt(r.getAttribute('flowStartSeconds') || 0);
-      const senderLocator    = r.getAttribute('senderLocator')   || '';
-      const receiverLocator  = r.getAttribute('receiverLocator') || '';
-
-      const freqKHz = freq / 1000;
-      const band = bandFromFreq(freqKHz);
-      if(!band) return;
-
-      // Convert Maidenhead locators to lat/lon
-      const txPos = maidenheadToLatLon(senderLocator);
-      const rxPos = maidenheadToLatLon(receiverLocator);
-      const ageSecs = now/1000 - flowStartSeconds;
-      if(ageSecs > 1800) return; // skip spots > 30 min old
-
-      spots.push({
-        dx_call: senderCallsign,
-        de_call: receiverCallsign,
-        freq: freqKHz,
-        band,
-        snr: sNR,
-        mode,
-        dx_lat: txPos ? txPos[0] : null,
-        dx_lon: txPos ? txPos[1] : null,
-        de_lat: rxPos ? rxPos[0] : null,
-        de_lon: rxPos ? rxPos[1] : null,
-        locator_tx: senderLocator,
-        locator_rx: receiverLocator,
-        age: ageSecs,
-      });
-    });
-
-    LIVE.pskSpots = spots;
-    renderSpotList(spots, 'spotList', 'spotsCount', 'psk-badge', LIVE.spotBandFilter);
-    if(LIVE.spotsVisible) drawSpotMarkers();
-    if(badge){ badge.className='live-badge'; badge.textContent=`PSKReporter · ${spots.length} spots · fresh`; }
-  } catch(err){
-    console.warn('PSKReporter fetch error:', err);
-    const msg = err.message.includes('timeout') ? 'Timeout — try again' : 'Fetch error';
-    if(badge){ badge.className='live-badge err'; badge.textContent=`PSKReporter: ${msg}`; }
-    const sl = document.getElementById('spotList');
-    if(sl) sl.innerHTML = `<div class="spots-empty">Unable to fetch: ${err.message}<br>PSKReporter may be rate-limiting — wait 1 min</div>`;
-  } finally {
-    if(btn){ btn.textContent='↻'; btn.disabled=false; }
-  }
+function pskLoadMqttJs(cb){
+  if(window.mqtt){ cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://unpkg.com/mqtt/dist/mqtt.min.js';
+  s.onload = cb;
+  s.onerror = ()=>{ console.warn('Could not load mqtt.min.js'); };
+  document.head.appendChild(s);
 }
 
-// ── DX Cluster via dxwatch.com JSON ──────────────────────────
-// dxwatch.com exposes a CORS-friendly JSON endpoint for recent spots
+function fetchPSKReporter(){
+  const btn   = document.getElementById('pskRefreshBtn');
+  const badge = document.getElementById('psk-badge');
+  const sl    = document.getElementById('spotList');
+  if(btn){ btn.textContent='…'; btn.disabled=true; }
+  if(badge){ badge.className='live-badge'; badge.textContent='Connecting…'; }
+
+  pskLoadMqttJs(()=>{
+    if(!window.mqtt){
+      if(badge){ badge.className='live-badge err'; badge.textContent='MQTT.js unavailable'; }
+      if(btn){ btn.textContent='↻'; btn.disabled=false; }
+      return;
+    }
+
+    // Disconnect existing session if reconnecting
+    if(_pskMqttClient && _pskMqttClient.connected){
+      // Already connected — just flush buffer to UI
+      _pskFlushToUI();
+      if(btn){ btn.textContent='↻'; btn.disabled=false; }
+      return;
+    }
+
+    // Connect to PSKReporter MQTT over secure WebSocket
+    try{
+      _pskMqttClient = window.mqtt.connect('wss://mqtt.pskreporter.info:1886', {
+        clientId: 'radio_range_' + Math.random().toString(16).slice(2,8),
+        clean: true,
+        reconnectPeriod: 5000,
+        connectTimeout: 10000,
+      });
+    } catch(e){
+      if(badge){ badge.className='live-badge err'; badge.textContent='MQTT connect failed'; }
+      if(btn){ btn.textContent='↻'; btn.disabled=false; }
+      return;
+    }
+
+    _pskMqttClient.on('connect', ()=>{
+      if(badge){ badge.className='live-badge'; badge.textContent='MQTT connected…'; }
+
+      const callInput = (document.getElementById('pskCallIn')?.value || '').trim().toUpperCase();
+      let topic;
+      if(callInput){
+        // Subscribe to all spots involving this callsign (as sender)
+        topic = `pskr/filter/v2/+/+/${callInput}/#`;
+      } else {
+        // Subscribe to active HF bands only to avoid massive data flood
+        // Use digital modes (FT8/FT4 dominate)
+        topic = 'pskr/filter/v2/+/FT8/+/+/+/+/+/+';
+      }
+      _pskMqttClient.subscribe(topic, {qos: 0});
+      if(btn){ btn.textContent='↻'; btn.disabled=false; }
+
+      // Auto-disconnect after 30 s to cap data, then flush to UI
+      setTimeout(()=>{
+        if(_pskMqttClient){ _pskMqttClient.end(true); _pskMqttClient = null; }
+        _pskFlushToUI();
+        if(badge){ badge.className='live-badge'; badge.textContent=`PSKReporter MQTT · ${LIVE.pskSpots.length} spots`; }
+      }, 30000);
+    });
+
+    _pskMqttClient.on('message', (topic, payload)=>{
+      try{
+        const spot = JSON.parse(payload.toString());
+        // spot: {sq,f,md,rp,t,t_tx,sc,sl,rc,rl,sa,ra,b}
+        const freqKHz = (spot.f || 0) / 1000;
+        const band = bandFromFreq(freqKHz) || spot.b;
+        if(!band) return;
+        const txPos = maidenheadToLatLon(spot.sl || '');
+        const rxPos = maidenheadToLatLon(spot.rl || '');
+        const ageSecs = Date.now()/1000 - (spot.t || spot.t_tx || 0);
+        if(ageSecs > 1800) return; // skip spots > 30 min old
+
+        const parsed = {
+          dx_call: spot.sc || '', de_call: spot.rc || '',
+          freq: freqKHz, band, snr: spot.rp || 0, mode: spot.md || '',
+          dx_lat: txPos ? txPos[0] : null, dx_lon: txPos ? txPos[1] : null,
+          de_lat: rxPos ? rxPos[0] : null, de_lon: rxPos ? rxPos[1] : null,
+          locator_tx: spot.sl || '', locator_rx: spot.rl || '',
+          age: ageSecs,
+        };
+        _pskMqttBuffer.unshift(parsed);
+        if(_pskMqttBuffer.length > PSK_MAX_BUFFER) _pskMqttBuffer.length = PSK_MAX_BUFFER;
+
+        // Update count badge live while collecting
+        const cnt = document.getElementById('spotsCount');
+        if(cnt) cnt.textContent = _pskMqttBuffer.length;
+      } catch(e){ /* ignore bad payloads */ }
+    });
+
+    _pskMqttClient.on('error', (err)=>{
+      console.warn('PSKReporter MQTT error:', err);
+      if(badge){ badge.className='live-badge err'; badge.textContent=`MQTT error: ${err.message||err}`; }
+      if(btn){ btn.textContent='↻'; btn.disabled=false; }
+    });
+
+    _pskMqttClient.on('offline', ()=>{
+      if(badge){ badge.className='live-badge warn'; badge.textContent='MQTT offline — retrying…'; }
+    });
+  });
+}
+
+function _pskFlushToUI(){
+  // De-duplicate by sender+band (keep freshest)
+  const seen = new Map();
+  for(const s of _pskMqttBuffer){
+    const key = `${s.dx_call}|${s.band}`;
+    if(!seen.has(key) || seen.get(key).age > s.age) seen.set(key, s);
+  }
+  const spots = [...seen.values()].sort((a,b)=>a.age-b.age);
+  LIVE.pskSpots = spots;
+  renderSpotList(spots, 'spotList', 'spotsCount', 'psk-badge', LIVE.spotBandFilter);
+  if(LIVE.spotsVisible) drawSpotMarkers();
+}
+
+// ── DX Cluster via HamQTH dxc_csv.php ────────────────────────
+// HamQTH provides a public DX cluster CSV endpoint, no auth needed.
+// URL: https://www.hamqth.com/dxc_csv.php?limit=100&band=ALL&mode=ALL
+// Returns CSV rows: spotter,freq,dx,comment,time,locator,continent
+// Has Access-Control-Allow-Origin: * header (confirmed CORS-safe).
 async function fetchDXCluster(){
-  const btn  = document.getElementById('dxRefreshBtn');
+  const btn   = document.getElementById('dxRefreshBtn');
   const badge = document.getElementById('dx-badge');
   if(btn){ btn.textContent='…'; btn.disabled=true; }
   if(badge){ badge.className='live-badge'; badge.textContent='Fetching…'; }
 
   try{
-    // dxwatch.com public JSON endpoint
-    // Returns ~50 most recent cluster spots across all bands
-    const dxUrl = 'https://dxwatch.com/dxsd1/s.php?s=0&r=50&cdx=0';
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(dxUrl)}`;
-
-    const resp = await fetch(proxyUrl, {signal: AbortSignal.timeout(12000)});
+    // HamQTH public DX cluster CSV — direct fetch, CORS headers present
+    const resp = await fetch('https://www.hamqth.com/dxc_csv.php?limit=100', {
+      signal: AbortSignal.timeout(12000)
+    });
     if(!resp.ok) throw new Error('HTTP ' + resp.status);
-    const wrapper = await resp.json();
-    const raw = wrapper.contents;
-    if(!raw || raw.length < 20) throw new Error('Empty response');
+    const csvText = await resp.text();
+    if(!csvText || csvText.trim().length < 20) throw new Error('Empty response');
 
-    // dxwatch returns JSON: {s:[{dx,de,f,t,com,...},...]}
-    let data;
-    try{ data = JSON.parse(raw); } catch(e){ throw new Error('Invalid JSON from dxwatch'); }
-
+    // Parse CSV: spotter;freq;dx;comment;time;locator;continent
+    // (HamQTH uses semicolons)
     const spots = [];
     const now = Date.now();
-    const entries = data.s || data.spots || [];
-    entries.forEach(s => {
-      const freq = parseFloat(s.f || s.freq || 0);
-      const freqKHz = freq > 100000 ? freq/1000 : freq; // handle Hz vs kHz
+    const lines = csvText.trim().split('\n');
+
+    // Skip header line if present
+    const startIdx = lines[0].toLowerCase().includes('spotter') ? 1 : 0;
+
+    lines.slice(startIdx).forEach(line => {
+      const parts = line.split(';');
+      if(parts.length < 3) return;
+      const deCall  = (parts[0] || '').trim();   // spotter
+      const freqStr = (parts[1] || '').trim();   // freq in kHz
+      const dxCall  = (parts[2] || '').trim();   // DX callsign
+      const comment = (parts[3] || '').trim();
+      const timeStr = (parts[4] || '').trim();   // HH:MM or HHMMz
+      const locator = (parts[5] || '').trim();   // spotter locator
+
+      const freqKHz = parseFloat(freqStr);
+      if(!freqKHz || isNaN(freqKHz)) return;
       const band = bandFromFreq(freqKHz);
       if(!band) return;
 
-      // dxwatch includes locators or lat/lon sometimes
-      const dxCall = s.dx || s.DX || '';
-      const deCall = s.de || s.DE || '';
-      const comment = s.com || s.comment || '';
-      const time = s.t || s.time || '';
+      // Parse time: format "HH:MMz" or "HH:MM" → compute age in seconds
+      let ageSecs = 0;
+      if(timeStr){
+        const clean = timeStr.replace('z','').replace('Z','');
+        const [hh, mm] = clean.split(':').map(Number);
+        if(!isNaN(hh) && !isNaN(mm)){
+          const nowD = new Date();
+          const spotUTC = new Date(Date.UTC(nowD.getUTCFullYear(), nowD.getUTCMonth(), nowD.getUTCDate(), hh, mm, 0));
+          ageSecs = (now - spotUTC.getTime()) / 1000;
+          if(ageSecs < 0) ageSecs += 86400; // rolled over midnight
+        }
+      }
+      if(ageSecs > 7200) return; // skip spots > 2 hrs old
 
-      spots.push({ dx_call: dxCall, de_call: deCall, freq: freqKHz, band, comment, time,
-                   dx_lat: null, dx_lon: null, de_lat: null, de_lon: null });
+      // Spotter locator → position
+      const dePos = maidenheadToLatLon(locator);
+
+      spots.push({
+        dx_call: dxCall, de_call: deCall,
+        freq: freqKHz, band, comment, mode: '',
+        dx_lat: null, dx_lon: null,
+        de_lat: dePos ? dePos[0] : null,
+        de_lon: dePos ? dePos[1] : null,
+        locator_tx: '', locator_rx: locator,
+        age: ageSecs,
+        snr: 0,
+      });
     });
 
     LIVE.dxSpots = spots;
     renderSpotList(spots, 'dxList', 'dxCount', 'dx-badge', LIVE.dxBandFilter, true);
     if(LIVE.dxVisible) drawDXMarkers();
-    if(badge){ badge.className='live-badge'; badge.textContent=`DX Watch · ${spots.length} spots · fresh`; }
+    if(badge){ badge.className='live-badge'; badge.textContent=`HamQTH DX · ${spots.length} spots · fresh`; }
   } catch(err){
     console.warn('DX fetch error:', err);
     if(badge){ badge.className='live-badge err'; badge.textContent=`DX Cluster: ${err.message}`; }
     const dl = document.getElementById('dxList');
-    if(dl) dl.innerHTML=`<div class="spots-empty">Unable to fetch DX cluster<br>Try again in a moment</div>`;
+    if(dl) dl.innerHTML=`<div class="spots-empty">Unable to fetch DX cluster<br>${err.message}</div>`;
   } finally {
     if(btn){ btn.textContent='↻'; btn.disabled=false; }
   }
@@ -5554,7 +5630,7 @@ function drawDXMarkers(){
     : LIVE.dxSpots.filter(s => s.band === LIVE.dxBandFilter);
 
   filtered.slice(0, 50).forEach(spot => {
-    if(spot.dx_lat === null) return; // no position data from dxwatch typically
+    if(spot.dx_lat === null) return; // no DX position data (only spotter locator available)
     const col = BAND_COLORS[spot.band] || '#888';
     const icon = L.divIcon({
       className:'', iconSize:[8,8], iconAnchor:[4,4],
@@ -5607,10 +5683,12 @@ function toggleDXLayer(){
 
 // ── Periodic auto-refresh ─────────────────────────────────────
 function startLiveDataRefresh(){
-  // Initial fetch
+  // Solar: fetch immediately, refresh every 15 min
   fetchLiveSolar();
-  // NOAA: refresh every 15 minutes
   setInterval(fetchLiveSolar, 15 * 60 * 1000);
+  // DX cluster: auto-refresh every 5 min (HamQTH CSV is lightweight)
+  setInterval(fetchDXCluster, 5 * 60 * 1000);
+  // PSKReporter MQTT is event-driven (connect on demand via GO button)
 }
 
 // ── Kick off live data on page load ──────────────────────────
