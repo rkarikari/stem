@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.035 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.036 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -798,7 +798,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.035';
+const APP_VERSION = 'v1.036';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5361,19 +5361,17 @@ function fetchPSKReporter(){
 }
 
 // ── HTTP path: callsign query ─────────────────────────────────
-// retrieve.pskreporter.info has NO CORS headers and cannot be fetched
-// directly from a browser. We route through a chain of CORS proxies.
+// retrieve.pskreporter.info/query returns XML and has no CORS headers.
+// The API also supports a ?callback=X parameter for JSONP — this is the
+// most reliable browser method: inject a <script> tag, PSKReporter wraps
+// the XML string in a JS callback, no CORS needed at all.
 //
-// Proxy chain (all return raw content, no JSON wrapper):
-//   1. corsproxy.io   — ?url=<encoded>        free, XML allowed, no key needed
-//   2. allorigins     — /raw?url=<encoded>     free, any content
-//   3. thingproxy     — /fetch/<url>           freeboard.io, 100KB limit
-//
-// Timeout per proxy: 10s. If all fail, show a clear error with suggestions.
+// Strategy:
+//   1. JSONP via <script> tag (primary — no CORS, no proxy needed)
+//   2. CORS proxy chain as fallback (corsproxy.io → allorigins → thingproxy)
 async function _pskFetchHTTP(call, btn, badge){
   if(badge){ badge.className='live-badge'; badge.textContent='Fetching\u2026'; }
 
-  // Client-side rate limit: 5 min between successful fetches
   const elapsed = Date.now() - _pskLastHttp;
   if(elapsed < 5*60*1000){
     const wait = Math.ceil((5*60*1000 - elapsed)/1000);
@@ -5383,46 +5381,71 @@ async function _pskFetchHTTP(call, btn, badge){
   }
 
   try{
-    const pskBase = 'https://retrieve.pskreporter.info/query'
-      + `?callsign=${encodeURIComponent(call)}&flowStartSeconds=-900&nolocator=0`;
-    const enc = encodeURIComponent(pskBase);
+    const baseParams = `callsign=${encodeURIComponent(call)}&flowStartSeconds=-900&nolocator=0`;
+    const baseUrl    = `https://retrieve.pskreporter.info/query?${baseParams}`;
 
-    // Proxies tried in order — all free, no API key required
-    const proxies = [
-      { url: `https://corsproxy.io/?url=${enc}`,                       name: 'corsproxy.io'  },
-      { url: `https://api.allorigins.win/raw?url=${enc}`,              name: 'allorigins'    },
-      { url: `https://thingproxy.freeboard.io/fetch/${pskBase}`,      name: 'thingproxy'   },
-    ];
+    // ── Method 1: JSONP (no CORS needed) ──────────────────────────
+    // PSKReporter wraps the XML in a JS callback when ?callback=X is added.
+    // Response looks like: pskrCb("<receptionReports>...</receptionReports>")
+    let xml = await new Promise((resolve) => {
+      const cbName = '_pskrCb_' + Math.random().toString(36).slice(2);
+      const script = document.createElement('script');
+      let settled  = false;
 
-    let xml = null;
-    let lastErr = '';
-    for(const proxy of proxies){
-      try{
-        if(badge) badge.textContent = `Trying ${proxy.name}\u2026`;
-        const ctrl = new AbortController();
-        const tid  = setTimeout(()=>ctrl.abort(), 10000);  // 10s per proxy
-        const resp = await fetch(proxy.url, {signal:ctrl.signal}).finally(()=>clearTimeout(tid));
-        if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const text = await resp.text();
-        // Accept if it looks like PSKReporter XML or at least generic XML
-        if(text && text.includes('<')) {
-          xml = text; break;
-        }
-        lastErr = `${proxy.name}: unexpected response`;
-        console.warn('PSK proxy non-XML from', proxy.name, text.slice(0,100));
-      } catch(e){
-        lastErr = `${proxy.name}: ${e.name==='AbortError'?'timeout':e.message}`;
-        console.warn('PSK proxy error:', proxy.name, e.message);
+      const finish = (result) => {
+        if(settled) return;
+        settled = true;
+        clearTimeout(timer);
+        delete window[cbName];
+        if(script.parentNode) script.parentNode.removeChild(script);
+        resolve(result);
+      };
+
+      window[cbName] = (data) => {
+        // data is the XML string wrapped by the callback
+        finish(typeof data === 'string' ? data : null);
+      };
+
+      const timer = setTimeout(() => {
+        console.warn('PSK JSONP timeout');
+        finish(null);
+      }, 12000);
+
+      script.onerror = () => { console.warn('PSK JSONP script error'); finish(null); };
+      script.src = `${baseUrl}&callback=${cbName}`;
+      document.head.appendChild(script);
+    });
+
+    // ── Method 2: CORS proxy chain (fallback) ──────────────────────
+    if(!xml || !xml.includes('<')){
+      const enc = encodeURIComponent(baseUrl);
+      const proxies = [
+        { url: `https://corsproxy.io/?url=${enc}`,            name: 'corsproxy.io' },
+        { url: `https://api.allorigins.win/raw?url=${enc}`,   name: 'allorigins'   },
+        { url: `https://thingproxy.freeboard.io/fetch/${baseUrl}`, name: 'thingproxy' },
+      ];
+
+      for(const proxy of proxies){
+        try{
+          if(badge) badge.textContent = `Trying ${proxy.name}\u2026`;
+          const ctrl = new AbortController();
+          const tid  = setTimeout(() => ctrl.abort(), 10000);
+          const resp = await fetch(proxy.url, {signal: ctrl.signal}).finally(() => clearTimeout(tid));
+          if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const text = await resp.text();
+          if(text && text.includes('<')){ xml = text; break; }
+          console.warn('PSK proxy unexpected response:', proxy.name, text.slice(0, 100));
+        } catch(e){ console.warn('PSK proxy failed:', proxy.name, e.message); }
       }
     }
 
-    if(!xml){
-      throw new Error(`All proxies failed (${lastErr}). Check your network or try a VPN.`);
+    if(!xml || !xml.includes('<')){
+      throw new Error('All methods failed — check console (F12) for details');
     }
 
     _pskLastHttp = Date.now();
 
-    // Parse XML — PSKReporter returns <receptionReports> with <receptionReport> children
+    // Parse XML — <receptionReports><receptionReport .../></receptionReports>
     const doc  = new DOMParser().parseFromString(xml, 'text/xml');
     const rpts = doc.querySelectorAll('receptionReport');
 
@@ -5435,7 +5458,7 @@ async function _pskFetchHTTP(call, btn, badge){
       if(!band) return;
       const flowStart = parseInt(r.getAttribute('flowStartSeconds') || 0);
       const age = tNow - flowStart;
-      if(age > 7200) return;   // skip spots older than 2h
+      if(age > 7200) return;
       const sl = r.getAttribute('senderLocator')   || '';
       const rl = r.getAttribute('receiverLocator') || '';
       const tp = maidenheadToLatLon(sl);
@@ -5452,13 +5475,13 @@ async function _pskFetchHTTP(call, btn, badge){
       });
     });
 
-    spots.sort((a,b)=>a.age - b.age);
+    spots.sort((a,b) => a.age - b.age);
     LIVE.pskSpots  = spots;
     _pskMqttBuffer = [...spots];
     renderSpotList(spots, 'spotList', 'spotsCount', 'psk-badge', LIVE.spotBandFilter);
     if(LIVE.spotsVisible) drawSpotMarkers();
     const label = spots.length === 0
-      ? 'PSKReporter \u00b7 0 spots (callsign may have no recent activity)'
+      ? 'PSKReporter \u00b7 0 spots (no recent activity for this call)'
       : `PSKReporter \u00b7 ${spots.length} spots`;
     if(badge){ badge.className='live-badge'; badge.textContent=label; }
 
@@ -5467,20 +5490,19 @@ async function _pskFetchHTTP(call, btn, badge){
     const msg = err.message || 'Unknown error';
     if(badge){ badge.className='live-badge err'; badge.textContent=`PSK: ${msg}`; }
     const sl = document.getElementById('spotList');
-    if(sl) sl.innerHTML = `<div class="spots-empty" style="color:#f87">\u26a0 PSKReporter fetch failed:<br>${msg}<br><small>Try again in a moment, or check browser console (F12).</small></div>`;
+    if(sl) sl.innerHTML = `<div class="spots-empty" style="color:#f87">&#9888; PSKReporter failed:<br>${msg}<br><small>Open F12 console for details.</small></div>`;
   } finally {
     if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
   }
 }
 
 // ── MQTT path: open stream (no callsign) ─────────────────────
-// MQTT path over WebSocket:
-// Mosquitto requires the WebSocket path to be /mqtt — plain wss://host:port fails.
-// Port 1886 = WSS (WebSocket + TLS), requires /mqtt path
-// Port 1885 = WS  (plain WebSocket, no TLS), requires /mqtt path
-// We try 1886 first; if it times out (port blocked or TLS issue), fall back to 1885.
-// mqtt.js in browser: must pass protocol:'wss' or 'ws' explicitly, otherwise
-// it may try to open a raw TCP socket which the browser will reject.
+// MQTT over WebSocket — mqtt.pskreporter.info
+// Per official docs (mqtt.pskreporter.info) and verified JS examples (openhamclock):
+//   ws://mqtt.pskreporter.info:1885  — plain WebSocket (no TLS) ← confirmed working in JS
+//   wss://mqtt.pskreporter.info:1886 — WebSocket + TLS
+// NO path suffix needed — these are direct WebSocket MQTT connections.
+// mqtt.js browser build: pass protocol:'ws'/'wss' explicitly.
 function _pskConnectMqtt(btn, badge){
   if(_pskMqttClient){
     try{ _pskMqttClient.end(true); }catch(e){}
@@ -5490,10 +5512,10 @@ function _pskConnectMqtt(btn, badge){
 
   const clientId = 'rr_' + Math.random().toString(16).slice(2,10);
 
-  // Try ports in order: 1886 (WSS/TLS), then 1885 (WS plain)
+  // Official ports — plain WebSocket (no /mqtt path needed):
   const endpoints = [
-    { url: 'wss://mqtt.pskreporter.info:1886/mqtt', protocol: 'wss', label: 'WSS:1886' },
-    { url: 'ws://mqtt.pskreporter.info:1885/mqtt',  protocol: 'ws',  label: 'WS:1885'  },
+    { url: 'ws://mqtt.pskreporter.info:1885',  protocol: 'ws',  label: 'WS:1885'  },
+    { url: 'wss://mqtt.pskreporter.info:1886', protocol: 'wss', label: 'WSS:1886' },
   ];
 
   function tryConnect(idx){
