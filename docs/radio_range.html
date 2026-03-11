@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.036 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.037 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -798,7 +798,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.036';
+const APP_VERSION = 'v1.037';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5322,10 +5322,13 @@ const PSK_MAX_BUFFER = 300;
 // ── MQTT.js loader (3-CDN fallback chain) ────────────────────
 function pskLoadMqttJs(cb){
   if(window.mqtt){ cb(); return; }
+  // Try mqtt 5.x first (better WebSocket support), fall back to 4.3.7
   const urls = [
-    'https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js',
+    'https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js',
+    'https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js',
     'https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js',
     'https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js',
   ];
   function tryLoad(i){
     if(i >= urls.length){ cb(); return; }
@@ -5502,7 +5505,8 @@ async function _pskFetchHTTP(call, btn, badge){
 //   ws://mqtt.pskreporter.info:1885  — plain WebSocket (no TLS) ← confirmed working in JS
 //   wss://mqtt.pskreporter.info:1886 — WebSocket + TLS
 // NO path suffix needed — these are direct WebSocket MQTT connections.
-// mqtt.js browser build: pass protocol:'ws'/'wss' explicitly.
+// Proven working per openhamclock (GitHub accius/openhamclock, 2025) and
+// pskr-ha-bridge (pentafive, Jan 2026). Key: minimal options, ws:// port 1885.
 function _pskConnectMqtt(btn, badge){
   if(_pskMqttClient){
     try{ _pskMqttClient.end(true); }catch(e){}
@@ -5510,37 +5514,33 @@ function _pskConnectMqtt(btn, badge){
   }
   _pskMqttBuffer = [];
 
-  const clientId = 'rr_' + Math.random().toString(16).slice(2,10);
-
-  // Official ports — plain WebSocket (no /mqtt path needed):
+  // Proven JS: mqtt.connect('ws://mqtt.pskreporter.info:1885')
+  // No options object needed — defaults work. Try plain WS first, then WSS.
   const endpoints = [
-    { url: 'ws://mqtt.pskreporter.info:1885',  protocol: 'ws',  label: 'WS:1885'  },
-    { url: 'wss://mqtt.pskreporter.info:1886', protocol: 'wss', label: 'WSS:1886' },
+    'ws://mqtt.pskreporter.info:1885',
+    'wss://mqtt.pskreporter.info:1886',
   ];
 
   function tryConnect(idx){
     if(idx >= endpoints.length){
       if(badge){ badge.className='live-badge warn';
-                 badge.textContent='MQTT blocked (1886+1885) — enter callsign for HTTP mode'; }
+                 badge.textContent='MQTT unavailable — enter callsign for HTTP mode'; }
       if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
       return;
     }
 
-    const ep = endpoints[idx];
-    if(badge) badge.textContent = `Connecting ${ep.label}\u2026`;
+    const url   = endpoints[idx];
+    const label = idx === 0 ? 'WS:1885' : 'WSS:1886';
+    if(badge) badge.textContent = `Connecting ${label}\u2026`;
 
     let client;
     try{
-      client = window.mqtt.connect(ep.url, {
-        clientId: clientId + '_' + idx,
-        protocol:        ep.protocol,
-        clean:           true,
-        reconnectPeriod: 0,      // no auto-reconnect
-        keepalive:       30,
-        protocolVersion: 4,      // MQTT 3.1.1
+      // Minimal options — exactly as proven working example
+      client = window.mqtt.connect(url, {
+        reconnectPeriod: 0,   // no auto-reconnect, we manage lifecycle
       });
     } catch(e){
-      console.warn('MQTT connect() threw:', ep.label, e);
+      console.warn('mqtt.connect threw:', label, e.message);
       tryConnect(idx + 1);
       return;
     }
@@ -5548,10 +5548,10 @@ function _pskConnectMqtt(btn, badge){
     _pskMqttClient = client;
     let connected = false;
 
-    // 10s timeout per endpoint
+    // Hard 10s timeout — browser suppresses most WebSocket errors silently
     const timer = setTimeout(()=>{
       if(!connected){
-        console.warn('MQTT timeout on', ep.label, '— trying next');
+        console.warn('MQTT timeout on', label, '— trying next endpoint');
         try{ client.end(true); }catch(e){}
         if(_pskMqttClient === client) _pskMqttClient = null;
         tryConnect(idx + 1);
@@ -5561,14 +5561,15 @@ function _pskConnectMqtt(btn, badge){
     client.on('connect', ()=>{
       connected = true;
       clearTimeout(timer);
-      if(badge){ badge.className='live-badge'; badge.textContent='Streaming FT8 (30s)\u2026'; }
+      if(badge){ badge.className='live-badge'; badge.textContent='Streaming spots (30s)\u2026'; }
       if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
 
-      // Subscribe to all spots: pskr/filter/v2/{band}/{mode}/{sc}/{rc}/{sl}/{rl}/{sa}/{ra}
-      // Use all modes (+) and all bands (+) for maximum coverage
-      client.subscribe('pskr/filter/v2/+/+/+/+/+/+/+/+', {qos:0});
+      // Subscribe all bands, all modes — pskr/filter/v2/{band}/{mode}/{sc}/{rc}/{sl}/{rl}/{sa}/{ra}
+      client.subscribe('pskr/filter/v2/+/+/+/+/+/+/+/+', {qos:0}, (err)=>{
+        if(err) console.warn('PSK subscribe error:', err);
+      });
 
-      // Collect 30s then render
+      // Collect 30s then close and render
       setTimeout(()=>{
         try{ client.end(true); }catch(e){}
         if(_pskMqttClient === client) _pskMqttClient = null;
@@ -5578,20 +5579,20 @@ function _pskConnectMqtt(btn, badge){
       }, 30000);
     });
 
-    client.on('message', (_t, payload)=>{
+    client.on('message', (_topic, payload)=>{
       try{
-        const s    = JSON.parse(payload.toString());
         // Payload: {sq,f,md,rp,t,t_tx,sc,sl,rc,rl,sa,ra,b}
+        const s    = JSON.parse(payload.toString());
         const fkHz = (s.f || 0) / 1000;
         const band = bandFromFreq(fkHz) || s.b;
         if(!band) return;
         const age  = Date.now()/1000 - (s.t_tx || s.t || 0);
         if(age > 1800) return;
-        const tp   = maidenheadToLatLon(s.sl || '');
-        const rp   = maidenheadToLatLon(s.rl || '');
+        const tp = maidenheadToLatLon(s.sl || '');
+        const rp = maidenheadToLatLon(s.rl || '');
         _pskMqttBuffer.unshift({
           dx_call: s.sc||'', de_call: s.rc||'',
-          freq: fkHz, band, snr: s.rp||0, mode: s.md||'FT8',
+          freq: fkHz, band, snr: s.rp||0, mode: s.md||'',
           dx_lat: tp?tp[0]:null, dx_lon: tp?tp[1]:null,
           de_lat: rp?rp[0]:null, de_lon: rp?rp[1]:null,
           locator_tx: s.sl||'', locator_rx: s.rl||'', age,
@@ -5599,19 +5600,15 @@ function _pskConnectMqtt(btn, badge){
         if(_pskMqttBuffer.length > PSK_MAX_BUFFER) _pskMqttBuffer.length = PSK_MAX_BUFFER;
         const cnt = document.getElementById('spotsCount');
         if(cnt) cnt.textContent = _pskMqttBuffer.length;
-      } catch(e){ /* skip malformed */ }
+      } catch(e){ /* skip malformed payload */ }
     });
 
-    client.on('error', err => console.warn('PSK MQTT error:', ep.label, err.message || err));
-
-    // mqtt.js in browser doesn't reliably fire 'error' on connection failure —
-    // the hard setTimeout above is the primary failure detection mechanism.
+    client.on('error', err => console.warn('PSK MQTT error:', label, err.message || err));
   }
 
   tryConnect(0);
 }
 
-// ── HTTP path: callsign query ─────────────────────────────────
 function _pskFlushToUI(){
   const seen = new Map();
   for(const s of _pskMqttBuffer){
