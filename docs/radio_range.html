@@ -805,7 +805,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.041';
+const APP_VERSION = 'v1.042';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5403,11 +5403,12 @@ async function _pskFetchHTTP(call, btn, badge){
     ];
 
     let xml = null;
-    for(const proxy of proxies){
+    for(let pi = 0; pi < proxies.length; pi++){
+      const proxy = proxies[pi];
       try{
-        if(badge) badge.textContent = `Trying ${proxy.name}…`;
+        if(badge) badge.textContent = `Trying ${proxy.name} (${pi+1}/${proxies.length})…`;
         const ctrl = new AbortController();
-        const tid  = setTimeout(() => ctrl.abort(), 10000);
+        const tid  = setTimeout(() => ctrl.abort(), 8000);
         const resp = await fetch(proxy.url, {signal: ctrl.signal}).finally(() => clearTimeout(tid));
         if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const text = await resp.text();
@@ -5608,7 +5609,7 @@ function _pskFlushToUI(){
 // ── Callsign prefix → approximate lat/lon ────────────────────
 // Compact DXCC prefix table: longest-match wins.
 // Covers ~95% of DX cluster traffic. Returns [lat, lon] or null.
-const DXCC_PREFIX = (function(){
+var DXCC_PREFIX = (function(){
   // [prefix, lat, lon]  — sorted longest-first for greedy match
   const raw = [
     ['VK9X',-10.4,105.6],['VK9C',-12.2,96.8],['VK9M',-23.5,154.0],
@@ -6094,7 +6095,8 @@ function startLiveDataRefresh(){
   // Solar: fetch immediately, refresh every 15 min
   fetchLiveSolar();
   setInterval(fetchLiveSolar, 15 * 60 * 1000);
-  // DX cluster: auto-refresh every 5 min (HamQTH CSV is lightweight)
+  // DX cluster: fetch immediately, auto-refresh every 5 min (HamQTH CSV is lightweight)
+  fetchDXCluster();
   setInterval(fetchDXCluster, 5 * 60 * 1000);
   // PSKReporter MQTT is event-driven (connect on demand via GO button)
 }
