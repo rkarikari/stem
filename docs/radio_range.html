@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v3.1 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.032 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -798,7 +798,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v3.1';
+const APP_VERSION = 'v1.032';
 const APP_DATE    = '2026-03-11';
 
 // ══════════════════════════════════════════════
@@ -5076,9 +5076,10 @@ buildVUAntSel('uhf');
 // Derive initial time from RTC
 S.time = deriveTimeLabel();
 startRTC();
-startLiveDataRefresh();
 rebuildLayers();
 autoFit();
+// Live data init deferred so const LIVE block below is fully parsed first
+setTimeout(startLiveDataRefresh, 0);
 // ══════════════════════════════════════════════════════════════════
 // LIVE DATA MODULE — v3.1
 // Sources:
@@ -5127,43 +5128,76 @@ function bandFromFreq(freqKHz){
 }
 
 // ── NOAA Space Weather ────────────────────────────────────────
-// NOAA provides JSON APIs without CORS restrictions:
-// NOAA SWPC — correct product endpoints (used by DXLook, have Access-Control-Allow-Origin: *)
-//   SFI:  https://services.swpc.noaa.gov/products/summary/10cm-flux.json
-//           → {"Flux":"155","TimeStamp":"2026-03-11 12:00:00"}
-//   Kp:   https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json
-//           → [["time_tag","Kp","Kp_index",...], ["2026-03-11 12:00:00","2.00",2,...], ...]
+// Primary SFI:  https://services.swpc.noaa.gov/products/summary/10cm-flux.json
+//               → {"Flux":"155","TimeStamp":"2026-03-11 12:00:00"}
+// Primary Kp:   https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json
+//               → [["time_tag","Kp","Kp_index",...], ["2026-03-11 12:00:00","2.00",2,...], ...]
+// Fallback SFI: observed-solar-cycle-indices.json (f10.7 field)
+// Fallback Kp:  planetary_k_index_1m.json
+// Both NOAA domains serve Access-Control-Allow-Origin: * (US Gov open data).
 async function fetchLiveSolar(){
   const btn = document.getElementById('solarRefreshBtn');
   if(btn){ btn.textContent='…'; btn.disabled=true; }
+  setSolarBadge('', 'Fetching…');
   try{
-    // Fetch both endpoints in parallel
-    const [sfiResp, kpResp] = await Promise.all([
-      fetch('https://services.swpc.noaa.gov/products/summary/10cm-flux.json'),
-      fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json')
-    ]);
-
-    // SFI — single JSON object: {Flux:"155", TimeStamp:"2026-03-11 12:00:00"}
+    // ── SFI ─────────────────────────────────────────────────
     let sfiVal = null, sfiDesc = '';
-    if(sfiResp.ok){
-      const sfiData = await sfiResp.json();
-      if(sfiData && sfiData.Flux != null){
-        sfiVal = parseFloat(sfiData.Flux);
-        sfiDesc = sfiData.TimeStamp || '';
+    try{
+      const r = await fetch('https://services.swpc.noaa.gov/products/summary/10cm-flux.json',
+                            {cache:'no-cache', signal:AbortSignal.timeout(8000)});
+      if(r.ok){
+        const d = await r.json();
+        if(d && d.Flux != null){ sfiVal = parseFloat(d.Flux); sfiDesc = d.TimeStamp || ''; }
       }
+    } catch(e){ console.warn('NOAA SFI primary:', e.message); }
+
+    // Fallback SFI: observed solar cycle indices (has f10.7 monthly)
+    if(sfiVal === null){
+      try{
+        const r = await fetch(
+          'https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json',
+          {cache:'no-cache', signal:AbortSignal.timeout(8000)});
+        if(r.ok){
+          const arr = await r.json();
+          if(Array.isArray(arr) && arr.length){
+            for(let i=arr.length-1;i>=0;i--){
+              const v = arr[i]['f10.7'] ?? null;
+              if(v != null){ sfiVal = parseFloat(v); sfiDesc = arr[i]['time-tag']||''; break; }
+            }
+          }
+        }
+      } catch(e){ console.warn('NOAA SFI fallback:', e.message); }
     }
 
-    // Kp — array of arrays, first row is headers, remaining are data rows (newest last)
-    // Format: [["time_tag","Kp","Kp_index","A_Running","Station_Count"],["2026-..","2.00",2,...],...]
+    // ── Kp ──────────────────────────────────────────────────
     let kpVal = null;
-    if(kpResp.ok){
-      const kpData = await kpResp.json();
-      if(Array.isArray(kpData) && kpData.length > 1){
-        // Skip header row (index 0), get last data row
-        const last = kpData[kpData.length - 1];
-        // last[1] = Kp string, last[2] = Kp_index integer
-        kpVal = parseFloat(last[1] ?? last[2] ?? 0);
+    try{
+      const r = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json',
+                            {cache:'no-cache', signal:AbortSignal.timeout(8000)});
+      if(r.ok){
+        const d = await r.json();
+        // First row is headers, remaining rows are data — get last
+        if(Array.isArray(d) && d.length > 1){
+          const last = d[d.length-1];
+          kpVal = parseFloat(last[1] ?? last[2] ?? 0);
+        }
       }
+    } catch(e){ console.warn('NOAA Kp primary:', e.message); }
+
+    // Fallback Kp: 1-minute data (object array)
+    if(kpVal === null){
+      try{
+        const r = await fetch(
+          'https://services.swpc.noaa.gov/json/planetary_k_index_1m.json',
+          {cache:'no-cache', signal:AbortSignal.timeout(8000)});
+        if(r.ok){
+          const arr = await r.json();
+          if(Array.isArray(arr) && arr.length){
+            const last = arr[arr.length-1];
+            kpVal = parseFloat(last.kp_index ?? last.Kp ?? last.kp ?? 0);
+          }
+        }
+      } catch(e){ console.warn('NOAA Kp fallback:', e.message); }
     }
 
     LIVE.sfi = sfiVal;
@@ -5173,13 +5207,14 @@ async function fetchLiveSolar(){
 
     updateSolarUI(sfiVal, kpVal, sfiDesc);
 
-    // Auto-apply: if SFI is fresh and within valid range, optionally auto-update
     if(sfiVal && sfiVal >= 50 && sfiVal <= 320){
-      document.getElementById('applySfiBtn').disabled = false;
+      const ab = document.getElementById('applySfiBtn');
+      if(ab) ab.disabled = false;
     }
-
-    // Auto-sync condition from Kp
     if(kpVal !== null) autoSyncCondFromKp(kpVal);
+
+    if(sfiVal === null && kpVal === null)
+      setSolarBadge('err', 'NOAA unreachable — try again');
 
   } catch(err){
     console.warn('NOAA fetch failed:', err);
@@ -5293,11 +5328,20 @@ const PSK_MAX_BUFFER = 200;
 
 function pskLoadMqttJs(cb){
   if(window.mqtt){ cb(); return; }
-  const s = document.createElement('script');
-  s.src = 'https://unpkg.com/mqtt/dist/mqtt.min.js';
-  s.onload = cb;
-  s.onerror = ()=>{ console.warn('Could not load mqtt.min.js'); };
-  document.head.appendChild(s);
+  // Try cdnjs first (reliable CDN), then unpkg as fallback
+  function tryLoad(urls, idx){
+    if(idx >= urls.length){ console.warn('All MQTT.js CDNs failed'); cb(); return; }
+    const s = document.createElement('script');
+    s.src = urls[idx];
+    s.onload = ()=>{ if(window.mqtt) cb(); else tryLoad(urls, idx+1); };
+    s.onerror = ()=>{ tryLoad(urls, idx+1); };
+    document.head.appendChild(s);
+  }
+  tryLoad([
+    'https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js',
+    'https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js',
+    'https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js',
+  ], 0);
 }
 
 function fetchPSKReporter(){
@@ -5309,7 +5353,7 @@ function fetchPSKReporter(){
 
   pskLoadMqttJs(()=>{
     if(!window.mqtt){
-      if(badge){ badge.className='live-badge err'; badge.textContent='MQTT.js unavailable'; }
+      if(badge){ badge.className='live-badge err'; badge.textContent='MQTT.js load failed — check CDN'; }
       if(btn){ btn.textContent='↻'; btn.disabled=false; }
       return;
     }
@@ -5322,12 +5366,15 @@ function fetchPSKReporter(){
       return;
     }
 
-    // Connect to PSKReporter MQTT over secure WebSocket
+    // Connect to PSKReporter MQTT over secure WebSocket (wss port 1886)
+    // Falls back to plain ws port 1885 if WSS fails (e.g. browser blocks mixed content)
+    let _connectUrl = 'wss://mqtt.pskreporter.info:1886';
+    let _connected = false;
     try{
-      _pskMqttClient = window.mqtt.connect('wss://mqtt.pskreporter.info:1886', {
-        clientId: 'radio_range_' + Math.random().toString(16).slice(2,8),
+      _pskMqttClient = window.mqtt.connect(_connectUrl, {
+        clientId: 'rr_' + Math.random().toString(16).slice(2,10),
         clean: true,
-        reconnectPeriod: 5000,
+        reconnectPeriod: 0,       // no auto-reconnect — we manage it
         connectTimeout: 10000,
       });
     } catch(e){
@@ -5336,7 +5383,18 @@ function fetchPSKReporter(){
       return;
     }
 
+    // Guard: if no connect event after 12s, show error
+    const _connTimer = setTimeout(()=>{
+      if(!_connected){
+        if(_pskMqttClient){ _pskMqttClient.end(true); _pskMqttClient=null; }
+        if(badge){ badge.className='live-badge err'; badge.textContent='MQTT timeout — port 1886 blocked?'; }
+        if(btn){ btn.textContent='↻'; btn.disabled=false; }
+      }
+    }, 12000);
+
     _pskMqttClient.on('connect', ()=>{
+      _connected = true;
+      clearTimeout(_connTimer);
       if(badge){ badge.className='live-badge'; badge.textContent='MQTT connected…'; }
 
       const callInput = (document.getElementById('pskCallIn')?.value || '').trim().toUpperCase();
