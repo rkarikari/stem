@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.043 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.044 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -805,7 +805,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.043';
+const APP_VERSION = 'v1.044';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5391,39 +5391,41 @@ async function _pskFetchHTTP(call, btn, badge){
   }
 
   try{
-    // callsign= returns spots where this call is EITHER sender OR receiver (last 1hr)
+    // Match the working Python script exactly: senderCallsign, 24h window, rronly=1, rptlimit=500
+    // retrieve.pskreporter.info supports CORS — try direct first, CORS proxies as fallback
     const pskUrl = `https://retrieve.pskreporter.info/query`
-      + `?callsign=${encodeURIComponent(call)}&flowStartSeconds=-3600&nolocator=0`;
-    const enc    = encodeURIComponent(pskUrl);
+      + `?senderCallsign=${encodeURIComponent(call)}&flowStartSeconds=-86400&rronly=1&rptlimit=500&nolocator=0`;
+    const enc = encodeURIComponent(pskUrl);
 
-    const proxies = [
-      { url: `https://corsproxy.io/?url=${enc}`,            name: 'corsproxy.io' },
-      { url: `https://api.allorigins.win/raw?url=${enc}`,   name: 'allorigins'   },
-      { url: `https://thingproxy.freeboard.io/fetch/${pskUrl}`, name: 'thingproxy' },
+    const sources = [
+      { url: pskUrl,                                              name: 'direct'      },
+      { url: `https://corsproxy.io/?url=${enc}`,               name: 'corsproxy.io' },
+      { url: `https://api.allorigins.win/raw?url=${enc}`,      name: 'allorigins'   },
+      { url: `https://thingproxy.freeboard.io/fetch/${pskUrl}`,name: 'thingproxy'   },
     ];
 
     // Hard outer deadline so the UI always unfreezes even if AbortController misfires
     let _outerDone = false;
-    const outerTimer = setTimeout(() => { _outerDone = true; }, 32000);
+    const outerTimer = setTimeout(() => { _outerDone = true; }, 35000);
 
     let xml = null;
-    for(let pi = 0; pi < proxies.length; pi++){
+    for(let pi = 0; pi < sources.length; pi++){
       if(_outerDone) break;
-      const proxy = proxies[pi];
+      const src = sources[pi];
       try{
-        if(badge) badge.textContent = `Trying ${proxy.name} (${pi+1}/${proxies.length})...`;
+        if(badge) badge.textContent = pi === 0 ? 'Contacting PSKReporter…' : `Trying ${src.name} (${pi}/${sources.length-1})…`;
         const ctrl = new AbortController();
         const tid  = setTimeout(() => ctrl.abort(), 9000);
-        const resp = await fetch(proxy.url, {signal: ctrl.signal}).finally(() => clearTimeout(tid));
+        const resp = await fetch(src.url, {signal: ctrl.signal}).finally(() => clearTimeout(tid));
         if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const text = await resp.text();
-        if(text && text.includes('<')){ xml = text; break; }
-        console.warn('PSK proxy unexpected:', proxy.name, text.slice(0, 120));
-      } catch(e){ console.warn('PSK proxy failed:', proxy.name, e.message); }
+        if(text && text.includes('<')){ xml = text; console.log('PSK: got data via', src.name); break; }
+        console.warn('PSK unexpected response from', src.name, text.slice(0, 120));
+      } catch(e){ console.warn('PSK', src.name, 'failed:', e.message); }
     }
     clearTimeout(outerTimer);
 
-    if(!xml) throw new Error(_outerDone ? 'Timed out — all proxies unreachable' : 'All CORS proxies failed — check console (F12)');
+    if(!xml) throw new Error(_outerDone ? 'Timed out — PSKReporter unreachable' : 'PSKReporter unreachable — check console (F12)');
     _pskLastHttp = Date.now();
 
     const doc  = new DOMParser().parseFromString(xml, 'text/xml');
