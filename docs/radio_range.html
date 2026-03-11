@@ -801,6 +801,46 @@ option{background:#0b1820;}
 const APP_VERSION = 'v1.032';
 const APP_DATE    = '2026-03-11';
 
+// ── Live state (declared at top-level to be available to all functions) ──
+const LIVE = {
+  sfi: null, kp: null, solarAge: null,
+  sfiLast: null,            // last successfully fetched SFI (for apply button)
+  pskSpots: [],             // array of {dx_call, de_call, freq, band, snr, mode, dx_lat, dx_lon, de_lat, de_lon, age}
+  dxSpots: [],              // DX cluster spots
+  spotBandFilter: 'all',
+  dxBandFilter: 'all',
+  spotsVisible: true,
+  dxVisible: true,
+  solarFetchInterval: null,
+  spotMarkers: [],          // Leaflet marker layer groups
+  dxMarkers: [],
+  spotLines: [],
+  dxLines: [],
+};
+
+// Band colour lookup (matching HF bands colour palette)
+const BAND_COLORS = {
+  '160m':'#ff6b9d','80m':'#ff9f43','60m':'#ffd93d','40m':'#6bcb77',
+  '30m':'#00ffc3','20m':'#00e5ff','17m':'#44aaff','15m':'#aa88ff',
+  '12m':'#ff88ff','10m':'#ff7675',
+};
+
+function bandFromFreq(freqKHz){
+  const f = parseFloat(freqKHz);
+  if(f >= 1800 && f < 2000)   return '160m';
+  if(f >= 3500 && f < 4000)   return '80m';
+  if(f >= 5300 && f < 5410)   return '60m';
+  if(f >= 7000 && f < 7300)   return '40m';
+  if(f >= 10100 && f < 10150) return '30m';
+  if(f >= 14000 && f < 14350) return '20m';
+  if(f >= 18068 && f < 18168) return '17m';
+  if(f >= 21000 && f < 21450) return '15m';
+  if(f >= 24890 && f < 24990) return '12m';
+  if(f >= 28000 && f < 29700) return '10m';
+  return null;
+}
+
+
 // ══════════════════════════════════════════════
 // DATA TABLES
 // ══════════════════════════════════════════════
@@ -5078,8 +5118,8 @@ S.time = deriveTimeLabel();
 startRTC();
 rebuildLayers();
 autoFit();
-// Live data init deferred so const LIVE block below is fully parsed first
-setTimeout(startLiveDataRefresh, 0);
+// Live data starts after page init
+setTimeout(startLiveDataRefresh, 100);
 // ══════════════════════════════════════════════════════════════════
 // LIVE DATA MODULE — v3.1
 // Sources:
@@ -5089,139 +5129,94 @@ setTimeout(startLiveDataRefresh, 0);
 // ══════════════════════════════════════════════════════════════════
 
 // ── Live state ────────────────────────────────────────────────
-const LIVE = {
-  sfi: null, kp: null, solarAge: null,
-  sfiLast: null,            // last successfully fetched SFI (for apply button)
-  pskSpots: [],             // array of {dx_call, de_call, freq, band, snr, mode, dx_lat, dx_lon, de_lat, de_lon, age}
-  dxSpots: [],              // DX cluster spots
-  spotBandFilter: 'all',
-  dxBandFilter: 'all',
-  spotsVisible: true,
-  dxVisible: true,
-  solarFetchInterval: null,
-  spotMarkers: [],          // Leaflet marker layer groups
-  dxMarkers: [],
-  spotLines: [],
-  dxLines: [],
-};
+// ── NOAA Space Weather ────────────────────────────────────────
+// Endpoints (all have Access-Control-Allow-Origin: * — US Gov open data):
+//   SFI: https://services.swpc.noaa.gov/products/summary/10cm-flux.json
+//        → {"Flux":"155","TimeStamp":"2026-03-11 12:00:00"}
+//   Kp:  https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json
+//        → [["time_tag","Kp","Kp_index",...], ["2026-..","2.00",2,...], ...]
+// Uses plain fetch() with AbortController for broad browser compat.
 
-// Band colour lookup (matching HF bands colour palette)
-const BAND_COLORS = {
-  '160m':'#ff6b9d','80m':'#ff9f43','60m':'#ffd93d','40m':'#6bcb77',
-  '30m':'#00ffc3','20m':'#00e5ff','17m':'#44aaff','15m':'#aa88ff',
-  '12m':'#ff88ff','10m':'#ff7675',
-};
-
-function bandFromFreq(freqKHz){
-  const f = parseFloat(freqKHz);
-  if(f >= 1800 && f < 2000)   return '160m';
-  if(f >= 3500 && f < 4000)   return '80m';
-  if(f >= 5300 && f < 5410)   return '60m';
-  if(f >= 7000 && f < 7300)   return '40m';
-  if(f >= 10100 && f < 10150) return '30m';
-  if(f >= 14000 && f < 14350) return '20m';
-  if(f >= 18068 && f < 18168) return '17m';
-  if(f >= 21000 && f < 21450) return '15m';
-  if(f >= 24890 && f < 24990) return '12m';
-  if(f >= 28000 && f < 29700) return '10m';
-  return null;
+function _noaaFetch(url, ms){
+  // AbortController-based timeout (broader compat than AbortSignal.timeout)
+  const ctrl = new AbortController();
+  const tid  = setTimeout(()=>ctrl.abort(), ms || 9000);
+  return fetch(url, {cache:'no-cache', signal:ctrl.signal})
+    .finally(()=>clearTimeout(tid));
 }
 
-// ── NOAA Space Weather ────────────────────────────────────────
-// Primary SFI:  https://services.swpc.noaa.gov/products/summary/10cm-flux.json
-//               → {"Flux":"155","TimeStamp":"2026-03-11 12:00:00"}
-// Primary Kp:   https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json
-//               → [["time_tag","Kp","Kp_index",...], ["2026-03-11 12:00:00","2.00",2,...], ...]
-// Fallback SFI: observed-solar-cycle-indices.json (f10.7 field)
-// Fallback Kp:  planetary_k_index_1m.json
-// Both NOAA domains serve Access-Control-Allow-Origin: * (US Gov open data).
 async function fetchLiveSolar(){
   const btn = document.getElementById('solarRefreshBtn');
   if(btn){ btn.textContent='…'; btn.disabled=true; }
   setSolarBadge('', 'Fetching…');
+
+  let sfiVal = null, sfiDesc = '', kpVal = null;
+
+  // ── SFI (primary) ──────────────────────────────────────────
   try{
-    // ── SFI ─────────────────────────────────────────────────
-    let sfiVal = null, sfiDesc = '';
-    try{
-      const r = await fetch('https://services.swpc.noaa.gov/products/summary/10cm-flux.json',
-                            {cache:'no-cache', signal:AbortSignal.timeout(8000)});
-      if(r.ok){
-        const d = await r.json();
-        if(d && d.Flux != null){ sfiVal = parseFloat(d.Flux); sfiDesc = d.TimeStamp || ''; }
-      }
-    } catch(e){ console.warn('NOAA SFI primary:', e.message); }
+    const r = await _noaaFetch('https://services.swpc.noaa.gov/products/summary/10cm-flux.json');
+    if(r.ok){
+      const d = await r.json();
+      if(d && d.Flux != null){ sfiVal = parseFloat(d.Flux); sfiDesc = d.TimeStamp || ''; }
+    }
+  } catch(e){ console.warn('NOAA SFI primary:', e.message); }
 
-    // Fallback SFI: observed solar cycle indices (has f10.7 monthly)
-    if(sfiVal === null){
-      try{
-        const r = await fetch(
-          'https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json',
-          {cache:'no-cache', signal:AbortSignal.timeout(8000)});
-        if(r.ok){
-          const arr = await r.json();
-          if(Array.isArray(arr) && arr.length){
-            for(let i=arr.length-1;i>=0;i--){
-              const v = arr[i]['f10.7'] ?? null;
-              if(v != null){ sfiVal = parseFloat(v); sfiDesc = arr[i]['time-tag']||''; break; }
-            }
+  // ── SFI (fallback: observed solar cycle indices, has f10.7) ─
+  if(sfiVal === null){
+    try{
+      const r = await _noaaFetch('https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json');
+      if(r.ok){
+        const arr = await r.json();
+        if(Array.isArray(arr)){
+          for(let i=arr.length-1;i>=0;i--){
+            const v = arr[i]['f10.7'] ?? null;
+            if(v != null){ sfiVal = parseFloat(v); sfiDesc = arr[i]['time-tag']||''; break; }
           }
         }
-      } catch(e){ console.warn('NOAA SFI fallback:', e.message); }
-    }
-
-    // ── Kp ──────────────────────────────────────────────────
-    let kpVal = null;
-    try{
-      const r = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json',
-                            {cache:'no-cache', signal:AbortSignal.timeout(8000)});
-      if(r.ok){
-        const d = await r.json();
-        // First row is headers, remaining rows are data — get last
-        if(Array.isArray(d) && d.length > 1){
-          const last = d[d.length-1];
-          kpVal = parseFloat(last[1] ?? last[2] ?? 0);
-        }
       }
-    } catch(e){ console.warn('NOAA Kp primary:', e.message); }
-
-    // Fallback Kp: 1-minute data (object array)
-    if(kpVal === null){
-      try{
-        const r = await fetch(
-          'https://services.swpc.noaa.gov/json/planetary_k_index_1m.json',
-          {cache:'no-cache', signal:AbortSignal.timeout(8000)});
-        if(r.ok){
-          const arr = await r.json();
-          if(Array.isArray(arr) && arr.length){
-            const last = arr[arr.length-1];
-            kpVal = parseFloat(last.kp_index ?? last.Kp ?? last.kp ?? 0);
-          }
-        }
-      } catch(e){ console.warn('NOAA Kp fallback:', e.message); }
-    }
-
-    LIVE.sfi = sfiVal;
-    LIVE.kp  = kpVal;
-    LIVE.solarAge = Date.now();
-    if(sfiVal) LIVE.sfiLast = sfiVal;
-
-    updateSolarUI(sfiVal, kpVal, sfiDesc);
-
-    if(sfiVal && sfiVal >= 50 && sfiVal <= 320){
-      const ab = document.getElementById('applySfiBtn');
-      if(ab) ab.disabled = false;
-    }
-    if(kpVal !== null) autoSyncCondFromKp(kpVal);
-
-    if(sfiVal === null && kpVal === null)
-      setSolarBadge('err', 'NOAA unreachable — try again');
-
-  } catch(err){
-    console.warn('NOAA fetch failed:', err);
-    setSolarBadge('err', 'Fetch error — check network');
-  } finally {
-    if(btn){ btn.textContent='↻'; btn.disabled=false; }
+    } catch(e){ console.warn('NOAA SFI fallback:', e.message); }
   }
+
+  // ── Kp (primary: array-of-arrays, first row = headers) ─────
+  try{
+    const r = await _noaaFetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
+    if(r.ok){
+      const d = await r.json();
+      if(Array.isArray(d) && d.length > 1){
+        const last = d[d.length-1];
+        kpVal = parseFloat(last[1] ?? last[2] ?? 0);
+      }
+    }
+  } catch(e){ console.warn('NOAA Kp primary:', e.message); }
+
+  // ── Kp (fallback: 1-minute object array) ───────────────────
+  if(kpVal === null){
+    try{
+      const r = await _noaaFetch('https://services.swpc.noaa.gov/json/planetary_k_index_1m.json');
+      if(r.ok){
+        const arr = await r.json();
+        if(Array.isArray(arr) && arr.length){
+          const last = arr[arr.length-1];
+          kpVal = parseFloat(last.kp_index ?? last.Kp ?? last.kp ?? 0);
+        }
+      }
+    } catch(e){ console.warn('NOAA Kp fallback:', e.message); }
+  }
+
+  LIVE.sfi = sfiVal;
+  LIVE.kp  = kpVal;
+  LIVE.solarAge = Date.now();
+  if(sfiVal) LIVE.sfiLast = sfiVal;
+
+  updateSolarUI(sfiVal, kpVal, sfiDesc);
+
+  const ab = document.getElementById('applySfiBtn');
+  if(ab) ab.disabled = !(sfiVal && sfiVal >= 50 && sfiVal <= 320);
+  if(kpVal !== null) autoSyncCondFromKp(kpVal);
+  if(sfiVal === null && kpVal === null)
+    setSolarBadge('err', 'NOAA unreachable — check console');
+
+  if(btn){ btn.textContent='↻'; btn.disabled=false; }
 }
 
 function updateSolarUI(sfi, kp, timeTag){
@@ -5485,9 +5480,7 @@ async function fetchDXCluster(){
 
   try{
     // HamQTH public DX cluster CSV — direct fetch, CORS headers present
-    const resp = await fetch('https://www.hamqth.com/dxc_csv.php?limit=100', {
-      signal: AbortSignal.timeout(12000)
-    });
+    const resp = await _noaaFetch('https://www.hamqth.com/dxc_csv.php?limit=100');
     if(!resp.ok) throw new Error('HTTP ' + resp.status);
     const csvText = await resp.text();
     if(!csvText || csvText.trim().length < 20) throw new Error('Empty response');
