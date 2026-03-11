@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.051 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.052 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -272,6 +272,11 @@ option{background:#0b1820;}
 .spot-map-dot:hover{transform:scale(1.5);}
 .spot-map-line{pointer-events:none;}
 </style>
+<script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
+<script>
+// mqtt.js load verification — will be checked before connecting
+window._mqttLoaded = typeof window.mqtt !== 'undefined';
+</script>
 </head>
 <body>
 <div class="app">
@@ -805,7 +810,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.051';
+const APP_VERSION = 'v1.052';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5364,11 +5369,28 @@ function fetchPSKReporter(){
     if(badge){ badge.className='live-badge warn'; badge.textContent='Enter your callsign first'; }
     if(btn){ btn.textContent='↻'; btn.disabled=false; }
     const sl = document.getElementById('spotList');
-    if(sl) sl.innerHTML='<div class="spots-empty">Your callsign is required — PSKReporter streams only spots where you are the sender or receiver.</div>';
+    if(sl) sl.innerHTML='<div class="spots-empty">Enter your callsign above then press GO.</div>';
     return;
   }
-  // Use MQTT WebSocket stream with callsign-filtered topic
-  pskLoadMqttJs(function(){ _pskConnectMqtt(btn, badge, callInput); });
+
+  if(badge){ badge.className='live-badge'; badge.textContent='Connecting to PSKReporter MQTT…'; }
+  var sl=document.getElementById('spotList');
+  if(sl) sl.innerHTML='<div class="spots-empty" style="color:#adf">Connecting to PSKReporter MQTT…</div>';
+
+  if(!window.mqtt){
+    // mqtt.js not yet loaded — load it now then connect
+    if(badge) badge.textContent='Loading MQTT library…';
+    pskLoadMqttJs(function(){
+      if(!window.mqtt){
+        if(badge){ badge.className='live-badge err'; badge.textContent='Failed to load MQTT library'; }
+        if(btn){ btn.textContent='↻'; btn.disabled=false; }
+        return;
+      }
+      _pskConnectMqtt(btn, badge, callInput);
+    });
+  } else {
+    _pskConnectMqtt(btn, badge, callInput);
+  }
 }
 
 // ── HTTP path: callsign query ─────────────────────────────────
@@ -5498,22 +5520,33 @@ function _pskConnectMqtt(btn, badge, callsign){
     'wss://mqtt.pskreporter.info:1886',
   ];
 
+  if(!window.mqtt){
+    console.error('[PSK MQTT] mqtt.js not loaded');
+    if(badge){ badge.className='live-badge err'; badge.textContent='PSK: MQTT library not loaded'; }
+    if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
+    return;
+  }
+
+  console.log('[PSK MQTT] mqtt.js version:', window.mqtt.VERSION || 'unknown');
+
   function tryConnect(idx){
     if(idx >= endpoints.length){
-      if(badge){ badge.className='live-badge warn';
-                 badge.textContent='MQTT unavailable — enter callsign for HTTP mode'; }
+      if(badge){ badge.className='live-badge err';
+                 badge.textContent='PSK: MQTT connection failed — check F12'; }
       if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
       return;
     }
 
     const url   = endpoints[idx];
     const label = idx === 0 ? 'WS:1885' : 'WSS:1886';
-    if(badge) badge.textContent = `Connecting ${label}\u2026`;
+    if(badge){ badge.className='live-badge'; badge.textContent='Connecting MQTT '+label+'…'; }
+    var el=document.getElementById('spotList');
+    if(el) el.innerHTML='<div class="spots-empty" style="color:#adf">Connecting MQTT '+label+'…</div>';
 
-    console.log(`[PSK MQTT] Attempting ${label} via ${url} (mqtt.js ${window.mqtt?.VERSION || '?'})`);
+    console.log('[PSK MQTT] trying', url);
     let client;
     try{
-      client = window.mqtt.connect(url, { reconnectPeriod: 0 });
+      client = window.mqtt.connect(url, { reconnectPeriod: 0, connectTimeout: 8000 });
     } catch(e){
       console.warn('[PSK MQTT] connect() threw:', label, e.message);
       tryConnect(idx + 1);
