@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.044 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.045 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -805,7 +805,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.044';
+const APP_VERSION = 'v1.045';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5391,44 +5391,59 @@ async function _pskFetchHTTP(call, btn, badge){
   }
 
   try{
-    // Match the working Python script exactly: senderCallsign, 24h window, rronly=1, rptlimit=500
-    // retrieve.pskreporter.info supports CORS — try direct first, CORS proxies as fallback
-    const pskUrl = `https://retrieve.pskreporter.info/query`
-      + `?senderCallsign=${encodeURIComponent(call)}&flowStartSeconds=-86400&rronly=1&rptlimit=500&nolocator=0`;
+    // retrieve.pskreporter.info has no CORS headers — browser blocks direct fetch.
+    // Use CORS proxies. Identical query params to the confirmed-working Python script:
+    //   senderCallsign=, flowStartSeconds=-86400, rronly=1, rptlimit=500
+    const pskUrl = 'https://retrieve.pskreporter.info/query'
+      + '?senderCallsign=' + encodeURIComponent(call)
+      + '&flowStartSeconds=-86400&rronly=1&rptlimit=500&nolocator=0';
     const enc = encodeURIComponent(pskUrl);
 
-    const sources = [
-      { url: pskUrl,                                              name: 'direct'      },
-      { url: `https://corsproxy.io/?url=${enc}`,               name: 'corsproxy.io' },
-      { url: `https://api.allorigins.win/raw?url=${enc}`,      name: 'allorigins'   },
-      { url: `https://thingproxy.freeboard.io/fetch/${pskUrl}`,name: 'thingproxy'   },
+    const proxies = [
+      { url: 'https://corsproxy.io/?url='                           + enc,    name: 'corsproxy.io'  },
+      { url: 'https://api.allorigins.win/raw?url='                  + enc,    name: 'allorigins'    },
+      { url: 'https://api.codetabs.com/v1/proxy?quest='             + enc,    name: 'codetabs'      },
+      { url: 'https://thingproxy.freeboard.io/fetch/'               + pskUrl, name: 'thingproxy'    },
     ];
 
-    // Hard outer deadline so the UI always unfreezes even if AbortController misfires
-    let _outerDone = false;
-    const outerTimer = setTimeout(() => { _outerDone = true; }, 35000);
+    if(badge) badge.textContent = 'Contacting PSKReporter…';
 
-    let xml = null;
-    for(let pi = 0; pi < sources.length; pi++){
-      if(_outerDone) break;
-      const src = sources[pi];
-      try{
-        if(badge) badge.textContent = pi === 0 ? 'Contacting PSKReporter…' : `Trying ${src.name} (${pi}/${sources.length-1})…`;
+    // Race all proxies in parallel — first valid XML response wins
+    function tryProxy(proxy){
+      return new Promise((resolve, reject) => {
         const ctrl = new AbortController();
-        const tid  = setTimeout(() => ctrl.abort(), 9000);
-        const resp = await fetch(src.url, {signal: ctrl.signal}).finally(() => clearTimeout(tid));
-        if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const text = await resp.text();
-        if(text && text.includes('<')){ xml = text; console.log('PSK: got data via', src.name); break; }
-        console.warn('PSK unexpected response from', src.name, text.slice(0, 120));
-      } catch(e){ console.warn('PSK', src.name, 'failed:', e.message); }
+        const tid  = setTimeout(() => { ctrl.abort(); reject(new Error('timeout')); }, 12000);
+        fetch(proxy.url, { signal: ctrl.signal })
+          .then(r => {
+            clearTimeout(tid);
+            if(!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          })
+          .then(text => {
+            // Must be actual PSKReporter XML, not a proxy error page
+            if(text && text.includes('receptionReport'))
+              resolve({ text, name: proxy.name });
+            else
+              reject(new Error('no receptionReport in response'));
+          })
+          .catch(e => { clearTimeout(tid); reject(e); });
+      });
     }
-    clearTimeout(outerTimer);
 
-    if(!xml) throw new Error(_outerDone ? 'Timed out — PSKReporter unreachable' : 'PSKReporter unreachable — check console (F12)');
+    let result;
+    try{
+      result = await Promise.any(proxies.map(p => tryProxy(p)));
+    } catch(aggErr){
+      // All proxies failed — log individual errors
+      console.warn('PSKReporter: all proxies failed:', aggErr);
+      throw new Error('All CORS proxies failed — open F12 console for details');
+    }
+
+    console.log('PSKReporter: data via', result.name);
+    if(badge) badge.textContent = 'Parsing…';
     _pskLastHttp = Date.now();
 
-    const doc  = new DOMParser().parseFromString(xml, 'text/xml');
+    const doc  = new DOMParser().parseFromString(result.text, 'text/xml');
     const rpts = doc.querySelectorAll('receptionReport');
 
     const spots = [];
@@ -5439,7 +5454,7 @@ async function _pskFetchHTTP(call, btn, badge){
       const band  = bandFromFreq(freqK);
       if(!band) return;
       const age = tNow - parseInt(r.getAttribute('flowStartSeconds') || 0);
-      if(age > 7200) return;
+      if(age > 86400) return;
       const sl = r.getAttribute('senderLocator')   || '';
       const rl = r.getAttribute('receiverLocator') || '';
       const tp = maidenheadToLatLon(sl);
@@ -5467,15 +5482,15 @@ async function _pskFetchHTTP(call, btn, badge){
       const d2 = s.de_lat!==null ? haversineKm(S.lat,S.lon,s.de_lat,s.de_lon) : Infinity;
       return Math.min(d1,d2) <= MAX_SPOT_KM;
     }).length;
-    const label = `PSKReporter · ${spots.length} spots · ${mapped} near TX`;
+    const label = 'PSKReporter · ' + spots.length + ' spots (24h) · ' + mapped + ' near TX · via ' + result.name;
     if(badge){ badge.className='live-badge'; badge.textContent=label; }
 
   } catch(err){
     console.warn('PSKReporter HTTP error:', err);
     const msg = err.message || 'Unknown error';
-    if(badge){ badge.className='live-badge err'; badge.textContent=`PSK: ${msg}`; }
+    if(badge){ badge.className='live-badge err'; badge.textContent='PSK: ' + msg; }
     const sl = document.getElementById('spotList');
-    if(sl) sl.innerHTML = `<div class="spots-empty" style="color:#f87">⚠ ${msg}<br><small>Open F12 → Console for details</small></div>`;
+    if(sl) sl.innerHTML = '<div class="spots-empty" style="color:#f87">⚠ ' + msg + '<br><small>Open F12 → Console for proxy details</small></div>';
   } finally {
     if(btn){ btn.textContent='↻'; btn.disabled=false; }
   }
