@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.033 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.034 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -798,7 +798,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.033';
+const APP_VERSION = 'v1.034';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5361,34 +5361,68 @@ function fetchPSKReporter(){
 }
 
 // ── HTTP path: callsign query ─────────────────────────────────
-// Endpoint: https://retrieve.pskreporter.info/query
-// Params:   callsign=XX  flowStartSeconds=-900  (last 15 min)
-// Response: XML  <receptionReports><receptionReport .../></receptionReports>
+// retrieve.pskreporter.info has NO CORS headers and cannot be fetched
+// directly from a browser. We route through a chain of CORS proxies.
+//
+// Proxy chain (all return raw content, no JSON wrapper):
+//   1. corsproxy.io   — ?url=<encoded>        free, XML allowed, no key needed
+//   2. allorigins     — /raw?url=<encoded>     free, any content
+//   3. thingproxy     — /fetch/<url>           freeboard.io, 100KB limit
+//
+// Timeout per proxy: 10s. If all fail, show a clear error with suggestions.
 async function _pskFetchHTTP(call, btn, badge){
-  if(badge){ badge.className='live-badge'; badge.textContent='Fetching…'; }
+  if(badge){ badge.className='live-badge'; badge.textContent='Fetching\u2026'; }
 
+  // Client-side rate limit: 5 min between successful fetches
   const elapsed = Date.now() - _pskLastHttp;
   if(elapsed < 5*60*1000){
     const wait = Math.ceil((5*60*1000 - elapsed)/1000);
-    if(badge){ badge.className='live-badge warn'; badge.textContent=`Rate limited — wait ${wait}s`; }
-    if(btn){ btn.textContent='↻'; btn.disabled=false; }
+    if(badge){ badge.className='live-badge warn'; badge.textContent=`Rate limited \u2014 wait ${wait}s`; }
+    if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
     return;
   }
 
   try{
-    // Correct endpoint per official API docs
-    const url = 'https://retrieve.pskreporter.info/query'
+    const pskBase = 'https://retrieve.pskreporter.info/query'
       + `?callsign=${encodeURIComponent(call)}&flowStartSeconds=-900&nolocator=0`;
+    const enc = encodeURIComponent(pskBase);
 
-    const ctrl = new AbortController();
-    const tid  = setTimeout(()=>ctrl.abort(), 15000);
-    const resp = await fetch(url, {signal: ctrl.signal}).finally(()=>clearTimeout(tid));
+    // Proxies tried in order — all free, no API key required
+    const proxies = [
+      { url: `https://corsproxy.io/?url=${enc}`,                       name: 'corsproxy.io'  },
+      { url: `https://api.allorigins.win/raw?url=${enc}`,              name: 'allorigins'    },
+      { url: `https://thingproxy.freeboard.io/fetch/${pskBase}`,      name: 'thingproxy'   },
+    ];
 
-    if(!resp.ok) throw new Error('HTTP ' + resp.status);
-    const xml = await resp.text();
+    let xml = null;
+    let lastErr = '';
+    for(const proxy of proxies){
+      try{
+        if(badge) badge.textContent = `Trying ${proxy.name}\u2026`;
+        const ctrl = new AbortController();
+        const tid  = setTimeout(()=>ctrl.abort(), 10000);  // 10s per proxy
+        const resp = await fetch(proxy.url, {signal:ctrl.signal}).finally(()=>clearTimeout(tid));
+        if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const text = await resp.text();
+        // Accept if it looks like PSKReporter XML or at least generic XML
+        if(text && text.includes('<')) {
+          xml = text; break;
+        }
+        lastErr = `${proxy.name}: unexpected response`;
+        console.warn('PSK proxy non-XML from', proxy.name, text.slice(0,100));
+      } catch(e){
+        lastErr = `${proxy.name}: ${e.name==='AbortError'?'timeout':e.message}`;
+        console.warn('PSK proxy error:', proxy.name, e.message);
+      }
+    }
+
+    if(!xml){
+      throw new Error(`All proxies failed (${lastErr}). Check your network or try a VPN.`);
+    }
+
     _pskLastHttp = Date.now();
 
-    // Parse XML response
+    // Parse XML — PSKReporter returns <receptionReports> with <receptionReport> children
     const doc  = new DOMParser().parseFromString(xml, 'text/xml');
     const rpts = doc.querySelectorAll('receptionReport');
 
@@ -5399,7 +5433,8 @@ async function _pskFetchHTTP(call, btn, badge){
       const freqK = freq / 1000;
       const band  = bandFromFreq(freqK);
       if(!band) return;
-      const age = tNow - parseInt(r.getAttribute('flowStartSeconds') || 0);
+      const flowStart = parseInt(r.getAttribute('flowStartSeconds') || 0);
+      const age = tNow - flowStart;
       if(age > 7200) return;   // skip spots older than 2h
       const sl = r.getAttribute('senderLocator')   || '';
       const rl = r.getAttribute('receiverLocator') || '';
@@ -5418,20 +5453,23 @@ async function _pskFetchHTTP(call, btn, badge){
     });
 
     spots.sort((a,b)=>a.age - b.age);
-    LIVE.pskSpots   = spots;
-    _pskMqttBuffer  = [...spots];
+    LIVE.pskSpots  = spots;
+    _pskMqttBuffer = [...spots];
     renderSpotList(spots, 'spotList', 'spotsCount', 'psk-badge', LIVE.spotBandFilter);
     if(LIVE.spotsVisible) drawSpotMarkers();
-    if(badge){ badge.className='live-badge'; badge.textContent=`PSKReporter · ${spots.length} spots`; }
+    const label = spots.length === 0
+      ? 'PSKReporter \u00b7 0 spots (callsign may have no recent activity)'
+      : `PSKReporter \u00b7 ${spots.length} spots`;
+    if(badge){ badge.className='live-badge'; badge.textContent=label; }
 
   } catch(err){
     console.warn('PSKReporter HTTP error:', err);
-    const msg = err.name==='AbortError' ? 'Timeout (15s)' : err.message;
-    if(badge){ badge.className='live-badge err'; badge.textContent=`PSK error: ${msg}`; }
+    const msg = err.message || 'Unknown error';
+    if(badge){ badge.className='live-badge err'; badge.textContent=`PSK: ${msg}`; }
     const sl = document.getElementById('spotList');
-    if(sl) sl.innerHTML = `<div class="spots-empty">PSKReporter error: ${msg}<br>Check console for details</div>`;
+    if(sl) sl.innerHTML = `<div class="spots-empty" style="color:#f87">\u26a0 PSKReporter fetch failed:<br>${msg}<br><small>Try again in a moment, or check browser console (F12).</small></div>`;
   } finally {
-    if(btn){ btn.textContent='↻'; btn.disabled=false; }
+    if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
   }
 }
 
