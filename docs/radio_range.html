@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.037 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.038 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -798,7 +798,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.037';
+const APP_VERSION = 'v1.038';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5623,87 +5623,101 @@ function _pskFlushToUI(){
 
 
 // ── DX Cluster via HamQTH dxc_csv.php ────────────────────────
-// HamQTH provides a public DX cluster CSV endpoint, no auth needed.
-// URL: https://www.hamqth.com/dxc_csv.php?limit=100&band=ALL&mode=ALL
-// Returns CSV rows: spotter,freq,dx,comment,time,locator,continent
-// Has Access-Control-Allow-Origin: * header (confirmed CORS-safe).
+// Real format (confirmed from live endpoint, ^ delimited):
+// Call^Frequency^Date/Time^Spotter^Comment^LoTW user^eQSL user^Continent^Band^Country name
+// Example row:
+//   KF0NYM^18070.0^TX5U^Good Sig^2149 2025-05-27^^^EU^17M^France^227
+//   col 0 = DX callsign (spotted station)
+//   col 1 = frequency kHz
+//   col 2 = spotter callsign  ← NOTE: HamQTH puts DX first, spotter third
+//   col 3 = comment
+//   col 4 = "HHMM YYYY-MM-DD"  (time UTC + date)
+//   col 7 = continent
+//   col 8 = band string (e.g. "17M")
+//   col 9 = country name
 async function fetchDXCluster(){
   const btn   = document.getElementById('dxRefreshBtn');
   const badge = document.getElementById('dx-badge');
-  if(btn){ btn.textContent='…'; btn.disabled=true; }
-  if(badge){ badge.className='live-badge'; badge.textContent='Fetching…'; }
+  if(btn){ btn.textContent='\u2026'; btn.disabled=true; }
+  if(badge){ badge.className='live-badge'; badge.textContent='Fetching\u2026'; }
 
   try{
-    // HamQTH public DX cluster CSV — direct fetch, CORS headers present
     const resp = await _noaaFetch('https://www.hamqth.com/dxc_csv.php?limit=100');
     if(!resp.ok) throw new Error('HTTP ' + resp.status);
     const csvText = await resp.text();
-    if(!csvText || csvText.trim().length < 20) throw new Error('Empty response');
+    if(!csvText || csvText.trim().length < 10) throw new Error('Empty response');
 
-    // Parse CSV: spotter;freq;dx;comment;time;locator;continent
-    // (HamQTH uses semicolons)
     const spots = [];
-    const now = Date.now();
-    const lines = csvText.trim().split('\n');
+    const now   = Date.now();
 
-    // Skip header line if present
-    const startIdx = lines[0].toLowerCase().includes('spotter') ? 1 : 0;
+    csvText.trim().split('\n').forEach(line => {
+      // Skip header
+      if(line.toLowerCase().startsWith('call')) return;
+      const p = line.split('^');
+      if(p.length < 3) return;
 
-    lines.slice(startIdx).forEach(line => {
-      const parts = line.split(';');
-      if(parts.length < 3) return;
-      const deCall  = (parts[0] || '').trim();   // spotter
-      const freqStr = (parts[1] || '').trim();   // freq in kHz
-      const dxCall  = (parts[2] || '').trim();   // DX callsign
-      const comment = (parts[3] || '').trim();
-      const timeStr = (parts[4] || '').trim();   // HH:MM or HHMMz
-      const locator = (parts[5] || '').trim();   // spotter locator
+      const dxCall  = (p[0] || '').trim();   // spotted DX station
+      const freqStr = (p[1] || '').trim();   // frequency kHz
+      const deCall  = (p[2] || '').trim();   // spotter
+      const comment = (p[3] || '').trim();
+      const timeStr = (p[4] || '').trim();   // "HHMM YYYY-MM-DD"
+      const band    = (p[8] || '').trim();   // "17M", "20M" etc.
 
       const freqKHz = parseFloat(freqStr);
       if(!freqKHz || isNaN(freqKHz)) return;
-      const band = bandFromFreq(freqKHz);
-      if(!band) return;
+      if(!dxCall) return;
 
-      // Parse time: format "HH:MMz" or "HH:MM" → compute age in seconds
+      // Parse "HHMM YYYY-MM-DD" into a UTC Date → age in seconds
       let ageSecs = 0;
       if(timeStr){
-        const clean = timeStr.replace('z','').replace('Z','');
-        const [hh, mm] = clean.split(':').map(Number);
-        if(!isNaN(hh) && !isNaN(mm)){
-          const nowD = new Date();
-          const spotUTC = new Date(Date.UTC(nowD.getUTCFullYear(), nowD.getUTCMonth(), nowD.getUTCDate(), hh, mm, 0));
-          ageSecs = (now - spotUTC.getTime()) / 1000;
-          if(ageSecs < 0) ageSecs += 86400; // rolled over midnight
-        }
+        try{
+          // Split on space: ["2149", "2025-05-27"]
+          const [tPart, dPart] = timeStr.split(' ');
+          if(tPart && dPart){
+            const hh = parseInt(tPart.slice(0,2), 10);
+            const mm = parseInt(tPart.slice(2,4), 10);
+            const [yr, mo, dy] = dPart.split('-').map(Number);
+            const spotMs = Date.UTC(yr, mo - 1, dy, hh, mm, 0);
+            ageSecs = (now - spotMs) / 1000;
+            if(ageSecs < 0) ageSecs = 0;
+          }
+        } catch(e){ /* use ageSecs = 0 */ }
       }
-      if(ageSecs > 7200) return; // skip spots > 2 hrs old
 
-      // Spotter locator → position
-      const dePos = maidenheadToLatLon(locator);
+      // Keep spots up to 24 hours — DX cluster is slower-moving than PSKReporter
+      if(ageSecs > 86400) return;
+
+      // Derive band from freq if band column missing
+      // Normalise band: HamQTH returns "17M", bandFromFreq returns "17m"
+      const derivedBand = band ? band.toLowerCase() : (bandFromFreq(freqKHz) || '');
 
       spots.push({
         dx_call: dxCall, de_call: deCall,
-        freq: freqKHz, band, comment, mode: '',
+        freq: freqKHz,
+        band: derivedBand || bandFromFreq(freqKHz) || '',
+        comment, mode: '',
         dx_lat: null, dx_lon: null,
-        de_lat: dePos ? dePos[0] : null,
-        de_lon: dePos ? dePos[1] : null,
-        locator_tx: '', locator_rx: locator,
+        de_lat: null, de_lon: null,
+        locator_tx: '', locator_rx: '',
         age: ageSecs,
         snr: 0,
       });
     });
 
+    spots.sort((a,b) => a.age - b.age);
     LIVE.dxSpots = spots;
     renderSpotList(spots, 'dxList', 'dxCount', 'dx-badge', LIVE.dxBandFilter, true);
     if(LIVE.dxVisible) drawDXMarkers();
-    if(badge){ badge.className='live-badge'; badge.textContent=`HamQTH DX · ${spots.length} spots · fresh`; }
+    if(badge){ badge.className='live-badge';
+               badge.textContent=`HamQTH DX \u00b7 ${spots.length} spots`; }
+
   } catch(err){
     console.warn('DX fetch error:', err);
-    if(badge){ badge.className='live-badge err'; badge.textContent=`DX Cluster: ${err.message}`; }
+    if(badge){ badge.className='live-badge err'; badge.textContent=`DX: ${err.message}`; }
     const dl = document.getElementById('dxList');
     if(dl) dl.innerHTML=`<div class="spots-empty">Unable to fetch DX cluster<br>${err.message}</div>`;
   } finally {
-    if(btn){ btn.textContent='↻'; btn.disabled=false; }
+    if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
   }
 }
 
