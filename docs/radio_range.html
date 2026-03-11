@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.046 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.048 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -805,7 +805,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.046';
+const APP_VERSION = 'v1.048';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5379,110 +5379,199 @@ function fetchPSKReporter(){
 //   2. allorigins       — /raw?url=<encoded>        returns raw content
 //   3. thingproxy       — /fetch/<url>              returns raw content
 // If all proxies fail: show clear error with F12 suggestion.
-async function _pskFetchHTTP(call, btn, badge){
-  function setB(cls, txt){ if(badge){ badge.className='live-badge'+(cls?' '+cls:''); badge.textContent=txt; } }
+function _pskFetchHTTP(call, btn, badge){
+  function show(cls, msg){
+    console.log('[PSK]', msg);
+    if(badge){ badge.className='live-badge'+(cls?' '+cls:''); badge.textContent=msg; }
+    var sl=document.getElementById('spotList');
+    if(sl) sl.innerHTML='<div class="spots-empty" style="color:#adf">'+msg+'</div>';
+  }
 
-  setB('', 'Fetching…');
+  show('', 'Fetching…');
 
-  const elapsed = Date.now() - _pskLastHttp;
+  var elapsed = Date.now() - _pskLastHttp;
   if(elapsed < 5*60*1000){
-    setB('warn', 'Rate limited — wait '+Math.ceil((5*60*1000-elapsed)/1000)+'s');
-    if(btn){ btn.textContent='↻'; btn.disabled=false; }
+    show('warn','Rate limited — wait '+Math.ceil((5*60*1000-elapsed)/1000)+'s');
+    if(btn){btn.textContent='↻';btn.disabled=false;}
     return;
   }
 
-  // Same query as the confirmed-working Python script:
-  //   senderCallsign=  flowStartSeconds=-86400  rronly=1  rptlimit=500
-  const pskUrl = 'https://retrieve.pskreporter.info/query'
-    + '?senderCallsign=' + encodeURIComponent(call)
-    + '&flowStartSeconds=-86400&rronly=1&rptlimit=500&nolocator=0';
-  const enc = encodeURIComponent(pskUrl);
+  // Exact same URL + params as the confirmed-working Python script
+  var url = 'https://retrieve.pskreporter.info/query'
+    +'?senderCallsign='+encodeURIComponent(call)
+    +'&flowStartSeconds=-86400&rronly=1&rptlimit=500&nolocator=0';
 
-  // Proxies tried one at a time — simple sequential await, no Promise.any
-  const proxies = [
-    { url: 'https://corsproxy.io/?url='                           + enc,    name: 'corsproxy.io'  },
-    { url: 'https://api.allorigins.win/raw?url='                  + enc,    name: 'allorigins'    },
-    { url: 'https://api.codetabs.com/v1/proxy?quest='             + enc,    name: 'codetabs'      },
-    { url: 'https://thingproxy.freeboard.io/fetch/'               + pskUrl, name: 'thingproxy'    },
+  console.log('[PSK] XHR GET', url);
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  xhr.setRequestHeader('Accept', 'text/xml, application/xml, */*');
+  xhr.timeout = 20000;
+
+  xhr.onload = function(){
+    console.log('[PSK] XHR status:', xhr.status, 'length:', xhr.responseText.length);
+    if(xhr.status !== 200){
+      show('err','HTTP '+xhr.status+' — check F12');
+      if(btn){btn.textContent='↻';btn.disabled=false;}
+      return;
+    }
+    var xml = xhr.responseText;
+    if(!xml || !xml.includes('receptionReport')){
+      console.warn('[PSK] No receptionReport in response:', xml.slice(0,300));
+      show('err','No spot data in response — check F12');
+      if(btn){btn.textContent='↻';btn.disabled=false;}
+      return;
+    }
+    _pskLastHttp = Date.now();
+    show('', 'Parsing…');
+    try{
+      var doc  = new DOMParser().parseFromString(xml, 'text/xml');
+      var rpts = doc.querySelectorAll('receptionReport');
+      console.log('[PSK] receptionReport nodes:', rpts.length);
+      var spots = [];
+      var tNow  = Date.now()/1000;
+      rpts.forEach(function(r){
+        var freq  = parseFloat(r.getAttribute('frequency')||0);
+        var freqK = freq/1000;
+        var band  = bandFromFreq(freqK);
+        if(!band) return;
+        var age = tNow - parseInt(r.getAttribute('flowStartSeconds')||0);
+        if(age > 86400) return;
+        var sl = r.getAttribute('senderLocator')||'';
+        var rl = r.getAttribute('receiverLocator')||'';
+        var tp = maidenheadToLatLon(sl);
+        var rp = maidenheadToLatLon(rl);
+        spots.push({
+          dx_call: r.getAttribute('senderCallsign')||'',
+          de_call: r.getAttribute('receiverCallsign')||'',
+          freq:freqK, band:band,
+          snr: parseFloat(r.getAttribute('sNR')||0),
+          mode: r.getAttribute('mode')||'',
+          dx_lat:tp?tp[0]:null, dx_lon:tp?tp[1]:null,
+          de_lat:rp?rp[0]:null, de_lon:rp?rp[1]:null,
+          locator_tx:sl, locator_rx:rl, age:age,
+        });
+      });
+      spots.sort(function(a,b){return a.age-b.age;});
+      LIVE.pskSpots = spots;
+      _pskMqttBuffer = spots.slice();
+      console.log('[PSK] spots:', spots.length);
+      renderSpotList(spots,'spotList','spotsCount','psk-badge',LIVE.spotBandFilter);
+      if(LIVE.spotsVisible) drawSpotMarkers();
+      var mapped = spots.filter(function(s){
+        var d1=s.dx_lat!==null?haversineKm(S.lat,S.lon,s.dx_lat,s.dx_lon):Infinity;
+        var d2=s.de_lat!==null?haversineKm(S.lat,S.lon,s.de_lat,s.de_lon):Infinity;
+        return Math.min(d1,d2)<=MAX_SPOT_KM;
+      }).length;
+      if(badge){badge.className='live-badge';badge.textContent='PSKReporter · '+spots.length+' spots · '+mapped+' near TX';}
+    } catch(parseErr){
+      console.error('[PSK] parse error:',parseErr);
+      show('err','Parse error: '+parseErr.message);
+    }
+    if(btn){btn.textContent='↻';btn.disabled=false;}
+  };
+
+  xhr.onerror = function(){
+    console.warn('[PSK] XHR network error (likely CORS) — trying proxy fallback');
+    show('', 'Direct blocked — trying proxy…');
+    _pskTryProxy(call, btn, badge, 0);
+  };
+
+  xhr.ontimeout = function(){
+    console.warn('[PSK] XHR timed out — trying proxy fallback');
+    show('', 'Direct timed out — trying proxy…');
+    _pskTryProxy(call, btn, badge, 0);
+  };
+
+  xhr.send();
+}
+
+// Proxy fallback chain — only used if direct XHR is blocked
+function _pskTryProxy(call, btn, badge, idx){
+  function show(cls, msg){
+    console.log('[PSK proxy]', msg);
+    if(badge){ badge.className='live-badge'+(cls?' '+cls:''); badge.textContent=msg; }
+    var sl=document.getElementById('spotList');
+    if(sl) sl.innerHTML='<div class="spots-empty" style="color:#adf">'+msg+'</div>';
+  }
+
+  var pskUrl = 'https://retrieve.pskreporter.info/query'
+    +'?senderCallsign='+encodeURIComponent(call)
+    +'&flowStartSeconds=-86400&rronly=1&rptlimit=500&nolocator=0';
+  var enc = encodeURIComponent(pskUrl);
+  var proxies = [
+    {url:'https://corsproxy.io/?url='+enc,                name:'corsproxy.io'},
+    {url:'https://api.allorigins.win/raw?url='+enc,       name:'allorigins'},
+    {url:'https://thingproxy.freeboard.io/fetch/'+pskUrl, name:'thingproxy'},
   ];
 
-  let xml = null, usedProxy = '';
-
-  for(let i = 0; i < proxies.length; i++){
-    const p = proxies[i];
-    setB('', 'Trying ' + p.name + ' (' + (i+1) + '/' + proxies.length + ')…');
-    try{
-      const ctrl = new AbortController();
-      const tid  = setTimeout(function(){ ctrl.abort(); }, 10000);
-      let resp;
-      try{ resp = await fetch(p.url, { signal: ctrl.signal }); }
-      finally{ clearTimeout(tid); }
-      if(!resp.ok) throw new Error('HTTP ' + resp.status);
-      const text = await resp.text();
-      if(text && text.includes('receptionReport')){ xml = text; usedProxy = p.name; break; }
-      console.warn('PSK ' + p.name + ': no receptionReport in response (first 200 chars):', text.slice(0,200));
-    } catch(e){
-      console.warn('PSK ' + p.name + ' failed:', e.message);
-    }
-  }
-
-  if(!xml){
-    setB('err', 'PSK: all proxies failed — see F12 console');
-    const sl = document.getElementById('spotList');
-    if(sl) sl.innerHTML = '<div class="spots-empty" style="color:#f87">⚠ All CORS proxies failed.<br><small>Open F12 → Console to see each error.<br>Try again in a few minutes.</small></div>';
-    if(btn){ btn.textContent='↻'; btn.disabled=false; }
+  if(idx >= proxies.length){
+    show('err','All sources failed — check F12 console');
+    if(btn){btn.textContent='↻';btn.disabled=false;}
     return;
   }
 
-  try{
-    setB('', 'Parsing…');
-    _pskLastHttp = Date.now();
-    const doc  = new DOMParser().parseFromString(xml, 'text/xml');
-    const rpts = doc.querySelectorAll('receptionReport');
+  var p = proxies[idx];
+  show('', 'Proxy '+p.name+' ('+(idx+1)+'/'+proxies.length+')…');
+  console.log('[PSK proxy] trying', p.name, p.url.slice(0,80));
 
-    const spots = [];
-    const tNow  = Date.now() / 1000;
-    rpts.forEach(function(r){
-      const freq  = parseFloat(r.getAttribute('frequency') || 0);
-      const freqK = freq / 1000;
-      const band  = bandFromFreq(freqK);
-      if(!band) return;
-      const age = tNow - parseInt(r.getAttribute('flowStartSeconds') || 0);
-      if(age > 86400) return;
-      const sl = r.getAttribute('senderLocator')   || '';
-      const rl = r.getAttribute('receiverLocator') || '';
-      const tp = maidenheadToLatLon(sl);
-      const rp = maidenheadToLatLon(rl);
-      spots.push({
-        dx_call: r.getAttribute('senderCallsign')   || '',
-        de_call: r.getAttribute('receiverCallsign') || '',
-        freq: freqK, band,
-        snr:  parseFloat(r.getAttribute('sNR') || 0),
-        mode: r.getAttribute('mode') || '',
-        dx_lat: tp?tp[0]:null, dx_lon: tp?tp[1]:null,
-        de_lat: rp?rp[0]:null, de_lon: rp?rp[1]:null,
-        locator_tx: sl, locator_rx: rl, age,
-      });
-    });
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', p.url, true);
+  xhr.timeout = 10000;
 
-    spots.sort(function(a,b){ return a.age - b.age; });
-    LIVE.pskSpots  = spots;
-    _pskMqttBuffer = spots.slice();
-    renderSpotList(spots, 'spotList', 'spotsCount', 'psk-badge', LIVE.spotBandFilter);
-    if(LIVE.spotsVisible) drawSpotMarkers();
-    var mapped = spots.filter(function(s){
-      if(s.dx_lat===null && s.de_lat===null) return false;
-      var d1 = s.dx_lat!==null ? haversineKm(S.lat,S.lon,s.dx_lat,s.dx_lon) : Infinity;
-      var d2 = s.de_lat!==null ? haversineKm(S.lat,S.lon,s.de_lat,s.de_lon) : Infinity;
-      return Math.min(d1,d2) <= MAX_SPOT_KM;
-    }).length;
-    setB('', 'PSKReporter · ' + spots.length + ' spots (24h) · ' + mapped + ' near TX · via ' + usedProxy);
-  } catch(parseErr){
-    console.warn('PSK parse error:', parseErr);
-    setB('err', 'PSK: parse error — ' + parseErr.message);
-  } finally{
-    if(btn){ btn.textContent='↻'; btn.disabled=false; }
-  }
+  xhr.onload = function(){
+    console.log('[PSK proxy]', p.name, 'status:', xhr.status, 'len:', xhr.responseText.length);
+    if(xhr.status === 200 && xhr.responseText.includes('receptionReport')){
+      _pskLastHttp = Date.now();
+      // Parse same as direct path
+      try{
+        var doc  = new DOMParser().parseFromString(xhr.responseText,'text/xml');
+        var rpts = doc.querySelectorAll('receptionReport');
+        var spots = [];
+        var tNow  = Date.now()/1000;
+        rpts.forEach(function(r){
+          var freq=parseFloat(r.getAttribute('frequency')||0);
+          var freqK=freq/1000;
+          var band=bandFromFreq(freqK);
+          if(!band) return;
+          var age=tNow-parseInt(r.getAttribute('flowStartSeconds')||0);
+          if(age>86400) return;
+          var sl=r.getAttribute('senderLocator')||'';
+          var rl=r.getAttribute('receiverLocator')||'';
+          var tp=maidenheadToLatLon(sl);
+          var rp=maidenheadToLatLon(rl);
+          spots.push({
+            dx_call:r.getAttribute('senderCallsign')||'',
+            de_call:r.getAttribute('receiverCallsign')||'',
+            freq:freqK,band:band,
+            snr:parseFloat(r.getAttribute('sNR')||0),
+            mode:r.getAttribute('mode')||'',
+            dx_lat:tp?tp[0]:null,dx_lon:tp?tp[1]:null,
+            de_lat:rp?rp[0]:null,de_lon:rp?rp[1]:null,
+            locator_tx:sl,locator_rx:rl,age:age,
+          });
+        });
+        spots.sort(function(a,b){return a.age-b.age;});
+        LIVE.pskSpots=spots;
+        _pskMqttBuffer=spots.slice();
+        renderSpotList(spots,'spotList','spotsCount','psk-badge',LIVE.spotBandFilter);
+        if(LIVE.spotsVisible) drawSpotMarkers();
+        var mapped=spots.filter(function(s){
+          var d1=s.dx_lat!==null?haversineKm(S.lat,S.lon,s.dx_lat,s.dx_lon):Infinity;
+          var d2=s.de_lat!==null?haversineKm(S.lat,S.lon,s.de_lat,s.de_lon):Infinity;
+          return Math.min(d1,d2)<=MAX_SPOT_KM;
+        }).length;
+        if(badge){badge.className='live-badge';badge.textContent='PSKReporter · '+spots.length+' spots · '+mapped+' near TX · via '+p.name;}
+        if(btn){btn.textContent='↻';btn.disabled=false;}
+      } catch(e){ show('err','Parse error: '+e.message); if(btn){btn.textContent='↻';btn.disabled=false;} }
+    } else {
+      console.warn('[PSK proxy]',p.name,'bad response, trying next');
+      _pskTryProxy(call,btn,badge,idx+1);
+    }
+  };
+  xhr.onerror   = function(){ console.warn('[PSK proxy]',p.name,'network error'); _pskTryProxy(call,btn,badge,idx+1); };
+  xhr.ontimeout = function(){ console.warn('[PSK proxy]',p.name,'timeout');        _pskTryProxy(call,btn,badge,idx+1); };
+  xhr.send();
 }
 
 // ── MQTT path: open stream (no callsign) ─────────────────────
