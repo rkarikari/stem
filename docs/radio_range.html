@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.041 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.042 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -5402,13 +5402,18 @@ async function _pskFetchHTTP(call, btn, badge){
       { url: `https://thingproxy.freeboard.io/fetch/${pskUrl}`, name: 'thingproxy' },
     ];
 
+    // Hard outer deadline so the UI always unfreezes even if AbortController misfires
+    let _outerDone = false;
+    const outerTimer = setTimeout(() => { _outerDone = true; }, 32000);
+
     let xml = null;
     for(let pi = 0; pi < proxies.length; pi++){
+      if(_outerDone) break;
       const proxy = proxies[pi];
       try{
-        if(badge) badge.textContent = `Trying ${proxy.name} (${pi+1}/${proxies.length})…`;
+        if(badge) badge.textContent = `Trying ${proxy.name} (${pi+1}/${proxies.length})...`;
         const ctrl = new AbortController();
-        const tid  = setTimeout(() => ctrl.abort(), 8000);
+        const tid  = setTimeout(() => ctrl.abort(), 9000);
         const resp = await fetch(proxy.url, {signal: ctrl.signal}).finally(() => clearTimeout(tid));
         if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const text = await resp.text();
@@ -5416,8 +5421,9 @@ async function _pskFetchHTTP(call, btn, badge){
         console.warn('PSK proxy unexpected:', proxy.name, text.slice(0, 120));
       } catch(e){ console.warn('PSK proxy failed:', proxy.name, e.message); }
     }
+    clearTimeout(outerTimer);
 
-    if(!xml) throw new Error('All CORS proxies failed — check console (F12)');
+    if(!xml) throw new Error(_outerDone ? 'Timed out — all proxies unreachable' : 'All CORS proxies failed — check console (F12)');
     _pskLastHttp = Date.now();
 
     const doc  = new DOMParser().parseFromString(xml, 'text/xml');
@@ -5709,25 +5715,23 @@ var DXCC_PREFIX = (function(){
 })();
 
 function callsignToLatLon(call){
-  if(!call) return null;
-  const c = call.toUpperCase().replace(/[\/].*/, '');  // strip /P /M etc
-  // Greedy longest-prefix match
-  for(let len = Math.min(c.length, 5); len >= 1; len--){
-    const pfx = c.slice(0, len);
-    if(DXCC_PREFIX[pfx]) return DXCC_PREFIX[pfx];
-  }
+  if(!call || !DXCC_PREFIX) return null;
+  try{
+    const c = call.toUpperCase().replace(/[\/].*/, '');  // strip /P /M etc
+    // Greedy longest-prefix match
+    for(let len = Math.min(c.length, 5); len >= 1; len--){
+      const pfx = c.slice(0, len);
+      if(DXCC_PREFIX[pfx]) return DXCC_PREFIX[pfx];
+    }
+  } catch(e){ console.warn('callsignToLatLon error:', e.message); }
   return null;
 }
 
-// ── DX Cluster via HamQTH dxc_csv.php ────────────────────────
-// Real format (^ delimited, confirmed from live endpoint):
-// col 0: DX callsign (spotted station)
-// col 1: frequency kHz
-// col 2: spotter callsign
-// col 3: comment
-// col 4: "HHMM YYYY-MM-DD"  (UTC time + date)
-// col 7: continent  col 8: band (e.g. "17M")  col 9: country name
-// No locators in feed — positions derived from callsign prefix lookup.
+// ── DX Cluster — multi-source with CORS proxy fallback chain ──
+// Sources tried in order:
+//   1. HamQTH dxc_csv.php via CORS proxies (^ delimited CSV)
+//   2. DX Summit JSON API (public, CORS-enabled)
+// Positions derived from callsign prefix table (DXCC_PREFIX).
 async function fetchDXCluster(){
   const btn   = document.getElementById('dxRefreshBtn');
   const badge = document.getElementById('dx-badge');
@@ -5735,70 +5739,111 @@ async function fetchDXCluster(){
   if(badge){ badge.className='live-badge'; badge.textContent='Fetching\u2026'; }
 
   try{
-    const resp = await _noaaFetch('https://www.hamqth.com/dxc_csv.php?limit=100');
-    if(!resp.ok) throw new Error('HTTP ' + resp.status);
-    const csvText = await resp.text();
-    if(!csvText || csvText.trim().length < 10) throw new Error('Empty response');
+    let spots = null;
+    let sourceName = '';
 
-    const spots = [];
-    const now   = Date.now();
+    // ── Helper: fetch with timeout ──────────────────────────────
+    function _dxFetch(url, ms){
+      const ctrl = new AbortController();
+      const tid  = setTimeout(() => ctrl.abort(), ms || 9000);
+      return fetch(url, {cache:'no-cache', signal:ctrl.signal}).finally(() => clearTimeout(tid));
+    }
 
-    csvText.trim().split('\n').forEach(line => {
-      if(line.toLowerCase().startsWith('call')) return;
-      const p = line.split('^');
-      if(p.length < 3) return;
+    // ── Source 1: HamQTH via CORS proxy chain ──────────────────
+    const hamqthUrl = 'https://www.hamqth.com/dxc_csv.php?limit=100';
+    const hamqthEnc = encodeURIComponent(hamqthUrl);
+    const hamqthProxies = [
+      `https://corsproxy.io/?url=${hamqthEnc}`,
+      `https://api.allorigins.win/raw?url=${hamqthEnc}`,
+      `https://thingproxy.freeboard.io/fetch/${hamqthUrl}`,
+    ];
 
-      const dxCall  = (p[0] || '').trim();
-      const freqStr = (p[1] || '').trim();
-      const deCall  = (p[2] || '').trim();
-      const comment = (p[3] || '').trim();
-      const timeStr = (p[4] || '').trim();   // "HHMM YYYY-MM-DD"
-      const band    = (p[8] || '').trim();   // "17M" etc.
+    for(let pi = 0; pi < hamqthProxies.length && spots === null; pi++){
+      try{
+        if(badge) badge.textContent = `HamQTH via proxy ${pi+1}/${hamqthProxies.length}...`;
+        const resp = await _dxFetch(hamqthProxies[pi], 9000);
+        if(!resp.ok) throw new Error('HTTP ' + resp.status);
+        const txt = await resp.text();
+        if(!txt || txt.trim().length < 20) throw new Error('Empty');
+        // Parse ^ delimited CSV
+        // col 0: DX call, col 1: freq kHz, col 2: spotter, col 3: comment,
+        // col 4: "HHMM YYYY-MM-DD", col 8: band
+        const parsed = [];
+        const now = Date.now();
+        txt.trim().split('\n').forEach(line => {
+          if(line.toLowerCase().startsWith('call')) return;
+          const p = line.split('^');
+          if(p.length < 3) return;
+          const dxCall  = (p[0] || '').trim();
+          const freqKHz = parseFloat((p[1] || '').trim());
+          const deCall  = (p[2] || '').trim();
+          const comment = (p[3] || '').trim();
+          const timeStr = (p[4] || '').trim();
+          const bandRaw = (p[8] || '').trim();
+          if(!freqKHz || isNaN(freqKHz) || !dxCall) return;
+          let ageSecs = 0;
+          try{
+            const [tPart, dPart] = timeStr.split(' ');
+            if(tPart && dPart){
+              const hh = parseInt(tPart.slice(0,2), 10);
+              const mm = parseInt(tPart.slice(2,4), 10);
+              const [yr, mo, dy] = dPart.split('-').map(Number);
+              ageSecs = Math.max(0, (now - Date.UTC(yr, mo-1, dy, hh, mm, 0)) / 1000);
+            }
+          } catch(e){}
+          if(ageSecs > 86400) return;
+          const dxPos = callsignToLatLon(dxCall);
+          const dePos = callsignToLatLon(deCall);
+          const band  = bandRaw ? bandRaw.toLowerCase().replace(/^(\d+)m$/,'$1m') : (bandFromFreq(freqKHz) || '');
+          parsed.push({
+            dx_call:dxCall, de_call:deCall, freq:freqKHz,
+            band: band || bandFromFreq(freqKHz) || '',
+            comment, mode:'',
+            dx_lat:dxPos?dxPos[0]:null, dx_lon:dxPos?dxPos[1]:null,
+            de_lat:dePos?dePos[0]:null, de_lon:dePos?dePos[1]:null,
+            locator_tx:'', locator_rx:'', age:ageSecs, snr:0,
+          });
+        });
+        if(parsed.length > 0){ spots = parsed; sourceName = 'HamQTH'; }
+      } catch(e){ console.warn('DX HamQTH proxy', pi, 'failed:', e.message); }
+    }
 
-      const freqKHz = parseFloat(freqStr);
-      if(!freqKHz || isNaN(freqKHz)) return;
-      if(!dxCall) return;
+    // ── Source 2: DX Summit JSON API (CORS-enabled fallback) ───
+    if(spots === null){
+      try{
+        if(badge) badge.textContent = 'Trying DX Summit...';
+        const resp = await _dxFetch('https://www.dxsummit.fi/api/v1/spots?limit=100', 10000);
+        if(!resp.ok) throw new Error('HTTP ' + resp.status);
+        const json = await resp.json();
+        if(!Array.isArray(json) || json.length === 0) throw new Error('Empty JSON');
+        const now = Date.now();
+        const parsed = json.map(s => {
+          const freqKHz = parseFloat(s.frequency || s.freq || 0);
+          if(!freqKHz) return null;
+          const dxCall = (s.dx_call || s.callsign || '').trim();
+          const deCall = (s.de_call || s.spotter  || '').trim();
+          if(!dxCall) return null;
+          const ageSecs = s.time ? Math.max(0, (now - new Date(s.time).getTime()) / 1000) : 0;
+          if(ageSecs > 86400) return null;
+          const dxPos = callsignToLatLon(dxCall);
+          const dePos = callsignToLatLon(deCall);
+          return {
+            dx_call:dxCall, de_call:deCall, freq:freqKHz,
+            band: bandFromFreq(freqKHz) || '',
+            comment: s.comment || s.info || '', mode:'',
+            dx_lat:dxPos?dxPos[0]:null, dx_lon:dxPos?dxPos[1]:null,
+            de_lat:dePos?dePos[0]:null, de_lon:dePos?dePos[1]:null,
+            locator_tx:'', locator_rx:'', age:ageSecs, snr:0,
+          };
+        }).filter(Boolean);
+        if(parsed.length > 0){ spots = parsed; sourceName = 'DX Summit'; }
+      } catch(e){ console.warn('DX Summit fallback failed:', e.message); }
+    }
 
-      // Parse "HHMM YYYY-MM-DD"
-      let ageSecs = 0;
-      if(timeStr){
-        try{
-          const [tPart, dPart] = timeStr.split(' ');
-          if(tPart && dPart){
-            const hh = parseInt(tPart.slice(0,2), 10);
-            const mm = parseInt(tPart.slice(2,4), 10);
-            const [yr, mo, dy] = dPart.split('-').map(Number);
-            const spotMs = Date.UTC(yr, mo - 1, dy, hh, mm, 0);
-            ageSecs = (now - spotMs) / 1000;
-            if(ageSecs < 0) ageSecs = 0;
-          }
-        } catch(e){}
-      }
-      if(ageSecs > 86400) return;
-
-      // Derive positions from callsign prefixes
-      const dxPos = callsignToLatLon(dxCall);
-      const dePos = callsignToLatLon(deCall);
-
-      const derivedBand = band ? band.toLowerCase() : (bandFromFreq(freqKHz) || '');
-
-      spots.push({
-        dx_call: dxCall, de_call: deCall,
-        freq: freqKHz,
-        band: derivedBand || bandFromFreq(freqKHz) || '',
-        comment, mode: '',
-        dx_lat: dxPos ? dxPos[0] : null,
-        dx_lon: dxPos ? dxPos[1] : null,
-        de_lat: dePos ? dePos[0] : null,
-        de_lon: dePos ? dePos[1] : null,
-        locator_tx: '', locator_rx: '',
-        age: ageSecs, snr: 0,
-      });
-    });
+    if(!spots || spots.length === 0) throw new Error('All DX cluster sources failed — check console (F12)');
 
     spots.sort((a,b) => a.age - b.age);
     LIVE.dxSpots = spots;
-    // Sidebar shows only spots where spotter is within user-set range of TX location
     const nearSpots = spots.filter(s =>
       s.de_lat !== null && haversineKm(S.lat, S.lon, s.de_lat, s.de_lon) <= MAX_SPOT_KM
     );
@@ -5806,7 +5851,7 @@ async function fetchDXCluster(){
     if(LIVE.dxVisible) drawDXMarkers();
     const rkm = MAX_SPOT_KM >= 1000 ? `${(MAX_SPOT_KM/1000).toFixed(0)}Mm` : `${MAX_SPOT_KM}km`;
     if(badge){ badge.className='live-badge';
-               badge.textContent=`HamQTH DX · ${nearSpots.length} within ${rkm} · ${spots.length} total`; }
+               badge.textContent=`${sourceName} DX \xb7 ${nearSpots.length} within ${rkm} \xb7 ${spots.length} total`; }
 
   } catch(err){
     console.warn('DX fetch error:', err);
@@ -6095,8 +6140,7 @@ function startLiveDataRefresh(){
   // Solar: fetch immediately, refresh every 15 min
   fetchLiveSolar();
   setInterval(fetchLiveSolar, 15 * 60 * 1000);
-  // DX cluster: fetch immediately, auto-refresh every 5 min (HamQTH CSV is lightweight)
-  fetchDXCluster();
+  // DX cluster: auto-refresh every 5 min (HamQTH CSV is lightweight)
   setInterval(fetchDXCluster, 5 * 60 * 1000);
   // PSKReporter MQTT is event-driven (connect on demand via GO button)
 }
