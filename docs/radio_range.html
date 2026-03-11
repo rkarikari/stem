@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.050 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.051 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -805,7 +805,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.050';
+const APP_VERSION = 'v1.051';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5367,8 +5367,8 @@ function fetchPSKReporter(){
     if(sl) sl.innerHTML='<div class="spots-empty">Your callsign is required — PSKReporter streams only spots where you are the sender or receiver.</div>';
     return;
   }
-  // Always use HTTP path (callsign required for meaningful results)
-  _pskFetchHTTP(callInput, btn, badge);
+  // Use MQTT WebSocket stream with callsign-filtered topic
+  pskLoadMqttJs(function(){ _pskConnectMqtt(btn, badge, callInput); });
 }
 
 // ── HTTP path: callsign query ─────────────────────────────────
@@ -5484,7 +5484,7 @@ function _pskFetchHTTP(call, btn, badge){
 // NO path suffix needed — these are direct WebSocket MQTT connections.
 // Proven working per openhamclock (GitHub accius/openhamclock, 2025) and
 // pskr-ha-bridge (pentafive, Jan 2026). Key: minimal options, ws:// port 1885.
-function _pskConnectMqtt(btn, badge){
+function _pskConnectMqtt(btn, badge, callsign){
   if(_pskMqttClient){
     try{ _pskMqttClient.end(true); }catch(e){}
     _pskMqttClient = null;
@@ -5539,9 +5539,16 @@ function _pskConnectMqtt(btn, badge){
       if(badge){ badge.className='live-badge'; badge.textContent='Streaming spots (30s)\u2026'; }
       if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
 
-      // Subscribe all bands, all modes — pskr/filter/v2/{band}/{mode}/{sc}/{rc}/{sl}/{rl}/{sa}/{ra}
-      client.subscribe('pskr/filter/v2/+/+/+/+/+/+/+/+', {qos:0}, (err)=>{
+      // Callsign-filtered topics per PSKReporter MQTT docs:
+      //   pskr/filter/v2/+/+/CALLSIGN/#  — all reports where callsign is SENDER
+      //   pskr/filter/v2/+/+/+/CALLSIGN/# — all reports where callsign is RECEIVER
+      const call = (callsign || '').toUpperCase();
+      const topicTx = 'pskr/filter/v2/+/+/' + call + '/#';
+      const topicRx = 'pskr/filter/v2/+/+/+/' + call + '/#';
+      console.log('[PSK MQTT] subscribing to', topicTx, 'and', topicRx);
+      client.subscribe([topicTx, topicRx], {qos:0}, function(err){
         if(err) console.warn('PSK subscribe error:', err);
+        else console.log('[PSK MQTT] subscribed OK');
       });
 
       // Collect 30s then close and render
@@ -5567,7 +5574,7 @@ function _pskConnectMqtt(btn, badge){
         const band = bandFromFreq(fkHz) || s.b;
         if(!band) return;
         const age  = Date.now()/1000 - (s.t_tx || s.t || 0);
-        if(age > 1800) return;
+        if(age > 86400) return;
         const tp = maidenheadToLatLon(s.sl || '');
         const rp = maidenheadToLatLon(s.rl || '');
         _pskMqttBuffer.unshift({
