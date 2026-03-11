@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.053 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.054 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap');
 :root{
@@ -805,7 +806,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.053';
+const APP_VERSION = 'v1.054';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5333,9 +5334,9 @@ const PSK_MAX_BUFFER = 300;
 
 // ── MQTT.js loader (3-CDN fallback chain) ────────────────────
 function fetchPSKReporter(){
-  const btn   = document.getElementById('pskRefreshBtn');
-  const badge = document.getElementById('psk-badge');
-  const call  = (document.getElementById('pskCallIn')?.value||'').trim().toUpperCase();
+  var btn   = document.getElementById('pskRefreshBtn');
+  var badge = document.getElementById('psk-badge');
+  var call  = (document.getElementById('pskCallIn')?.value||'').trim().toUpperCase();
   if(btn){btn.textContent='…';btn.disabled=true;}
 
   function show(cls,msg){
@@ -5351,134 +5352,120 @@ function fetchPSKReporter(){
     return;
   }
 
-  show('','Connecting to PSKReporter…');
-
-  // Close any existing connection
-  if(_pskMqttClient){try{_pskMqttClient.close();}catch(e){}  _pskMqttClient=null;}
-  _pskMqttBuffer=[];
-
-  // Try ws:// first, then wss://
-  var urls = ['ws://mqtt.pskreporter.info:1885','wss://mqtt.pskreporter.info:1886'];
-  var urlIdx = 0;
-
-  function attempt(){
-    if(urlIdx >= urls.length){
-      show('err','MQTT connection failed — check F12 console');
-      if(btn){btn.textContent='↻';btn.disabled=false;}
-      return;
-    }
-    var url = urls[urlIdx];
-    show('','Connecting '+url+'…');
-    console.log('[PSK] WebSocket connecting to',url);
-
-    var ws;
-    try{ ws = new WebSocket(url, ['mqtt']); }
-    catch(e){
-      console.warn('[PSK] WebSocket() threw:',e.message);
-      urlIdx++; attempt(); return;
-    }
-    ws.binaryType = 'arraybuffer';
-    _pskMqttClient = ws;
-
-    var connected = false;
-    var timer = setTimeout(function(){
-      if(!connected){
-        console.warn('[PSK] connect timeout on',url);
-        try{ws.close();}catch(e){}
-        urlIdx++; attempt();
-      }
-    }, 8000);
-
-    ws.onopen = function(){
-      console.log('[PSK] WS open, sending MQTT CONNECT');
-      // MQTT 3.1.1 CONNECT packet — no auth, clean session, keepalive 60s
-      var clientId = 'pskr_' + Math.random().toString(36).substr(2,8);
-      var cid = [];
-      for(var i=0;i<clientId.length;i++) cid.push(clientId.charCodeAt(i));
-      var payload = [
-        0x00,0x04,0x4D,0x51,0x54,0x54, // "MQTT"
-        0x04,                           // protocol level 4 = MQTT 3.1.1
-        0x02,                           // connect flags: clean session
-        0x00,0x3C,                      // keepalive 60s
-        0x00,cid.length].concat(cid);   // client id
-      var pkt = [0x10, payload.length].concat(payload);
-      ws.send(new Uint8Array(pkt));
-    };
-
-    ws.onmessage = function(ev){
-      var data = new Uint8Array(ev.data);
-      var type = (data[0]>>4);
-      console.log('[PSK] MQTT packet type',type,'len',data.length);
-
-      if(type===2){ // CONNACK
-        var rc = data[3];
-        if(rc!==0){
-          console.error('[PSK] CONNACK refused, code:',rc);
-          show('err','MQTT rejected (code '+rc+')');
-          if(btn){btn.textContent='↻';btn.disabled=false;}
-          clearTimeout(timer);
-          return;
-        }
-        connected=true; clearTimeout(timer);
-        // Subscribe to callsign-filtered topics (sender + receiver)
-        var topics = [
-          'pskr/filter/v2/+/+/'+call+'/#',
-          'pskr/filter/v2/+/+/+/'+call+'/#'
-        ];
-        console.log('[PSK] connected, subscribing to',topics);
-        topics.forEach(function(t,i){
-          var tb=[]; for(var c=0;c<t.length;c++) tb.push(t.charCodeAt(c));
-          var sub=[0x00,i+1, 0x00,tb.length].concat(tb).concat([0x00]);
-          ws.send(new Uint8Array([0x82,sub.length].concat(sub)));
-        });
-        show('','Streaming '+call+' spots… (collecting 30s)');
-        if(btn){btn.textContent='↻';btn.disabled=false;}
-        // After 30s, close and render
-        setTimeout(function(){
-          try{ws.close();}catch(e){}
-          if(_pskMqttClient===ws) _pskMqttClient=null;
-          _pskFlushToUI(badge);
-        }, 30000);
-      }
-      else if(type===3){ // PUBLISH — parse topic + JSON payload
-        try{
-          // Remaining length starts at byte 1 (single byte assumed <128)
-          var remLen=data[1], off=2;
-          var topicLen=(data[off]<<8)|data[off+1]; off+=2;
-          off+=topicLen; // skip topic (we don't need it here)
-          var json=new TextDecoder().decode(data.slice(off,2+remLen));
-          var s=JSON.parse(json);
-          var fkHz=(s.f||0)/1000;
-          var band=bandFromFreq(fkHz)||s.b;
-          if(!band) return;
-          var age=Date.now()/1000-(s.t_tx||s.t||0);
-          if(age>86400) return;
-          var tp=maidenheadToLatLon(s.sl||''), rp=maidenheadToLatLon(s.rl||'');
-          _pskMqttBuffer.unshift({
-            dx_call:s.sc||'', de_call:s.rc||'',
-            freq:fkHz, band:band, snr:s.rp||0, mode:s.md||'',
-            dx_lat:tp?tp[0]:null, dx_lon:tp?tp[1]:null,
-            de_lat:rp?rp[0]:null, de_lon:rp?rp[1]:null,
-            locator_tx:s.sl||'', locator_rx:s.rl||'', age:age,
-          });
-          if(_pskMqttBuffer.length>PSK_MAX_BUFFER) _pskMqttBuffer.length=PSK_MAX_BUFFER;
-          var cnt=document.getElementById('spotsCount');
-          if(cnt) cnt.textContent=_pskMqttBuffer.length+' spots';
-          console.log('[PSK] spot:',s.sc,'→',s.rc,band,s.md);
-        }catch(e){ console.warn('[PSK] parse error:',e.message); }
-      }
-    };
-
-    ws.onerror = function(e){ console.warn('[PSK] WS error on',url,e); };
-    ws.onclose = function(){
-      console.log('[PSK] WS closed, connected was',connected);
-      if(!connected){ clearTimeout(timer); urlIdx++; attempt(); }
-    };
+  if(!window.mqtt){
+    show('err','MQTT library not loaded — reload page');
+    if(btn){btn.textContent='↻';btn.disabled=false;}
+    return;
   }
 
-  attempt();
-}
+  // Close any existing connection
+  if(_pskMqttClient){try{_pskMqttClient.end(true);}catch(e){} _pskMqttClient=null;}
+  _pskMqttBuffer=[];
 
+  show('','Connecting to mqtt.pskreporter.info…');
+
+  // Hard 25s deadline — no matter what, reset UI
+  var deadline = setTimeout(function(){
+    console.warn('[PSK] 25s deadline hit — giving up');
+    if(_pskMqttClient){try{_pskMqttClient.end(true);}catch(e){} _pskMqttClient=null;}
+    if(_pskMqttBuffer.length > 0){
+      _pskFlushToUI(badge);
+    } else {
+      show('err','No response from PSKReporter in 25s');
+      if(btn){btn.textContent='↻';btn.disabled=false;}
+    }
+  }, 25000);
+
+  // Exact connect options from PSKReporter MQTT documentation
+  var client;
+  try{
+    client = window.mqtt.connect({
+      host: 'mqtt.pskreporter.info',
+      port: 1886,
+      protocol: 'wss',
+      reconnectPeriod: 0,
+      connectTimeout: 10000,
+      clientId: 'pskr_' + Math.random().toString(36).substr(2,8),
+    });
+  } catch(e){
+    clearTimeout(deadline);
+    show('err','mqtt.connect() failed: '+e.message);
+    if(btn){btn.textContent='↻';btn.disabled=false;}
+    return;
+  }
+
+  _pskMqttClient = client;
+
+  client.on('connect', function(){
+    console.log('[PSK] MQTT connected');
+    show('','Connected — subscribing to '+call+' spots…');
+
+    // Per PSKReporter MQTT docs: pskr/filter/v2/+/+/CALLSIGN/#
+    var topicTx = 'pskr/filter/v2/+/+/'+call+'/#';   // callsign as sender
+    var topicRx = 'pskr/filter/v2/+/+/+/'+call+'/#'; // callsign as receiver
+    console.log('[PSK] subscribing:', topicTx, topicRx);
+
+    client.subscribe([topicTx, topicRx], {qos:0}, function(err){
+      if(err){ console.warn('[PSK] subscribe error:',err); }
+      else {
+        console.log('[PSK] subscribed OK — collecting 30s');
+        show('','Collecting '+call+' spots for 30s…');
+        if(btn){btn.textContent='↻';btn.disabled=false;}
+      }
+    });
+  });
+
+  client.on('message', function(topic, payload){
+    try{
+      var s = JSON.parse(payload.toString());
+      var fkHz = (s.f||0)/1000;
+      var band = bandFromFreq(fkHz)||s.b;
+      if(!band) return;
+      var age = Date.now()/1000 - (s.t_tx||s.t||0);
+      if(age > 86400) return;
+      var tp = maidenheadToLatLon(s.sl||'');
+      var rp = maidenheadToLatLon(s.rl||'');
+      _pskMqttBuffer.unshift({
+        dx_call:s.sc||'', de_call:s.rc||'',
+        freq:fkHz, band:band, snr:s.rp||0, mode:s.md||'',
+        dx_lat:tp?tp[0]:null, dx_lon:tp?tp[1]:null,
+        de_lat:rp?rp[0]:null, de_lon:rp?rp[1]:null,
+        locator_tx:s.sl||'', locator_rx:s.rl||'', age:age,
+      });
+      if(_pskMqttBuffer.length>PSK_MAX_BUFFER) _pskMqttBuffer.length=PSK_MAX_BUFFER;
+      var cnt=document.getElementById('spotsCount');
+      if(cnt) cnt.textContent=_pskMqttBuffer.length+' spots';
+      console.log('[PSK] spot:',s.sc,'→',s.rc,band,s.md);
+    } catch(e){ console.warn('[PSK] parse:',e.message); }
+  });
+
+  client.on('error', function(err){
+    console.warn('[PSK] error:',err.message||err);
+    clearTimeout(deadline);
+    show('err','MQTT error: '+(err.message||err));
+    try{client.end(true);}catch(e){}
+    if(btn){btn.textContent='↻';btn.disabled=false;}
+  });
+
+  client.on('close', function(){
+    console.log('[PSK] connection closed, buffer size:',_pskMqttBuffer.length);
+  });
+
+  client.on('offline', function(){
+    console.warn('[PSK] offline');
+  });
+
+  // After 30s collect window, close and render
+  setTimeout(function(){
+    clearTimeout(deadline);
+    console.log('[PSK] 30s window done, rendering',_pskMqttBuffer.length,'spots');
+    try{if(_pskMqttClient===client) client.end(true);}catch(e){}
+    _pskMqttClient=null;
+    _pskFlushToUI(badge);
+    if(btn){btn.textContent='↻';btn.disabled=false;}
+  }, 30000);
+
+}
 function _pskFlushToUI(badge){
   var seen = new Map();
   for(var s of _pskMqttBuffer){
