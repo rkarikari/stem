@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.038 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.041 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -477,9 +477,9 @@ option{background:#0b1820;}
           </div>
           <div id="psk-badge" class="live-badge stale">No data</div>
           <div style="margin-top:8px;">
-            <label style="margin-bottom:4px;">Callsign (spotter or DX)</label>
+            <label style="margin-bottom:4px;">Your callsign <span style="color:var(--dim);font-size:.6rem;">(required — streams YOUR spots)</span></label>
             <div class="row2b gap8">
-              <input type="text" id="pskCallIn" placeholder="e.g. 9G5AR or leave blank" style="font-size:.75rem;"/>
+              <input type="text" id="pskCallIn" placeholder="e.g. 9G5AR" style="font-size:.75rem;" oninput="savePskCall(this.value)"/>
               <button class="btn btn-sm hi" onclick="fetchPSKReporter()">GO</button>
             </div>
             <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">
@@ -494,7 +494,7 @@ option{background:#0b1820;}
             </div>
           </div>
           <div class="spot-list" id="spotList">
-            <div class="spots-empty">Enter callsign → HTTP (15min window) · Blank → MQTT stream (30s)</div>
+            <div class="spots-empty">Enter your callsign to stream spots where you are TX or RX</div>
           </div>
           <div class="spots-count" id="spotsCount"></div>
         </div>
@@ -510,6 +510,13 @@ option{background:#0b1820;}
           </div>
           <div id="dx-badge" class="live-badge stale">No data</div>
           <div style="margin-top:8px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);white-space:nowrap;">Spotter range:</span>
+              <input type="range" id="dxRangeSlider" min="500" max="20000" step="500" value="10000"
+                style="flex:1;accent-color:var(--acc);"
+                oninput="setSpotRange(parseInt(this.value))"/>
+              <span style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--acc);min-width:52px;text-align:right;" id="dxRangeLabel">10000 km</span>
+            </div>
             <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px;">
               <span style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);">Show on map:</span>
               <button class="sf-btn on" id="dxf-all" onclick="setDXBandFilter('all')">ALL</button>
@@ -798,7 +805,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.038';
+const APP_VERSION = 'v1.041';
 const APP_DATE    = '2026-03-11';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5113,6 +5120,11 @@ buildEnvGrid('uhf');
 // Build antenna selectors
 buildVUAntSel('vhf');
 buildVUAntSel('uhf');
+// Restore saved callsign
+try{
+  const saved = localStorage.getItem('pskCall');
+  if(saved){ const el=document.getElementById('pskCallIn'); if(el) el.value=saved; }
+} catch(e){}
 // Derive initial time from RTC
 S.time = deriveTimeLabel();
 startRTC();
@@ -5348,107 +5360,65 @@ function fetchPSKReporter(){
   const callInput = (document.getElementById('pskCallIn')?.value || '').trim().toUpperCase();
   if(btn){ btn.textContent = '…'; btn.disabled = true; }
 
-  if(callInput){
-    _pskFetchHTTP(callInput, btn, badge);
-  } else {
-    if(badge){ badge.className='live-badge'; badge.textContent='Connecting…'; }
-    pskLoadMqttJs(()=>{
-      if(!window.mqtt){
-        if(badge){ badge.className='live-badge err'; badge.textContent='MQTT.js CDN failed — enter a callsign to use HTTP'; }
-        if(btn){ btn.textContent='↻'; btn.disabled=false; }
-        return;
-      }
-      _pskConnectMqtt(btn, badge);
-    });
+  if(!callInput){
+    if(badge){ badge.className='live-badge warn'; badge.textContent='Enter your callsign first'; }
+    if(btn){ btn.textContent='↻'; btn.disabled=false; }
+    const sl = document.getElementById('spotList');
+    if(sl) sl.innerHTML='<div class="spots-empty">Your callsign is required — PSKReporter streams only spots where you are the sender or receiver.</div>';
+    return;
   }
+  // Always use HTTP path (callsign required for meaningful results)
+  _pskFetchHTTP(callInput, btn, badge);
 }
 
 // ── HTTP path: callsign query ─────────────────────────────────
-// retrieve.pskreporter.info/query returns XML and has no CORS headers.
-// The API also supports a ?callback=X parameter for JSONP — this is the
-// most reliable browser method: inject a <script> tag, PSKReporter wraps
-// the XML string in a JS callback, no CORS needed at all.
-//
-// Strategy:
-//   1. JSONP via <script> tag (primary — no CORS, no proxy needed)
-//   2. CORS proxy chain as fallback (corsproxy.io → allorigins → thingproxy)
+// retrieve.pskreporter.info/query returns XML with no CORS headers.
+// Browser fetch() is blocked. We use a CORS proxy chain.
+// Proxies tried in order (all free, no key needed):
+//   1. corsproxy.io     — ?url=<encoded>           returns raw content
+//   2. allorigins       — /raw?url=<encoded>        returns raw content
+//   3. thingproxy       — /fetch/<url>              returns raw content
+// If all proxies fail: show clear error with F12 suggestion.
 async function _pskFetchHTTP(call, btn, badge){
-  if(badge){ badge.className='live-badge'; badge.textContent='Fetching\u2026'; }
+  if(badge){ badge.className='live-badge'; badge.textContent='Fetching…'; }
 
   const elapsed = Date.now() - _pskLastHttp;
   if(elapsed < 5*60*1000){
     const wait = Math.ceil((5*60*1000 - elapsed)/1000);
-    if(badge){ badge.className='live-badge warn'; badge.textContent=`Rate limited \u2014 wait ${wait}s`; }
-    if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
+    if(badge){ badge.className='live-badge warn'; badge.textContent=`Rate limited — wait ${wait}s`; }
+    if(btn){ btn.textContent='↻'; btn.disabled=false; }
     return;
   }
 
   try{
-    const baseParams = `callsign=${encodeURIComponent(call)}&flowStartSeconds=-900&nolocator=0`;
-    const baseUrl    = `https://retrieve.pskreporter.info/query?${baseParams}`;
+    // callsign= returns spots where this call is EITHER sender OR receiver (last 1hr)
+    const pskUrl = `https://retrieve.pskreporter.info/query`
+      + `?callsign=${encodeURIComponent(call)}&flowStartSeconds=-3600&nolocator=0`;
+    const enc    = encodeURIComponent(pskUrl);
 
-    // ── Method 1: JSONP (no CORS needed) ──────────────────────────
-    // PSKReporter wraps the XML in a JS callback when ?callback=X is added.
-    // Response looks like: pskrCb("<receptionReports>...</receptionReports>")
-    let xml = await new Promise((resolve) => {
-      const cbName = '_pskrCb_' + Math.random().toString(36).slice(2);
-      const script = document.createElement('script');
-      let settled  = false;
+    const proxies = [
+      { url: `https://corsproxy.io/?url=${enc}`,            name: 'corsproxy.io' },
+      { url: `https://api.allorigins.win/raw?url=${enc}`,   name: 'allorigins'   },
+      { url: `https://thingproxy.freeboard.io/fetch/${pskUrl}`, name: 'thingproxy' },
+    ];
 
-      const finish = (result) => {
-        if(settled) return;
-        settled = true;
-        clearTimeout(timer);
-        delete window[cbName];
-        if(script.parentNode) script.parentNode.removeChild(script);
-        resolve(result);
-      };
-
-      window[cbName] = (data) => {
-        // data is the XML string wrapped by the callback
-        finish(typeof data === 'string' ? data : null);
-      };
-
-      const timer = setTimeout(() => {
-        console.warn('PSK JSONP timeout');
-        finish(null);
-      }, 12000);
-
-      script.onerror = () => { console.warn('PSK JSONP script error'); finish(null); };
-      script.src = `${baseUrl}&callback=${cbName}`;
-      document.head.appendChild(script);
-    });
-
-    // ── Method 2: CORS proxy chain (fallback) ──────────────────────
-    if(!xml || !xml.includes('<')){
-      const enc = encodeURIComponent(baseUrl);
-      const proxies = [
-        { url: `https://corsproxy.io/?url=${enc}`,            name: 'corsproxy.io' },
-        { url: `https://api.allorigins.win/raw?url=${enc}`,   name: 'allorigins'   },
-        { url: `https://thingproxy.freeboard.io/fetch/${baseUrl}`, name: 'thingproxy' },
-      ];
-
-      for(const proxy of proxies){
-        try{
-          if(badge) badge.textContent = `Trying ${proxy.name}\u2026`;
-          const ctrl = new AbortController();
-          const tid  = setTimeout(() => ctrl.abort(), 10000);
-          const resp = await fetch(proxy.url, {signal: ctrl.signal}).finally(() => clearTimeout(tid));
-          if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          const text = await resp.text();
-          if(text && text.includes('<')){ xml = text; break; }
-          console.warn('PSK proxy unexpected response:', proxy.name, text.slice(0, 100));
-        } catch(e){ console.warn('PSK proxy failed:', proxy.name, e.message); }
-      }
+    let xml = null;
+    for(const proxy of proxies){
+      try{
+        if(badge) badge.textContent = `Trying ${proxy.name}…`;
+        const ctrl = new AbortController();
+        const tid  = setTimeout(() => ctrl.abort(), 10000);
+        const resp = await fetch(proxy.url, {signal: ctrl.signal}).finally(() => clearTimeout(tid));
+        if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const text = await resp.text();
+        if(text && text.includes('<')){ xml = text; break; }
+        console.warn('PSK proxy unexpected:', proxy.name, text.slice(0, 120));
+      } catch(e){ console.warn('PSK proxy failed:', proxy.name, e.message); }
     }
 
-    if(!xml || !xml.includes('<')){
-      throw new Error('All methods failed — check console (F12) for details');
-    }
-
+    if(!xml) throw new Error('All CORS proxies failed — check console (F12)');
     _pskLastHttp = Date.now();
 
-    // Parse XML — <receptionReports><receptionReport .../></receptionReports>
     const doc  = new DOMParser().parseFromString(xml, 'text/xml');
     const rpts = doc.querySelectorAll('receptionReport');
 
@@ -5459,8 +5429,7 @@ async function _pskFetchHTTP(call, btn, badge){
       const freqK = freq / 1000;
       const band  = bandFromFreq(freqK);
       if(!band) return;
-      const flowStart = parseInt(r.getAttribute('flowStartSeconds') || 0);
-      const age = tNow - flowStart;
+      const age = tNow - parseInt(r.getAttribute('flowStartSeconds') || 0);
       if(age > 7200) return;
       const sl = r.getAttribute('senderLocator')   || '';
       const rl = r.getAttribute('receiverLocator') || '';
@@ -5483,9 +5452,13 @@ async function _pskFetchHTTP(call, btn, badge){
     _pskMqttBuffer = [...spots];
     renderSpotList(spots, 'spotList', 'spotsCount', 'psk-badge', LIVE.spotBandFilter);
     if(LIVE.spotsVisible) drawSpotMarkers();
-    const label = spots.length === 0
-      ? 'PSKReporter \u00b7 0 spots (no recent activity for this call)'
-      : `PSKReporter \u00b7 ${spots.length} spots`;
+    const mapped = spots.filter(s => {
+      if(s.dx_lat===null && s.de_lat===null) return false;
+      const d1 = s.dx_lat!==null ? haversineKm(S.lat,S.lon,s.dx_lat,s.dx_lon) : Infinity;
+      const d2 = s.de_lat!==null ? haversineKm(S.lat,S.lon,s.de_lat,s.de_lon) : Infinity;
+      return Math.min(d1,d2) <= MAX_SPOT_KM;
+    }).length;
+    const label = `PSKReporter · ${spots.length} spots · ${mapped} near TX`;
     if(badge){ badge.className='live-badge'; badge.textContent=label; }
 
   } catch(err){
@@ -5493,9 +5466,9 @@ async function _pskFetchHTTP(call, btn, badge){
     const msg = err.message || 'Unknown error';
     if(badge){ badge.className='live-badge err'; badge.textContent=`PSK: ${msg}`; }
     const sl = document.getElementById('spotList');
-    if(sl) sl.innerHTML = `<div class="spots-empty" style="color:#f87">&#9888; PSKReporter failed:<br>${msg}<br><small>Open F12 console for details.</small></div>`;
+    if(sl) sl.innerHTML = `<div class="spots-empty" style="color:#f87">⚠ ${msg}<br><small>Open F12 → Console for details</small></div>`;
   } finally {
-    if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
+    if(btn){ btn.textContent='↻'; btn.disabled=false; }
   }
 }
 
@@ -5533,14 +5506,12 @@ function _pskConnectMqtt(btn, badge){
     const label = idx === 0 ? 'WS:1885' : 'WSS:1886';
     if(badge) badge.textContent = `Connecting ${label}\u2026`;
 
+    console.log(`[PSK MQTT] Attempting ${label} via ${url} (mqtt.js ${window.mqtt?.VERSION || '?'})`);
     let client;
     try{
-      // Minimal options — exactly as proven working example
-      client = window.mqtt.connect(url, {
-        reconnectPeriod: 0,   // no auto-reconnect, we manage lifecycle
-      });
+      client = window.mqtt.connect(url, { reconnectPeriod: 0 });
     } catch(e){
-      console.warn('mqtt.connect threw:', label, e.message);
+      console.warn('[PSK MQTT] connect() threw:', label, e.message);
       tryConnect(idx + 1);
       return;
     }
@@ -5574,8 +5545,13 @@ function _pskConnectMqtt(btn, badge){
         try{ client.end(true); }catch(e){}
         if(_pskMqttClient === client) _pskMqttClient = null;
         _pskFlushToUI();
-        if(badge){ badge.className='live-badge';
-                   badge.textContent=`PSKReporter MQTT \u00b7 ${LIVE.pskSpots.length} spots`; }
+        const mqttMapped = LIVE.pskSpots.filter(s => {
+        const d1 = s.dx_lat!==null ? haversineKm(S.lat,S.lon,s.dx_lat,s.dx_lon) : Infinity;
+        const d2 = s.de_lat!==null ? haversineKm(S.lat,S.lon,s.de_lat,s.de_lon) : Infinity;
+        return Math.min(d1,d2) <= MAX_SPOT_KM;
+      }).length;
+    if(badge){ badge.className='live-badge';
+               badge.textContent=`PSKReporter MQTT · ${LIVE.pskSpots.length} spots · ${mqttMapped} near TX`; }
       }, 30000);
     });
 
@@ -5603,7 +5579,14 @@ function _pskConnectMqtt(btn, badge){
       } catch(e){ /* skip malformed payload */ }
     });
 
-    client.on('error', err => console.warn('PSK MQTT error:', label, err.message || err));
+    client.on('error', err => {
+      console.warn('[PSK MQTT] error on', label, ':', err.message || err);
+    });
+    // 'close' fires when connection is refused or dropped
+    client.on('close', () => {
+      if(!connected) console.warn('[PSK MQTT] connection closed (never connected) on', label);
+    });
+    client.on('offline', () => console.warn('[PSK MQTT] offline on', label));
   }
 
   tryConnect(0);
@@ -5622,19 +5605,128 @@ function _pskFlushToUI(){
 }
 
 
+// ── Callsign prefix → approximate lat/lon ────────────────────
+// Compact DXCC prefix table: longest-match wins.
+// Covers ~95% of DX cluster traffic. Returns [lat, lon] or null.
+const DXCC_PREFIX = (function(){
+  // [prefix, lat, lon]  — sorted longest-first for greedy match
+  const raw = [
+    ['VK9X',-10.4,105.6],['VK9C',-12.2,96.8],['VK9M',-23.5,154.0],
+    ['VK9N',-29.0,167.9],['VK9W',-31.5,159.1],['ZL8',-29.0,-178.0],
+    ['ZL9',-52.5,-169.0],['ZL',-41.3,174.8],['VK',-25.3,133.8],
+    ['JD1',[35.0,142.0]],['JA',[36.2,138.3]],['HL',[37.5,127.9]],
+    ['BV',[23.7,121.0]],['BY',[35.9,104.2]],['VR2',[22.3,114.2]],
+    ['VS6',[22.3,114.2]],['4S7',[7.9,80.7]],['VU',[20.6,79.1]],
+    ['A4',[23.6,58.6]],['A5',[27.5,90.4]],['A6',[24.5,54.4]],
+    ['A7',[25.3,51.2]],['A9',[26.0,50.6]],['4X',[31.8,35.2]],
+    ['4Z',[31.8,35.2]],['9K',[29.3,47.7]],['YK',[34.8,38.9]],
+    ['OD5',[33.9,35.5]],['9Y',[10.7,-61.5]],['8P',[13.2,-59.6]],
+    ['VP9',[32.3,-64.8]],['KP4',[18.2,-66.5]],['KP2',[18.3,-64.9]],
+    ['FG',[16.3,-61.6]],['FM',[14.6,-61.0]],['J3',[12.1,-61.7]],
+    ['J7',[15.3,-61.4]],['J8',[13.3,-61.2]],['V2',[17.1,-61.8]],
+    ['V4',[17.4,-62.8]],['VP2M',[16.7,-62.2]],['VP2E',[17.7,-62.2]],
+    ['VP2V',[18.4,-64.6]],['ZF',[19.3,-81.4]],['6Y',[18.1,-77.3]],
+    ['VP5',[21.8,-72.0]],['HH',[18.9,-72.3]],['HI',[19.0,-70.7]],
+    ['PJ4',[12.2,-68.3]],['PJ2',[12.1,-68.9]],['NP3',[18.2,-66.5]],
+    ['TI',[9.7,-83.8]],['HP',[8.9,-79.5]],['HO',[8.9,-79.5]],
+    ['YN',[12.1,-86.3]],['TG',[15.8,-90.2]],['HR',[14.1,-87.2]],
+    ['YS',[13.8,-88.9]],['V3',[17.3,-88.5]],['HQ',[14.1,-87.2]],
+    ['XE',[23.6,-102.5]],['XF',[23.6,-110.0]],['KL7',[64.2,-153.4]],
+    ['KH6',[20.7,-157.0]],['W',[37.1,-95.7]],['K',[37.1,-95.7]],
+    ['N',[37.1,-95.7]],['AA',[37.1,-95.7]],['AB',[37.1,-95.7]],
+    ['AC',[37.1,-95.7]],['AD',[37.1,-95.7]],['AE',[37.1,-95.7]],
+    ['AF',[37.1,-95.7]],['AG',[37.1,-95.7]],['AH',[37.1,-95.7]],
+    ['AI',[37.1,-95.7]],['AJ',[37.1,-95.7]],['AK',[37.1,-95.7]],
+    ['VE',[56.1,-106.4]],['VA',[56.1,-106.4]],['VY',[63.0,-136.0]],
+    ['XA',[23.6,-102.5]],['PY',-14.2,-51.9],['CE',-33.5,-70.7],
+    ['LU',-34.6,-58.4],['CX',-32.5,-55.8],['PZ',[5.9,-55.2]],
+    ['PY0F',[-3.8,-32.4]],['PY0T',[-20.5,-28.8]],['9Y4',[10.7,-61.5]],
+    ['OA',-9.2,-75.0],['HC',-1.8,-78.2],['HK',[4.6,-74.1]],
+    ['YV',[8.0,-66.6]],['GY',[4.9,-58.9]],['GW',[52.5,-3.5]],
+    ['GJ',[49.2,-2.1]],['GD',[54.2,-4.5]],['GU',[49.5,-2.6]],
+    ['G',[52.8,-1.7]],['EI',[53.3,-8.2]],['F',[46.2,2.2]],
+    ['ON',[50.8,4.5]],['PA',[52.1,5.3]],['LX',[49.8,6.1]],
+    ['HB9',[47.0,8.2]],['OE',[47.5,13.3]],['DL',[51.2,10.5]],
+    ['DA',[51.2,10.5]],['DB',[51.2,10.5]],['DC',[51.2,10.5]],
+    ['DD',[51.2,10.5]],['DE',[51.2,10.5]],['DF',[51.2,10.5]],
+    ['DG',[51.2,10.5]],['DH',[51.2,10.5]],['DJ',[51.2,10.5]],
+    ['DK',[51.2,10.5]],['DL',[51.2,10.5]],['DM',[51.2,10.5]],
+    ['DN',[51.2,10.5]],['DO',[51.2,10.5]],['DP',[51.2,10.5]],
+    ['DR',[51.2,10.5]],
+    ['SM',[60.1,18.6]],['LA',[60.5,8.5]],['OZ',[56.3,9.5]],
+    ['OH',[64.0,26.0]],['TF',[65.0,-18.6]],['SP',[52.0,19.4]],
+    ['OK',[49.8,15.5]],['OM',[48.7,19.7]],['OL',[49.8,15.5]],
+    ['YO',[45.9,24.9]],['LZ',[42.7,25.5]],['SV',[39.1,21.8]],
+    ['SY',[39.1,21.8]],['TA',[38.9,35.2]],['TC',[38.9,35.2]],
+    ['LY',[55.2,23.9]],['YL',[56.9,24.1]],['ES',[58.6,25.0]],
+    ['RK',[60.0,100.0]],['RA',[60.0,100.0]],['RB',[60.0,100.0]],
+    ['RC',[60.0,100.0]],['RD',[60.0,100.0]],['RE',[60.0,100.0]],
+    ['RF',[60.0,100.0]],['RG',[60.0,100.0]],['R',[60.0,100.0]],
+    ['UA',[60.0,100.0]],['UB',[60.0,100.0]],['UC',[60.0,100.0]],
+    ['UD',[60.0,100.0]],['UE',[60.0,100.0]],['UF',[60.0,100.0]],
+    ['UG',[60.0,100.0]],['UK',[41.4,64.6]],['UN',[48.0,67.0]],
+    ['EW',[53.5,28.0]],['UR',[49.0,31.0]],['UT',[49.0,31.0]],
+    ['UX',[49.0,31.0]],['UY',[49.0,31.0]],['UZ',[49.0,31.0]],
+    ['ER',[47.0,28.5]],['YU',[44.0,21.0]],['YT',[44.0,21.0]],
+    ['YU',[44.0,21.0]],['E7',[44.2,17.5]],['9A',[45.1,16.4]],
+    ['S5',[46.1,14.8]],['Z3',[41.6,21.7]],['ZA',[41.3,20.0]],
+    ['HA',[47.2,19.4]],['HG',[47.2,19.4]],['IT9',[37.6,14.0]],
+    ['IW',[43.0,12.6]],['IZ',[43.0,12.6]],['I',[43.0,12.6]],
+    ['9H',[35.9,14.5]],['IS0',[39.2,9.1]],['4U1',[48.2,16.4]],
+    ['EA6',[39.6,3.0]],['EA8',[28.3,-15.6]],['EA9',[35.9,-5.4]],
+    ['EA',[40.5,-3.7]],['EB',[40.5,-3.7]],['EC',[40.5,-3.7]],
+    ['ED',[40.5,-3.7]],['EE',[40.5,-3.7]],['EF',[40.5,-3.7]],
+    ['EG',[40.5,-3.7]],['EH',[40.5,-3.7]],
+    ['CT9',[32.8,-17.0]],['CT',[39.6,-8.0]],['CQ',[39.6,-8.0]],
+    ['CN',[31.8,-7.1]],['EA8',[28.3,-15.6]],['3V',[33.9,9.6]],
+    ['7X',[28.0,2.6]],['5A',[26.3,17.2]],['SU',[26.8,30.8]],
+    ['ST',[15.6,32.5]],['5Z',[0.0,38.0]],['5X',[1.4,32.3]],
+    ['5H',-6.4,35.0],['9J',-13.1,27.9],['ZS',-29.0,25.1],
+    ['ZR',-29.0,25.1],['ZT',-29.0,25.1],['ZU',-29.0,25.1],
+    ['V5',-22.3,17.1],['A2',-22.3,24.7],['Z2',-20.0,30.0],
+    ['7Q',-13.3,34.3],['C9',-18.3,35.5],['3B8',-20.3,57.6],
+    ['VQ9',-7.3,72.4],['FR',-21.1,55.5],['FT',-49.4,70.0],
+    ['TZ',[12.7,-8.0]],['5V',[8.6,0.8]],['9L',[8.5,-13.2]],
+    ['EL',[6.4,-9.4]],['9G',[7.9,-1.0]],['5N',[9.1,8.7]],
+    ['TY',[9.3,2.3]],['XT2',[12.4,-1.5]],['6W',[14.5,-14.5]],
+    ['TU',[7.5,-5.5]],['D2',-11.2,17.9],['TR',-0.8,11.8],
+    ['TJ',[3.9,11.5]],['5U',[13.5,2.1]],['TT',[15.5,18.7]],
+    ['ET',[9.1,40.5]],['5B4',[35.1,33.4]],['P2',-6.3,143.9],
+    ['YB',-0.8,113.9],['9M',[3.8,108.0]],['DU',[12.9,121.8]],
+    ['HS',[15.9,100.9]],['VU2',[20.6,79.1]],['4W',-8.9,125.7],
+    ['XU',[12.6,105.0]],['XV',[16.5,107.6]],['XW',[17.9,102.6]],
+    ['A3',-21.2,-175.2],['E5',-21.2,-159.8],['KH4',[28.2,-177.4]],
+    ['KH3',[28.2,-177.4]],['AH8',-14.3,-170.7],['ZK1',-21.2,-159.8],
+  ];
+  // Build object: prefix → [lat, lon], sort keys by length desc for greedy match
+  const map = {};
+  raw.forEach(([pfx, lat, lon]) => {
+    if(Array.isArray(lat)){ map[pfx] = lat; }    // passed as [lat,lon] array
+    else { map[pfx] = [lat, lon]; }
+  });
+  return map;
+})();
+
+function callsignToLatLon(call){
+  if(!call) return null;
+  const c = call.toUpperCase().replace(/[\/].*/, '');  // strip /P /M etc
+  // Greedy longest-prefix match
+  for(let len = Math.min(c.length, 5); len >= 1; len--){
+    const pfx = c.slice(0, len);
+    if(DXCC_PREFIX[pfx]) return DXCC_PREFIX[pfx];
+  }
+  return null;
+}
+
 // ── DX Cluster via HamQTH dxc_csv.php ────────────────────────
-// Real format (confirmed from live endpoint, ^ delimited):
-// Call^Frequency^Date/Time^Spotter^Comment^LoTW user^eQSL user^Continent^Band^Country name
-// Example row:
-//   KF0NYM^18070.0^TX5U^Good Sig^2149 2025-05-27^^^EU^17M^France^227
-//   col 0 = DX callsign (spotted station)
-//   col 1 = frequency kHz
-//   col 2 = spotter callsign  ← NOTE: HamQTH puts DX first, spotter third
-//   col 3 = comment
-//   col 4 = "HHMM YYYY-MM-DD"  (time UTC + date)
-//   col 7 = continent
-//   col 8 = band string (e.g. "17M")
-//   col 9 = country name
+// Real format (^ delimited, confirmed from live endpoint):
+// col 0: DX callsign (spotted station)
+// col 1: frequency kHz
+// col 2: spotter callsign
+// col 3: comment
+// col 4: "HHMM YYYY-MM-DD"  (UTC time + date)
+// col 7: continent  col 8: band (e.g. "17M")  col 9: country name
+// No locators in feed — positions derived from callsign prefix lookup.
 async function fetchDXCluster(){
   const btn   = document.getElementById('dxRefreshBtn');
   const badge = document.getElementById('dx-badge');
@@ -5651,27 +5743,25 @@ async function fetchDXCluster(){
     const now   = Date.now();
 
     csvText.trim().split('\n').forEach(line => {
-      // Skip header
       if(line.toLowerCase().startsWith('call')) return;
       const p = line.split('^');
       if(p.length < 3) return;
 
-      const dxCall  = (p[0] || '').trim();   // spotted DX station
-      const freqStr = (p[1] || '').trim();   // frequency kHz
-      const deCall  = (p[2] || '').trim();   // spotter
+      const dxCall  = (p[0] || '').trim();
+      const freqStr = (p[1] || '').trim();
+      const deCall  = (p[2] || '').trim();
       const comment = (p[3] || '').trim();
       const timeStr = (p[4] || '').trim();   // "HHMM YYYY-MM-DD"
-      const band    = (p[8] || '').trim();   // "17M", "20M" etc.
+      const band    = (p[8] || '').trim();   // "17M" etc.
 
       const freqKHz = parseFloat(freqStr);
       if(!freqKHz || isNaN(freqKHz)) return;
       if(!dxCall) return;
 
-      // Parse "HHMM YYYY-MM-DD" into a UTC Date → age in seconds
+      // Parse "HHMM YYYY-MM-DD"
       let ageSecs = 0;
       if(timeStr){
         try{
-          // Split on space: ["2149", "2025-05-27"]
           const [tPart, dPart] = timeStr.split(' ');
           if(tPart && dPart){
             const hh = parseInt(tPart.slice(0,2), 10);
@@ -5681,14 +5771,14 @@ async function fetchDXCluster(){
             ageSecs = (now - spotMs) / 1000;
             if(ageSecs < 0) ageSecs = 0;
           }
-        } catch(e){ /* use ageSecs = 0 */ }
+        } catch(e){}
       }
-
-      // Keep spots up to 24 hours — DX cluster is slower-moving than PSKReporter
       if(ageSecs > 86400) return;
 
-      // Derive band from freq if band column missing
-      // Normalise band: HamQTH returns "17M", bandFromFreq returns "17m"
+      // Derive positions from callsign prefixes
+      const dxPos = callsignToLatLon(dxCall);
+      const dePos = callsignToLatLon(deCall);
+
       const derivedBand = band ? band.toLowerCase() : (bandFromFreq(freqKHz) || '');
 
       spots.push({
@@ -5696,20 +5786,26 @@ async function fetchDXCluster(){
         freq: freqKHz,
         band: derivedBand || bandFromFreq(freqKHz) || '',
         comment, mode: '',
-        dx_lat: null, dx_lon: null,
-        de_lat: null, de_lon: null,
+        dx_lat: dxPos ? dxPos[0] : null,
+        dx_lon: dxPos ? dxPos[1] : null,
+        de_lat: dePos ? dePos[0] : null,
+        de_lon: dePos ? dePos[1] : null,
         locator_tx: '', locator_rx: '',
-        age: ageSecs,
-        snr: 0,
+        age: ageSecs, snr: 0,
       });
     });
 
     spots.sort((a,b) => a.age - b.age);
     LIVE.dxSpots = spots;
-    renderSpotList(spots, 'dxList', 'dxCount', 'dx-badge', LIVE.dxBandFilter, true);
+    // Sidebar shows only spots where spotter is within user-set range of TX location
+    const nearSpots = spots.filter(s =>
+      s.de_lat !== null && haversineKm(S.lat, S.lon, s.de_lat, s.de_lon) <= MAX_SPOT_KM
+    );
+    renderSpotList(nearSpots, 'dxList', 'dxCount', 'dx-badge', LIVE.dxBandFilter, true);
     if(LIVE.dxVisible) drawDXMarkers();
+    const rkm = MAX_SPOT_KM >= 1000 ? `${(MAX_SPOT_KM/1000).toFixed(0)}Mm` : `${MAX_SPOT_KM}km`;
     if(badge){ badge.className='live-badge';
-               badge.textContent=`HamQTH DX \u00b7 ${spots.length} spots`; }
+               badge.textContent=`HamQTH DX · ${nearSpots.length} within ${rkm} · ${spots.length} total`; }
 
   } catch(err){
     console.warn('DX fetch error:', err);
@@ -5800,40 +5896,99 @@ function clearDXMarkers(){
   LIVE.dxLines = [];
 }
 
+// ── Haversine distance (km) between two lat/lon points ────────
+function haversineKm(lat1, lon1, lat2, lon2){
+  const R = 6371;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2
+    + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ── PSKReporter spot markers ──────────────────────────────────
+// Only spots where at least one end is within MAX_SPOT_KM of TX location.
+// Lines drawn FROM the TX location TO the remote endpoint — showing which
+// propagation paths are currently open from your location.
+let MAX_SPOT_KM = 10000; // user-adjustable via slider
+
+function setSpotRange(km){
+  MAX_SPOT_KM = km;
+  const lbl = document.getElementById('dxRangeLabel');
+  if(lbl) lbl.textContent = km >= 1000 ? `${(km/1000).toFixed(1).replace('.0','')} Mm` : `${km} km`;
+  // Redraw with new range
+  if(LIVE.dxVisible)    drawDXMarkers();
+  if(LIVE.spotsVisible) drawSpotMarkers();
+  // Re-filter DX sidebar by new range, re-render PSK list
+  const nearDX = LIVE.dxSpots.filter(s =>
+    s.de_lat !== null && haversineKm(S.lat, S.lon, s.de_lat, s.de_lon) <= MAX_SPOT_KM
+  );
+  renderSpotList(LIVE.pskSpots, 'spotList', 'spotsCount', 'psk-badge', LIVE.spotBandFilter);
+  renderSpotList(nearDX, 'dxList', 'dxCount', 'dx-badge', LIVE.dxBandFilter, true);
+  // Update DX badge count
+  const dxBadge = document.getElementById('dx-badge');
+  if(dxBadge && LIVE.dxSpots.length > 0){
+    const rkm = km >= 1000 ? `${(km/1000).toFixed(0)}Mm` : `${km}km`;
+    dxBadge.textContent = `HamQTH DX · ${nearDX.length} within ${rkm} · ${LIVE.dxSpots.length} total`;
+  }
+}
+
+function savePskCall(val){
+  try{ localStorage.setItem('pskCall', val.toUpperCase()); } catch(e){}
+}
+
 function drawSpotMarkers(){
   clearSpotMarkers();
   if(!LIVE.spotsVisible) return;
-  const filtered = LIVE.spotBandFilter === 'all'
-    ? LIVE.pskSpots
-    : LIVE.pskSpots.filter(s => s.band === LIVE.spotBandFilter);
+  const txLat = S.lat, txLon = S.lon;
 
-  filtered.slice(0, 80).forEach(spot => {
+  const filtered = (LIVE.spotBandFilter === 'all'
+    ? LIVE.pskSpots
+    : LIVE.pskSpots.filter(s => s.band === LIVE.spotBandFilter));
+
+  filtered.slice(0, 200).forEach(spot => {
+    if(spot.dx_lat === null && spot.de_lat === null) return;
+
     const col = BAND_COLORS[spot.band] || '#888';
 
-    // Draw TX location marker (DX station)
-    if(spot.dx_lat !== null && !isNaN(spot.dx_lat)){
+    // Determine which end is "near TX" and which is the "remote" end
+    const dxDist = (spot.dx_lat !== null) ? haversineKm(txLat,txLon,spot.dx_lat,spot.dx_lon) : Infinity;
+    const deDist = (spot.de_lat !== null) ? haversineKm(txLat,txLon,spot.de_lat,spot.de_lon) : Infinity;
+
+    // At least one end must be within range of TX location
+    if(dxDist > MAX_SPOT_KM && deDist > MAX_SPOT_KM) return;
+
+    // The "remote" end — the station that is far from TX (what's reachable)
+    // If DX is near TX, remote = receiver (de). If receiver is near TX, remote = DX (sender).
+    const nearDX = dxDist <= deDist; // true = DX end is the local/near side
+    const remoteLat = nearDX ? spot.de_lat : spot.dx_lat;
+    const remoteLon = nearDX ? spot.de_lon : spot.dx_lon;
+    const remoteCall = nearDX ? spot.de_call : spot.dx_call;
+    const nearCall   = nearDX ? spot.dx_call : spot.de_call;
+
+    // Draw dot at remote endpoint
+    if(remoteLat !== null){
       const icon = L.divIcon({
         className:'',
         iconSize:[10,10], iconAnchor:[5,5],
         html:`<div class="spot-map-dot" style="background:${col}22;border-color:${col};box-shadow:0 0 4px ${col}88;" title="${spot.dx_call} · ${spot.band} · ${spot.mode}"></div>`
       });
-      const m = L.marker([spot.dx_lat, spot.dx_lon], {icon, zIndexOffset:200});
+      const m = L.marker([remoteLat, remoteLon], {icon, zIndexOffset:200});
       m.bindPopup(`<div style="font-family:'Share Tech Mono',monospace;font-size:.7rem;padding:6px 10px;line-height:1.7;">
         <div style="color:${col};font-size:.85rem;font-weight:700;">${spot.dx_call}</div>
         <div>Band: <b>${spot.band}</b> · ${spot.freq.toFixed(1)} kHz · ${spot.mode}</div>
-        <div>Heard by: ${spot.de_call} ${spot.locator_rx ? '('+spot.locator_rx+')' : ''}</div>
+        <div>TX: ${spot.dx_call} ${spot.locator_tx ? '('+spot.locator_tx+')' : ''}</div>
+        <div>RX: ${spot.de_call} ${spot.locator_rx ? '('+spot.locator_rx+')' : ''}</div>
         <div>SNR: ${spot.snr >= 0 ? '+' : ''}${spot.snr} dB · ${fmtAge(spot.age)} ago</div>
-        ${spot.locator_tx ? `<div>Grid: ${spot.locator_tx}</div>` : ''}
       </div>`);
       m.addTo(map);
       LIVE.spotMarkers.push(m);
     }
 
-    // Draw path line if we have both ends
-    if(spot.dx_lat !== null && spot.de_lat !== null &&
-       !isNaN(spot.dx_lat) && !isNaN(spot.de_lat)){
-      const line = L.polyline([[spot.dx_lat,spot.dx_lon],[spot.de_lat,spot.de_lon]], {
-        color: col, weight: 1, opacity: 0.25, dashArray: '4 4'
+    // Draw great-circle line from TX location to remote endpoint
+    if(remoteLat !== null){
+      const line = L.polyline([[txLat, txLon],[remoteLat, remoteLon]], {
+        color: col, weight: 1.5, opacity: 0.4, dashArray: '5 4'
       });
       line.addTo(map);
       LIVE.spotLines.push(line);
@@ -5841,30 +5996,59 @@ function drawSpotMarkers(){
   });
 }
 
+// ── DX Cluster markers ────────────────────────────────────────
+// Show spots where the SPOTTER is within range of TX location.
+// This answers: "what DX is currently audible from my region?"
+// Draw line FROM TX location TO the DX station — shows workable paths.
 function drawDXMarkers(){
   clearDXMarkers();
   if(!LIVE.dxVisible) return;
-  // DX spots often don't have coordinates — skip those without lat/lon
-  const filtered = LIVE.dxBandFilter === 'all'
-    ? LIVE.dxSpots
-    : LIVE.dxSpots.filter(s => s.band === LIVE.dxBandFilter);
+  const txLat = S.lat, txLon = S.lon;
 
-  filtered.slice(0, 50).forEach(spot => {
-    if(spot.dx_lat === null) return; // no DX position data (only spotter locator available)
+  const filtered = (LIVE.dxBandFilter === 'all'
+    ? LIVE.dxSpots
+    : LIVE.dxSpots.filter(s => s.band === LIVE.dxBandFilter));
+
+  filtered.slice(0, 100).forEach(spot => {
     const col = BAND_COLORS[spot.band] || '#888';
+
+    // Check spotter proximity to TX location
+    const deNear = spot.de_lat !== null &&
+                   haversineKm(txLat,txLon,spot.de_lat,spot.de_lon) <= MAX_SPOT_KM;
+    // Also accept spots where DX station is near TX (you might be the DX!)
+    const dxNear = spot.dx_lat !== null &&
+                   haversineKm(txLat,txLon,spot.dx_lat,spot.dx_lon) <= MAX_SPOT_KM;
+
+    if(!deNear && !dxNear) return;
+
+    // Remote end: if spotter is near TX, remote = DX station; otherwise remote = spotter
+    const remLat  = deNear ? spot.dx_lat  : spot.de_lat;
+    const remLon  = deNear ? spot.dx_lon  : spot.de_lon;
+    const remCall = deNear ? spot.dx_call : spot.de_call;
+
+    if(remLat === null) return;
+
     const icon = L.divIcon({
-      className:'', iconSize:[8,8], iconAnchor:[4,4],
-      html:`<div style="width:8px;height:8px;border-radius:50%;background:${col};border:1.5px solid #fff4;opacity:.7;"></div>`
+      className:'', iconSize:[9,9], iconAnchor:[4,4],
+      html:`<div style="width:9px;height:9px;border-radius:50%;background:${col};border:1.5px solid #fff5;opacity:.85;" title="${spot.dx_call}"></div>`
     });
-    const m = L.marker([spot.dx_lat, spot.dx_lon], {icon, zIndexOffset:150});
+    const m = L.marker([remLat, remLon], {icon, zIndexOffset:150});
     m.bindPopup(`<div style="font-family:'Share Tech Mono',monospace;font-size:.7rem;padding:6px 10px;line-height:1.7;">
       <div style="color:${col};font-weight:700;">${spot.dx_call}</div>
       <div>Band: <b>${spot.band}</b> · ${spot.freq.toFixed(1)} kHz</div>
-      <div>Spotter: ${spot.de_call}</div>
-      ${spot.comment ? `<div>Info: ${spot.comment}</div>` : ''}
+      <div>Spotted by: ${spot.de_call}</div>
+      ${spot.comment ? `<div style="color:#aaa;">${spot.comment}</div>` : ''}
+      <div style="color:#888;">${fmtAge(spot.age)} ago</div>
     </div>`);
     m.addTo(map);
     LIVE.dxMarkers.push(m);
+
+    // Line from TX location to remote station
+    const line = L.polyline([[txLat,txLon],[remLat,remLon]], {
+      color: col, weight: 1.5, opacity: 0.35, dashArray: '3 5'
+    });
+    line.addTo(map);
+    LIVE.dxLines.push(line);
   });
 }
 
@@ -5883,7 +6067,11 @@ function setDXBandFilter(band){
   document.querySelectorAll('[id^="dxf-"]').forEach(b => b.classList.remove('on'));
   const el = document.getElementById('dxf-' + (band === 'all' ? 'all' : band.replace('m','')));
   if(el) el.classList.add('on');
-  renderSpotList(LIVE.dxSpots, 'dxList', 'dxCount', 'dx-badge', band, true);
+  // Sidebar always shows only near-TX spots
+  const nearDX = LIVE.dxSpots.filter(s =>
+    s.de_lat !== null && haversineKm(S.lat, S.lon, s.de_lat, s.de_lon) <= MAX_SPOT_KM
+  );
+  renderSpotList(nearDX, 'dxList', 'dxCount', 'dx-badge', band, true);
   if(LIVE.dxVisible) drawDXMarkers();
 }
 
