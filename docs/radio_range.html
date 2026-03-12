@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.055 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.056 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
@@ -806,7 +806,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.055';
+const APP_VERSION = 'v1.056';
 const APP_DATE    = '2026-03-12';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -5339,11 +5339,19 @@ function fetchPSKReporter(){
   var call  = (document.getElementById('pskCallIn')?.value||'').trim().toUpperCase();
   if(btn){btn.textContent='…';btn.disabled=true;}
 
+  // show() — updates badge AND overwrites the spot list with a status line.
+  // Use only at lifecycle transition points (start, done, error).
   function show(cls,msg){
     console.log('[PSK]',msg);
     if(badge){badge.className='live-badge'+(cls?' '+cls:'');badge.textContent=msg;}
     var sl=document.getElementById('spotList');
     if(sl) sl.innerHTML='<div class="spots-empty" style="color:#adf">'+msg+'</div>';
+  }
+  // showBadge() — updates ONLY the badge, never wipes the spot list.
+  // Use for intermediate progress where spots may already be displayed.
+  function showBadge(cls,msg){
+    console.log('[PSK]',msg);
+    if(badge){badge.className='live-badge'+(cls?' '+cls:'');badge.textContent=msg;}
   }
 
   if(!call){
@@ -5353,11 +5361,11 @@ function fetchPSKReporter(){
   }
 
   // ── HTTP fallback: PSKReporter retrieve API via CORS proxies ──────────────
-  // Called when MQTT is unavailable or times out with no spots.
+  // Called when MQTT is unavailable, errors, or times out with zero spots.
   // Endpoint: https://retrieve.pskreporter.info/query (returns XML, no CORS header)
   // Rate limited to once per 5 min. Uses same CORS proxy chain as DX cluster.
-  async function _pskHttpFallback(){
-    show('','MQTT unavailable — trying HTTP fallback…');
+  async function _pskHttpFallback(reason){
+    showBadge('warn', reason || 'MQTT unavailable — trying HTTP…');
     var pskUrl = 'https://retrieve.pskreporter.info/query'
       + '?callsign=' + encodeURIComponent(call)
       + '&flowStartSeconds=-900'   // last 15 minutes
@@ -5369,23 +5377,34 @@ function fetchPSKReporter(){
       'https://api.allorigins.win/raw?url=' + enc,
       'https://thingproxy.freeboard.io/fetch/' + pskUrl,
     ];
+
     for(var pi = 0; pi < proxies.length; pi++){
       try{
-        show('','HTTP fallback via proxy '+(pi+1)+'/'+proxies.length+'…');
+        showBadge('warn', 'HTTP fallback '+(pi+1)+'/'+proxies.length+'…');
         var ctrl = new AbortController();
         var tid = setTimeout(()=>ctrl.abort(), 10000);
         var r = await fetch(proxies[pi], {cache:'no-cache', signal:ctrl.signal})
           .finally(()=>clearTimeout(tid));
         if(!r.ok) throw new Error('HTTP '+r.status);
         var txt = await r.text();
-        if(!txt || txt.length < 30) throw new Error('Empty response');
-        // Parse XML: <receptionReport receiverCallsign="..." senderCallsign="..."
-        //   receiverLocator="..." senderLocator="..." frequency="..." mode="..."
-        //   flowStartSeconds="..." sNR="..." />
+        if(!txt || txt.length < 20) throw new Error('Empty response');
+
+        // Check for proxy error pages (html returned instead of XML)
+        if(txt.trimStart().startsWith('<html') || txt.trimStart().startsWith('<!')) throw new Error('Proxy returned HTML, not XML');
+
+        // Parse XML <receptionReport> elements
         var parser = new DOMParser();
         var doc = parser.parseFromString(txt, 'text/xml');
+
+        // Detect XML parse errors
+        var parseErr = doc.querySelector('parsererror');
+        if(parseErr) throw new Error('XML parse error: '+parseErr.textContent.slice(0,60));
+
         var rpts = Array.from(doc.querySelectorAll('receptionReport'));
-        if(!rpts.length) throw new Error('No reception reports in XML');
+        console.log('[PSK] HTTP proxy '+(pi+1)+' returned '+rpts.length+' receptionReport elements');
+
+        // ── "0 reports" is a VALID result — callsign has no activity in window.
+        // Do NOT try the next proxy — PSKReporter answered us correctly.
         var now = Date.now()/1000;
         var parsed = [];
         rpts.forEach(function(rr){
@@ -5412,24 +5431,32 @@ function fetchPSKReporter(){
             locator_tx:sLoc, locator_rx:rLoc, age:age,
           });
         });
-        if(!parsed.length) throw new Error('Parsed 0 spots');
+
         _pskMqttBuffer = parsed;
-        console.log('[PSK] HTTP fallback OK, '+parsed.length+' spots from proxy '+(pi+1));
-        _pskFlushToUI(badge);
+        console.log('[PSK] HTTP OK — '+parsed.length+' spots (proxy '+(pi+1)+')');
+
+        if(parsed.length === 0){
+          // Valid XML, callsign just has no recent activity — show informatively
+          show('warn', call+' — no spots in last 15 min (HTTP/PSKReporter)');
+        } else {
+          _pskFlushToUI(badge);
+        }
         if(btn){btn.textContent='↻';btn.disabled=false;}
-        return;
+        return; // success — do not try more proxies
+
       } catch(e){
         console.warn('[PSK] HTTP proxy '+(pi+1)+' failed:',e.message);
       }
     }
-    show('err','PSKReporter unreachable — check callsign & try again');
+
+    // All proxies failed — network/CORS issue, not a callsign issue
+    show('err','PSKReporter unreachable (MQTT + 3 HTTP proxies failed) — check network');
     if(btn){btn.textContent='↻';btn.disabled=false;}
   }
 
   // ── MQTT path ─────────────────────────────────────────────────────────────
   if(!window.mqtt){
-    // MQTT library not available — go straight to HTTP fallback
-    _pskHttpFallback();
+    _pskHttpFallback('MQTT library not loaded — using HTTP…');
     return;
   }
 
@@ -5439,29 +5466,37 @@ function fetchPSKReporter(){
 
   show('','Connecting to PSKReporter MQTT…');
 
-  var _mqttFailed = false; // prevents double-fallback
+  var _mqttDone = false; // gate: only one path (deadline / error / close / 30s) wins
+
+  function _mqttFinish(triggerFallback, reason){
+    if(_mqttDone) return;
+    _mqttDone = true;
+    clearTimeout(deadline);
+    clearTimeout(collectTimer);
+    if(_pskMqttClient){ try{_pskMqttClient.end(true);}catch(e){} _pskMqttClient=null; }
+    if(triggerFallback && _pskMqttBuffer.length === 0){
+      _pskHttpFallback(reason);
+    } else {
+      _pskFlushToUI(badge);
+      if(btn){btn.textContent='↻';btn.disabled=false;}
+    }
+  }
 
   // Hard 20s deadline — if no connect or no spots, fall back to HTTP
   var deadline = setTimeout(function(){
-    if(_mqttFailed) return;
-    _mqttFailed = true;
     console.warn('[PSK] 20s deadline — MQTT gave',_pskMqttBuffer.length,'spots');
-    if(_pskMqttClient){try{_pskMqttClient.end(true);}catch(e){} _pskMqttClient=null;}
-    if(_pskMqttBuffer.length > 0){
-      _pskFlushToUI(badge);
-      if(btn){btn.textContent='↻';btn.disabled=false;}
-    } else {
-      // MQTT timed out with zero spots — try HTTP fallback
-      _pskHttpFallback();
-    }
+    _mqttFinish(true, 'MQTT timed out — trying HTTP fallback…');
   }, 20000);
 
-  // ── FIX: use URL string form of mqtt.connect() — object-only form is
-  // unreliable in mqtt.js 4.x (hostname vs host key confusion + missing path).
+  // 30s collect window (runs only if we actually connect and subscribe)
+  var collectTimer = null;
+
+  // FIX: use URL string form of mqtt.connect() — object-only form is unreliable
+  // in mqtt.js 4.x (hostname vs host confusion + missing WSS path component).
   var client;
   try{
     client = window.mqtt.connect('wss://mqtt.pskreporter.info:1886', {
-      reconnectPeriod: 0,          // no auto-reconnect — we manage lifecycle
+      reconnectPeriod: 0,
       connectTimeout: 12000,
       clientId: 'pskr_' + Math.random().toString(36).substr(2,9),
       clean: true,
@@ -5470,7 +5505,8 @@ function fetchPSKReporter(){
   } catch(e){
     clearTimeout(deadline);
     console.warn('[PSK] mqtt.connect() threw:',e.message);
-    _pskHttpFallback();
+    _pskHttpFallback('MQTT init failed — using HTTP…');
+    if(btn){btn.textContent='↻';btn.disabled=false;}
     return;
   }
 
@@ -5478,23 +5514,28 @@ function fetchPSKReporter(){
 
   client.on('connect', function(){
     console.log('[PSK] MQTT connected');
-    show('','Connected — collecting '+call+' spots for 30s…');
+    showBadge('', 'MQTT connected — collecting '+call+' spots…');
 
-    // Topic format: pskr/filter/v2/{band}/{mode}/{senderCall}/{receiverCall}/...
-    // Subscribe to callsign as TX sender and as RX receiver separately.
-    var topicTx = 'pskr/filter/v2/+/+/'+call+'/#';   // callsign is sender
-    var topicRx = 'pskr/filter/v2/+/+/+/'+call+'/#'; // callsign is receiver
+    var topicTx = 'pskr/filter/v2/+/+/'+call+'/#';
+    var topicRx = 'pskr/filter/v2/+/+/+/'+call+'/#';
     console.log('[PSK] subscribing:', topicTx, '|', topicRx);
 
     client.subscribe([topicTx, topicRx], {qos:0}, function(err){
       if(err){
         console.warn('[PSK] subscribe error:',err);
-        show('warn','Subscribed with warning — waiting for spots…');
+        showBadge('warn','Subscribed (with warning) — collecting '+call+' spots…');
       } else {
         console.log('[PSK] subscribed OK');
+        showBadge('', 'Collecting '+call+' spots for 30s…');
       }
       if(btn){btn.textContent='↻';btn.disabled=false;}
     });
+
+    // Start the 30s collect window now that we're connected
+    collectTimer = setTimeout(function(){
+      console.log('[PSK] 30s window done, rendering',_pskMqttBuffer.length,'spots');
+      _mqttFinish(false);
+    }, 30000);
   });
 
   client.on('message', function(topic, payload){
@@ -5515,45 +5556,37 @@ function fetchPSKReporter(){
         locator_tx:s.sl||'', locator_rx:s.rl||'', age:age,
       });
       if(_pskMqttBuffer.length>PSK_MAX_BUFFER) _pskMqttBuffer.length=PSK_MAX_BUFFER;
-      var cnt=document.getElementById('spotsCount');
-      if(cnt) cnt.textContent=_pskMqttBuffer.length+' spots (live)';
+      showBadge('', 'Collecting… '+_pskMqttBuffer.length+' spots so far');
     } catch(e){ console.warn('[PSK] parse:',e.message); }
   });
 
   client.on('error', function(err){
-    if(_mqttFailed) return;
-    _mqttFailed = true;
     console.warn('[PSK] MQTT error:',err.message||err);
-    clearTimeout(deadline);
-    try{client.end(true);}catch(e){}
-    _pskMqttClient = null;
-    if(_pskMqttBuffer.length > 0){
-      _pskFlushToUI(badge);
-      if(btn){btn.textContent='↻';btn.disabled=false;}
-    } else {
-      // Try HTTP fallback on MQTT error
-      _pskHttpFallback();
-    }
+    _mqttFinish(true, 'MQTT error: '+(err.message||String(err)).slice(0,40)+' — trying HTTP…');
   });
 
+  // 'close' fires when the broker drops the connection (not by us).
+  // With reconnectPeriod:0 it won't recover — go straight to fallback.
   client.on('close', function(){
-    console.log('[PSK] MQTT connection closed, buffer:',_pskMqttBuffer.length);
+    console.warn('[PSK] MQTT connection closed unexpectedly, buffer:',_pskMqttBuffer.length);
+    if(!_mqttDone){
+      showBadge('warn','MQTT connection dropped — switching to HTTP fallback…');
+      // Small delay so the event loop settles before we kill the client
+      setTimeout(function(){
+        _mqttFinish(true, 'MQTT connection dropped — trying HTTP fallback…');
+      }, 400);
+    }
   });
 
   client.on('offline', function(){
     console.warn('[PSK] MQTT offline');
+    if(!_mqttDone){
+      showBadge('warn','MQTT went offline — switching to HTTP fallback…');
+      setTimeout(function(){
+        _mqttFinish(true, 'MQTT offline — trying HTTP fallback…');
+      }, 400);
+    }
   });
-
-  // After 30s collect window, close and render
-  setTimeout(function(){
-    if(_mqttFailed) return; // deadline already handled it
-    clearTimeout(deadline);
-    console.log('[PSK] 30s window done, rendering',_pskMqttBuffer.length,'spots');
-    try{if(_pskMqttClient===client) client.end(true);}catch(e){}
-    _pskMqttClient=null;
-    _pskFlushToUI(badge);
-    if(btn){btn.textContent='↻';btn.disabled=false;}
-  }, 30000);
 
 }
 function _pskFlushToUI(badge){
