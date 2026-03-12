@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.066 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.065 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
@@ -493,13 +493,6 @@ option{background:#0b1820;}
               <button class="sf-btn" id="sf-15" onclick="setSpotBandFilter('15m')">15m</button>
               <button class="sf-btn" id="sf-10" onclick="setSpotBandFilter('10m')">10m</button>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;margin-top:7px;">
-              <span style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);white-space:nowrap;">Spot timeout:</span>
-              <input type="range" id="spotTtlSlider" min="1" max="15" step="1" value="3"
-                style="flex:1;accent-color:var(--accent);"
-                oninput="setSpotTTL(parseInt(this.value))"/>
-              <span style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--accent);min-width:38px;text-align:right;" id="spotTtlLabel">3 min</span>
-            </div>
           </div>
           <div class="spot-list" id="spotList">
             <div class="spots-empty">Enter your callsign to stream spots where you are TX or RX</div>
@@ -507,8 +500,9 @@ option{background:#0b1820;}
           <div class="spots-count" id="spotsCount"></div>
         </div>
 
+
         <div style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);line-height:1.55;margin-top:2px;">
-          Live SFI auto-applies to model when fresh · K-index maps to condition setting · Spot markers show real contacts vs predicted coverage
+          Live SFI auto-applies to model when fresh · K-index maps to condition setting · Spot markers show real contacts vs predicted coverage · PSKReporter 15-min window
         </div>
       </div>
     </div>
@@ -780,17 +774,19 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.066';
+const APP_VERSION = 'v1.065';
 const APP_DATE    = '2026-03-12';
 
 // ── Live state (declared at top-level to be available to all functions) ──
 const LIVE = {
   sfi: null, kp: null, solarAge: null,
-  sfiLast: null,
-  pskSpots: [],
+  sfiLast: null,            // last successfully fetched SFI (for apply button)
+  pskSpots: [],             // array of {dx_call, de_call, freq, band, snr, mode, dx_lat, dx_lon, de_lat, de_lon, age}
   spotBandFilter: 'all',
   spotsVisible: true,
   solarFetchInterval: null,
+  // Persistent spot layers: key → {marker, line, expiresAt, band, onMap}
+  // Spots stay on the map for 3 minutes after last seen, then expire.
   spotLayers: new Map(),
 };
 
@@ -5416,18 +5412,16 @@ function _pskConnect(call){
       if(!tp && s.sc) tp = callsignToLatLon(s.sc);
       if(!rp && s.rc) rp = callsignToLatLon(s.rc);
 
-      // Deduplicate: replace any existing entry for same tx+band, preserving count
+      // Deduplicate: replace any existing entry for same tx+band
       var key = (s.sc||'') + '|' + band;
       var idx = _pskMqttBuffer.findIndex(function(x){ return x._key===key; });
-      var prevCount = (idx >= 0) ? (_pskMqttBuffer[idx].count || 1) : 0;
       var entry = {
         _key: key, _ts: Date.now()/1000,
         dx_call:s.sc||'', de_call:s.rc||'',
         freq:fkHz, band:band, snr:s.rp||0, mode:s.md||'',
         dx_lat:tp?tp[0]:null, dx_lon:tp?tp[1]:null,
         de_lat:rp?rp[0]:null, de_lon:rp?rp[1]:null,
-        locator_tx:s.sl||'', locator_rx:s.rl||'', age:age,
-        count: prevCount + 1
+        locator_tx:s.sl||'', locator_rx:s.rl||'', age:age
       };
       if(idx >= 0){ _pskMqttBuffer[idx] = entry; }
       else { _pskMqttBuffer.unshift(entry); }
@@ -5491,7 +5485,7 @@ function _pskFlushToUI(badge){
 
 // ── Callsign prefix → approximate lat/lon ────────────────────
 // Compact DXCC prefix table: longest-match wins.
-// Covers ~95% of DX cluster traffic. Returns [lat, lon] or null.
+// Used for PSKReporter spot position resolution. Returns [lat, lon] or null.
 var DXCC_PREFIX = (function(){
   // [prefix, lat, lon]  — sorted longest-first for greedy match
   const raw = [
@@ -5582,10 +5576,9 @@ var DXCC_PREFIX = (function(){
     ['A3',-21.2,-175.2],['E5',-21.2,-159.8],['KH4',[28.2,-177.4]],
     ['KH3',[28.2,-177.4]],['AH8',-14.3,-170.7],['ZK1',-21.2,-159.8],
   ];
-  // Build object: prefix → [lat, lon], sort keys by length desc for greedy match
   const map = {};
   raw.forEach(([pfx, lat, lon]) => {
-    if(Array.isArray(lat)){ map[pfx] = lat; }    // passed as [lat,lon] array
+    if(Array.isArray(lat)){ map[pfx] = lat; }
     else { map[pfx] = [lat, lon]; }
   });
   return map;
@@ -5595,7 +5588,6 @@ function callsignToLatLon(call){
   if(!call || !DXCC_PREFIX) return null;
   try{
     const c = call.toUpperCase().replace(/[\/].*/, '');  // strip /P /M etc
-    // Greedy longest-prefix match
     for(let len = Math.min(c.length, 5); len >= 1; len--){
       const pfx = c.slice(0, len);
       if(DXCC_PREFIX[pfx]) return DXCC_PREFIX[pfx];
@@ -5716,18 +5708,12 @@ function clearSpotMarkers(){
   LIVE.spotLayers.clear();
 }
 
-// ── Update PSK spot markers:
+// Update PSK spot markers:
 //   • Expired spots (> 3 min since last seen) are removed from the map.
 //   • Spots already on the map have their expiry refreshed — not redrawn.
 //   • New spots are added with geodesic (great-circle) curves.
 //   • Band filter is applied by show/hide, not by destroying layers.
-var SPOT_TTL_MS = 3 * 60 * 1000; // 3-minute lifetime (user-adjustable via slider)
-
-function setSpotTTL(mins){
-  SPOT_TTL_MS = mins * 60 * 1000;
-  const lbl = document.getElementById('spotTtlLabel');
-  if(lbl) lbl.textContent = mins + ' min';
-}
+const SPOT_TTL_MS = 3 * 60 * 1000; // 3-minute lifetime
 
 function drawSpotMarkers(){
   const now   = Date.now();
@@ -5763,8 +5749,13 @@ function drawSpotMarkers(){
 
     const existing = LIVE.spotLayers.get(spot._key);
     if(existing){
-      // Refresh expiry — don't redraw
+      // Refresh expiry and sync latest plotCall/coords for dynamic popup
       existing.expiresAt = now + SPOT_TTL_MS;
+      if(existing.marker){
+        existing.marker._plotCall = plotCall;
+        existing.marker._plotLat  = plotLat !== null ? plotLat  : existing.marker._plotLat;
+        existing.marker._plotLon  = plotLon !== null ? plotLon  : existing.marker._plotLon;
+      }
       return;
     }
 
@@ -5783,30 +5774,47 @@ function drawSpotMarkers(){
     if(plotLat === null) return;
 
     // ── Dot marker at remote endpoint ──
+    const distKm = haversineKm(txLat, txLon, plotLat, plotLon);
+    const distStr = Math.round(distKm).toLocaleString() + ' km';
     const icon = L.divIcon({
       className:'', iconSize:[10,10], iconAnchor:[5,5],
-      html:`<div class="spot-map-dot" style="background:${col}22;border-color:${col};box-shadow:0 0 4px ${col}88;" title="${plotCall} · ${spot.band} · ${spot.mode}"></div>`
+      html:`<div class="spot-map-dot" style="background:${col}22;border-color:${col};box-shadow:0 0 4px ${col}88;" title="${plotCall} · ${spot.band} · ${spot.mode} · ${distStr}"></div>`
     });
-    const distKm = (spot.dx_lat !== null && spot.de_lat !== null)
-      ? haversineKm(spot.dx_lat, spot.dx_lon, spot.de_lat, spot.de_lon).toFixed(2)
-      : '—';
-    const freqMHz = (spot.freq / 1000).toFixed(3);
-    const gridStr = spot.locator_rx || spot.locator_tx || '—';
     const marker = L.marker([plotLat, plotLon], {icon, zIndexOffset:200});
-    marker.bindPopup(`<div style="font-family:'Rajdhani',sans-serif;font-size:.78rem;padding:8px 12px;line-height:1.9;min-width:195px;background:#0b1820;color:#b8d8d2;">
-      <div style="font-family:'Share Tech Mono',monospace;font-size:.7rem;color:${col};font-weight:700;margin-bottom:4px;letter-spacing:.05em;">${plotCall}</div>
-      <table style="border-collapse:collapse;width:100%;">
-        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Grid:</td><td style="color:#b8d8d2;">${gridStr}</td></tr>
-        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Callsign:</td><td style="color:#b8d8d2;">${plotCall}</td></tr>
-        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Band:</td><td style="color:${col};font-weight:700;">${spot.band}</td></tr>
-        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Freq:</td><td style="color:#b8d8d2;">${freqMHz} MHz</td></tr>
-        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Mode:</td><td style="color:#b8d8d2;">${spot.mode || '—'}</td></tr>
-        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">SNR:</td><td style="color:#b8d8d2;">${spot.snr >= 0 ? '+' : ''}${spot.snr} dB</td></tr>
-        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Count:</td><td style="color:#b8d8d2;">${spot.count || 1}</td></tr>
-        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Distance:</td><td style="color:#b8d8d2;">${distKm} km</td></tr>
-        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Last heard:</td><td style="color:#b8d8d2;">${fmtAge(spot.age)} ago</td></tr>
-      </table>
-    </div>`);
+
+    // Store the spot key and remote coords so the popup can pull
+    // the freshest data from LIVE.pskSpots at the moment it opens.
+    marker._spotKey     = spot._key;
+    marker._plotLat     = plotLat;
+    marker._plotLon     = plotLon;
+    marker._plotCall    = plotCall;
+
+    // Build popup HTML from the most current spot data (called on every open)
+    function buildSpotPopup(){
+      const fresh = LIVE.pskSpots.find(function(s){ return s._key === marker._spotKey; }) || spot;
+      const nowSec = Date.now() / 1000;
+      // Re-derive age from wall-clock timestamp, same formula as _pskFlushToUI
+      const ageNow = fresh._ts ? Math.max(0, nowSec - (fresh._ts - fresh.age)) : fresh.age;
+      const c2 = BAND_COLORS[fresh.band] || '#888';
+      const dNow = haversineKm(S.lat, S.lon, marker._plotLat, marker._plotLon);
+      const dStr = Math.round(dNow).toLocaleString() + ' km';
+      return `<div style="font-family:'Share Tech Mono',monospace;font-size:.7rem;padding:6px 10px;line-height:1.85;">
+        <div style="color:${c2};font-size:.85rem;font-weight:700;margin-bottom:3px;">${marker._plotCall}</div>
+        <div>Band: <b>${fresh.band}</b> &nbsp;·&nbsp; ${fresh.freq.toFixed(1)} kHz &nbsp;·&nbsp; ${fresh.mode}</div>
+        <div>TX: ${fresh.dx_call}${fresh.locator_tx ? ' <span style="color:var(--dim)">('+fresh.locator_tx+')</span>' : ''}</div>
+        <div>RX: ${fresh.de_call}${fresh.locator_rx ? ' <span style="color:var(--dim)">('+fresh.locator_rx+')</span>' : ''}</div>
+        <div>SNR: ${fresh.snr >= 0 ? '+' : ''}${fresh.snr} dB &nbsp;·&nbsp; <span style="color:#aaa">${fmtAge(ageNow)} ago</span></div>
+        <div style="margin-top:4px;padding-top:4px;border-top:1px solid #1a3a42;">
+          <span style="color:#00ffc3;">&#x25B6; ${dStr} from TX</span>
+        </div>
+      </div>`;
+    }
+
+    marker.bindPopup(buildSpotPopup());
+    // Refresh content with live data every time the popup is opened
+    marker.on('popupopen', function(){
+      marker.getPopup().setContent(buildSpotPopup());
+    });
 
     // ── Geodesic (great-circle) arc from TX to remote endpoint ──
     const arcPts = gcPoints(txLat, txLon, plotLat, plotLon, 64);
@@ -5850,6 +5858,19 @@ function haversineKm(lat1, lon1, lat2, lon2){
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+// ── PSKReporter spot markers ──────────────────────────────────
+// Only spots where at least one end is within MAX_SPOT_KM of TX location.
+// Lines drawn FROM the TX location TO the remote endpoint — showing which
+// propagation paths are currently open from your location.
+let MAX_SPOT_KM = 10000; // user-adjustable via slider
+
+function setSpotRange(km){
+  MAX_SPOT_KM = km;
+  if(LIVE.spotsVisible) drawSpotMarkers();
+  // Re-render PSK list with new range
+  renderSpotList(LIVE.pskSpots, 'spotList', 'spotsCount', 'psk-badge', LIVE.spotBandFilter);
+}
+
 function savePskCall(val){
   try{ localStorage.setItem('pskCall', val.toUpperCase()); } catch(e){}
 }
@@ -5861,7 +5882,7 @@ function setSpotBandFilter(band){
   const el = document.getElementById('sf-' + (band === 'all' ? 'all' : band.replace('m','')));
   if(el) el.classList.add('on');
   renderSpotList(LIVE.pskSpots, 'spotList', 'spotsCount', 'psk-badge', band);
-  drawSpotMarkers();
+  drawSpotMarkers(); // show/hide existing layers by band in-place
 }
 
 function toggleSpotsLayer(){
@@ -5877,6 +5898,8 @@ function startLiveDataRefresh(){
   fetchLiveSolar();
   setInterval(fetchLiveSolar, 15 * 60 * 1000);
   // PSKReporter: connect immediately on load if callsign is saved.
+  // The persistent MQTT client handles all reconnects internally —
+  // no polling interval needed here.
   setTimeout(function(){
     var call = (document.getElementById('pskCallIn')?.value||'').trim();
     if(call) fetchPSKReporter();
