@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.072 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.065 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
@@ -774,32 +774,20 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.072';
+const APP_VERSION = 'v1.065';
 const APP_DATE    = '2026-03-12';
 
 // ── Live state (declared at top-level to be available to all functions) ──
 const LIVE = {
   sfi: null, kp: null, solarAge: null,
-  sfiLast: null,
-  pskSpots: [],
+  sfiLast: null,            // last successfully fetched SFI (for apply button)
+  pskSpots: [],             // array of {dx_call, de_call, freq, band, snr, mode, dx_lat, dx_lon, de_lat, de_lon, age}
   spotBandFilter: 'all',
   spotsVisible: true,
   solarFetchInterval: null,
-  solarDataTime: null,    // UTC ms of the actual NOAA data timestamp (not fetch time)
+  // Persistent spot layers: key → {marker, line, expiresAt, band, onMap}
+  // Spots stay on the map for 3 minutes after last seen, then expire.
   spotLayers: new Map(),
-  // ── Spot-calibration (Upgrade M — v1.070) ───────────────────
-  // spotFoF2Floor: highest foF2 (MHz) implied by spots exactly involving the
-  //   TX callsign via oblique secant back-calculation at the reflection midpoint,
-  //   adjusted to TX-position equivalent via the model's ionospheric gradient.
-  //   Applied as an upward-only floor in currentFoF2().
-  // spotConfirmedBands: Set of band strings proved open by live spots.
-  // spotCalibAge: Date.now() of last calibration run.
-  // spotCalibRebuildTimer: throttle handle for rebuildLayers() after calibration.
-  spotFoF2Floor: null,
-  spotFoF2ScaleFactor: 1.0,   // ratio applied globally inside foF2At() — propagates spot calibration to all midpoints
-  spotConfirmedBands: new Set(),
-  spotCalibAge: 0,
-  spotCalibRebuildTimer: null,
 };
 
 // Band colour lookup (matching HF bands colour palette)
@@ -1595,9 +1583,7 @@ function currentFoF2(){
   const st = solarTimes(S.lat);
   const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
   const raw = interpProfile(foF2Profile(S.lat), lt);
-  const modelValue = scaledFoF2(raw, isDay, S.lat);
-  // Upgrade M: apply spot-derived foF2 floor (upward correction only)
-  return Math.max(modelValue, LIVE.spotFoF2Floor || 0);
+  return scaledFoF2(raw, isDay, S.lat);
 }
 
 function currentDlayer(){
@@ -1824,190 +1810,6 @@ function scaledFoF2(rawProfileValue, isDaytime, lat){
   return rawProfileValue * sf;
 }
 
-// ══════════════════════════════════════════════════════════════════
-// UPGRADE M (v1.070) — SPOT-CALIBRATED foF2 FLOOR
-// ──────────────────────────────────────────────────────────────────
-// Each PSKReporter spot that exactly involves the TX callsign is a real
-// oblique ionospheric sounding. The signal was transmitted from one
-// endpoint and decoded at the other — one of which is the user's station.
-//
-// Physics: For a single F2 hop at ground-distance D (km) and frequency
-//   f (MHz), the F2 layer reflected at the path midpoint. The vertical
-//   foF2 at that midpoint must satisfy the secant (oblique MUF) law
-//   (Martyn's equivalent theorem, ITU-R P.533):
-//
-//     MUF_oblique = foF2_midpoint × sec(θ)
-//     sec(θ) = √(1 + (D / (2·hmF2))²)          [flat-Earth approximation]
-//     → foF2_midpoint ≥ f / √(1 + (D / (2·hmF2))²)
-//
-//   hmF2 (virtual height of F2 peak, km) is estimated from M(3000)F2:
-//     hmF2 = 1490 / (M3k − 0.253)   [Shimazaki 1955; already used in liveZones]
-//
-// This gives a FLOOR (minimum) on foF2 at the reflection midpoint.
-// To convert to a TX-position equivalent, we scale by the model's own
-// ionospheric gradient ratio:
-//     foF2_txEquiv = foF2_midpoint_floor × (modelFoF2_atTX / modelFoF2_atMidpoint)
-//
-// Applied as: currentFoF2() = max(model_foF2, max(foF2_txEquiv over all spots))
-//
-// Rules:
-//   • Exact callsign match only: dx_call === pskCall or de_call === pskCall
-//   • Only spots ≤ 15 min old (fresh ionospheric evidence)
-//   • Only single-hop distances: D ≤ 5000 km (multi-hop geometry is ambiguous)
-//   • D > 100 km (< 100 km is groundwave, not F2 ionospheric)
-//   • Correction is UPWARD ONLY — spots prove the band is more open than
-//     the model thinks. They cannot prove the band is MORE CLOSED than
-//     the model predicts (absence of spots ≠ band closed).
-//   • Cap: floor never exceeds 2× model value (guard against bad coordinates)
-//
-// Sources: ITU-R P.533-14 §2 (oblique MUF); Shimazaki (1955) J.Radio Res.Labs;
-//          Martyn equivalent-path theorem; ARRL Handbook §19.
-// ══════════════════════════════════════════════════════════════════
-function computeSpotCalibration(){
-  const pskCallEl = document.getElementById('pskCallIn');
-  const pskCall   = pskCallEl ? pskCallEl.value.trim().toUpperCase() : '';
-
-  if(!pskCall || !LIVE.pskSpots.length){
-    LIVE.spotFoF2Floor       = null;
-    LIVE.spotFoF2ScaleFactor = 1.0;
-    LIVE.spotConfirmedBands  = new Set();
-    LIVE.spotCalibAge        = Date.now();
-    return;
-  }
-
-  const MAX_AGE_S     = 900;   // 15 min — only fresh ionospheric evidence
-  const MIN_IONO_KM   = 100;   // below this, groundwave/NVIS — not useful for foF2
-
-  let maxFoF2Floor = 0;
-  const confirmedBands = new Set();
-
-  LIVE.pskSpots.forEach(function(spot){
-    // ── Exact callsign match only ─────────────────────────────
-    const isUserTX = (spot.dx_call === pskCall);
-    const isUserRX = (spot.de_call === pskCall);
-    if(!isUserTX && !isUserRX) return;
-    if(spot.age > MAX_AGE_S)   return;
-
-    const remoteLat = isUserTX ? spot.de_lat : spot.dx_lat;
-    const remoteLon = isUserTX ? spot.de_lon : spot.dx_lon;
-    if(remoteLat === null || remoteLon === null) return;
-
-    const band = spot.band;
-    const b    = BANDS[band];
-    if(!b) return;
-
-    const D      = haversineKm(S.lat, S.lon, remoteLat, remoteLon);
-    const f_MHz  = spot.freq / 1000;   // kHz → MHz
-    const geomMax = b.skipGeomMax || 5000;
-
-    if(D >= MIN_IONO_KM) confirmedBands.add(band);
-    if(D < MIN_IONO_KM)  return;
-
-    // ── Determine hop count and per-hop distance ──────────────
-    // Single-hop: D ≤ skipGeomMax
-    // 2-hop:      D ≤ 2 × skipGeomMax
-    // Beyond 2-hop: geometry too ambiguous for reliable back-calc
-    let nHops, hopDist;
-    if(D <= geomMax){
-      nHops   = 1;
-      hopDist = D;
-    } else if(D <= 2 * geomMax){
-      nHops   = 2;
-      hopDist = D / 2;   // each individual hop distance
-    } else {
-      return;  // > 2 hops — too ambiguous
-    }
-
-    // ── Oblique secant back-calculation ───────────────────────
-    // Reflection midpoint of the FIRST hop (closest to TX):
-    //   single-hop: D/2 from TX
-    //   2-hop:      D/4 from TX (midpoint of the first hop leg)
-    // This gives the tightest foF2 constraint closest to the TX position.
-    const firstHopMidDist = hopDist / 2;
-    const bearing = (function(){
-      // Approximate bearing TX→remote using atan2 on Δlon, Δlat
-      const dLat = (remoteLat - S.lat) * Math.PI / 180;
-      const dLon = (remoteLon - S.lon) * Math.PI / 180;
-      const y = Math.sin(dLon) * Math.cos(remoteLat * Math.PI / 180);
-      const x = Math.cos(S.lat * Math.PI / 180) * Math.sin(remoteLat * Math.PI / 180)
-              - Math.sin(S.lat * Math.PI / 180) * Math.cos(remoteLat * Math.PI / 180) * Math.cos(dLon);
-      return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-    })();
-
-    const mpPt  = destPt(S.lat, S.lon, bearing, firstHopMidDist);
-    const mpLat = Array.isArray(mpPt) ? mpPt[0] : mpPt.lat;
-    const mpLon = Array.isArray(mpPt) ? mpPt[1] : mpPt.lon;
-    const m3k   = m3kAt(mpLat, mpLon);
-    // Shimazaki (1955): hmF2 = 1490 / (M3k − 0.253), clamped 150–450 km
-    const hmF2  = Math.max(150, Math.min(450, 1490 / Math.max(0.5, m3k - 0.253)));
-
-    // Secant law — constraint on foF2 at the hop's reflection midpoint
-    const sec           = Math.sqrt(1 + Math.pow(hopDist / (2 * hmF2), 2));
-    const foF2_midFloor = f_MHz / sec;
-
-    // Convert midpoint foF2 floor → TX-position equivalent via model gradient
-    // (without scale factor — use raw model ratio to avoid circular dependency)
-    const modelAtMid = (function(){
-      const lt    = localSolarTimeAt(mpLon);
-      const st    = solarTimes(mpLat);
-      const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
-      const raw   = interpProfile(foF2Profile(mpLat), lt);
-      return scaledFoF2(raw, isDay, mpLat);  // raw model, no spot factor
-    })();
-    const modelAtTX  = (function(){
-      const lt    = S.autoTime ? txLocalTime() : (S.time === 'day' ? 13.0 : 1.0);
-      const st    = solarTimes(S.lat);
-      const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
-      const raw   = interpProfile(foF2Profile(S.lat), lt);
-      return scaledFoF2(raw, isDay, S.lat);  // raw model, no spot factor
-    })();
-
-    const gradRatio    = (modelAtMid > 0.5) ? modelAtTX / modelAtMid : 1.0;
-    const clampedRatio = Math.max(0.25, Math.min(4.0, gradRatio));
-    const foF2_txEquiv = foF2_midFloor * clampedRatio;
-
-    if(foF2_txEquiv > maxFoF2Floor) maxFoF2Floor = foF2_txEquiv;
-  });
-
-  // ── Apply floor and derive global scale factor ────────────
-  // Cap floor at 3× raw model value (handles solar-peak conditions
-  // where SFI=150 baseline underestimates actual ionosphere significantly)
-  const rawModelAtTX = (function(){
-    const lt    = S.autoTime ? txLocalTime() : (S.time === 'day' ? 13.0 : 1.0);
-    const st    = solarTimes(S.lat);
-    const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
-    const raw   = interpProfile(foF2Profile(S.lat), lt);
-    return scaledFoF2(raw, isDay, S.lat);
-  })();
-
-  const cappedFloor = Math.min(maxFoF2Floor, rawModelAtTX * 3);
-
-  const prevFloor  = LIVE.spotFoF2Floor    || 0;
-  const prevScale  = LIVE.spotFoF2ScaleFactor || 1.0;
-
-  LIVE.spotFoF2Floor      = cappedFloor > 0.5 ? cappedFloor : null;
-  LIVE.spotConfirmedBands = confirmedBands;
-  LIVE.spotCalibAge       = Date.now();
-
-  // Global scale factor: ratio of spot-implied foF2 to raw model foF2 at TX.
-  // Propagated into foF2At() so ALL midpoint evaluations (bearingSkipOuter MUF
-  // tests, per-bearing zone calculations) reflect the elevated ionosphere.
-  LIVE.spotFoF2ScaleFactor = (LIVE.spotFoF2Floor && rawModelAtTX > 0.5)
-    ? Math.max(1.0, LIVE.spotFoF2Floor / rawModelAtTX)
-    : 1.0;
-
-  // Throttled rebuild: trigger when foF2Floor changed by ≥ 0.3 MHz or
-  // scale factor changed by ≥ 5%
-  const floorChanged = Math.abs((LIVE.spotFoF2Floor || 0) - prevFloor) >= 0.3;
-  const scaleChanged = Math.abs((LIVE.spotFoF2ScaleFactor) - prevScale) >= 0.05;
-  if(floorChanged || scaleChanged){
-    clearTimeout(LIVE.spotCalibRebuildTimer);
-    LIVE.spotCalibRebuildTimer = setTimeout(function(){
-      rebuildLayers();
-    }, 800);
-  }
-}
-
 
 // ──────────────────────────────────────────────────────────────────────────
 // Instead of one scalar foF2 at the TX, every bearing gets its OWN foF2
@@ -2054,13 +1856,7 @@ function foF2At(lat, lon, ltOverride){
   const st = solarTimes(lat);
   const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
   const raw = interpProfile(foF2Profile(lat), lt);
-  const base = scaledFoF2(raw, isDay, lat);
-  // Upgrade M: apply spot-calibrated global scale factor (upward only).
-  // If live spots prove the TX ionosphere is richer than the model predicts,
-  // solar conditions are better than SFI=150 assumes — all midpoints are
-  // elevated proportionally. This propagates the floor through bearingSkipOuter()
-  // midpoint MUF tests so confirmed-open bands actually open on the map.
-  return base * Math.max(1.0, LIVE.spotFoF2ScaleFactor || 1.0);
+  return scaledFoF2(raw, isDay, lat);
 }
 
 // M(3000)F2 at an arbitrary lat/lon
@@ -2257,16 +2053,9 @@ function updateRTCDisplay(){
     metaEl.textContent = `${days[now.getUTCDay()]} ${now.getUTCDate()} ${months[now.getUTCMonth()]} ${now.getUTCFullYear()} · ${S.autoTime ? 'AUTO' : 'MANUAL'}`;
   }
 
-  // foF2 display — show spot-calibration indicator when active
+  // foF2 display
   const foF2El = document.getElementById('foF2Display');
-  if(foF2El){
-    const isSpotCal = LIVE.spotFoF2Floor && LIVE.spotFoF2Floor > (foF2 - 0.05);
-    foF2El.textContent = foF2.toFixed(1) + ' MHz';
-    foF2El.style.color = isSpotCal ? '#00ffc3' : '#ffd93d';
-    foF2El.title = isSpotCal
-      ? `Spot-calibrated: floor ${LIVE.spotFoF2Floor.toFixed(1)} MHz from live contacts`
-      : 'Solar model estimate';
-  }
+  if(foF2El) foF2El.textContent = foF2.toFixed(1) + ' MHz';
 
   // foF2 description based on value and LT
   const foF2DescEl = document.getElementById('foF2Desc');
@@ -2278,18 +2067,7 @@ function updateRTCDisplay(){
     // UPGRADE I: grey-line indicator — shown when within terminator window
     const glfRTC = greyLineFactor(ltD, 3.5);  // 80m as low-band representative
     const glStr  = glfRTC < 0.70 ? ' ✦ GREY LINE ACTIVE' : (glfRTC < 0.90 ? ' ◈ near grey line' : '');
-    // UPGRADE M: spot-calibration status
-    let spotStr = '';
-    if(LIVE.spotFoF2Floor && LIVE.spotConfirmedBands.size > 0){
-      const bands = [...LIVE.spotConfirmedBands].sort().join(' ');
-      const sf    = LIVE.spotFoF2ScaleFactor || 1.0;
-      const sfStr = sf > 1.05 ? ` ×${sf.toFixed(2)}` : '';
-      spotStr = ` ⚡ spot-cal${sfStr} · ${bands} confirmed`;
-    } else if(LIVE.spotConfirmedBands.size > 0){
-      const bands = [...LIVE.spotConfirmedBands].sort().join(' ');
-      spotStr = ` · ${bands} confirmed`;
-    }
-    foF2DescEl.textContent = desc + muf + glStr + spotStr;
+    foF2DescEl.textContent = desc + muf + glStr;
   }
 
   // foE display (Upgrade G: solar-zenith foE model)
@@ -3637,41 +3415,30 @@ function rebuildLayers(){
     if(p >= b.minW){
       const hop2GeomMax = 2 * b.skipGeomMax;
       const hopGeomLeg  = z.skipGeomKm || b.skipGeomMax;
-      // Pre-compute hop leg (same for all bearings — power and conditions don't vary per bearing)
-      const hop2LegKm = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase*gLin,p,c.factor));
-      // ── Geometric minimum guard ───────────────────────────────────────────
-      // Each hop leg must be ≥ skipInnerKm: the minimum physical F2 skip distance.
-      // This is set by the virtual height of the F2 layer, not by TX power.
-      // If the link budget can only support a shorter hop, that hop is geometrically
-      // impossible (the signal would emerge from the ionosphere below skip angle).
-      // Drawing zones with sub-skipInner legs produces phantom rings that contradict
-      // real contacts and labels them with incorrect hop counts.
-      // Fix: suppress the zone entirely if the leg can't meet the minimum skip.
-      if(!z.skipInnerKm || hop2LegKm >= z.skipInnerKm){
-        const outerPts2 = [], innerPts2 = [];
-        let anyOpen2 = false, maxHop2 = 0;
-        for(let i=0; i<N_HF_RADIALS; i++){
-          const brg = (i/N_HF_RADIALS)*360;
-          const skip1 = skipOuterPerBearing[i];
-          if(skip1 <= 0){ outerPts2.push(destPt(S.lat,S.lon,brg,0.5)); innerPts2.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
-          const hop2Total = Math.min(hop2GeomMax, skip1 + hop2LegKm);
-          if(hop2Total > skip1 + 100) anyOpen2 = true;
-          if(hop2Total > maxHop2) maxHop2 = hop2Total;
-          outerPts2.push(destPt(S.lat,S.lon,brg,Math.max(hop2Total,0.5)));
-          innerPts2.push(destPt(S.lat,S.lon,brg,Math.max(skip1,0.5)));
-        }
-        outerPts2.push(outerPts2[0]); innerPts2.push(innerPts2[0]);
-        if(anyOpen2){
-          innerPts2.reverse();
-          const hop2Layer = L.polygon([outerPts2,innerPts2],{
-            color:col,fillColor:col,weight:1.5,opacity:.55,fillOpacity:.06,dashArray:'6 4', smoothFactor:1});
-          hop2Layer.bindTooltip(
-            `ZONE 3c · 2-hop DX · ${fmtPwr(p)} · ~${Math.round(maxHop2)} km max · per-bearing\n`+
-            `${z.hop2Note}\n${z.skipNote}\n${phaseStr}`,
-            {className:'ltt',direction:'top'});
-          addLayer(hop2Layer);
-          addLabel(Math.round(maxHop2), col, 'Z3c·2HOP', 135);
-        }
+      const outerPts2 = [], innerPts2 = [];
+      let anyOpen2 = false, maxHop2 = 0;
+      for(let i=0; i<N_HF_RADIALS; i++){
+        const brg = (i/N_HF_RADIALS)*360;
+        const skip1 = skipOuterPerBearing[i];
+        if(skip1 <= 0){ outerPts2.push(destPt(S.lat,S.lon,brg,0.5)); innerPts2.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
+        const hop2Leg   = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase*gLin,p,c.factor));
+        const hop2Total = Math.min(hop2GeomMax, skip1 + hop2Leg);
+        if(hop2Total > skip1 + 100) anyOpen2 = true;
+        if(hop2Total > maxHop2) maxHop2 = hop2Total;
+        outerPts2.push(destPt(S.lat,S.lon,brg,Math.max(hop2Total,0.5)));
+        innerPts2.push(destPt(S.lat,S.lon,brg,Math.max(skip1,0.5)));
+      }
+      outerPts2.push(outerPts2[0]); innerPts2.push(innerPts2[0]);
+      if(anyOpen2){
+        innerPts2.reverse();
+        const hop2Layer = L.polygon([outerPts2,innerPts2],{
+          color:col,fillColor:col,weight:1.5,opacity:.55,fillOpacity:.06,dashArray:'6 4', smoothFactor:1});
+        hop2Layer.bindTooltip(
+          `ZONE 3c · 2-hop DX · ${fmtPwr(p)} · ~${Math.round(maxHop2)} km max · per-bearing\n`+
+          `${z.hop2Note}\n${z.skipNote}\n${phaseStr}`,
+          {className:'ltt',direction:'top'});
+        addLayer(hop2Layer);
+        addLabel(Math.round(maxHop2), col, 'Z3c·2HOP', 135);
       }
     }
   }
@@ -3684,34 +3451,31 @@ function rebuildLayers(){
     if(p >= b.minW){
       const hop3GeomMax = Math.min(3*b.skipGeomMax, MAX_KM);
       const hopGeomLeg  = z.skipGeomKm || b.skipGeomMax;
-      const hop2LegKm   = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase*gLin,p,c.factor));
-      const hop3LegKm   = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase*gLin,p,c.factor));
-      // Geometric minimum guard: both the 2nd and 3rd hop legs must be ≥ skipInner.
-      if(!z.skipInnerKm || (hop2LegKm >= z.skipInnerKm && hop3LegKm >= z.skipInnerKm)){
-        const outerPts3 = [], innerPts3 = [];
-        let anyOpen3=false, maxHop3=0;
-        for(let i=0; i<N_HF_RADIALS; i++){
-          const brg = (i/N_HF_RADIALS)*360;
-          const skip1 = skipOuterPerBearing[i];
-          if(skip1<=0){ outerPts3.push(destPt(S.lat,S.lon,brg,0.5)); innerPts3.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
-          const hop2Total = Math.min(2*b.skipGeomMax, skip1+hop2LegKm);
-          const hop3Total = Math.min(hop3GeomMax, hop2Total+hop3LegKm);
-          if(hop3Total > hop2Total+100) anyOpen3=true;
-          if(hop3Total > maxHop3) maxHop3=hop3Total;
-          outerPts3.push(destPt(S.lat,S.lon,brg,Math.max(hop3Total,0.5)));
-          innerPts3.push(destPt(S.lat,S.lon,brg,Math.max(hop2Total,0.5)));
-        }
-        outerPts3.push(outerPts3[0]); innerPts3.push(innerPts3[0]);
-        if(anyOpen3){
-          innerPts3.reverse();
-          const hop3Layer = L.polygon([outerPts3,innerPts3],{
-            color:col,fillColor:col,weight:1,opacity:.40,fillOpacity:.04,dashArray:'4 6', smoothFactor:1});
-          hop3Layer.bindTooltip(
-            `ZONE 3d · 3-hop DX · ${fmtPwr(p)} · ~${Math.round(maxHop3)} km max\n`+
-            `${z.hop3Note}\n${z.skipNote}\n${phaseStr}`,{className:'ltt',direction:'top'});
-          addLayer(hop3Layer);
-          addLabel(Math.round(maxHop3), col, 'Z3d·3HOP', 225);
-        }
+      const outerPts3 = [], innerPts3 = [];
+      let anyOpen3=false, maxHop3=0;
+      for(let i=0; i<N_HF_RADIALS; i++){
+        const brg = (i/N_HF_RADIALS)*360;
+        const skip1 = skipOuterPerBearing[i];
+        if(skip1<=0){ outerPts3.push(destPt(S.lat,S.lon,brg,0.5)); innerPts3.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
+        const hop2Leg   = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase*gLin,p,c.factor));
+        const hop2Total = Math.min(2*b.skipGeomMax, skip1+hop2Leg);
+        const hop3Leg   = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase*gLin,p,c.factor));
+        const hop3Total = Math.min(hop3GeomMax, hop2Total+hop3Leg);
+        if(hop3Total > hop2Total+100) anyOpen3=true;
+        if(hop3Total > maxHop3) maxHop3=hop3Total;
+        outerPts3.push(destPt(S.lat,S.lon,brg,Math.max(hop3Total,0.5)));
+        innerPts3.push(destPt(S.lat,S.lon,brg,Math.max(hop2Total,0.5)));
+      }
+      outerPts3.push(outerPts3[0]); innerPts3.push(innerPts3[0]);
+      if(anyOpen3){
+        innerPts3.reverse();
+        const hop3Layer = L.polygon([outerPts3,innerPts3],{
+          color:col,fillColor:col,weight:1,opacity:.40,fillOpacity:.04,dashArray:'4 6', smoothFactor:1});
+        hop3Layer.bindTooltip(
+          `ZONE 3d · 3-hop DX · ${fmtPwr(p)} · ~${Math.round(maxHop3)} km max\n`+
+          `${z.hop3Note}\n${z.skipNote}\n${phaseStr}`,{className:'ltt',direction:'top'});
+        addLayer(hop3Layer);
+        addLabel(Math.round(maxHop3), col, 'Z3d·3HOP', 225);
       }
     }
   }
@@ -3724,36 +3488,33 @@ function rebuildLayers(){
     if(p >= b.minW){
       const hop4GeomMax = Math.min(4*b.skipGeomMax, MAX_KM);
       const hopGeomLeg  = z.skipGeomKm || b.skipGeomMax;
-      const hop2LegKm   = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase*gLin,p,c.factor));
-      const hop3LegKm   = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase*gLin,p,c.factor));
-      const hop4LegKm   = Math.min(hopGeomLeg, scaledIono(z.hop4OuterBase*gLin,p,c.factor));
-      // Geometric minimum guard: all hop legs must be ≥ skipInner.
-      if(!z.skipInnerKm || (hop2LegKm >= z.skipInnerKm && hop3LegKm >= z.skipInnerKm && hop4LegKm >= z.skipInnerKm)){
-        const outerPts4=[], innerPts4=[];
-        let anyOpen4=false, maxHop4=0;
-        for(let i=0; i<N_HF_RADIALS; i++){
-          const brg=(i/N_HF_RADIALS)*360;
-          const skip1=skipOuterPerBearing[i];
-          if(skip1<=0){ outerPts4.push(destPt(S.lat,S.lon,brg,0.5)); innerPts4.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
-          const hop2Total = Math.min(2*b.skipGeomMax, skip1+hop2LegKm);
-          const hop3Total = Math.min(3*b.skipGeomMax, hop2Total+hop3LegKm);
-          const hop4Total = Math.min(hop4GeomMax, hop3Total+hop4LegKm);
-          if(hop4Total > hop3Total+100) anyOpen4=true;
-          if(hop4Total > maxHop4) maxHop4=hop4Total;
-          outerPts4.push(destPt(S.lat,S.lon,brg,Math.max(hop4Total,0.5)));
-          innerPts4.push(destPt(S.lat,S.lon,brg,Math.max(hop3Total,0.5)));
-        }
-        outerPts4.push(outerPts4[0]); innerPts4.push(innerPts4[0]);
-        if(anyOpen4){
-          innerPts4.reverse();
-          const hop4Layer = L.polygon([outerPts4,innerPts4],{
-            color:col,fillColor:col,weight:1,opacity:.30,fillOpacity:.03,dashArray:'3 8', smoothFactor:1});
-          hop4Layer.bindTooltip(
-            `ZONE 3e · 4-hop DX · ${fmtPwr(p)} · ~${Math.round(maxHop4)} km max\n`+
-            `${z.hop4Note}\n${z.skipNote}\n${phaseStr}`,{className:'ltt',direction:'top'});
-          addLayer(hop4Layer);
-          addLabel(Math.round(maxHop4), col, 'Z3e·4HOP', 315);
-        }
+      const outerPts4=[], innerPts4=[];
+      let anyOpen4=false, maxHop4=0;
+      for(let i=0; i<N_HF_RADIALS; i++){
+        const brg=(i/N_HF_RADIALS)*360;
+        const skip1=skipOuterPerBearing[i];
+        if(skip1<=0){ outerPts4.push(destPt(S.lat,S.lon,brg,0.5)); innerPts4.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
+        const hop2Leg   = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase*gLin,p,c.factor));
+        const hop2Total = Math.min(2*b.skipGeomMax, skip1+hop2Leg);
+        const hop3Leg   = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase*gLin,p,c.factor));
+        const hop3Total = Math.min(3*b.skipGeomMax, hop2Total+hop3Leg);
+        const hop4Leg   = Math.min(hopGeomLeg, scaledIono(z.hop4OuterBase*gLin,p,c.factor));
+        const hop4Total = Math.min(hop4GeomMax, hop3Total+hop4Leg);
+        if(hop4Total > hop3Total+100) anyOpen4=true;
+        if(hop4Total > maxHop4) maxHop4=hop4Total;
+        outerPts4.push(destPt(S.lat,S.lon,brg,Math.max(hop4Total,0.5)));
+        innerPts4.push(destPt(S.lat,S.lon,brg,Math.max(hop3Total,0.5)));
+      }
+      outerPts4.push(outerPts4[0]); innerPts4.push(innerPts4[0]);
+      if(anyOpen4){
+        innerPts4.reverse();
+        const hop4Layer = L.polygon([outerPts4,innerPts4],{
+          color:col,fillColor:col,weight:1,opacity:.30,fillOpacity:.03,dashArray:'3 8', smoothFactor:1});
+        hop4Layer.bindTooltip(
+          `ZONE 3e · 4-hop DX · ${fmtPwr(p)} · ~${Math.round(maxHop4)} km max\n`+
+          `${z.hop4Note}\n${z.skipNote}\n${phaseStr}`,{className:'ltt',direction:'top'});
+        addLayer(hop4Layer);
+        addLabel(Math.round(maxHop4), col, 'Z3e·4HOP', 315);
       }
     }
   }
@@ -5421,14 +5182,6 @@ async function fetchLiveSolar(){
   LIVE.sfi = sfiVal;
   LIVE.kp  = kpVal;
   LIVE.solarAge = Date.now();
-  // Parse the actual NOAA data timestamp so the badge shows data age, not fetch age.
-  // NOAA TimeStamp format: "2026-03-11 20:00:00" (UTC). Replace space with T and append Z.
-  if(sfiDesc){
-    try{
-      const parsed = new Date(sfiDesc.trim().replace(' ','T')+'Z').getTime();
-      if(!isNaN(parsed)) LIVE.solarDataTime = parsed;
-    } catch(e){}
-  }
   if(sfiVal) LIVE.sfiLast = sfiVal;
 
   updateSolarUI(sfiVal, kpVal, sfiDesc);
@@ -5480,23 +5233,10 @@ function updateSolarUI(sfi, kp, timeTag){
       seg.classList.toggle('active', i === kpIdx);
     }
   }
-  // Badge — use actual NOAA data timestamp, not fetch time.
-  // NOAA F10.7 is updated once daily; data from yesterday should show as "13h ago" not "0m ago".
-  const dataRefTime = LIVE.solarDataTime || LIVE.solarAge;
-  const dataAgeMins = dataRefTime ? Math.round((Date.now() - dataRefTime) / 60000) : null;
-  let ageStr = '';
-  if(dataAgeMins !== null){
-    if(dataAgeMins < 60){
-      ageStr = `${dataAgeMins}m ago`;
-    } else {
-      const h = Math.floor(dataAgeMins / 60);
-      const m = dataAgeMins % 60;
-      ageStr = m > 0 ? `${h}h ${m}m ago` : `${h}h ago`;
-    }
-  }
-  // Stale if data is > 90 min old (NOAA F10.7 updates ~daily at ~17:00 UTC)
-  const isDataStale = dataAgeMins === null || dataAgeMins > 90;
-  setSolarBadge(isDataStale ? 'stale' : 'live', `NOAA · ${ageStr}${timeTag ? ' · '+timeTag.slice(0,16) : ''}`);
+  // Badge
+  const age = LIVE.solarAge ? Math.round((Date.now()-LIVE.solarAge)/60000) : null;
+  const ageStr = age !== null ? `${age}m ago` : '';
+  setSolarBadge(age !== null && age < 20 ? 'live' : 'stale', `NOAA · ${ageStr}${timeTag ? ' · '+timeTag.slice(0,16) : ''}`);
 
   // Note
   const noteEl = document.getElementById('live-solar-note');
@@ -5733,8 +5473,6 @@ function _pskFlushToUI(badge){
   });
   var spots = _pskMqttBuffer.slice().sort(function(a,b){return a.age-b.age;});
   LIVE.pskSpots = spots;
-  // Upgrade M: re-calibrate foF2 floor from spots exactly involving the TX callsign
-  computeSpotCalibration();
   renderSpotList(spots,'spotList','spotsCount','psk-badge',LIVE.spotBandFilter);
   LIVE.spotsVisible = true;
   var toggleBtn = document.getElementById('spotsToggleBtn');
