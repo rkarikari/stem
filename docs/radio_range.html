@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.061 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.066 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
@@ -493,6 +493,13 @@ option{background:#0b1820;}
               <button class="sf-btn" id="sf-15" onclick="setSpotBandFilter('15m')">15m</button>
               <button class="sf-btn" id="sf-10" onclick="setSpotBandFilter('10m')">10m</button>
             </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:7px;">
+              <span style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);white-space:nowrap;">Spot timeout:</span>
+              <input type="range" id="spotTtlSlider" min="1" max="15" step="1" value="3"
+                style="flex:1;accent-color:var(--accent);"
+                oninput="setSpotTTL(parseInt(this.value))"/>
+              <span style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--accent);min-width:38px;text-align:right;" id="spotTtlLabel">3 min</span>
+            </div>
           </div>
           <div class="spot-list" id="spotList">
             <div class="spots-empty">Enter your callsign to stream spots where you are TX or RX</div>
@@ -500,41 +507,8 @@ option{background:#0b1820;}
           <div class="spots-count" id="spotsCount"></div>
         </div>
 
-        <!-- DX Cluster block -->
-        <div class="rtd-block">
-          <div class="rtd-title">
-            <span>🌐 DX CLUSTER (HamQTH)</span>
-            <div style="display:flex;gap:4px;">
-              <button class="btn btn-xs" onclick="fetchDXCluster()" id="dxRefreshBtn" title="Refresh DX cluster">↻</button>
-              <button class="btn btn-xs" id="dxToggleBtn" onclick="toggleDXLayer()" title="Show/hide DX spots on map">👁</button>
-            </div>
-          </div>
-          <div id="dx-badge" class="live-badge stale">No data</div>
-          <div style="margin-top:8px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-              <span style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);white-space:nowrap;">Spotter range:</span>
-              <input type="range" id="dxRangeSlider" min="500" max="20000" step="500" value="10000"
-                style="flex:1;accent-color:var(--acc);"
-                oninput="setSpotRange(parseInt(this.value))"/>
-              <span style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--acc);min-width:52px;text-align:right;" id="dxRangeLabel">10000 km</span>
-            </div>
-            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px;">
-              <span style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);">Show on map:</span>
-              <button class="sf-btn on" id="dxf-all" onclick="setDXBandFilter('all')">ALL</button>
-              <button class="sf-btn" id="dxf-40" onclick="setDXBandFilter('40m')">40m</button>
-              <button class="sf-btn" id="dxf-20" onclick="setDXBandFilter('20m')">20m</button>
-              <button class="sf-btn" id="dxf-15" onclick="setDXBandFilter('15m')">15m</button>
-              <button class="sf-btn" id="dxf-10" onclick="setDXBandFilter('10m')">10m</button>
-            </div>
-          </div>
-          <div class="spot-list" id="dxList" style="margin-top:8px;">
-            <div class="spots-empty">Click ↻ to load DX cluster spots</div>
-          </div>
-          <div class="spots-count" id="dxCount"></div>
-        </div>
-
         <div style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);line-height:1.55;margin-top:2px;">
-          Live SFI auto-applies to model when fresh · K-index maps to condition setting · Spot markers show real contacts vs predicted coverage · PSKReporter 15-min window
+          Live SFI auto-applies to model when fresh · K-index maps to condition setting · Spot markers show real contacts vs predicted coverage
         </div>
       </div>
     </div>
@@ -806,24 +780,18 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.061';
+const APP_VERSION = 'v1.066';
 const APP_DATE    = '2026-03-12';
 
 // ── Live state (declared at top-level to be available to all functions) ──
 const LIVE = {
   sfi: null, kp: null, solarAge: null,
-  sfiLast: null,            // last successfully fetched SFI (for apply button)
-  pskSpots: [],             // array of {dx_call, de_call, freq, band, snr, mode, dx_lat, dx_lon, de_lat, de_lon, age}
-  dxSpots: [],              // DX cluster spots
+  sfiLast: null,
+  pskSpots: [],
   spotBandFilter: 'all',
-  dxBandFilter: 'all',
   spotsVisible: true,
-  dxVisible: true,
   solarFetchInterval: null,
-  spotMarkers: [],          // Leaflet marker layer groups
-  dxMarkers: [],
-  spotLines: [],
-  dxLines: [],
+  spotLayers: new Map(),
 };
 
 // Band colour lookup (matching HF bands colour palette)
@@ -5138,7 +5106,6 @@ setTimeout(startLiveDataRefresh, 100);
 // Sources:
 //   Solar  — NOAA SWPC  (direct CORS, correct product endpoints)
 //   Spots  — PSKReporter MQTT over WSS  (mqtt.pskreporter.info:1886)
-//   DX     — HamQTH dxc_csv.php  (public CSV, direct CORS)
 // ══════════════════════════════════════════════════════════════════
 
 // ── Live state ────────────────────────────────────────────────
@@ -5327,173 +5294,198 @@ function autoSyncCondFromKp(kp){
 //                   Topic: pskr/filter/v2/+/FT8/+/+/+/+/+/+ (30s collection window)
 //                   Falls back gracefully if port blocked (15s timeout → clear error msg)
 
-var _pskMqttClient = null;
-var _pskMqttBuffer = [];
-let _pskLastHttp   = 0;        // ms timestamp of last HTTP fetch
-const PSK_MAX_BUFFER = 300;
+var _pskMqttClient    = null;
+var _pskMqttBuffer    = [];
+var _pskActiveCall    = '';       // callsign the live session is subscribed to
+var _pskReconnTimer   = null;     // pending reconnect setTimeout handle
+var _pskAgeTimer      = null;     // periodic age-refresh interval handle
+var _pskConnDeadline  = null;     // initial connect timeout handle
+const PSK_MAX_BUFFER  = 500;
 
-// ── MQTT.js loader (3-CDN fallback chain) ────────────────────
-function fetchPSKReporter(){
-  var btn  = document.getElementById('pskRefreshBtn');
-  var call = (document.getElementById('pskCallIn')?.value||'').trim().toUpperCase();
+// ── Shared status helper (used inside and outside the connect flow) ──
+function _pskStat(cls, msg){
+  var b = document.getElementById('psk-badge');
+  if(b){ b.className='live-badge'+(cls?' '+cls:''); b.textContent=msg; }
+  console.log('[PSK]', msg);
+}
 
-  function stat(btnTxt, cls, msg){
-    if(btn){ btn.textContent = btnTxt; }
-    var b = document.getElementById('psk-badge');
-    if(b){ b.className='live-badge'+(cls?' '+cls:''); b.textContent=msg; }
-    var sl = document.getElementById('spotList');
-    if(sl) sl.innerHTML='<div class="spots-empty" style="color:#adf;padding:12px 8px 4px;">'+msg+'</div>';
-    var ce = document.getElementById('spotsCount');
-    if(ce) ce.textContent='';
-    console.log('[PSK]',msg);
+// ── Tear down the current client completely (no reconnect scheduled here) ──
+function _pskDestroy(){
+  clearTimeout(_pskConnDeadline); _pskConnDeadline=null;
+  clearTimeout(_pskReconnTimer);  _pskReconnTimer=null;
+  clearInterval(_pskAgeTimer);    _pskAgeTimer=null;
+  if(_pskMqttClient){
+    try{ _pskMqttClient.removeAllListeners(); _pskMqttClient.end(true); }catch(e){}
+    _pskMqttClient=null;
   }
-  function unlock(){ var b=document.getElementById('pskRefreshBtn'); if(b){b.textContent='\u21bb';b.disabled=false;} }
-  function lock()  { var b=document.getElementById('pskRefreshBtn'); if(b){b.textContent='\u2026';b.disabled=true; } }
+}
 
-  // Absolute safety net — button can never stay frozen beyond 65s
-  var _safetyTimer = setTimeout(function(){
-    stat('\u21bb','err','PSKReporter: timed out \u2014 try again');
-    unlock();
-  }, 65000);
-  function finish(){ clearTimeout(_safetyTimer); unlock(); }
+// ── Schedule a reconnect after `delayMs`, preserving the buffer ──
+function _pskScheduleReconnect(delayMs, reason){
+  clearTimeout(_pskReconnTimer);
+  _pskStat('warn', reason + ' \u2014 reconnecting in ' + Math.round(delayMs/1000) + 's\u2026');
+  _pskReconnTimer = setTimeout(function(){
+    var call = (document.getElementById('pskCallIn')?.value||'').trim().toUpperCase();
+    if(call){ _pskConnect(call); }
+  }, delayMs);
+}
 
-  lock();
+// ── Core persistent MQTT connect ─────────────────────────────
+// Connects, subscribes, and stays alive indefinitely.
+// On drop (close/offline/error) auto-reconnects after 10s.
+// Call fetchPSKReporter() from UI; it calls this internally.
+function _pskConnect(call){
+  // Kill any existing session first
+  _pskDestroy();
+  _pskActiveCall = call;
 
-  if(!call){
-    stat('\u21bb','warn','Enter callsign first');
-    finish(); return;
-  }
+  _pskStat('', 'Connecting \u2014 ' + call + '\u2026');
+  var btn = document.getElementById('pskRefreshBtn');
+  if(btn){ btn.textContent='\u2026'; btn.disabled=true; }
 
-  if(!window.mqtt){
-    stat('\u21bb','err','MQTT library not loaded \u2014 reload page');
-    finish(); return;
-  }
-
-  // Close any existing connection
-  if(_pskMqttClient){try{_pskMqttClient.end(true);}catch(e){} _pskMqttClient=null;}
-  _pskMqttBuffer=[];
-  stat('\u2026','','Connecting to PSKReporter MQTT\u2026');
-
-  var _mqttDone=false;
-  // _connDeadline: only guards the initial TCP/TLS connect phase.
-  // Cancelled as soon as 'connect' fires so it never interferes with collecting.
-  var _connDeadline=null, _collect=null, _tick=null;
-
-  function _mqttFinish(reason){
-    if(_mqttDone) return;
-    _mqttDone=true;
-    clearTimeout(_connDeadline); clearTimeout(_collect); clearInterval(_tick);
-    if(_pskMqttClient){try{_pskMqttClient.end(true);}catch(e){} _pskMqttClient=null;}
-    finish();
-    if(_pskMqttBuffer.length===0){
-      stat('\u21bb','warn',call+' \u2014 '+(reason||'no spots received. Check callsign or try again.'));
-    } else {
-      _pskFlushToUI(null);
-    }
-  }
-
-  // 15s connection deadline — only applies until 'connect' fires
-  _connDeadline=setTimeout(function(){
-    stat('\u2026','err','MQTT: could not connect in 15s \u2014 check network');
-    _mqttFinish('could not connect to MQTT in 15s');
+  // Connection deadline: if TCP/TLS doesn't complete in 15s, reschedule
+  _pskConnDeadline = setTimeout(function(){
+    _pskStat('err', 'Could not connect in 15s \u2014 retrying\u2026');
+    _pskDestroy();
+    _pskScheduleReconnect(15000, 'Connection timeout');
+    var b2 = document.getElementById('pskRefreshBtn');
+    if(b2){ b2.textContent='\u21bb'; b2.disabled=false; }
   }, 15000);
-
-  var _ts=0;
-  // Tick starts immediately but shows useful info once connected
-  _tick=setInterval(function(){
-    if(_mqttDone) return;
-    _ts+=5;
-    var n=_pskMqttBuffer.length;
-    stat('\u2026','','Collecting '+call+'\u2026 '+_ts+'s \u00b7 '+n+' spot'+(n!==1?'s':'')+(n?' \u2713':''));
-  }, 5000);
 
   var client;
   try{
-    client=window.mqtt.connect('wss://mqtt.pskreporter.info:1886',{
-      reconnectPeriod:0, connectTimeout:12000,
-      clientId:'pskr_'+Math.random().toString(36).substr(2,9),
-      clean:true, keepalive:30
+    client = window.mqtt.connect('wss://mqtt.pskreporter.info:1886', {
+      reconnectPeriod: 0,          // we handle reconnects ourselves
+      connectTimeout:  12000,
+      clientId: 'pskr_' + Math.random().toString(36).substr(2,9),
+      clean: true, keepalive: 30
     });
   } catch(e){
-    clearTimeout(_connDeadline); clearInterval(_tick);
-    stat('\u21bb','err','MQTT init error: '+e.message);
-    finish(); return;
+    clearTimeout(_pskConnDeadline); _pskConnDeadline=null;
+    _pskStat('err', 'MQTT init error: ' + e.message);
+    var b2 = document.getElementById('pskRefreshBtn');
+    if(b2){ b2.textContent='\u21bb'; b2.disabled=false; }
+    return;
   }
-  _pskMqttClient=client;
+  _pskMqttClient = client;
 
-  client.on('connect',function(){
-    if(_mqttDone) return;
-    // *** Cancel connection deadline immediately — we are connected ***
-    clearTimeout(_connDeadline);
-    _connDeadline=null;
+  // ── Connected ────────────────────────────────────────────────
+  client.on('connect', function(){
+    if(_pskMqttClient !== client) return;   // superseded
+    clearTimeout(_pskConnDeadline); _pskConnDeadline=null;
 
-    stat('\u2026','','MQTT connected \u00b7 subscribing to '+call+'\u2026');
+    var b2 = document.getElementById('pskRefreshBtn');
+    if(b2){ b2.textContent='\u21bb'; b2.disabled=false; }
+
     client.subscribe(
       ['pskr/filter/v2/+/+/'+call+'/#', 'pskr/filter/v2/+/+/+/'+call+'/#'],
       {qos:0},
       function(err){
-        if(_mqttDone) return;
-        if(err) console.warn('[PSK] subscribe error:',err);
-        stat('\u2026','','Collecting '+call+' \u2014 30s window\u2026');
-        finish(); // unlock button while collecting
+        if(err){ console.warn('[PSK] subscribe error:', err); }
+        _pskStat('', '\u25cf LIVE \u00b7 ' + call + ' \u00b7 streaming\u2026');
       }
     );
-    // 30s collect window starts on connect, not on function call
-    _collect=setTimeout(function(){ _mqttFinish('30s window complete'); }, 30000);
+
+    // Periodic age refresh: re-render every 30s so "X ago" stays current
+    // and stale spots (>4h) are pruned from the buffer automatically.
+    clearInterval(_pskAgeTimer);
+    _pskAgeTimer = setInterval(function(){
+      if(_pskMqttClient !== client) return;
+      // Age all spots by real elapsed time and prune very old ones
+      var now = Date.now()/1000;
+      _pskMqttBuffer = _pskMqttBuffer.filter(function(s){
+        return (s._ts && (now - s._ts) < 14400); // keep < 4h
+      });
+      _pskFlushToUI(null);
+    }, 30000);
   });
 
-  client.on('message',function(topic,payload){
-    if(_mqttDone) return;
+  // ── Incoming spot ────────────────────────────────────────────
+  client.on('message', function(topic, payload){
+    if(_pskMqttClient !== client) return;
     try{
-      var s=JSON.parse(payload.toString());
-      var fkHz=(s.f||0)/1000, band=bandFromFreq(fkHz)||(s.b||'');
+      var s = JSON.parse(payload.toString());
+      var fkHz = (s.f||0)/1000, band = bandFromFreq(fkHz)||(s.b||'');
       if(!band) return;
-      var age=Math.max(0,Date.now()/1000-(s.t_tx||s.t||0));
-      if(age>86400) return;
+      var txTime = s.t_tx || s.t || 0;
+      var age = Math.max(0, Date.now()/1000 - txTime);
+      if(age > 86400) return;
 
-      // ── Position: prefer Maidenhead locator, fall back to DXCC prefix table
-      var tp=maidenheadToLatLon(s.sl||'');
-      var rp=maidenheadToLatLon(s.rl||'');
-      if(!tp && s.sc) tp=callsignToLatLon(s.sc);
-      if(!rp && s.rc) rp=callsignToLatLon(s.rc);
+      var tp = maidenheadToLatLon(s.sl||'');
+      var rp = maidenheadToLatLon(s.rl||'');
+      if(!tp && s.sc) tp = callsignToLatLon(s.sc);
+      if(!rp && s.rc) rp = callsignToLatLon(s.rc);
 
-      _pskMqttBuffer.unshift({
+      // Deduplicate: replace any existing entry for same tx+band, preserving count
+      var key = (s.sc||'') + '|' + band;
+      var idx = _pskMqttBuffer.findIndex(function(x){ return x._key===key; });
+      var prevCount = (idx >= 0) ? (_pskMqttBuffer[idx].count || 1) : 0;
+      var entry = {
+        _key: key, _ts: Date.now()/1000,
         dx_call:s.sc||'', de_call:s.rc||'',
         freq:fkHz, band:band, snr:s.rp||0, mode:s.md||'',
         dx_lat:tp?tp[0]:null, dx_lon:tp?tp[1]:null,
         de_lat:rp?rp[0]:null, de_lon:rp?rp[1]:null,
-        locator_tx:s.sl||'', locator_rx:s.rl||'', age:age
-      });
-      if(_pskMqttBuffer.length>PSK_MAX_BUFFER) _pskMqttBuffer.length=PSK_MAX_BUFFER;
-    } catch(e){ console.warn('[PSK] msg parse:',e.message); }
+        locator_tx:s.sl||'', locator_rx:s.rl||'', age:age,
+        count: prevCount + 1
+      };
+      if(idx >= 0){ _pskMqttBuffer[idx] = entry; }
+      else { _pskMqttBuffer.unshift(entry); }
+      if(_pskMqttBuffer.length > PSK_MAX_BUFFER) _pskMqttBuffer.length = PSK_MAX_BUFFER;
+
+      _pskFlushToUI(null);
+    } catch(e){ console.warn('[PSK] msg parse:', e.message); }
   });
 
-  client.on('error',  function(err){ if(_mqttDone)return; var m=(err&&err.message)||String(err); stat('\u2026','err','MQTT error: '+m.slice(0,50)); _mqttFinish('MQTT error: '+m.slice(0,40)); });
-  client.on('close',  function(){    if(_mqttDone)return; stat('\u2026','warn','MQTT connection closed'); _mqttFinish('MQTT connection closed unexpectedly'); });
-  client.on('offline',function(){    if(_mqttDone)return; stat('\u2026','warn','MQTT offline');          _mqttFinish('MQTT went offline');                   });
+  // ── Connection lost — auto-reconnect in 10s ──────────────────
+  function _onDrop(label){
+    if(_pskMqttClient !== client) return;
+    clearInterval(_pskAgeTimer); _pskAgeTimer=null;
+    try{ client.removeAllListeners(); client.end(true); }catch(e){}
+    _pskMqttClient=null;
+    _pskScheduleReconnect(10000, label);
+  }
+  client.on('error',   function(err){ _onDrop('MQTT error: '+((err&&err.message)||String(err)).slice(0,40)); });
+  client.on('close',   function(){    _onDrop('Connection closed'); });
+  client.on('offline', function(){    _onDrop('Connection offline'); });
+}
+
+// ── Public entry point (called by button and auto-start) ─────
+function fetchPSKReporter(){
+  var call = (document.getElementById('pskCallIn')?.value||'').trim().toUpperCase();
+  if(!call){
+    _pskStat('warn','Enter callsign first');
+    return;
+  }
+  if(!window.mqtt){
+    _pskStat('err','MQTT library not loaded \u2014 reload page');
+    return;
+  }
+  // If already streaming the same callsign, just flush current data
+  if(_pskMqttClient && _pskActiveCall === call){
+    _pskFlushToUI(null);
+    return;
+  }
+  _pskMqttBuffer = [];   // clear buffer only when callsign changes
+  _pskConnect(call);
 }
 
 function _pskFlushToUI(badge){
-  var seen = new Map();
-  for(var s of _pskMqttBuffer){
-    var k = s.dx_call+'|'+s.band;
-    if(!seen.has(k)||seen.get(k).age>s.age) seen.set(k,s);
-  }
-  var spots=[...seen.values()].sort(function(a,b){return a.age-b.age;});
-  LIVE.pskSpots=spots;
+  // Buffer entries are already deduplicated on arrival (_key per tx+band).
+  // Re-compute age from wall clock so "X ago" values stay current.
+  var now = Date.now()/1000;
+  _pskMqttBuffer.forEach(function(s){
+    if(s._ts) s.age = Math.max(0, now - (s._ts - s.age));
+  });
+  var spots = _pskMqttBuffer.slice().sort(function(a,b){return a.age-b.age;});
+  LIVE.pskSpots = spots;
   renderSpotList(spots,'spotList','spotsCount','psk-badge',LIVE.spotBandFilter);
-  // Force spots layer on whenever fresh data arrives
-  LIVE.spotsVisible=true;
-  var toggleBtn=document.getElementById('spotsToggleBtn');
+  LIVE.spotsVisible = true;
+  var toggleBtn = document.getElementById('spotsToggleBtn');
   if(toggleBtn) toggleBtn.style.opacity='1';
   drawSpotMarkers();
-  var mapped=spots.filter(function(s){
-    var d1=s.dx_lat!==null?haversineKm(S.lat,S.lon,s.dx_lat,s.dx_lon):Infinity;
-    var d2=s.de_lat!==null?haversineKm(S.lat,S.lon,s.de_lat,s.de_lon):Infinity;
-    return Math.min(d1,d2)<=MAX_SPOT_KM;
-  }).length;
-  var b=badge||document.getElementById('psk-badge');
-  if(b){b.className='live-badge';b.textContent='PSKReporter · '+spots.length+' spots · '+mapped+' mapped';}
+  var b = badge || document.getElementById('psk-badge');
+  if(b){ b.className='live-badge'; b.textContent='\u25cf LIVE \u00b7 '+_pskActiveCall+' \u00b7 '+spots.length+' spot'+(spots.length!==1?'s':''); }
 }
 
 
@@ -5612,142 +5604,6 @@ function callsignToLatLon(call){
   return null;
 }
 
-// ── DX Cluster — multi-source with CORS proxy fallback chain ──
-// Sources tried in order:
-//   1. HamQTH dxc_csv.php via CORS proxies (^ delimited CSV)
-//   2. DX Summit JSON API (public, CORS-enabled)
-// Positions derived from callsign prefix table (DXCC_PREFIX).
-async function fetchDXCluster(){
-  const btn   = document.getElementById('dxRefreshBtn');
-  const badge = document.getElementById('dx-badge');
-  if(btn){ btn.textContent='\u2026'; btn.disabled=true; }
-  if(badge){ badge.className='live-badge'; badge.textContent='Fetching\u2026'; }
-
-  try{
-    let spots = null;
-    let sourceName = '';
-
-    // ── Helper: fetch with timeout ──────────────────────────────
-    function _dxFetch(url, ms){
-      const ctrl = new AbortController();
-      const tid  = setTimeout(() => ctrl.abort(), ms || 9000);
-      return fetch(url, {cache:'no-cache', signal:ctrl.signal}).finally(() => clearTimeout(tid));
-    }
-
-    // ── Source 1: HamQTH via CORS proxy chain ──────────────────
-    const hamqthUrl = 'https://www.hamqth.com/dxc_csv.php?limit=100';
-    const hamqthEnc = encodeURIComponent(hamqthUrl);
-    const hamqthProxies = [
-      `https://corsproxy.io/?url=${hamqthEnc}`,
-      `https://api.allorigins.win/raw?url=${hamqthEnc}`,
-      `https://thingproxy.freeboard.io/fetch/${hamqthUrl}`,
-    ];
-
-    for(let pi = 0; pi < hamqthProxies.length && spots === null; pi++){
-      try{
-        if(badge) badge.textContent = `HamQTH via proxy ${pi+1}/${hamqthProxies.length}...`;
-        const resp = await _dxFetch(hamqthProxies[pi], 9000);
-        if(!resp.ok) throw new Error('HTTP ' + resp.status);
-        const txt = await resp.text();
-        if(!txt || txt.trim().length < 20) throw new Error('Empty');
-        // Parse ^ delimited CSV
-        // col 0: DX call, col 1: freq kHz, col 2: spotter, col 3: comment,
-        // col 4: "HHMM YYYY-MM-DD", col 8: band
-        const parsed = [];
-        const now = Date.now();
-        txt.trim().split('\n').forEach(line => {
-          if(line.toLowerCase().startsWith('call')) return;
-          const p = line.split('^');
-          if(p.length < 3) return;
-          const dxCall  = (p[0] || '').trim();
-          const freqKHz = parseFloat((p[1] || '').trim());
-          const deCall  = (p[2] || '').trim();
-          const comment = (p[3] || '').trim();
-          const timeStr = (p[4] || '').trim();
-          const bandRaw = (p[8] || '').trim();
-          if(!freqKHz || isNaN(freqKHz) || !dxCall) return;
-          let ageSecs = 0;
-          try{
-            const [tPart, dPart] = timeStr.split(' ');
-            if(tPart && dPart){
-              const hh = parseInt(tPart.slice(0,2), 10);
-              const mm = parseInt(tPart.slice(2,4), 10);
-              const [yr, mo, dy] = dPart.split('-').map(Number);
-              ageSecs = Math.max(0, (now - Date.UTC(yr, mo-1, dy, hh, mm, 0)) / 1000);
-            }
-          } catch(e){}
-          if(ageSecs > 86400) return;
-          const dxPos = callsignToLatLon(dxCall);
-          const dePos = callsignToLatLon(deCall);
-          const band  = bandRaw ? bandRaw.toLowerCase().replace(/^(\d+)m$/,'$1m') : (bandFromFreq(freqKHz) || '');
-          parsed.push({
-            dx_call:dxCall, de_call:deCall, freq:freqKHz,
-            band: band || bandFromFreq(freqKHz) || '',
-            comment, mode:'',
-            dx_lat:dxPos?dxPos[0]:null, dx_lon:dxPos?dxPos[1]:null,
-            de_lat:dePos?dePos[0]:null, de_lon:dePos?dePos[1]:null,
-            locator_tx:'', locator_rx:'', age:ageSecs, snr:0,
-          });
-        });
-        if(parsed.length > 0){ spots = parsed; sourceName = 'HamQTH'; }
-      } catch(e){ console.warn('DX HamQTH proxy', pi, 'failed:', e.message); }
-    }
-
-    // ── Source 2: DX Summit JSON API (CORS-enabled fallback) ───
-    if(spots === null){
-      try{
-        if(badge) badge.textContent = 'Trying DX Summit...';
-        const resp = await _dxFetch('https://www.dxsummit.fi/api/v1/spots?limit=100', 10000);
-        if(!resp.ok) throw new Error('HTTP ' + resp.status);
-        const json = await resp.json();
-        if(!Array.isArray(json) || json.length === 0) throw new Error('Empty JSON');
-        const now = Date.now();
-        const parsed = json.map(s => {
-          const freqKHz = parseFloat(s.frequency || s.freq || 0);
-          if(!freqKHz) return null;
-          const dxCall = (s.dx_call || s.callsign || '').trim();
-          const deCall = (s.de_call || s.spotter  || '').trim();
-          if(!dxCall) return null;
-          const ageSecs = s.time ? Math.max(0, (now - new Date(s.time).getTime()) / 1000) : 0;
-          if(ageSecs > 86400) return null;
-          const dxPos = callsignToLatLon(dxCall);
-          const dePos = callsignToLatLon(deCall);
-          return {
-            dx_call:dxCall, de_call:deCall, freq:freqKHz,
-            band: bandFromFreq(freqKHz) || '',
-            comment: s.comment || s.info || '', mode:'',
-            dx_lat:dxPos?dxPos[0]:null, dx_lon:dxPos?dxPos[1]:null,
-            de_lat:dePos?dePos[0]:null, de_lon:dePos?dePos[1]:null,
-            locator_tx:'', locator_rx:'', age:ageSecs, snr:0,
-          };
-        }).filter(Boolean);
-        if(parsed.length > 0){ spots = parsed; sourceName = 'DX Summit'; }
-      } catch(e){ console.warn('DX Summit fallback failed:', e.message); }
-    }
-
-    if(!spots || spots.length === 0) throw new Error('All DX cluster sources failed — check console (F12)');
-
-    spots.sort((a,b) => a.age - b.age);
-    LIVE.dxSpots = spots;
-    const nearSpots = spots.filter(s =>
-      s.de_lat !== null && haversineKm(S.lat, S.lon, s.de_lat, s.de_lon) <= MAX_SPOT_KM
-    );
-    renderSpotList(nearSpots, 'dxList', 'dxCount', 'dx-badge', LIVE.dxBandFilter, true);
-    if(LIVE.dxVisible) drawDXMarkers();
-    const rkm = MAX_SPOT_KM >= 1000 ? `${(MAX_SPOT_KM/1000).toFixed(0)}Mm` : `${MAX_SPOT_KM}km`;
-    if(badge){ badge.className='live-badge';
-               badge.textContent=`${sourceName} DX \xb7 ${nearSpots.length} within ${rkm} \xb7 ${spots.length} total`; }
-
-  } catch(err){
-    console.warn('DX fetch error:', err);
-    if(badge){ badge.className='live-badge err'; badge.textContent=`DX: ${err.message}`; }
-    const dl = document.getElementById('dxList');
-    if(dl) dl.innerHTML=`<div class="spots-empty">Unable to fetch DX cluster<br>${err.message}</div>`;
-  } finally {
-    if(btn){ btn.textContent='\u21bb'; btn.disabled=false; }
-  }
-}
-
 // ── Maidenhead locator → lat/lon ──────────────────────────────
 function maidenheadToLatLon(loc){
   if(!loc || loc.length < 4) return null;
@@ -5813,18 +5669,175 @@ function zoomToSpot(spot){
 }
 
 // ── Draw spot markers on map ──────────────────────────────────
-function clearSpotMarkers(){
-  LIVE.spotMarkers.forEach(m=>{ try{map.removeLayer(m);}catch(e){} });
-  LIVE.spotLines.forEach(l=>{ try{map.removeLayer(l);}catch(e){} });
-  LIVE.spotMarkers = [];
-  LIVE.spotLines = [];
+
+// Great-circle interpolation: returns nSegs+1 [lat,lon] waypoints between
+// two points on the sphere, producing a geodesic curve in Leaflet.
+// Handles antimeridian by keeping consecutive longitudes within ±180° of each other.
+function gcPoints(lat1, lon1, lat2, lon2, nSegs){
+  const R2D = 180 / Math.PI;
+  const D2R = Math.PI / 180;
+  const φ1 = lat1*D2R, λ1 = lon1*D2R;
+  const φ2 = lat2*D2R, λ2 = lon2*D2R;
+  const dφ = φ2-φ1, dλ = λ2-λ1;
+  const a  = Math.sin(dφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)**2;
+  const d  = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  if(d < 1e-6) return [[lat1,lon1],[lat2,lon2]];
+  const sinD = Math.sin(d);
+  const pts = [];
+  for(let i = 0; i <= nSegs; i++){
+    const f = i / nSegs;
+    const A = Math.sin((1-f)*d) / sinD;
+    const B = Math.sin(f*d)     / sinD;
+    const x = A*Math.cos(φ1)*Math.cos(λ1) + B*Math.cos(φ2)*Math.cos(λ2);
+    const y = A*Math.cos(φ1)*Math.sin(λ1) + B*Math.cos(φ2)*Math.sin(λ2);
+    const z = A*Math.sin(φ1)               + B*Math.sin(φ2);
+    pts.push([
+      Math.atan2(z, Math.sqrt(x*x+y*y)) * R2D,
+      Math.atan2(y, x) * R2D
+    ]);
+  }
+  // Antimeridian fix: keep consecutive longitudes within ±180° of each other
+  for(let i = 1; i < pts.length; i++){
+    let Δ = pts[i][1] - pts[i-1][1];
+    if(Δ >  180) pts[i][1] -= 360;
+    if(Δ < -180) pts[i][1] += 360;
+  }
+  return pts;
 }
 
-function clearDXMarkers(){
-  LIVE.dxMarkers.forEach(m=>{ try{map.removeLayer(m);}catch(e){} });
-  LIVE.dxLines.forEach(l=>{ try{map.removeLayer(l);}catch(e){} });
-  LIVE.dxMarkers = [];
-  LIVE.dxLines = [];
+// Fully clear all PSK spot layers from the map and wipe the persistent store.
+function clearSpotMarkers(){
+  LIVE.spotLayers.forEach(function(e){
+    if(e.onMap){
+      try{ map.removeLayer(e.marker); }catch(ex){}
+      try{ map.removeLayer(e.line);   }catch(ex){}
+    }
+  });
+  LIVE.spotLayers.clear();
+}
+
+// ── Update PSK spot markers:
+//   • Expired spots (> 3 min since last seen) are removed from the map.
+//   • Spots already on the map have their expiry refreshed — not redrawn.
+//   • New spots are added with geodesic (great-circle) curves.
+//   • Band filter is applied by show/hide, not by destroying layers.
+var SPOT_TTL_MS = 3 * 60 * 1000; // 3-minute lifetime (user-adjustable via slider)
+
+function setSpotTTL(mins){
+  SPOT_TTL_MS = mins * 60 * 1000;
+  const lbl = document.getElementById('spotTtlLabel');
+  if(lbl) lbl.textContent = mins + ' min';
+}
+
+function drawSpotMarkers(){
+  const now   = Date.now();
+  const txLat = S.lat, txLon = S.lon;
+
+  // ── 1. Remove expired layers ─────────────────────────────────
+  LIVE.spotLayers.forEach(function(e, key){
+    if(now > e.expiresAt){
+      if(e.onMap){
+        try{ map.removeLayer(e.marker); }catch(ex){}
+        try{ map.removeLayer(e.line);   }catch(ex){}
+      }
+      LIVE.spotLayers.delete(key);
+    }
+  });
+
+  // ── 2. If layer is hidden, just purge expired and return ──────
+  if(!LIVE.spotsVisible){
+    LIVE.spotLayers.forEach(function(e){
+      if(e.onMap){
+        try{ map.removeLayer(e.marker); }catch(ex){}
+        try{ map.removeLayer(e.line);   }catch(ex){}
+        e.onMap = false;
+      }
+    });
+    return;
+  }
+
+  // ── 3. Add new spots / refresh expiry of existing ones ───────
+  LIVE.pskSpots.slice(0, 300).forEach(function(spot){
+    if(!spot._key) return;
+    if(spot.dx_lat === null && spot.de_lat === null) return;
+
+    const existing = LIVE.spotLayers.get(spot._key);
+    if(existing){
+      // Refresh expiry — don't redraw
+      existing.expiresAt = now + SPOT_TTL_MS;
+      return;
+    }
+
+    const col = BAND_COLORS[spot.band] || '#888';
+
+    const dxDist = (spot.dx_lat !== null) ? haversineKm(txLat,txLon,spot.dx_lat,spot.dx_lon) : Infinity;
+    const deDist = (spot.de_lat !== null) ? haversineKm(txLat,txLon,spot.de_lat,spot.de_lon) : Infinity;
+    const nearDX    = dxDist <= deDist;
+    const remoteLat = nearDX ? spot.de_lat : spot.dx_lat;
+    const remoteLon = nearDX ? spot.de_lon : spot.dx_lon;
+    const remoteCall= nearDX ? spot.de_call : spot.dx_call;
+    const nearCall  = nearDX ? spot.dx_call : spot.de_call;
+    const plotLat   = remoteLat !== null ? remoteLat  : (nearDX ? spot.dx_lat : spot.de_lat);
+    const plotLon   = remoteLon !== null ? remoteLon  : (nearDX ? spot.dx_lon : spot.de_lon);
+    const plotCall  = remoteLat !== null ? remoteCall : nearCall;
+    if(plotLat === null) return;
+
+    // ── Dot marker at remote endpoint ──
+    const icon = L.divIcon({
+      className:'', iconSize:[10,10], iconAnchor:[5,5],
+      html:`<div class="spot-map-dot" style="background:${col}22;border-color:${col};box-shadow:0 0 4px ${col}88;" title="${plotCall} · ${spot.band} · ${spot.mode}"></div>`
+    });
+    const distKm = (spot.dx_lat !== null && spot.de_lat !== null)
+      ? haversineKm(spot.dx_lat, spot.dx_lon, spot.de_lat, spot.de_lon).toFixed(2)
+      : '—';
+    const freqMHz = (spot.freq / 1000).toFixed(3);
+    const gridStr = spot.locator_rx || spot.locator_tx || '—';
+    const marker = L.marker([plotLat, plotLon], {icon, zIndexOffset:200});
+    marker.bindPopup(`<div style="font-family:'Rajdhani',sans-serif;font-size:.78rem;padding:8px 12px;line-height:1.9;min-width:195px;background:#0b1820;color:#b8d8d2;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:.7rem;color:${col};font-weight:700;margin-bottom:4px;letter-spacing:.05em;">${plotCall}</div>
+      <table style="border-collapse:collapse;width:100%;">
+        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Grid:</td><td style="color:#b8d8d2;">${gridStr}</td></tr>
+        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Callsign:</td><td style="color:#b8d8d2;">${plotCall}</td></tr>
+        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Band:</td><td style="color:${col};font-weight:700;">${spot.band}</td></tr>
+        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Freq:</td><td style="color:#b8d8d2;">${freqMHz} MHz</td></tr>
+        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Mode:</td><td style="color:#b8d8d2;">${spot.mode || '—'}</td></tr>
+        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">SNR:</td><td style="color:#b8d8d2;">${spot.snr >= 0 ? '+' : ''}${spot.snr} dB</td></tr>
+        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Count:</td><td style="color:#b8d8d2;">${spot.count || 1}</td></tr>
+        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Distance:</td><td style="color:#b8d8d2;">${distKm} km</td></tr>
+        <tr><td style="color:#4a8a82;padding-right:8px;white-space:nowrap;font-weight:600;">Last heard:</td><td style="color:#b8d8d2;">${fmtAge(spot.age)} ago</td></tr>
+      </table>
+    </div>`);
+
+    // ── Geodesic (great-circle) arc from TX to remote endpoint ──
+    const arcPts = gcPoints(txLat, txLon, plotLat, plotLon, 64);
+    const line = L.polyline(arcPts, {
+      color: col, weight: 1.5, opacity: 0.55, dashArray: null
+    });
+
+    // Apply band filter visibility before adding to map
+    const visible = (LIVE.spotBandFilter === 'all' || LIVE.spotBandFilter === spot.band);
+    if(visible){
+      marker.addTo(map);
+      line.addTo(map);
+    }
+
+    LIVE.spotLayers.set(spot._key, {
+      marker, line,
+      expiresAt: now + SPOT_TTL_MS,
+      band: spot.band,
+      onMap: visible
+    });
+  });
+
+  // ── 4. Apply current band filter to all layers ───────────────
+  LIVE.spotLayers.forEach(function(e){
+    const shouldShow = LIVE.spotBandFilter === 'all' || LIVE.spotBandFilter === e.band;
+    if(shouldShow && !e.onMap){
+      try{ e.marker.addTo(map); e.line.addTo(map); e.onMap=true; }catch(ex){}
+    } else if(!shouldShow && e.onMap){
+      try{ map.removeLayer(e.marker); map.removeLayer(e.line); e.onMap=false; }catch(ex){}
+    }
+  });
 }
 
 // ── Haversine distance (km) between two lat/lon points ────────
@@ -5837,150 +5850,8 @@ function haversineKm(lat1, lon1, lat2, lon2){
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-// ── PSKReporter spot markers ──────────────────────────────────
-// Only spots where at least one end is within MAX_SPOT_KM of TX location.
-// Lines drawn FROM the TX location TO the remote endpoint — showing which
-// propagation paths are currently open from your location.
-let MAX_SPOT_KM = 10000; // user-adjustable via slider
-
-function setSpotRange(km){
-  MAX_SPOT_KM = km;
-  const lbl = document.getElementById('dxRangeLabel');
-  if(lbl) lbl.textContent = km >= 1000 ? `${(km/1000).toFixed(1).replace('.0','')} Mm` : `${km} km`;
-  // Redraw with new range
-  if(LIVE.dxVisible)    drawDXMarkers();
-  if(LIVE.spotsVisible) drawSpotMarkers();
-  // Re-filter DX sidebar by new range, re-render PSK list
-  const nearDX = LIVE.dxSpots.filter(s =>
-    s.de_lat !== null && haversineKm(S.lat, S.lon, s.de_lat, s.de_lon) <= MAX_SPOT_KM
-  );
-  renderSpotList(LIVE.pskSpots, 'spotList', 'spotsCount', 'psk-badge', LIVE.spotBandFilter);
-  renderSpotList(nearDX, 'dxList', 'dxCount', 'dx-badge', LIVE.dxBandFilter, true);
-  // Update DX badge count
-  const dxBadge = document.getElementById('dx-badge');
-  if(dxBadge && LIVE.dxSpots.length > 0){
-    const rkm = km >= 1000 ? `${(km/1000).toFixed(0)}Mm` : `${km}km`;
-    dxBadge.textContent = `HamQTH DX · ${nearDX.length} within ${rkm} · ${LIVE.dxSpots.length} total`;
-  }
-}
-
 function savePskCall(val){
   try{ localStorage.setItem('pskCall', val.toUpperCase()); } catch(e){}
-}
-
-function drawSpotMarkers(){
-  clearSpotMarkers();
-  if(!LIVE.spotsVisible) return;
-  const txLat = S.lat, txLon = S.lon;
-
-  const filtered = (LIVE.spotBandFilter === 'all'
-    ? LIVE.pskSpots
-    : LIVE.pskSpots.filter(s => s.band === LIVE.spotBandFilter));
-
-  filtered.slice(0, 200).forEach(spot => {
-    if(spot.dx_lat === null && spot.de_lat === null) return;
-
-    const col = BAND_COLORS[spot.band] || '#888';
-
-    // Determine which end is "near TX" and which is the "remote" end
-    const dxDist = (spot.dx_lat !== null) ? haversineKm(txLat,txLon,spot.dx_lat,spot.dx_lon) : Infinity;
-    const deDist = (spot.de_lat !== null) ? haversineKm(txLat,txLon,spot.de_lat,spot.de_lon) : Infinity;
-
-    // At least one end must be within range of TX location
-    if(dxDist > MAX_SPOT_KM && deDist > MAX_SPOT_KM) return;
-
-    // The "remote" end — the station that is far from TX (what's reachable)
-    // If DX is near TX, remote = receiver (de). If receiver is near TX, remote = DX (sender).
-    const nearDX = dxDist <= deDist; // true = DX end is the local/near side
-    const remoteLat = nearDX ? spot.de_lat : spot.dx_lat;
-    const remoteLon = nearDX ? spot.de_lon : spot.dx_lon;
-    const remoteCall = nearDX ? spot.de_call : spot.dx_call;
-    const nearCall   = nearDX ? spot.dx_call : spot.de_call;
-
-    // Draw dot at remote endpoint
-    if(remoteLat !== null){
-      const icon = L.divIcon({
-        className:'',
-        iconSize:[10,10], iconAnchor:[5,5],
-        html:`<div class="spot-map-dot" style="background:${col}22;border-color:${col};box-shadow:0 0 4px ${col}88;" title="${spot.dx_call} · ${spot.band} · ${spot.mode}"></div>`
-      });
-      const m = L.marker([remoteLat, remoteLon], {icon, zIndexOffset:200});
-      m.bindPopup(`<div style="font-family:'Share Tech Mono',monospace;font-size:.7rem;padding:6px 10px;line-height:1.7;">
-        <div style="color:${col};font-size:.85rem;font-weight:700;">${spot.dx_call}</div>
-        <div>Band: <b>${spot.band}</b> · ${spot.freq.toFixed(1)} kHz · ${spot.mode}</div>
-        <div>TX: ${spot.dx_call} ${spot.locator_tx ? '('+spot.locator_tx+')' : ''}</div>
-        <div>RX: ${spot.de_call} ${spot.locator_rx ? '('+spot.locator_rx+')' : ''}</div>
-        <div>SNR: ${spot.snr >= 0 ? '+' : ''}${spot.snr} dB · ${fmtAge(spot.age)} ago</div>
-      </div>`);
-      m.addTo(map);
-      LIVE.spotMarkers.push(m);
-    }
-
-    // Draw great-circle line from TX location to remote endpoint
-    if(remoteLat !== null){
-      const line = L.polyline([[txLat, txLon],[remoteLat, remoteLon]], {
-        color: col, weight: 1.5, opacity: 0.4, dashArray: '5 4'
-      });
-      line.addTo(map);
-      LIVE.spotLines.push(line);
-    }
-  });
-}
-
-// ── DX Cluster markers ────────────────────────────────────────
-// Show spots where the SPOTTER is within range of TX location.
-// This answers: "what DX is currently audible from my region?"
-// Draw line FROM TX location TO the DX station — shows workable paths.
-function drawDXMarkers(){
-  clearDXMarkers();
-  if(!LIVE.dxVisible) return;
-  const txLat = S.lat, txLon = S.lon;
-
-  const filtered = (LIVE.dxBandFilter === 'all'
-    ? LIVE.dxSpots
-    : LIVE.dxSpots.filter(s => s.band === LIVE.dxBandFilter));
-
-  filtered.slice(0, 100).forEach(spot => {
-    const col = BAND_COLORS[spot.band] || '#888';
-
-    // Check spotter proximity to TX location
-    const deNear = spot.de_lat !== null &&
-                   haversineKm(txLat,txLon,spot.de_lat,spot.de_lon) <= MAX_SPOT_KM;
-    // Also accept spots where DX station is near TX (you might be the DX!)
-    const dxNear = spot.dx_lat !== null &&
-                   haversineKm(txLat,txLon,spot.dx_lat,spot.dx_lon) <= MAX_SPOT_KM;
-
-    if(!deNear && !dxNear) return;
-
-    // Remote end: if spotter is near TX, remote = DX station; otherwise remote = spotter
-    const remLat  = deNear ? spot.dx_lat  : spot.de_lat;
-    const remLon  = deNear ? spot.dx_lon  : spot.de_lon;
-    const remCall = deNear ? spot.dx_call : spot.de_call;
-
-    if(remLat === null) return;
-
-    const icon = L.divIcon({
-      className:'', iconSize:[9,9], iconAnchor:[4,4],
-      html:`<div style="width:9px;height:9px;border-radius:50%;background:${col};border:1.5px solid #fff5;opacity:.85;" title="${spot.dx_call}"></div>`
-    });
-    const m = L.marker([remLat, remLon], {icon, zIndexOffset:150});
-    m.bindPopup(`<div style="font-family:'Share Tech Mono',monospace;font-size:.7rem;padding:6px 10px;line-height:1.7;">
-      <div style="color:${col};font-weight:700;">${spot.dx_call}</div>
-      <div>Band: <b>${spot.band}</b> · ${spot.freq.toFixed(1)} kHz</div>
-      <div>Spotted by: ${spot.de_call}</div>
-      ${spot.comment ? `<div style="color:#aaa;">${spot.comment}</div>` : ''}
-      <div style="color:#888;">${fmtAge(spot.age)} ago</div>
-    </div>`);
-    m.addTo(map);
-    LIVE.dxMarkers.push(m);
-
-    // Line from TX location to remote station
-    const line = L.polyline([[txLat,txLon],[remLat,remLon]], {
-      color: col, weight: 1.5, opacity: 0.35, dashArray: '3 5'
-    });
-    line.addTo(map);
-    LIVE.dxLines.push(line);
-  });
 }
 
 // ── Filter controls ───────────────────────────────────────────
@@ -5990,34 +5861,14 @@ function setSpotBandFilter(band){
   const el = document.getElementById('sf-' + (band === 'all' ? 'all' : band.replace('m','')));
   if(el) el.classList.add('on');
   renderSpotList(LIVE.pskSpots, 'spotList', 'spotsCount', 'psk-badge', band);
-  if(LIVE.spotsVisible) drawSpotMarkers();
-}
-
-function setDXBandFilter(band){
-  LIVE.dxBandFilter = band;
-  document.querySelectorAll('[id^="dxf-"]').forEach(b => b.classList.remove('on'));
-  const el = document.getElementById('dxf-' + (band === 'all' ? 'all' : band.replace('m','')));
-  if(el) el.classList.add('on');
-  // Sidebar always shows only near-TX spots
-  const nearDX = LIVE.dxSpots.filter(s =>
-    s.de_lat !== null && haversineKm(S.lat, S.lon, s.de_lat, s.de_lon) <= MAX_SPOT_KM
-  );
-  renderSpotList(nearDX, 'dxList', 'dxCount', 'dx-badge', band, true);
-  if(LIVE.dxVisible) drawDXMarkers();
+  drawSpotMarkers();
 }
 
 function toggleSpotsLayer(){
   LIVE.spotsVisible = !LIVE.spotsVisible;
   const btn = document.getElementById('spotsToggleBtn');
   if(btn) btn.style.opacity = LIVE.spotsVisible ? '1' : '0.4';
-  if(LIVE.spotsVisible) drawSpotMarkers(); else clearSpotMarkers();
-}
-
-function toggleDXLayer(){
-  LIVE.dxVisible = !LIVE.dxVisible;
-  const btn = document.getElementById('dxToggleBtn');
-  if(btn) btn.style.opacity = LIVE.dxVisible ? '1' : '0.4';
-  if(LIVE.dxVisible) drawDXMarkers(); else clearDXMarkers();
+  drawSpotMarkers();
 }
 
 // ── Periodic auto-refresh ─────────────────────────────────────
@@ -6025,9 +5876,11 @@ function startLiveDataRefresh(){
   // Solar: fetch immediately, refresh every 15 min
   fetchLiveSolar();
   setInterval(fetchLiveSolar, 15 * 60 * 1000);
-  // DX cluster: auto-refresh every 5 min (HamQTH CSV is lightweight)
-  setInterval(fetchDXCluster, 5 * 60 * 1000);
-  // PSKReporter MQTT is event-driven (connect on demand via GO button)
+  // PSKReporter: connect immediately on load if callsign is saved.
+  setTimeout(function(){
+    var call = (document.getElementById('pskCallIn')?.value||'').trim();
+    if(call) fetchPSKReporter();
+  }, 1500);
 }
 
 // ── Kick off live data on page load ──────────────────────────
