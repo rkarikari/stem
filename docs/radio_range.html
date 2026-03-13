@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.084 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.088 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
@@ -493,6 +493,15 @@ option{background:#0b1820;}
               <button class="sf-btn" id="sf-15" onclick="setSpotBandFilter('15m')">15m</button>
               <button class="sf-btn" id="sf-10" onclick="setSpotBandFilter('10m')">10m</button>
             </div>
+            <div style="margin-top:7px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+                <span style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);">Spot expiry</span>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--acc);" id="spotTTLVal">15 min</span>
+              </div>
+              <input type="range" id="spotTTLSlider" min="5" max="30" step="1" value="15"
+                style="width:100%;accent-color:var(--acc);"
+                oninput="setSpotTTL(+this.value)"/>
+            </div>
           </div>
           <div class="spot-list" id="spotList">
             <div class="spots-empty">Enter your callsign to stream spots where you are TX or RX</div>
@@ -502,7 +511,7 @@ option{background:#0b1820;}
 
 
         <div style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);line-height:1.55;margin-top:2px;">
-          Live SFI auto-applies to model when fresh · K-index maps to condition setting · Spot markers show real contacts vs predicted coverage · PSKReporter 15-min window
+          Live SFI auto-applies to model when fresh · K-index maps to condition setting · Spot markers show real contacts vs predicted coverage · PSKReporter spot window configurable
         </div>
       </div>
     </div>
@@ -776,8 +785,13 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.084';
+const APP_VERSION = 'v1.088';
 const APP_DATE    = '2026-03-12';
+
+// PSK constants — declared here as var (not const) so they are hoisted and
+// never in the temporal dead zone when timers or MQTT callbacks fire early.
+var SPOT_TTL_MS    = 15 * 60 * 1000; // 15-minute layer lifetime (matches PSKReporter window)
+var PSK_MAX_BUFFER = 500;
 
 // ── Live state (declared at top-level to be available to all functions) ──
 const LIVE = {
@@ -2118,6 +2132,19 @@ function tickRTC(){
       // Rebuild every minute to keep foF2-driven zones current
       const s = new Date().getUTCSeconds();
       if(s === 0) rebuildLayers();
+    }
+  }
+  // Evict expired PSK spots every 30s regardless of MQTT activity.
+  // Guard on spotLayers.size (not just pskSpots.length) so cleanup still
+  // runs after the buffer has been pruned but layers remain on the map.
+  // Use elapsed-time tracking instead of exact UTC-second matching — the
+  // s===0||s===30 pattern is unreliable when the browser throttles the timer
+  // (the tick may land on s===1 or s===31 and miss the window entirely).
+  if(LIVE.spotLayers && (LIVE.spotLayers.size > 0 || (LIVE.pskSpots && LIVE.pskSpots.length > 0))){
+    var _tNow = Date.now();
+    if(_tNow - (tickRTC._lastEvict || 0) >= 30000){
+      tickRTC._lastEvict = _tNow;
+      drawSpotMarkers();
     }
   }
 }
@@ -5527,7 +5554,7 @@ var _pskActiveCall    = '';       // callsign the live session is subscribed to
 var _pskReconnTimer   = null;     // pending reconnect setTimeout handle
 var _pskAgeTimer      = null;     // periodic age-refresh interval handle
 var _pskConnDeadline  = null;     // initial connect timeout handle
-const PSK_MAX_BUFFER  = 500;
+
 
 // ── Shared status helper (used inside and outside the connect flow) ──
 function _pskStat(cls, msg){
@@ -5624,7 +5651,7 @@ function _pskConnect(call){
       // from keeping map layers alive indefinitely via the flush→drawSpotMarkers cycle.
       var now = Date.now()/1000;
       _pskMqttBuffer = _pskMqttBuffer.filter(function(s){
-        return s._ts && (now - (s._ts - s.age)) < 900; // keep < 15 min from TX
+        return s._txTime && (now - s._txTime) < SPOT_TTL_MS / 1000;
       });
       _pskFlushToUI(null);
     }, 30000);
@@ -5639,18 +5666,20 @@ function _pskConnect(call){
       if(!band) return;
       var txTime = s.t_tx || s.t || 0;
       var age = Math.max(0, Date.now()/1000 - txTime);
-      if(age > 86400) return;
+      if(age > SPOT_TTL_MS / 1000) return; // drop spots older than TTL
 
       var tp = maidenheadToLatLon(s.sl||'');
       var rp = maidenheadToLatLon(s.rl||'');
       if(!tp && s.sc) tp = callsignToLatLon(s.sc);
       if(!rp && s.rc) rp = callsignToLatLon(s.rc);
 
-      // Deduplicate: replace any existing entry for same tx+band
+      // Deduplicate: update metadata for same tx+band but preserve _ts
+      // (first-reception wall-clock) so the expiry timer is never reset.
       var key = (s.sc||'') + '|' + band;
       var idx = _pskMqttBuffer.findIndex(function(x){ return x._key===key; });
+      var firstSeen = idx >= 0 ? _pskMqttBuffer[idx]._ts : Date.now()/1000;
       var entry = {
-        _key: key, _ts: Date.now()/1000, _txTime: txTime,
+        _key: key, _ts: firstSeen, _txTime: txTime,
         dx_call:s.sc||'', de_call:s.rc||'',
         freq:fkHz, band:band, snr:s.rp||0, mode:s.md||'',
         dx_lat:tp?tp[0]:null, dx_lon:tp?tp[1]:null,
@@ -5949,11 +5978,22 @@ function clearSpotMarkers(){
 //   • Spots already on the map have their expiry refreshed — not redrawn.
 //   • New spots are added with geodesic (great-circle) curves.
 //   • Band filter is applied by show/hide, not by destroying layers.
-const SPOT_TTL_MS = 15 * 60 * 1000; // 15-minute lifetime (matches PSKReporter window)
-
 function drawSpotMarkers(){
   const now   = Date.now();
   const txLat = S.lat, txLon = S.lon;
+
+  // ── 0. Inline buffer prune ───────────────────────────────────
+  // Must happen here, not just on the 30s timer: without this, an expired
+  // spot gets evicted from spotLayers in step 1 then immediately re-added
+  // in step 3 because it's still sitting in LIVE.pskSpots.
+  const nowSec = now / 1000;
+  _pskMqttBuffer = _pskMqttBuffer.filter(function(s){
+    return s._txTime && (nowSec - s._txTime) < SPOT_TTL_MS / 1000;
+  });
+  _pskMqttBuffer.forEach(function(s){
+    if(s._txTime) s.age = Math.max(0, nowSec - s._txTime);
+  });
+  LIVE.pskSpots = _pskMqttBuffer.slice().sort(function(a,b){ return a.age - b.age; });
 
   // ── 1. Remove expired layers and layers no longer in the buffer ─────
   // Build a set of keys currently in the active buffer so we can evict map
@@ -5963,7 +6003,7 @@ function drawSpotMarkers(){
   const _activeSpotKeys = new Set(LIVE.pskSpots.map(function(s){ return s._key; }));
 
   LIVE.spotLayers.forEach(function(e, key){
-    if(now > e.expiresAt || !_activeSpotKeys.has(key)){
+    if(now > e.expiresAt || !_activeSpotKeys.has(e.spotKey)){
       if(e.onMap){
         try{ map.removeLayer(e.marker); }catch(ex){}
         try{ map.removeLayer(e.line);   }catch(ex){}
@@ -5989,14 +6029,6 @@ function drawSpotMarkers(){
     if(!spot._key) return;
     if(spot.dx_lat === null && spot.de_lat === null) return;
 
-    const existing = LIVE.spotLayers.get(spot._key);
-    if(existing){
-      // Layer already on map — do not touch expiresAt.
-      // Each spot's expiry is set independently at creation time so timers
-      // are unique per spot. Resetting here would stamp all to the same value.
-      return;
-    }
-
     const col = BAND_COLORS[spot.band] || '#888';
 
     const dxDist = (spot.dx_lat !== null) ? haversineKm(txLat,txLon,spot.dx_lat,spot.dx_lon) : Infinity;
@@ -6011,6 +6043,17 @@ function drawSpotMarkers(){
     const plotCall  = remoteLat !== null ? remoteCall : nearCall;
     if(plotLat === null) return;
 
+    // layerKey is per-marker unique (tx|band|remoteCall) — must be computed
+    // before the existing check so each RX marker for the same TX station
+    // has its own slot in spotLayers and is evicted independently.
+    const layerKey = spot._key + '|' + plotCall;
+
+    const existing = LIVE.spotLayers.get(layerKey);
+    if(existing){
+      // Layer already on map — do not touch expiresAt.
+      return;
+    }
+
     // ── Dot marker at remote endpoint ──
     const distKm = haversineKm(txLat, txLon, plotLat, plotLon);
     const distStr = Math.round(distKm).toLocaleString() + ' km';
@@ -6023,23 +6066,28 @@ function drawSpotMarkers(){
     // Store the spot key and remote coords so the popup can pull
     // the freshest data from LIVE.pskSpots at the moment it opens.
     // Per-reception fields (SNR, RX call/locator, time) are snapshotted here
-    // because the dedup key is tx|band — a single shared entry overwritten by
-    // every new receiver. Reading these from `fresh` at popup-open time would
-    // show the last report's values on every marker, not this marker's own.
-    marker._spotKey     = spot._key;
-    marker._plotLat     = plotLat;
-    marker._plotLon     = plotLon;
-    marker._plotCall    = plotCall;   // remote-end callsign (unique per marker)
-    marker._nearCall    = nearCall;   // near-end callsign
-    marker._nearIsTX    = nearDX;     // true = user is near the TX end
-    marker._nearLoc     = nearDX ? (spot.locator_tx||'') : (spot.locator_rx||'');
-    marker._remoteLoc   = nearDX ? (spot.locator_rx||'') : (spot.locator_tx||'');
-    marker._snr         = spot.snr;   // SNR at the moment this marker was created
-    marker._ts          = spot._ts;   // first-reception wall-clock (for age/expiry)
-    marker._txTime      = spot._txTime;
+    // because the dedup key is tx|band — a shared entry overwritten by every
+    // new receiver. Reading these from `fresh` at popup-open time would show
+    // the last report's values on every marker, not this marker's own.
+    //
+    // _layerKey is per-marker unique (tx|band|remoteCall) so spotLayers tracks
+    // every individual marker. Without this, markers for the same TX+band would
+    // overwrite each other in the Map, orphaning earlier markers with no eviction path.
+    marker._layerKey  = layerKey;
+    marker._spotKey   = spot._key;
+    marker._plotLat   = plotLat;
+    marker._plotLon   = plotLon;
+    marker._plotCall  = plotCall;
+    marker._nearCall  = nearCall;
+    marker._nearIsTX  = nearDX;
+    marker._nearLoc   = nearDX ? (spot.locator_tx||'') : (spot.locator_rx||'');
+    marker._remoteLoc = nearDX ? (spot.locator_rx||'') : (spot.locator_tx||'');
+    marker._snr       = spot.snr;
+    marker._ts        = spot._ts;
+    marker._txTime    = spot._txTime;
 
-    // Build popup HTML — band/freq/mode come from `fresh` (shared, fine for those),
-    // all per-reception fields come from the marker's own snapshot.
+    // Build popup — band/freq/mode from `fresh` (shared TX props, fine);
+    // all per-reception fields from the marker's own snapshot.
     function buildSpotPopup(){
       const fresh  = LIVE.pskSpots.find(function(s){ return s._key === marker._spotKey; }) || spot;
       const nowSec = Date.now() / 1000;
@@ -6066,8 +6114,25 @@ function drawSpotMarkers(){
     }
 
     marker.bindPopup(buildSpotPopup());
-    // Refresh content with live data every time the popup is opened
+    // On popup open: if the spot is >= 15 min old, close it immediately and
+    // self-evict the marker+arc. This is a last-resort guard for the case
+    // where all timer-based eviction paths were delayed (e.g. background tab).
     marker.on('popupopen', function(){
+      var ageNow = marker._txTime ? Math.max(0, Date.now()/1000 - marker._txTime) : Infinity;
+      if(ageNow >= SPOT_TTL_MS / 1000){
+        // Capture layerKey and line now, in this closure scope, before the
+        // setTimeout fires — do not look them up via spotLayers later because
+        // the entry may already have been deleted by a concurrent eviction.
+        var _lk  = marker._layerKey;
+        var _line = line;
+        setTimeout(function(){
+          try{ map.closePopup(); }catch(ex){}
+          try{ map.removeLayer(marker); }catch(ex){}
+          try{ map.removeLayer(_line);  }catch(ex){}
+          LIVE.spotLayers.delete(_lk);
+        }, 0);
+        return;
+      }
       marker.getPopup().setContent(buildSpotPopup());
     });
 
@@ -6084,10 +6149,11 @@ function drawSpotMarkers(){
       line.addTo(map);
     }
 
-    LIVE.spotLayers.set(spot._key, {
+    LIVE.spotLayers.set(layerKey, {
       marker, line,
-      expiresAt: now + Math.max(0, SPOT_TTL_MS - spot.age * 1000),
+      expiresAt: spot._txTime * 1000 + SPOT_TTL_MS,
       band: spot.band,
+      spotKey: spot._key,
       onMap: visible
     });
   });
@@ -6126,6 +6192,15 @@ function setSpotRange(km){
   renderSpotList(LIVE.pskSpots, 'spotList', 'spotsCount', 'psk-badge', LIVE.spotBandFilter);
 }
 
+function setSpotTTL(minutes){
+  SPOT_TTL_MS = minutes * 60 * 1000;
+  var lbl = document.getElementById('spotTTLVal');
+  if(lbl) lbl.textContent = minutes + ' min';
+  // Also tighten the incoming message drop threshold to match
+  // (spots older than the TTL won't be added to the buffer at all)
+  drawSpotMarkers();
+}
+
 function savePskCall(val){
   try{ localStorage.setItem('pskCall', val.toUpperCase()); } catch(e){}
 }
@@ -6160,6 +6235,19 @@ function startLiveDataRefresh(){
     if(call) fetchPSKReporter();
   }, 1500);
 }
+
+// ── Evict stale PSK markers when tab becomes visible again ───
+// setInterval timers (tickRTC, _pskAgeTimer) are throttled or suspended
+// by the browser when the tab is hidden. This means a marker whose
+// expiresAt passed while the tab was in the background will not be
+// evicted until the user returns. The visibilitychange event fires
+// immediately and unconditionally when the tab becomes visible, regardless
+// of timer state — making it the only reliable place to force eviction.
+document.addEventListener('visibilitychange', function(){
+  if(!document.hidden && LIVE.spotLayers && LIVE.spotLayers.size > 0){
+    drawSpotMarkers();
+  }
+});
 
 // ── Kick off live data on page load ──────────────────────────
 // Called from init section below
