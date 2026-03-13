@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.090 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.093 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
@@ -298,8 +298,8 @@ option{background:#0b1820;}
 
     <!-- LOCATION -->
     <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ TX Location <span class="arr">▾</span></div>
-      <div class="sec-body">
+      <div class="sec-hdr collapsed" onclick="toggleSec(this)">◈ TX Location <span class="arr">▾</span></div>
+      <div class="sec-body hidden">
         <label>Search place / city</label>
         <div class="row2b">
           <input type="text" id="locSearch" placeholder="e.g. Kumasi, Lomé, Lagos…"/>
@@ -322,8 +322,8 @@ option{background:#0b1820;}
 
     <!-- BAND -->
     <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Band <span class="arr">▾</span></div>
-      <div class="sec-body">
+      <div class="sec-hdr collapsed" onclick="toggleSec(this)">◈ Band <span class="arr">▾</span></div>
+      <div class="sec-body hidden">
         <div class="band-grid" id="bandGrid"></div>
         <div class="band-info" id="bandInfo"></div>
       </div>
@@ -331,8 +331,8 @@ option{background:#0b1820;}
 
     <!-- POWER -->
     <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Max Power <span class="arr">▾</span></div>
-      <div class="sec-body">
+      <div class="sec-hdr collapsed" onclick="toggleSec(this)">◈ Max Power <span class="arr">▾</span></div>
+      <div class="sec-body hidden">
         <div class="pwr-row">
           <div>
             <div class="pwr-big" id="pwrBig">100</div>
@@ -348,8 +348,8 @@ option{background:#0b1820;}
 
     <!-- CONDITIONS + RTC -->
     <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Ionospheric Conditions &amp; Time <span class="arr">▾</span></div>
-      <div class="sec-body">
+      <div class="sec-hdr collapsed" onclick="toggleSec(this)">◈ Ionospheric Conditions &amp; Time <span class="arr">▾</span></div>
+      <div class="sec-body hidden">
 
         <!-- Real-Time Clock -->
         <div class="rtc-block">
@@ -389,15 +389,26 @@ option{background:#0b1820;}
           <button class="btn"    id="btnNight" onclick="setAutoTime(false);setTime('night')">☾ FORCE NIGHT</button>
         </div>
 
-        <div class="cond-list" id="condList"></div>
-        <div class="cond-hint" id="condHint"></div>
+        <!-- Compact condition picker — shows selection only; expands on click -->
+        <div id="condPicker" style="position:relative;margin-top:4px;">
+          <div id="condSelected" onclick="toggleCondPicker()" style="display:flex;align-items:center;gap:9px;background:var(--inp);border:1px solid var(--border2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.68rem;padding:6px 9px;cursor:pointer;user-select:none;transition:border-color .15s;">
+            <span id="condSelDot" class="cdot"></span>
+            <span id="condSelLabel" style="font-weight:600;"></span>
+            <span id="condSelDesc" class="cond-desc"></span>
+            <span style="margin-left:auto;font-size:.6rem;color:var(--dim);" id="condPickerArr">&#9660;</span>
+          </div>
+          <div id="condDropdown" style="display:none;position:absolute;left:0;right:0;z-index:200;background:var(--sb);border:1px solid var(--border2);border-top:none;max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
+            <div id="condList" style="display:flex;flex-direction:column;"></div>
+          </div>
+        </div>
+        <div class="cond-hint" id="condHint" style="display:none;margin-top:6px;"></div>
       </div>
     </div>
 
     <!-- SOLAR ACTIVITY & SEASON -->
     <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Solar Activity &amp; Season <span class="arr">▾</span></div>
-      <div class="sec-body">
+      <div class="sec-hdr collapsed" onclick="toggleSec(this)">◈ Solar Activity &amp; Season <span class="arr">▾</span></div>
+      <div class="sec-body hidden">
 
         <!-- SFI -->
         <label>Solar Flux Index (SFI / F10.7)</label>
@@ -436,8 +447,8 @@ option{background:#0b1820;}
 
     <!-- LIVE DATA -->
     <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Live Solar &amp; Spot Data <span class="arr">▾</span></div>
-      <div class="sec-body">
+      <div class="sec-hdr collapsed" onclick="toggleSec(this)">◈ Live Solar &amp; Spot Data <span class="arr">▾</span></div>
+      <div class="sec-body hidden">
         <!-- Solar / Space Weather block -->
         <div class="rtd-block">
           <div class="rtd-title">
@@ -464,7 +475,7 @@ option{background:#0b1820;}
           <div class="kp-labels"><span>K0</span><span>K1</span><span>K2</span><span>K3</span><span>K4</span><span>K5</span><span>K6</span><span>K7</span><span>K8+</span></div>
           <div id="live-solar-badge" class="live-badge stale">Waiting for data…</div>
           <button class="apply-sfi-btn" id="applySfiBtn" onclick="applyLiveSFI()" disabled>⚡ Apply Live SFI to Model</button>
-          <div style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);margin-top:4px;" id="live-solar-note"></div>
+          <div id="live-solar-note" style="display:none;"></div>
         </div>
 
         <!-- PSKReporter spots block -->
@@ -483,25 +494,15 @@ option{background:#0b1820;}
               <input type="text" id="pskCallIn" placeholder="e.g. 9G5AR" style="font-size:.75rem;" oninput="savePskCall(this.value)"/>
               <button class="btn btn-sm hi" onclick="fetchPSKReporter()">GO</button>
             </div>
-            <div style="display:flex;gap:4px;margin-top:5px;">
-              <button class="sf-btn on" id="pskDir-both" onclick="setPskDirection('both')">TX+RX</button>
-              <button class="sf-btn"    id="pskDir-tx"   onclick="setPskDirection('tx')">TX only</button>
-              <button class="sf-btn"    id="pskDir-rx"   onclick="setPskDirection('rx')">RX only</button>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;">
-              <span style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);display:flex;align-items:center;margin-right:2px;">Filter:</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">
+              <span style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);">Filter band:</span>
               <button class="sf-btn on" id="sf-all" onclick="setSpotBandFilter('all')">ALL</button>
               <button class="sf-btn" id="sf-160" onclick="setSpotBandFilter('160m')">160m</button>
-              <button class="sf-btn" id="sf-80"  onclick="setSpotBandFilter('80m')">80m</button>
-              <button class="sf-btn" id="sf-60"  onclick="setSpotBandFilter('60m')">60m</button>
-              <button class="sf-btn" id="sf-40"  onclick="setSpotBandFilter('40m')">40m</button>
-              <button class="sf-btn" id="sf-30"  onclick="setSpotBandFilter('30m')">30m</button>
-              <button class="sf-btn" id="sf-20"  onclick="setSpotBandFilter('20m')">20m</button>
-              <button class="sf-btn" id="sf-17"  onclick="setSpotBandFilter('17m')">17m</button>
-              <button class="sf-btn" id="sf-15"  onclick="setSpotBandFilter('15m')">15m</button>
-              <button class="sf-btn" id="sf-12"  onclick="setSpotBandFilter('12m')">12m</button>
-              <button class="sf-btn" id="sf-10"  onclick="setSpotBandFilter('10m')">10m</button>
-              <button class="sf-btn" id="sf-6"   onclick="setSpotBandFilter('6m')">6m</button>
+              <button class="sf-btn" id="sf-80" onclick="setSpotBandFilter('80m')">80m</button>
+              <button class="sf-btn" id="sf-40" onclick="setSpotBandFilter('40m')">40m</button>
+              <button class="sf-btn" id="sf-20" onclick="setSpotBandFilter('20m')">20m</button>
+              <button class="sf-btn" id="sf-15" onclick="setSpotBandFilter('15m')">15m</button>
+              <button class="sf-btn" id="sf-10" onclick="setSpotBandFilter('10m')">10m</button>
             </div>
             <div style="margin-top:7px;">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
@@ -520,16 +521,14 @@ option{background:#0b1820;}
         </div>
 
 
-        <div style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);line-height:1.55;margin-top:2px;">
-          Live SFI auto-applies to model when fresh · K-index maps to condition setting · Spot markers show real contacts vs predicted coverage · PSKReporter spot window configurable
-        </div>
+
       </div>
     </div>
 
     <!-- ANTENNA -->
     <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Antenna <span class="arr">▾</span></div>
-      <div class="sec-body">
+      <div class="sec-hdr collapsed" onclick="toggleSec(this)">◈ Antenna <span class="arr">▾</span></div>
+      <div class="sec-body hidden">
         <label>Antenna Type</label>
         <select id="antSel" onchange="setAnt(this.value)"></select>
         <div class="ant-info" id="antInfo"></div>
@@ -546,8 +545,8 @@ option{background:#0b1820;}
 
     <!-- COVERAGE SUMMARY -->
     <div class="sec">
-      <div class="sec-hdr" onclick="toggleSec(this)">◈ Coverage Summary <span class="arr">▾</span></div>
-      <div class="sec-body">
+      <div class="sec-hdr collapsed" onclick="toggleSec(this)">◈ Coverage Summary <span class="arr">▾</span></div>
+      <div class="sec-body hidden">
         <div class="cov-list" id="covList"></div>
       </div>
     </div>
@@ -795,7 +794,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.090';
+const APP_VERSION = 'v1.093';
 const APP_DATE    = '2026-03-12';
 
 // PSK constants — declared here as var (not const) so they are hoisted and
@@ -820,23 +819,21 @@ const LIVE = {
 const BAND_COLORS = {
   '160m':'#ff6b9d','80m':'#ff9f43','60m':'#ffd93d','40m':'#6bcb77',
   '30m':'#00ffc3','20m':'#00e5ff','17m':'#44aaff','15m':'#aa88ff',
-  '12m':'#ff88ff','10m':'#ff7675','6m':'#ffb347','2m':'#47ffd4',
+  '12m':'#ff88ff','10m':'#ff7675',
 };
 
 function bandFromFreq(freqKHz){
   const f = parseFloat(freqKHz);
-  if(f >= 1800   && f < 2000)   return '160m';
-  if(f >= 3500   && f < 4000)   return '80m';
-  if(f >= 5300   && f < 5410)   return '60m';
-  if(f >= 7000   && f < 7300)   return '40m';
-  if(f >= 10100  && f < 10150)  return '30m';
-  if(f >= 14000  && f < 14350)  return '20m';
-  if(f >= 18068  && f < 18168)  return '17m';
-  if(f >= 21000  && f < 21450)  return '15m';
-  if(f >= 24890  && f < 24990)  return '12m';
-  if(f >= 28000  && f < 29700)  return '10m';
-  if(f >= 50000  && f < 54000)  return '6m';
-  if(f >= 144000 && f < 148000) return '2m';
+  if(f >= 1800 && f < 2000)   return '160m';
+  if(f >= 3500 && f < 4000)   return '80m';
+  if(f >= 5300 && f < 5410)   return '60m';
+  if(f >= 7000 && f < 7300)   return '40m';
+  if(f >= 10100 && f < 10150) return '30m';
+  if(f >= 14000 && f < 14350) return '20m';
+  if(f >= 18068 && f < 18168) return '17m';
+  if(f >= 21000 && f < 21450) return '15m';
+  if(f >= 24890 && f < 24990) return '12m';
+  if(f >= 28000 && f < 29700) return '10m';
   return null;
 }
 
@@ -1242,7 +1239,7 @@ const MAX_KM = 18000;
 
 const S = {
   lat:5.561, lon:-0.209, locName:'Accra, Ghana',
-  band:'10m', power:2, cond:'average', time:'day',
+  band:'20m', power:25, cond:'average', time:'day',
   ant:'inverted_v', bearing:0, clickMode:false,
   autoTime: true,   // when true, time is derived from RTC + TX longitude
   sfi: 150,         // Solar Flux Index (SFI/F10.7). Range 50–300. Default 150 ≈ solar cycle 25 peak.
@@ -4057,17 +4054,69 @@ function updateCovSummary(){
 
 
 function buildConds(){
+  // Update selected-row display
+  const sel = CONDS.find(x=>x.id===S.cond);
+  if(sel){
+    const dot = document.getElementById('condSelDot');
+    const lbl = document.getElementById('condSelLabel');
+    const dsc = document.getElementById('condSelDesc');
+    if(dot){ dot.style.background=sel.color; }
+    if(lbl){ lbl.textContent=sel.label; lbl.style.color=sel.color; }
+    if(dsc){ dsc.textContent=sel.desc; }
+  }
+  // Build dropdown items
   const c=document.getElementById('condList');
   c.innerHTML='';
   CONDS.forEach(x=>{
     const d=document.createElement('div');
     d.className='cond-btn'+(x.id===S.cond?' on':'');
-    d.innerHTML=`<span class="cdot" style="background:${x.color}"></span>
-      <span>${x.label}</span><span class="cond-desc">${x.desc}</span>`;
-    d.onclick=()=>{S.cond=x.id;buildConds();updateCondHint();rebuildLayers();};
+    d.style.cssText='display:flex;align-items:center;gap:9px;background:var(--inp);border:none;border-bottom:1px solid var(--border);color:'+(x.id===S.cond?x.color:'var(--text2)')+';font-family:\'Share Tech Mono\',monospace;font-size:.68rem;padding:6px 9px;cursor:pointer;transition:all .15s;';
+    d.innerHTML=`<span class="cdot" style="background:${x.color}"></span><span style="font-weight:600">${x.label}</span><span class="cond-desc">${x.desc}</span>`;
+    d.onmouseenter=()=>{ if(x.id!==S.cond) d.style.background='var(--sbh)'; };
+    d.onmouseleave=()=>{ if(x.id!==S.cond) d.style.background='var(--inp)'; };
+    d.onclick=()=>{
+      S.cond=x.id;
+      closeCondPicker();
+      buildConds();
+      updateCondHint();
+      rebuildLayers();
+    };
     c.appendChild(d);
   });
   updateCondHint();
+}
+
+function toggleCondPicker(){
+  const dd = document.getElementById('condDropdown');
+  const arr = document.getElementById('condPickerArr');
+  const hint = document.getElementById('condHint');
+  const sel = document.getElementById('condSelected');
+  const open = dd.style.display !== 'none';
+  if(open){
+    dd.style.display='none';
+    if(arr) arr.textContent='&#9660;';
+    if(hint) hint.style.display='none';
+    if(sel) sel.style.borderColor='var(--border2)';
+  } else {
+    dd.style.display='block';
+    if(arr) arr.innerHTML='&#9650;';
+    if(hint) hint.style.display='block';
+    if(sel) sel.style.borderColor='var(--accent2)';
+    // Scroll active item into view
+    const active = dd.querySelector('.cond-btn.on');
+    if(active) setTimeout(()=>active.scrollIntoView({block:'nearest'}),0);
+  }
+}
+
+function closeCondPicker(){
+  const dd = document.getElementById('condDropdown');
+  const arr = document.getElementById('condPickerArr');
+  const hint = document.getElementById('condHint');
+  const sel = document.getElementById('condSelected');
+  if(dd) dd.style.display='none';
+  if(arr) arr.innerHTML='&#9660;';
+  if(hint) hint.style.display='none';
+  if(sel) sel.style.borderColor='var(--border2)';
 }
 
 function updateCondHint(){
@@ -4085,6 +4134,14 @@ function updateCondHint(){
   if(document.getElementById('sfiHint'))   updateSFIHint();
   if(document.getElementById('seasonHint')) updateSeasonHint();
 }
+
+// Close condition picker when clicking outside it
+document.addEventListener('click', function(e){
+  const picker = document.getElementById('condPicker');
+  if(picker && !picker.contains(e.target)){
+    closeCondPicker();
+  }
+});
 
 function buildAnts(){
   const s=document.getElementById('antSel');
@@ -5563,7 +5620,6 @@ function autoSyncCondFromKp(kp){
 var _pskMqttClient    = null;
 var _pskMqttBuffer    = [];
 var _pskActiveCall    = '';       // callsign the live session is subscribed to
-var _pskDirection     = 'both';   // 'tx' | 'rx' | 'both'
 var _pskReconnTimer   = null;     // pending reconnect setTimeout handle
 var _pskAgeTimer      = null;     // periodic age-refresh interval handle
 var _pskConnDeadline  = null;     // initial connect timeout handle
@@ -5644,19 +5700,12 @@ function _pskConnect(call){
     var b2 = document.getElementById('pskRefreshBtn');
     if(b2){ b2.textContent='\u21bb'; b2.disabled=false; }
 
-    var topics = [];
-    if(_pskDirection === 'tx'  || _pskDirection === 'both')
-      topics.push('pskr/filter/v2/+/+/' + call + '/#');
-    if(_pskDirection === 'rx'  || _pskDirection === 'both')
-      topics.push('pskr/filter/v2/+/+/+/' + call + '/#');
-
     client.subscribe(
-      topics,
+      ['pskr/filter/v2/+/+/'+call+'/#', 'pskr/filter/v2/+/+/+/'+call+'/#'],
       {qos:0},
       function(err){
         if(err){ console.warn('[PSK] subscribe error:', err); }
-        var dirLabel = _pskDirection === 'tx' ? ' · TX▶' : (_pskDirection === 'rx' ? ' · ▶RX' : '');
-        _pskStat('', '● LIVE · ' + call + dirLabel + ' · streaming…');
+        _pskStat('', '\u25cf LIVE \u00b7 ' + call + ' \u00b7 streaming\u2026');
       }
     );
 
@@ -5728,16 +5777,6 @@ function _pskConnect(call){
 }
 
 // ── Public entry point (called by button and auto-start) ─────
-function setPskDirection(dir){
-  _pskDirection = dir;
-  ['both','tx','rx'].forEach(function(d){
-    var b = document.getElementById('pskDir-' + d);
-    if(b) b.className = 'sf-btn' + (d === dir ? ' on' : '');
-  });
-  // Reconnect immediately to apply new topic subscriptions
-  if(_pskActiveCall){ _pskMqttBuffer = []; _pskConnect(_pskActiveCall); }
-}
-
 function fetchPSKReporter(){
   var call = (document.getElementById('pskCallIn')?.value||'').trim().toUpperCase();
   if(!call){
@@ -6239,7 +6278,7 @@ function savePskCall(val){
 function setSpotBandFilter(band){
   LIVE.spotBandFilter = band;
   document.querySelectorAll('[id^="sf-"]').forEach(b => b.classList.remove('on'));
-  const el = document.getElementById('sf-' + (band === 'all' ? 'all' : band.replace(/[mc].*/, '')));
+  const el = document.getElementById('sf-' + (band === 'all' ? 'all' : band.replace('m','')));
   if(el) el.classList.add('on');
   renderSpotList(LIVE.pskSpots, 'spotList', 'spotsCount', 'psk-badge', band);
   drawSpotMarkers(); // show/hide existing layers by band in-place
@@ -6260,9 +6299,9 @@ function startLiveDataRefresh(){
   // PSKReporter: connect immediately on load if callsign is saved.
   // The persistent MQTT client handles all reconnects internally —
   // no polling interval needed here.
+  // Auto-connect on startup — always attempt; fetchPSKReporter() handles missing callsign gracefully
   setTimeout(function(){
-    var call = (document.getElementById('pskCallIn')?.value||'').trim();
-    if(call) fetchPSKReporter();
+    fetchPSKReporter();
   }, 1500);
 }
 
