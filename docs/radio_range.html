@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.065 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.084 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
@@ -548,6 +548,8 @@ option{background:#0b1820;}
       <span style="color:var(--accent);opacity:.7">╌╌</span> ZONE 3c · 2-hop DX &nbsp;
       <span style="color:var(--accent);opacity:.5">╌ ╌</span> ZONE 3d · 3-hop &nbsp;
       <span style="color:var(--accent);opacity:.4">·  ·</span> ZONE 3e · 4-hop<br/>
+      <span style="color:#44ddff;font-weight:bold">╌ ╌</span> ZONE Es · Sporadic-E overlay (statistical, 400–2200 km) &nbsp;
+      <span style="color:#44ddff;opacity:.6">·  ·</span> ZONE Es-2h · 2-hop Es (2200–4400 km)<br/>
       Zones are mutually exclusive · skipInner fixed (geometry) · skipOuter scales √P<br/>
       Sources: ITU-R P.368 (GW conductivity) · P.533 (skywave) · P.526 (diffraction) · ARRL Handbook<br/>
       ⚠ Average conditions · actual ionosphere varies with solar cycle, season, time
@@ -774,7 +776,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.065';
+const APP_VERSION = 'v1.084';
 const APP_DATE    = '2026-03-12';
 
 // ── Live state (declared at top-level to be available to all functions) ──
@@ -786,7 +788,7 @@ const LIVE = {
   spotsVisible: true,
   solarFetchInterval: null,
   // Persistent spot layers: key → {marker, line, expiresAt, band, onMap}
-  // Spots stay on the map for 3 minutes after last seen, then expire.
+  // Spots stay on the map for 15 minutes from TX time (matches PSKReporter window).
   spotLayers: new Map(),
 };
 
@@ -1693,7 +1695,7 @@ function sfiToR12(sfi){
   return (lo + hi) / 2;
 }
 
-function sfiScaleFactor(isDaytime){
+function sfiScaleFactor(isDaytime, lat){
   // Returns foF2 multiplier relative to R12=100 baseline profiles.
   // Day:   scale = 0.59 + 0.41×(R12/100)    [CCIR two-level model, mid-lat anchor]
   // Night: night ionosphere is partially decoupled from SFI (recombination limits peak).
@@ -1710,15 +1712,26 @@ function sfiScaleFactor(isDaytime){
   //   Calibration: R12=200 → linear gives ×1.41; log-saturated gives ×1.30.
   //   Saturation ceiling: scale_sat = 0.59 + 0.41×min(R12,130)/100 + 0.065×ln(1+max(R12-130,0)/70)
   //   This gives ×1.00 at R12=100, ×1.21 at R12=160, ×1.28 at R12=200 (vs ×1.25/×1.41 pure linear).
+  //
+  // FIX 4 — Equatorial African sector correction (+7% day, +4% night):
+  //   CCIR/IRI profiles are anchored to mid-latitude reference stations (Rome, Boulder).
+  //   African equatorial ionosondes (Ouagadougou, Ibadan, Dakar) show systematically
+  //   higher foF2 due to equatorial electrojet enhancement and fountain-effect TEC.
+  //   Sources: Adebesin et al. Space Weather 2021; Obrou et al. IJAR 2022;
+  //            Bilitza IRI-2016 African sector validation (2017).
+  //   lat parameter is optional; if omitted falls back to S.lat for backward compat.
+  const useLat = (lat !== undefined) ? lat : S.lat;
+  const eqBoost = (latZone(useLat) === 'equatorial') ? (isDaytime ? 1.07 : 1.04) : 1.0;
+
   const r12 = Math.min(200, Math.max(0, sfiToR12(S.sfi)));
   if(isDaytime){
     const linearPart = 0.59 + 0.41 * Math.min(r12, 130) / 100;
     const logSat     = r12 > 130 ? 0.065 * Math.log(1 + (r12 - 130) / 70) : 0;
-    return linearPart + logSat;
+    return (linearPart + logSat) * eqBoost;
   } else {
     const linearPart = 0.72 + 0.28 * Math.min(r12, 130) / 100;
     const logSat     = r12 > 130 ? 0.044 * Math.log(1 + (r12 - 130) / 70) : 0;
-    return linearPart + logSat;
+    return (linearPart + logSat) * eqBoost;
   }
 }
 
@@ -1806,7 +1819,7 @@ function seasonalScale(lat, isDaytime){
 // ── Combined foF2 scale (SFI × seasonal) applied to profile values ─
 // Used wherever foF2 is read from the profile tables.
 function scaledFoF2(rawProfileValue, isDaytime, lat){
-  const sf = sfiScaleFactor(isDaytime) * seasonalScale(lat, isDaytime);
+  const sf = sfiScaleFactor(isDaytime, lat) * seasonalScale(lat, isDaytime);
   return rawProfileValue * sf;
 }
 
@@ -1849,6 +1862,43 @@ function localSolarTimeAt(lonDeg){
   return ((utcH + lonDeg/15) + 24) % 24;
 }
 
+// ── Equatorial Ionization Anomaly (EIA / Appleton anomaly) foF2 boost ──
+// Physical mechanism (Rishbeth 1998; Kelley 2009; Namba & Maeda 1939):
+//   The equatorial electrojet (EEJ) drives upward E×B plasma drift at the
+//   magnetic equator. Plasma flows up over the equator and diffuses down along
+//   field lines, creating two high-density "crests" at ±13–18° magnetic lat
+//   (≈±11–16° geographic in the African sector). These crests elevate foF2
+//   by 2–4 MHz above the smooth equatorial profile — 30–40% daytime uplift.
+//
+// Magnetic-to-geographic offset (African sector):
+//   African magnetic equator runs ~3–5° south of the geographic equator.
+//   Northern crest: ≈+12–16° geographic lat (centered ~+14°N).
+//   Southern crest: ≈−12–16° geographic lat (centered ~−14°S).
+//   Both crests have a Gaussian-like spatial profile, half-width ~6–8°.
+//
+// Daytime only: EEJ-driven drift ceases after sunset; PRE (Pre-Reversal Enhancement)
+//   creates a brief secondary boost at ~18–19 LT; nighttime EIA fades by 22 LT.
+//
+// Peak boost calibrated at 3.0 MHz day, 0.8 MHz during PRE window (17.5–19.5 LT).
+// Sources: Fejer et al. JGR 1991; Ouattara & Amory-Mazaudier 2012; Bilitza 2017 IRI.
+function eiaBoost(lat, lt){
+  const absLat = Math.abs(lat);
+  if(absLat < 2 || absLat > 28) return 0;  // outside crest region
+  // Gaussian centered on crest at ~14°, half-width σ≈6°
+  const x = (absLat - 14) / 6;
+  const spatialFactor = Math.exp(-x * x);
+  if(spatialFactor < 0.05) return 0;
+  // Temporal: peaks from 10–17 LT, with PRE bump at 17.5–19.5 LT; fades by 22 LT
+  if(lt === undefined) lt = txLocalTime();
+  let timeFactor = 0;
+  if(lt >= 9 && lt < 17)       timeFactor = Math.min(1.0, (lt - 9) / 2.0);
+  else if(lt >= 17 && lt < 17.5) timeFactor = 1.0 - (lt - 17) / 0.5 * 0.3;  // slight dip
+  else if(lt >= 17.5 && lt < 19.5) timeFactor = 0.70 + 0.25 * Math.sin((lt - 17.5) / 2.0 * Math.PI); // PRE
+  else if(lt >= 19.5 && lt < 22) timeFactor = 0.70 * Math.max(0, 1 - (lt - 19.5) / 2.5);
+  if(timeFactor <= 0) return 0;
+  return 3.0 * spatialFactor * timeFactor;
+}
+
 // foF2 at an arbitrary lat/lon and optional override LT
 // If ltOverride is provided, use it; otherwise derive from longitude
 function foF2At(lat, lon, ltOverride){
@@ -1856,7 +1906,9 @@ function foF2At(lat, lon, ltOverride){
   const st = solarTimes(lat);
   const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
   const raw = interpProfile(foF2Profile(lat), lt);
-  return scaledFoF2(raw, isDay, lat);
+  const base = scaledFoF2(raw, isDay, lat);
+  // Add EIA crest boost (daytime/PRE only — eiaBoost returns 0 at night)
+  return base + eiaBoost(lat, lt);
 }
 
 // M(3000)F2 at an arbitrary lat/lon
@@ -1892,18 +1944,62 @@ function midpointIono(txLat, txLon, bearingDeg, skipDistKm){
 // Per-bearing skip outer: scales the base skipOuter by midpoint foF2 / TX foF2.
 // When the midpoint ionosphere is richer, more range; when poorer, less.
 // Capped at the geometric maximum and floored so it can't go below 20% of base.
+// Per-bearing skip outer — binary search for maximum viable range.
+//
+// FIX 1: The original code located the midpoint at a single "representative distance"
+// (the base skip outer scaled to 100W), then checked MUF there and either passed or
+// failed the entire bearing. This is wrong when the midpoint latitude changes the
+// ionospheric zone: a 5500 km northward path from Accra has its midpoint at ~27°N
+// (midlat, foF2≈7 MHz, MUF<28 MHz → bearing closed), but a 3000 km path on the
+// same bearing has its midpoint at ~18°N (equatorial, foF2≈10 MHz, MUF≥28 MHz → open).
+// The original code would return 0 for the entire northward bearing, hiding F2 DX
+// that real spots confirm exists.
+//
+// Fix: binary-search over candidate ranges [200 km, fullScaledDist] for the longest
+// range whose midpoint still satisfies MUF ≥ freqMHz. This finds the true ionospheric
+// boundary — the range at which the midpoint's ionosphere can no longer support the
+// band — rather than blindly testing only one distance.
+//
+// 8 bisection steps gives ±(fullDist/256) ≈ ±20 km precision — adequate for planning.
+//
+// Secondary effect: for bearings toward a richer ionosphere (e.g. toward the EIA crest
+// or the subsolar point), the full range is open at the true max, so the binary search
+// converges to the full scaled distance. The foF2 ratio scaling below then further
+// extends range toward those bearings, matching observed DX patterns.
 function bearingSkipOuter(txLat, txLon, bearingDeg, baseSkipOuterKm, freqMHz, skipGeomMax, power, condFactor, gLin){
   if(!baseSkipOuterKm) return null;
-  // Use a representative skip distance (the base at 100W) to locate the midpoint
-  const repDist = scaledIono(baseSkipOuterKm * gLin, 100, condFactor);
-  const mp = midpointIono(txLat, txLon, bearingDeg, Math.max(repDist, 200));
-  // MUF check at midpoint — if MUF < band_freq, this bearing is closed
-  if(mp.muf3000 < freqMHz) return 0;
-  // Scale factor: ratio of midpoint foF2 to TX foF2
-  const txF2 = currentFoF2();
-  const ratio = txF2 > 0.5 ? Math.max(0.2, Math.min(2.0, mp.foF2 / txF2)) : 1.0;
-  const scaled = scaledIono(baseSkipOuterKm * gLin * ratio, power, condFactor);
-  return Math.min(skipGeomMax, scaled);
+
+  const fullDist = Math.min(skipGeomMax, scaledIono(baseSkipOuterKm * gLin, power, condFactor));
+
+  // Quick check: if the midpoint at the minimum plausible skip distance already
+  // fails the MUF test, this bearing is truly closed — return 0 early.
+  const mpMin = midpointIono(txLat, txLon, bearingDeg, 200);
+  if(mpMin.muf3000 < freqMHz) return 0;
+
+  // Quick check: if the full distance midpoint passes, skip the binary search —
+  // the band is open all the way out. Apply foF2 ratio scaling and return.
+  const mpFull = midpointIono(txLat, txLon, bearingDeg, fullDist);
+  if(mpFull.muf3000 >= freqMHz){
+    const txF2  = currentFoF2();
+    const ratio = txF2 > 0.5 ? Math.max(0.2, Math.min(2.0, mpFull.foF2 / txF2)) : 1.0;
+    return Math.min(skipGeomMax, Math.round(fullDist * ratio));
+  }
+
+  // Binary search: find the longest range lo where MUF(midpoint) ≥ freqMHz.
+  let lo = 200, hi = fullDist;
+  for(let i = 0; i < 8; i++){
+    const mid = (lo + hi) / 2;
+    const mp  = midpointIono(txLat, txLon, bearingDeg, mid);
+    if(mp.muf3000 >= freqMHz) lo = mid; else hi = mid;
+  }
+
+  if(lo < 250) return 0;  // effectively closed
+
+  // Scale by midpoint foF2/TX foF2 ratio for the found max-viable range
+  const mpEdge = midpointIono(txLat, txLon, bearingDeg, lo);
+  const txF2   = currentFoF2();
+  const ratio  = txF2 > 0.5 ? Math.max(0.2, Math.min(2.0, mpEdge.foF2 / txF2)) : 1.0;
+  return Math.min(skipGeomMax, Math.round(lo * ratio));
 }
 
 // Per-bearing NVIS: midpoint must also support NVIS (foF2 > freq at midpoint)
@@ -2143,7 +2239,7 @@ function startRTC(){
 // MAP
 // ══════════════════════════════════════════════
 
-const map = L.map('map',{center:[S.lat,S.lon],zoom:5});
+const map = L.map('map',{center:[S.lat,S.lon],zoom:5,zoomSnap:1/3,zoomDelta:1/3});
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
   attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19
 }).addTo(map);
@@ -2717,6 +2813,96 @@ function currentFoE(lat, lt){
   return A * Math.pow(cosX, n);
 }
 
+// ══════════════════════════════════════════════════════════════════
+// SPORADIC-E (Es) STATISTICAL OVERLAY
+// ──────────────────────────────────────────────────────────────────
+// Sporadic-E is thin, highly ionized patches in the E-layer (~90–120 km)
+// that appear unpredictably but with strong climatological preferences.
+// Unlike F2 propagation, Es cannot be predicted for a specific moment —
+// but its statistical occurrence can be modelled by band, lat, and month.
+//
+// KEY PROPERTIES:
+//   • Single-hop geometry: 400–2200 km (E-layer at ~100 km altitude).
+//   • Two-hop Es: inner ~2200 km, outer ~4400 km (two sequential Es clouds).
+//   • Frequency ceiling (MUF_Es): typically 50–100 MHz; planning assumption ~50 MHz.
+//     → On 10m (28 MHz), 12m (24 MHz), 15m (21 MHz), 17m (18 MHz) Es routinely active.
+//     → On 20m (14 MHz), Es is the dominant mode in the 400–2200 km skip zone.
+//   • Es is the ONLY mechanism for reliable contact in the dead zone on 10–17m.
+//
+// CLIMATOLOGY (statistical monthly occurrence probability, 0–1):
+//   Equatorial (|lat|<20°):
+//     Moderate year-round, slight peaks at equinoxes (Mar–Apr, Sep–Oct).
+//     Weaker than mid-lat summer Es but more persistent.
+//     Source: Haldoupis et al. 2006 GPS RO study; Tsai et al. 2009.
+//   Mid-latitude (20–55°):
+//     Strong summer peak (May–Aug NH; Nov–Feb SH). 60–80% occurrence at peak.
+//     Winter occurrence: 10–20%.
+//     Source: Sporadic-E Handbook, VOACAP notes; WA5IYX Es database.
+//   High-latitude (>55°):
+//     Auroral-E dominates over classical Es. Not modelled here.
+//
+// RENDERED ZONE: Dashed cyan annulus. Inner edge = Es min hop (~400 km).
+// Outer edge = Es max single hop (~2200 km) when Es probable. Two-hop ring
+// shown at 2200–4400 km. Labelled "Z·Es" to distinguish from F2 zones.
+// ══════════════════════════════════════════════════════════════════
+
+// Monthly Es occurrence probability by latitude zone (0=Jan, 11=Dec).
+// Values represent the fraction of days when Es is usable on relevant HF bands.
+const ES_PROB = {
+  equatorial: [0.40, 0.42, 0.50, 0.55, 0.52, 0.45, 0.42, 0.42, 0.50, 0.55, 0.48, 0.40],
+  midlat:     [0.15, 0.18, 0.25, 0.35, 0.60, 0.75, 0.78, 0.70, 0.45, 0.28, 0.18, 0.14],
+  high:       [0.10, 0.10, 0.12, 0.15, 0.18, 0.20, 0.18, 0.15, 0.12, 0.10, 0.10, 0.10]
+};
+
+// Diurnal Es probability multiplier (peaks late morning and afternoon LT)
+function esDiurnalFactor(lt){
+  // Es peaks around 10–12 LT and again 14–16 LT, weak at night
+  // Source: Whitehead 1970; Haldoupis 2011 review
+  if(lt < 6 || lt > 22)  return 0.15;
+  if(lt >= 6  && lt < 9)  return 0.30 + (lt - 6) / 3 * 0.40;
+  if(lt >= 9  && lt < 12) return 0.70 + (lt - 9) / 3 * 0.30;
+  if(lt >= 12 && lt < 14) return 1.00;
+  if(lt >= 14 && lt < 17) return 0.90;
+  if(lt >= 17 && lt < 19) return 0.70;
+  if(lt >= 19 && lt < 22) return 0.40;
+  return 0.20;
+}
+
+// Compute Es statistical zone for a given band and current conditions.
+// Returns { prob, innerKm, outerKm, hop2OuterKm } or null if no Es expected.
+// "prob" is the estimated occurrence probability (shown in tooltip).
+// Zones are only rendered when prob > threshold (currently 0.25).
+const ES_THRESHOLD = 0.25;  // minimum probability to show Es overlay
+const ES_FREQ_MAX  = 50;    // Es MUF planning ceiling (MHz) — conservative
+
+function esZone(band){
+  const b = BANDS[band];
+  if(!b) return null;
+  // Es only relevant up to ~50 MHz; below ~5 MHz, skip zone is too short for Es to fill
+  if(b.freqMHz > ES_FREQ_MAX || b.freqMHz < 5) return null;
+
+  const lt  = S.autoTime ? txLocalTime() : (S.time === 'day' ? 12.0 : 1.0);
+  const mo  = currentMonth();
+  const zone = latZone(S.lat);
+  if(zone === 'high') return null;  // auroral-E not modelled
+
+  // Southern hemisphere: flip season
+  const moAdj = S.lat < 0 ? (mo + 6) % 12 : mo;
+  const monthProb  = ES_PROB[zone][moAdj];
+  const diurnalMod = esDiurnalFactor(lt);
+  const prob = monthProb * diurnalMod;
+
+  if(prob < ES_THRESHOLD) return null;
+
+  // Es inner/outer geometry (fixed by E-layer altitude, independent of power)
+  const innerKm    = 400;
+  const outerKm    = 2200;
+  const hop2OuterKm = 4400;
+
+  return { prob, innerKm, outerKm, hop2OuterKm,
+           note: `Es prob ~${Math.round(prob*100)}% · ${zone} ${new Date(Date.UTC(2000,mo,15)).toLocaleString('en',{month:'short'})} · lt ${lt.toFixed(1)}h` };
+}
+
 // ── Live propagation state derived from foF2 + D-layer ────────────
 // Returns an object describing all active zones for a given band right now.
 // Uses latitude-zone-aware profiles for foF2, D-layer, and M(3000)F2.
@@ -2966,7 +3152,8 @@ function liveZones(band){
            hop3OuterBase, hop3Note,
            hop4OuterBase, hop4Note,
            foF2, dAbs, isDaytime, lt, t, muf3000, m3000, skipGeomKm,
-           lh_auroral, eScreenLoss };
+           lh_auroral, eScreenLoss,
+           es: esZone(band) };
 }
 
 // Best single range for autoFit — includes Zone 3c/3d/3e (2/3/4-hop) when available
@@ -3353,6 +3540,50 @@ function rebuildLayers(){
         {className:'ltt',direction:'top'});
       addLayer(deadLayer);
       addLabel(Math.round((deadInner+deadOuter)/2), '#555577', 'Z3a·DEAD', 225);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ZONE Es — SPORADIC-E STATISTICAL OVERLAY
+  // Rendered as dashed cyan/teal annulus over the dead zone when Es
+  // occurrence probability exceeds the threshold for current band/month/LT.
+  // Geometry is fixed (E-layer altitude determines hop distance, not power).
+  // Label and opacity scale with probability.
+  // ═══════════════════════════════════════════════════════════════════
+  if(z.es){
+    const es     = z.es;
+    const esCol  = '#44ddff';
+    const esProb = es.prob;
+    const esOpacity = 0.10 + esProb * 0.20;  // 0.10 low prob → 0.30 high prob
+    // Single-hop Es annulus (400–2200 km)
+    const esDeadInner = Math.max(gwMaxKm, maxNvisKm, es.innerKm);
+    const es1Layer = L.polygon(
+      annulusPts(S.lat, S.lon, esDeadInner, es.outerKm),
+      { color: esCol, fillColor: esCol,
+        weight: 1.5, opacity: 0.55 + esProb * 0.25,
+        fillOpacity: esOpacity, dashArray: '4 3', smoothFactor: 1 }
+    );
+    es1Layer.bindTooltip(
+      `ZONE Es · Sporadic-E · 1-hop · ${Math.round(esDeadInner)}–${es.outerKm} km\n`+
+      `${es.note}\nEs is statistical — actual occurrence unpredictable\n${phaseStr}`,
+      {className:'ltt', direction:'top'});
+    addLayer(es1Layer);
+    addLabel(es.outerKm, esCol, 'Z·Es', 180);
+
+    // Two-hop Es annulus (2200–4400 km) — only if prob is moderate+
+    if(esProb > 0.35 && es.hop2OuterKm > es.outerKm + 100){
+      const es2Layer = L.polygon(
+        annulusPts(S.lat, S.lon, es.outerKm, es.hop2OuterKm),
+        { color: esCol, fillColor: esCol,
+          weight: 1.0, opacity: 0.35,
+          fillOpacity: esOpacity * 0.5, dashArray: '3 5', smoothFactor: 1 }
+      );
+      es2Layer.bindTooltip(
+        `ZONE Es · Sporadic-E · 2-hop · ${es.outerKm}–${es.hop2OuterKm} km\n`+
+        `${es.note}\nTwo sequential Es clouds required\n${phaseStr}`,
+        {className:'ltt', direction:'top'});
+      addLayer(es2Layer);
+      addLabel(es.hop2OuterKm, esCol, 'Z·Es-2h', 190);
     }
   }
 
@@ -3903,7 +4134,7 @@ function updateSFIHint(){
   const lt  = S.autoTime ? txLocalTime() : (S.time==='day' ? 13.0 : 1.0);
   const st  = solarTimes(S.lat);
   const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
-  const sf  = sfiScaleFactor(isDay);
+  const sf  = sfiScaleFactor(isDay, S.lat);
   const foF2 = currentFoF2();
   let label = '';
   if(S.sfi < 90)        label = '☀ Solar minimum — MUF severely reduced';
@@ -5062,7 +5293,7 @@ function switchMode(mode){
   const v = document.getElementById('appVer');
   if(v) v.textContent = APP_VERSION;
   const f = document.getElementById('sbFootVer');
-  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Per-bearing midpoint foF2 · ITU-R P.368 conductivity · ITU-R P.526 diffraction · SFI solar scaling · Seasonal foF2 · Troposcatter · Spencer(1971) solar geometry · Magneto-ionic gyrofrequency · Diurnal hmF2 · foE solar-zenith · GW P.368 recal · Grey-line D-layer (I) · M3k skip inner (J) · Hata rural recal (K) · Equatorial seasonal recal (L)`;
+  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Per-bearing midpoint foF2 · ITU-R P.368 conductivity · ITU-R P.526 diffraction · SFI solar scaling · Seasonal foF2 · Troposcatter · Spencer(1971) solar geometry · Magneto-ionic gyrofrequency · Diurnal hmF2 · foE solar-zenith · GW P.368 recal · Grey-line D-layer (I) · M3k skip inner (J) · Hata rural recal (K) · Equatorial seasonal recal (L) · Binary-search midpoint MUF (M) · EIA crest boost (N) · Eq.sector SFI+7% (O) · Sporadic-E overlay (P)`;
 })();
 buildBands();
 buildConds();
@@ -5383,14 +5614,17 @@ function _pskConnect(call){
     );
 
     // Periodic age refresh: re-render every 30s so "X ago" stays current
-    // and stale spots (>4h) are pruned from the buffer automatically.
+    // and spots older than 15 min (from TX time) are purged from the buffer.
     clearInterval(_pskAgeTimer);
     _pskAgeTimer = setInterval(function(){
       if(_pskMqttClient !== client) return;
-      // Age all spots by real elapsed time and prune very old ones
+      // Age all spots by real elapsed time and prune spots > 15 min from TX time.
+      // TX time = s._ts - s.age (both set on receipt). This enforces the
+      // advertised 15-minute PSKReporter window and prevents buffer entries
+      // from keeping map layers alive indefinitely via the flush→drawSpotMarkers cycle.
       var now = Date.now()/1000;
       _pskMqttBuffer = _pskMqttBuffer.filter(function(s){
-        return (s._ts && (now - s._ts) < 14400); // keep < 4h
+        return s._ts && (now - (s._ts - s.age)) < 900; // keep < 15 min from TX
       });
       _pskFlushToUI(null);
     }, 30000);
@@ -5416,7 +5650,7 @@ function _pskConnect(call){
       var key = (s.sc||'') + '|' + band;
       var idx = _pskMqttBuffer.findIndex(function(x){ return x._key===key; });
       var entry = {
-        _key: key, _ts: Date.now()/1000,
+        _key: key, _ts: Date.now()/1000, _txTime: txTime,
         dx_call:s.sc||'', de_call:s.rc||'',
         freq:fkHz, band:band, snr:s.rp||0, mode:s.md||'',
         dx_lat:tp?tp[0]:null, dx_lon:tp?tp[1]:null,
@@ -5469,7 +5703,7 @@ function _pskFlushToUI(badge){
   // Re-compute age from wall clock so "X ago" values stay current.
   var now = Date.now()/1000;
   _pskMqttBuffer.forEach(function(s){
-    if(s._ts) s.age = Math.max(0, now - (s._ts - s.age));
+    if(s._txTime) s.age = Math.max(0, now - s._txTime);
   });
   var spots = _pskMqttBuffer.slice().sort(function(a,b){return a.age-b.age;});
   LIVE.pskSpots = spots;
@@ -5709,19 +5943,27 @@ function clearSpotMarkers(){
 }
 
 // Update PSK spot markers:
-//   • Expired spots (> 3 min since last seen) are removed from the map.
+//   • Expired spots (> 15 min from TX time) are removed from the map.
+//   • Buffer purge (age timer) is the primary expiry driver: once a spot leaves
+//     the 15-min buffer its map layer is evicted on the next drawSpotMarkers() call.
 //   • Spots already on the map have their expiry refreshed — not redrawn.
 //   • New spots are added with geodesic (great-circle) curves.
 //   • Band filter is applied by show/hide, not by destroying layers.
-const SPOT_TTL_MS = 3 * 60 * 1000; // 3-minute lifetime
+const SPOT_TTL_MS = 15 * 60 * 1000; // 15-minute lifetime (matches PSKReporter window)
 
 function drawSpotMarkers(){
   const now   = Date.now();
   const txLat = S.lat, txLon = S.lon;
 
-  // ── 1. Remove expired layers ─────────────────────────────────
+  // ── 1. Remove expired layers and layers no longer in the buffer ─────
+  // Build a set of keys currently in the active buffer so we can evict map
+  // layers for spots that were pruned from _pskMqttBuffer (>15 min old).
+  // Without this check, drawSpotMarkers() would keep refreshing expiresAt
+  // for any spot still in LIVE.pskSpots, defeating the 15-min TTL.
+  const _activeSpotKeys = new Set(LIVE.pskSpots.map(function(s){ return s._key; }));
+
   LIVE.spotLayers.forEach(function(e, key){
-    if(now > e.expiresAt){
+    if(now > e.expiresAt || !_activeSpotKeys.has(key)){
       if(e.onMap){
         try{ map.removeLayer(e.marker); }catch(ex){}
         try{ map.removeLayer(e.line);   }catch(ex){}
@@ -5749,13 +5991,9 @@ function drawSpotMarkers(){
 
     const existing = LIVE.spotLayers.get(spot._key);
     if(existing){
-      // Refresh expiry and sync latest plotCall/coords for dynamic popup
-      existing.expiresAt = now + SPOT_TTL_MS;
-      if(existing.marker){
-        existing.marker._plotCall = plotCall;
-        existing.marker._plotLat  = plotLat !== null ? plotLat  : existing.marker._plotLat;
-        existing.marker._plotLon  = plotLon !== null ? plotLon  : existing.marker._plotLon;
-      }
+      // Layer already on map — do not touch expiresAt.
+      // Each spot's expiry is set independently at creation time so timers
+      // are unique per spot. Resetting here would stamp all to the same value.
       return;
     }
 
@@ -5784,26 +6022,43 @@ function drawSpotMarkers(){
 
     // Store the spot key and remote coords so the popup can pull
     // the freshest data from LIVE.pskSpots at the moment it opens.
+    // Per-reception fields (SNR, RX call/locator, time) are snapshotted here
+    // because the dedup key is tx|band — a single shared entry overwritten by
+    // every new receiver. Reading these from `fresh` at popup-open time would
+    // show the last report's values on every marker, not this marker's own.
     marker._spotKey     = spot._key;
     marker._plotLat     = plotLat;
     marker._plotLon     = plotLon;
-    marker._plotCall    = plotCall;
+    marker._plotCall    = plotCall;   // remote-end callsign (unique per marker)
+    marker._nearCall    = nearCall;   // near-end callsign
+    marker._nearIsTX    = nearDX;     // true = user is near the TX end
+    marker._nearLoc     = nearDX ? (spot.locator_tx||'') : (spot.locator_rx||'');
+    marker._remoteLoc   = nearDX ? (spot.locator_rx||'') : (spot.locator_tx||'');
+    marker._snr         = spot.snr;   // SNR at the moment this marker was created
+    marker._ts          = spot._ts;   // first-reception wall-clock (for age/expiry)
+    marker._txTime      = spot._txTime;
 
-    // Build popup HTML from the most current spot data (called on every open)
+    // Build popup HTML — band/freq/mode come from `fresh` (shared, fine for those),
+    // all per-reception fields come from the marker's own snapshot.
     function buildSpotPopup(){
-      const fresh = LIVE.pskSpots.find(function(s){ return s._key === marker._spotKey; }) || spot;
+      const fresh  = LIVE.pskSpots.find(function(s){ return s._key === marker._spotKey; }) || spot;
       const nowSec = Date.now() / 1000;
-      // Re-derive age from wall-clock timestamp, same formula as _pskFlushToUI
-      const ageNow = fresh._ts ? Math.max(0, nowSec - (fresh._ts - fresh.age)) : fresh.age;
-      const c2 = BAND_COLORS[fresh.band] || '#888';
+      const ageNow = marker._txTime ? Math.max(0, nowSec - marker._txTime)
+                   : marker._ts     ? Math.max(0, nowSec - marker._ts) : 0;
+      const c2   = BAND_COLORS[fresh.band] || '#888';
       const dNow = haversineKm(S.lat, S.lon, marker._plotLat, marker._plotLon);
       const dStr = Math.round(dNow).toLocaleString() + ' km';
+      const nearLabel   = marker._nearIsTX ? 'TX' : 'RX';
+      const remoteLabel = marker._nearIsTX ? 'RX' : 'TX';
+      const nearStr   = marker._nearCall + (marker._nearLoc   ? ` <span style="color:var(--dim)">(${marker._nearLoc})</span>`   : '');
+      const remoteStr = marker._plotCall + (marker._remoteLoc ? ` <span style="color:var(--dim)">(${marker._remoteLoc})</span>` : '');
+      const snrStr = (marker._snr >= 0 ? '+' : '') + marker._snr + ' dB';
       return `<div style="font-family:'Share Tech Mono',monospace;font-size:.7rem;padding:6px 10px;line-height:1.85;">
         <div style="color:${c2};font-size:.85rem;font-weight:700;margin-bottom:3px;">${marker._plotCall}</div>
         <div>Band: <b>${fresh.band}</b> &nbsp;·&nbsp; ${fresh.freq.toFixed(1)} kHz &nbsp;·&nbsp; ${fresh.mode}</div>
-        <div>TX: ${fresh.dx_call}${fresh.locator_tx ? ' <span style="color:var(--dim)">('+fresh.locator_tx+')</span>' : ''}</div>
-        <div>RX: ${fresh.de_call}${fresh.locator_rx ? ' <span style="color:var(--dim)">('+fresh.locator_rx+')</span>' : ''}</div>
-        <div>SNR: ${fresh.snr >= 0 ? '+' : ''}${fresh.snr} dB &nbsp;·&nbsp; <span style="color:#aaa">${fmtAge(ageNow)} ago</span></div>
+        <div>${nearLabel}: ${nearStr}</div>
+        <div>${remoteLabel}: ${remoteStr}</div>
+        <div>SNR: ${snrStr} &nbsp;·&nbsp; <span style="color:#aaa">${fmtAge(ageNow)} ago</span></div>
         <div style="margin-top:4px;padding-top:4px;border-top:1px solid #1a3a42;">
           <span style="color:#00ffc3;">&#x25B6; ${dStr} from TX</span>
         </div>
@@ -5831,7 +6086,7 @@ function drawSpotMarkers(){
 
     LIVE.spotLayers.set(spot._key, {
       marker, line,
-      expiresAt: now + SPOT_TTL_MS,
+      expiresAt: now + Math.max(0, SPOT_TTL_MS - spot.age * 1000),
       band: spot.band,
       onMap: visible
     });
