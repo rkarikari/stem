@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.088 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.090 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
@@ -291,7 +291,7 @@ option{background:#0b1820;}
   <div id="hf-panel" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
   <div class="sb-head">
     <div class="sb-title">HF PROPAGATION PLANNER</div>
-    <div class="sb-sub">NVIS / Skywave Coverage · Per-bearing midpoint foF2 · <span id="appVer"></span></div>
+    <div class="sb-sub">NVIS / Skywave Coverage · © 9G5AR · <span id="appVer"></span></div>
   </div>
 
   <div class="sb-scroll">
@@ -785,7 +785,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.088';
+const APP_VERSION = 'v1.090';
 const APP_DATE    = '2026-03-12';
 
 // PSK constants — declared here as var (not const) so they are hoisted and
@@ -2273,7 +2273,7 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
 
 // Inject RNK copyright at the START of the Leaflet attribution bar
 map.attributionControl.setPrefix(
-  '© R.N.K : <a href="https://github.com/rkarikari/stem" target="_blank" style="color:#00ffc3;">RadioSport</a>'
+  '© R.N.K { 9G5AR } : <a href="https://github.com/rkarikari/stem" target="_blank" style="color:#00ffc3;">RadioSport</a>'
 );
 
 const extraCSS = document.createElement('style');
