@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.093 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.112 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
@@ -264,9 +264,7 @@ option{background:#0b1820;}
 .spot-age{color:var(--dim);font-size:.58rem;min-width:28px;text-align:right;}
 .spots-count{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);margin-top:6px;}
 .spots-empty{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim);text-align:center;padding:16px 0;font-style:italic;}
-.apply-sfi-btn{width:100%;padding:5px;font-family:'Share Tech Mono',monospace;font-size:.65rem;background:rgba(255,204,68,.07);border:1px solid rgba(255,204,68,.3);color:#ffcc44;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;transition:all .2s;margin-top:6px;}
-.apply-sfi-btn:hover{background:rgba(255,204,68,.14);border-color:rgba(255,204,68,.6);}
-.apply-sfi-btn:disabled{opacity:.4;cursor:not-allowed;}
+
 
 /* Spot map markers */
 .spot-map-dot{border-radius:50%;width:9px;height:9px;border:1.5px solid;cursor:pointer;transition:transform .1s;}
@@ -291,7 +289,7 @@ option{background:#0b1820;}
   <div id="hf-panel" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
   <div class="sb-head">
     <div class="sb-title">HF PROPAGATION PLANNER</div>
-    <div class="sb-sub">NVIS / Skywave Coverage · © 9G5AR · <span id="appVer"></span></div>
+    <div class="sb-sub">NVIS / Skywave Coverage · © 9G5AR · <span id="appVer"></span> · <span id="noaaStatus" style="color:var(--dim)">NOAA connecting…</span></div>
   </div>
 
   <div class="sb-scroll">
@@ -465,6 +463,16 @@ option{background:#0b1820;}
             <span class="rtd-val" id="live-kp">---</span>
             <span class="rtd-desc" id="live-kp-desc"></span>
           </div>
+          <div class="rtd-row" style="margin-top:3px;">
+            <span class="rtd-label">Bz</span>
+            <span class="rtd-val" id="live-bz">---</span>
+            <span class="rtd-desc" id="live-bz-desc"></span>
+          </div>
+          <div class="rtd-row" style="margin-top:3px;">
+            <span class="rtd-label">X-ray</span>
+            <span class="rtd-val" id="live-xray">---</span>
+            <span class="rtd-desc" id="live-xray-desc"></span>
+          </div>
           <div class="kp-bar" id="kpBar">
             <div class="kp-seg" id="kps0"></div><div class="kp-seg" id="kps1"></div>
             <div class="kp-seg" id="kps2"></div><div class="kp-seg" id="kps3"></div>
@@ -474,7 +482,6 @@ option{background:#0b1820;}
           </div>
           <div class="kp-labels"><span>K0</span><span>K1</span><span>K2</span><span>K3</span><span>K4</span><span>K5</span><span>K6</span><span>K7</span><span>K8+</span></div>
           <div id="live-solar-badge" class="live-badge stale">Waiting for data…</div>
-          <button class="apply-sfi-btn" id="applySfiBtn" onclick="applyLiveSFI()" disabled>⚡ Apply Live SFI to Model</button>
           <div id="live-solar-note" style="display:none;"></div>
         </div>
 
@@ -495,13 +502,17 @@ option{background:#0b1820;}
               <button class="btn btn-sm hi" onclick="fetchPSKReporter()">GO</button>
             </div>
             <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">
-              <span style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);">Filter band:</span>
+              <span style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);">Filter:</span>
               <button class="sf-btn on" id="sf-all" onclick="setSpotBandFilter('all')">ALL</button>
               <button class="sf-btn" id="sf-160" onclick="setSpotBandFilter('160m')">160m</button>
               <button class="sf-btn" id="sf-80" onclick="setSpotBandFilter('80m')">80m</button>
+              <button class="sf-btn" id="sf-60" onclick="setSpotBandFilter('60m')">60m</button>
               <button class="sf-btn" id="sf-40" onclick="setSpotBandFilter('40m')">40m</button>
+              <button class="sf-btn" id="sf-30" onclick="setSpotBandFilter('30m')">30m</button>
               <button class="sf-btn" id="sf-20" onclick="setSpotBandFilter('20m')">20m</button>
+              <button class="sf-btn" id="sf-17" onclick="setSpotBandFilter('17m')">17m</button>
               <button class="sf-btn" id="sf-15" onclick="setSpotBandFilter('15m')">15m</button>
+              <button class="sf-btn" id="sf-12" onclick="setSpotBandFilter('12m')">12m</button>
               <button class="sf-btn" id="sf-10" onclick="setSpotBandFilter('10m')">10m</button>
             </div>
             <div style="margin-top:7px;">
@@ -509,7 +520,7 @@ option{background:#0b1820;}
                 <span style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);">Spot expiry</span>
                 <span style="font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--acc);" id="spotTTLVal">15 min</span>
               </div>
-              <input type="range" id="spotTTLSlider" min="5" max="30" step="1" value="15"
+              <input type="range" id="spotTTLSlider" min="1" max="30" step="1" value="15"
                 style="width:100%;accent-color:var(--acc);"
                 oninput="setSpotTTL(+this.value)"/>
             </div>
@@ -794,7 +805,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.093';
+const APP_VERSION = 'v1.112';
 const APP_DATE    = '2026-03-12';
 
 // PSK constants — declared here as var (not const) so they are hoisted and
@@ -804,8 +815,9 @@ var PSK_MAX_BUFFER = 500;
 
 // ── Live state (declared at top-level to be available to all functions) ──
 const LIVE = {
-  sfi: null, kp: null, solarAge: null,
+  sfi: null, kp: null, bz: null, xray: null, solarAge: null,
   sfiLast: null,            // last successfully fetched SFI (for apply button)
+  condAutoSource: null,     // 'kp' | 'xray' | null — tracks which source last set S.cond automatically
   pskSpots: [],             // array of {dx_call, de_call, freq, band, snr, mode, dx_lat, dx_lon, de_lat, de_lon, age}
   spotBandFilter: 'all',
   spotsVisible: true,
@@ -993,7 +1005,7 @@ const BANDS = {
   },
   '60m':{
     label:'60m', freq:'5.3–5.4 MHz', freqMHz:5.35, color:'#ffd93d', minW:0.5,
-    dLayerThresh:0.92,
+    dLayerThresh:1.00,  // D-layer reduces range via dFactor but doesn't fully block; 60m NVIS works day with attenuation
     skipGeomMax: 4000, // E-layer day: 2000 km; F2 night: up to 4000 km
     // hop2Factor per-hop loss budget (marginal cost of each extra ground-reflecting F2 hop):
     //   day  13 dB: Lg=2 dB (ITU-R P.533) + Li≈11 dB (D-layer at 5.35 MHz, dAbs≈0.85:
@@ -1023,7 +1035,7 @@ const BANDS = {
   },
   '40m':{
     label:'40m', freq:'7.0–7.2 MHz', freqMHz:7.1, color:'#6bcb77', minW:0.25,
-    dLayerThresh:0.97,
+    dLayerThresh:1.00,  // 40m NVIS works all day; D-layer reduces range via dFactor, not hard-blocks
     skipGeomMax: 4500, // F2 day/night: up to 4000–4500 km
     // hop2Factor per-hop loss budget (marginal cost of each extra ground-reflecting F2 hop):
     //   day  8 dB: Lg=2 dB (ITU-R P.533) + Li≈6 dB (D-layer at 7.1 MHz, dAbs≈0.75 average:
@@ -1052,7 +1064,7 @@ const BANDS = {
   },
   '30m':{
     label:'30m', freq:'10.1–10.15 MHz', freqMHz:10.1, color:'#4d96ff', minW:0.25,
-    dLayerThresh:0.99,
+    dLayerThresh:1.00,  // D-layer negligible at 10 MHz; NVIS available when foF2 > 10.1 MHz
     skipGeomMax: 4500,
     // hop2Factor per-hop loss budget:
     //   7 dB day/night: Lg=2 dB + Li≈2 dB (D-layer at 10.1 MHz, dAbs≈0.6 average:
@@ -1065,11 +1077,11 @@ const BANDS = {
     hop3Factor: {day: 0.4467, night: 0.4467},
     hop4Factor: {day: 0.4467, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 15 km · No NVIS · ZONE 3b F-skip 800–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop ~11600 km · CW+digital',
+      day:  'ZONE 1 GW 15 km · ZONE 2 NVIS 0–600 km (when foF2 > 10.1 MHz) · ZONE 3b F-skip 800–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop ~11600 km · CW+digital',
       night:'ZONE 1 GW 15 km · No NVIS · ZONE 3b F2 1-hop 500–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop ~11600 km · CW+digital',
     },
     gw:        15,
-    nvis:      {day:null, night:null},
+    nvis:      {day:600, night:null},
     skipInner: {day:800,  night:500},
     skipOuter: {day:4000, night:4000},
   },
@@ -1929,9 +1941,7 @@ function foF2At(lat, lon, ltOverride){
   const st = solarTimes(lat);
   const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
   const raw = interpProfile(foF2Profile(lat), lt);
-  const base = scaledFoF2(raw, isDay, lat);
-  // Add EIA crest boost (daytime/PRE only — eiaBoost returns 0 at night)
-  return base + eiaBoost(lat, lt);
+  return scaledFoF2(raw, isDay, lat);
 }
 
 // M(3000)F2 at an arbitrary lat/lon
@@ -2031,18 +2041,43 @@ function bearingNvisOuter(txLat, txLon, bearingDeg, baseNvisKm, freqMHz, power, 
   // NVIS paths are short (~50–650 km) — midpoint is only 25–325 km away
   const repDist = Math.min(baseNvisKm, 650) / 2;
   const mp = midpointIono(txLat, txLon, bearingDeg, repDist * 2);
-  // NVIS available only if midpoint foF2 > band freq
-  if(mp.foF2 <= freqMHz) return 0;
+  // NVIS available only if midpoint foF2 exceeds band freq by minimum headroom
+  if(mp.foF2 <= freqMHz + 0.5) return 0;
   const txF2 = currentFoF2();
   const ratio = txF2 > 0.5 ? Math.max(0.3, Math.min(1.8, mp.foF2 / txF2)) : 1.0;
   const scaled = Math.min(650, scaledIono(baseNvisKm * gLin * ratio, power, condFactor));
   return scaled;
 }
 
+// Per-bearing skip inner: uses midpoint M(3000)F2 to vary skip inner by bearing.
+// F2 virtual height (hmF2) varies with latitude → paths toward higher latitudes
+// (lower M3k, higher hmF2) have wider skip zones than equatorial paths.
+function bearingSkipInnerKm(bearingDeg, z, b){
+  if(!z.skipInnerKm) return null;
+  const siDay   = b.skipInner.day;
+  const siNight = b.skipInner.night;
+  let siRef;
+  if(siDay !== null && siNight !== null){
+    siRef = siDay * z.siDayFrac + siNight * (1 - z.siDayFrac);
+  } else if(siDay !== null && z.isDaytime){
+    siRef = siDay;
+  } else if(siNight !== null && !z.isDaytime){
+    siRef = siNight;
+  } else {
+    return z.skipInnerKm;
+  }
+  if(!siRef) return null;
+  const mp = midpointIono(S.lat, S.lon, bearingDeg, siRef);
+  const M3K_REF_DAY = 2.9, M3K_REF_NIGHT = 3.5;
+  const m3kRef   = M3K_REF_DAY * z.siDayFrac + M3K_REF_NIGHT * (1 - z.siDayFrac);
+  const m3kRatio = Math.max(0.50, Math.min(1.50, m3kRef / Math.max(0.1, mp.m3k)));
+  return Math.max(50, Math.round(siRef * m3kRatio));
+}
+
 // Build a per-bearing polygon for a given zone using N_HF_RADIALS radials.
 // Returns array of [lat,lon] points forming the polygon outer edge.
 // rangeForBearing(brg) → km or 0 if closed on that bearing.
-const N_HF_RADIALS = 180; // 2° angular resolution
+const N_HF_RADIALS = 360; // 1° angular resolution — smoother, more accurate shapes
 function hfRadialPolygon(rangeForBearing){
   const pts = [];
   for(let i = 0; i < N_HF_RADIALS; i++){
@@ -2197,7 +2232,7 @@ function updateRTCDisplay(){
     const desc = foF2PhaseDesc(ltD, S.lat, dLayer);
     const muf  = z.muf3000 ? ` · MUF(3000)=${z.muf3000.toFixed(1)} MHz` : '';
     // UPGRADE I: grey-line indicator — shown when within terminator window
-    const glfRTC = greyLineFactor(ltD, 3.5);  // 80m as low-band representative
+    const glfRTC = greyLineFactor(ltD, 3.5);
     const glStr  = glfRTC < 0.70 ? ' ✦ GREY LINE ACTIVE' : (glfRTC < 0.90 ? ' ◈ near grey line' : '');
     foF2DescEl.textContent = desc + muf + glStr;
   }
@@ -2980,28 +3015,33 @@ function liveZones(band){
   //   Scales with headroom = foF2 - freq_MHz. Below 0.5 MHz headroom → unreliable.
   //   600 km × clamp((headroom - 0.5) / 5.5, 0, 1) + 50 km minimum floor.
   //   650 km hard ceiling (ARRL Handbook, G0ISW/QSL.net).
+  // NVIS available when:
+  //   (a) foF2 > band_freq + 0.5 MHz minimum headroom (sub-0.5 MHz is unreliable — no ring drawn)
+  //   (b) D-layer absorption < band threshold
+  // Range scales linearly with headroom from 50 km at 0.5 MHz to 650 km at 6 MHz headroom.
   let nvisBase = null;
   let nvisNote = '';
   const freq = b.freqMHz;
   const headroom = foF2 - freq;
+  const MIN_HEADROOM = 0.5; // MHz — below this, NVIS is unreliable (ray angle too steep)
 
-  if(headroom > 0){
+  if(headroom >= MIN_HEADROOM){
     const dThresh = b.dLayerThresh;
     if(dAbs < dThresh){
-      // Linear scale: 50 km at 0.5 MHz headroom, up to 650 km at ~6 MHz headroom.
-      // NVIS geometry ceiling: 650 km is a HARD physical limit set by the angle at which
-      // near-vertical rays re-enter the atmosphere — no amount of antenna gain or power
-      // can exceed this. Sources: Wikipedia NVIS, ARRL Handbook, ITU-R P.533.
-      // nvisBase is capped here; scaledIono() will further apply √P and condFactor,
-      // but the NVIS ring must also be capped at 650 km after that scaling.
-      const hFrac = Math.min(1, Math.max(0, (headroom - 0.5) / 5.5));
-      const dFactor = Math.sqrt(1 - (dAbs / dThresh));  // D-layer degrades NVIS
+      const hFrac = Math.min(1, Math.max(0, (headroom - MIN_HEADROOM) / 5.5));
+      // dFactor only applied for 160m/80m where D-layer can prevent reflection entirely.
+      // For 60m and above (dLayerThresh=1.00), D-layer causes signal attenuation (already
+      // handled by ionoAbsLoss in the link budget) — NOT geometric range collapse.
+      // Applying dFactor here would double-count absorption and produce falsely tiny rings.
+      const dFactor = (dThresh < 1.00) ? Math.sqrt(1 - (dAbs / dThresh)) : 1.0;
       nvisBase = Math.round(50 + 600 * hFrac * dFactor);
       nvisBase = Math.max(50, Math.min(650, nvisBase));
       nvisNote = `foF2 ${foF2.toFixed(1)}−${freq}=${headroom.toFixed(1)} MHz headroom · D-layer ${Math.round(dAbs*100)}%`;
     } else {
       nvisNote = `D-layer ${Math.round(dAbs*100)}% absorbs ${b.label} · NVIS suppressed`;
     }
+  } else if(headroom > 0){
+    nvisNote = `foF2 ${foF2.toFixed(1)} MHz — only ${headroom.toFixed(1)} MHz above ${freq} MHz · insufficient headroom`;
   } else {
     nvisNote = `foF2 ${foF2.toFixed(1)} MHz < ${freq} MHz · NVIS not possible`;
   }
@@ -3017,6 +3057,9 @@ function liveZones(band){
 
   // eLayerPresent defined above alongside isDaytime (latitude-aware)
   const f2SkipAvail = muf3000 > freq;
+  // Compute siDayFrac at liveZones scope so it can be returned and used per-bearing
+  const _siMp = st.sunriseLT + 2.0;
+  const siDayFrac = isDaytime ? 1.0 / (1.0 + Math.exp(-4.0 * (lt - _siMp))) : 0;
   // E-layer skip: fires when regular E layer (foE) can support the frequency.
   // Uses Upgrade G (foE solar-zenith model) instead of the v2.02 foF2>2.0 proxy.
   // E-skip MUF test: foE > 0.9×freq (the 0.9 factor accounts for oblique path
@@ -3038,11 +3081,7 @@ function liveZones(band){
     // with a steep k gives a rapid transition, avoiding the previous error of a linear
     // ramp that reached day value only at sunset (midday was 50% of the way between
     // night and day values). siDayFrac ≈ 0 at night, ≈ 1 from mid-morning onward.
-    const midpoint = st.sunriseLT + 2.0;   // F2 reaches daytime height ~2h after sunrise
-    const k = 4.0;                          // steepness: 0.05 at SR, 0.95 at SR+3h
-    const siDayFrac = isDaytime
-      ? 1.0 / (1.0 + Math.exp(-k * (lt - midpoint)))
-      : 0;
+    // siDayFrac already computed above at liveZones scope
     const siDay   = b.skipInner.day;
     const siNight = b.skipInner.night;
 
@@ -3183,7 +3222,7 @@ function liveZones(band){
   // Compute Lh auroral loss at TX position (midpoint proxy for summary table)
   const lh_auroral = auroralloss_Lh(S.lat, S.lon, isDaytime);
 
-  return { gwBase, nvisBase, nvisNote, skipInnerKm, skipOuterKm, skipNote,
+  return { gwBase, nvisBase, nvisNote, skipInnerKm, skipOuterKm, skipNote, siDayFrac,
            hop2OuterBase, hop2Note,
            hop3OuterBase, hop3Note,
            hop4OuterBase, hop4Note,
@@ -3417,7 +3456,7 @@ function conductivityMultiplier(sigma){
 // Average conductivity multiplier along a groundwave path from TX to distance dKm
 // on a given bearing. Samples 5 points along the path.
 function pathConductivityMult(txLat, txLon, bearingDeg, dKm){
-  const N = 5;
+  const N = 15; // more samples = accurate mixed ocean/land/desert paths
   let sumMult = 0;
   for(let i = 1; i <= N; i++){
     const frac = i / N;
@@ -3518,6 +3557,7 @@ function rebuildLayers(){
   // NVIS paths that cross into a richer ionosphere get longer range.
   // ═══════════════════════════════════════════════════════════════════
   let maxNvisKm = 0;
+  const nvisOuterPerBearing = new Array(N_HF_RADIALS).fill(0);
   if(z.nvisBase && S.power >= b.minW){
     const nvisColor = '#00ffc3';
     powers.forEach((p, pi)=>{
@@ -3536,6 +3576,7 @@ function rebuildLayers(){
         }
         outerKm = bearingNvisOuter(S.lat,S.lon,brg,z.nvisBase,b.freqMHz,p,c.factor,gLin);
         innerKm = Math.max(gwPerBearing[i] || 1, 1);
+        if(pi===0) nvisOuterPerBearing[i] = outerKm || 0;
         if(outerKm <= 0){ nvisPts.push(destPt(S.lat,S.lon,brg,0.5)); gwInnerPts.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
         if(outerKm > thisMaxNvis) thisMaxNvis = outerKm;
         nvisPts.push(destPt(S.lat,S.lon,brg,Math.max(outerKm,0.5)));
@@ -3558,24 +3599,38 @@ function rebuildLayers(){
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ZONE 3a — DEAD ZONE  (dark hatched annulus — kept symmetric: skip inner is geometric)
-  // The skip inner distance does NOT vary by bearing — it is set by ionospheric geometry
-  // (virtual height of the F2 layer), not by conductivity or midpoint foF2.
+  // ZONE 3a — DEAD ZONE (per-bearing: inner = GW/NVIS outer, outer = per-bearing skip inner)
+  // Skip inner now varies per bearing using midpoint M3k — paths toward higher latitudes
+  // (lower M3k, higher hmF2) have wider skip zones; equatorial paths narrower.
   // ═══════════════════════════════════════════════════════════════════
   if(z.skipInnerKm && z.skipOuterKm){
-    const deadInner = Math.max(gwMaxKm, maxNvisKm, 1);
-    const deadOuter = z.skipInnerKm;
-    if(deadOuter > deadInner + 20){
-      const deadLayer = L.polygon(annulusPts(S.lat,S.lon,deadInner,deadOuter),{
+    const deadOuterPts=[], deadInnerPts=[];
+    let anyDead=false, deadInnerMax=0, deadOuterMax=0;
+    for(let i=0;i<N_HF_RADIALS;i++){
+      const brg=(i/N_HF_RADIALS)*360;
+      const iKm=Math.max(gwPerBearing[i]||1, nvisOuterPerBearing[i]||0, 1);
+      const oKm=bearingSkipInnerKm(brg,z,b) || z.skipInnerKm;
+      if(oKm>iKm+20) anyDead=true;
+      if(iKm>deadInnerMax) deadInnerMax=iKm;
+      if(oKm>deadOuterMax) deadOuterMax=oKm;
+      deadOuterPts.push(destPt(S.lat,S.lon,brg,Math.max(oKm,iKm+0.5,0.5)));
+      deadInnerPts.push(destPt(S.lat,S.lon,brg,Math.max(iKm,0.5)));
+    }
+    deadOuterPts.push(deadOuterPts[0]); deadInnerPts.push(deadInnerPts[0]);
+    if(anyDead){
+      deadInnerPts.reverse();
+      const deadLayer=L.polygon([deadOuterPts,deadInnerPts],{
         color:'#3a3a4a', fillColor:'#0d0d18',
         weight:1.5, opacity:.7, fillOpacity:.30, dashArray:'5 3'
       });
       deadLayer.bindTooltip(
-        `ZONE 3a · Dead Zone (Skip Zone) · ${deadInner}–${deadOuter} km\n`+
-        `No signal via GW, NVIS, or F-skip · foF2=${z.foF2.toFixed(1)} MHz\n${phaseStr}`,
+        `ZONE 3a · Dead Zone (Skip Zone) · ~${Math.round(deadInnerMax)}–${Math.round(deadOuterMax)} km
+`+
+        `No signal via GW, NVIS, or F-skip · foF2=${z.foF2.toFixed(1)} MHz
+${phaseStr}`,
         {className:'ltt',direction:'top'});
       addLayer(deadLayer);
-      addLabel(Math.round((deadInner+deadOuter)/2), '#555577', 'Z3a·DEAD', 225);
+      addLabel(Math.round((deadInnerMax+deadOuterMax)/2),'#555577','Z3a·DEAD',225);
     }
   }
 
@@ -3593,8 +3648,16 @@ function rebuildLayers(){
     const esOpacity = 0.10 + esProb * 0.20;  // 0.10 low prob → 0.30 high prob
     // Single-hop Es annulus (400–2200 km)
     const esDeadInner = Math.max(gwMaxKm, maxNvisKm, es.innerKm);
+    const esOPts1=[],esIPts1=[];
+    for(let i=0;i<N_HF_RADIALS;i++){
+      const brg=(i/N_HF_RADIALS)*360;
+      const iKm=Math.max(gwPerBearing[i]||1,nvisOuterPerBearing[i]||0,es.innerKm);
+      esIPts1.push(destPt(S.lat,S.lon,brg,Math.max(iKm,0.5)));
+      esOPts1.push(destPt(S.lat,S.lon,brg,Math.max(es.outerKm,iKm+0.5)));
+    }
+    esOPts1.push(esOPts1[0]); esIPts1.push(esIPts1[0]); esIPts1.reverse();
     const es1Layer = L.polygon(
-      annulusPts(S.lat, S.lon, esDeadInner, es.outerKm),
+      [esOPts1, esIPts1],
       { color: esCol, fillColor: esCol,
         weight: 1.5, opacity: 0.55 + esProb * 0.25,
         fillOpacity: esOpacity, dashArray: '4 3', smoothFactor: 1 }
@@ -3608,8 +3671,15 @@ function rebuildLayers(){
 
     // Two-hop Es annulus (2200–4400 km) — only if prob is moderate+
     if(esProb > 0.35 && es.hop2OuterKm > es.outerKm + 100){
+      const esOPts2=[],esIPts2=[];
+      for(let i=0;i<N_HF_RADIALS;i++){
+        const brg=(i/N_HF_RADIALS)*360;
+        esIPts2.push(destPt(S.lat,S.lon,brg,Math.max(es.outerKm,0.5)));
+        esOPts2.push(destPt(S.lat,S.lon,brg,Math.max(es.hop2OuterKm,es.outerKm+0.5)));
+      }
+      esOPts2.push(esOPts2[0]); esIPts2.push(esIPts2[0]); esIPts2.reverse();
       const es2Layer = L.polygon(
-        annulusPts(S.lat, S.lon, es.outerKm, es.hop2OuterKm),
+        [esOPts2, esIPts2],
         { color: esCol, fillColor: esCol,
           weight: 1.0, opacity: 0.35,
           fillOpacity: esOpacity * 0.5, dashArray: '3 5', smoothFactor: 1 }
@@ -4076,6 +4146,7 @@ function buildConds(){
     d.onmouseleave=()=>{ if(x.id!==S.cond) d.style.background='var(--inp)'; };
     d.onclick=()=>{
       S.cond=x.id;
+      LIVE.condAutoSource = null; // user made a manual selection — block auto-sync
       closeCondPicker();
       buildConds();
       updateCondHint();
@@ -5389,7 +5460,7 @@ function switchMode(mode){
   const v = document.getElementById('appVer');
   if(v) v.textContent = APP_VERSION;
   const f = document.getElementById('sbFootVer');
-  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Per-bearing midpoint foF2 · ITU-R P.368 conductivity · ITU-R P.526 diffraction · SFI solar scaling · Seasonal foF2 · Troposcatter · Spencer(1971) solar geometry · Magneto-ionic gyrofrequency · Diurnal hmF2 · foE solar-zenith · GW P.368 recal · Grey-line D-layer (I) · M3k skip inner (J) · Hata rural recal (K) · Equatorial seasonal recal (L) · Binary-search midpoint MUF (M) · EIA crest boost (N) · Eq.sector SFI+7% (O) · Sporadic-E overlay (P)`;
+  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Per-bearing midpoint foF2 · ITU-R P.368 conductivity · ITU-R P.526 diffraction · SFI solar scaling · Seasonal foF2 · Troposcatter · Spencer(1971) solar geometry · Magneto-ionic gyrofrequency · Diurnal hmF2 · foE solar-zenith · GW P.368 recal · Grey-line D-layer (I) · M3k skip inner (J) · Hata rural recal (K) · Equatorial seasonal recal (L) · Binary-search midpoint MUF (M) · Eq.sector SFI+7% (N) · Sporadic-E overlay (O)`;
 })();
 buildBands();
 buildConds();
@@ -5421,9 +5492,13 @@ try{
 S.time = deriveTimeLabel();
 startRTC();
 rebuildLayers();
-autoFit();
-// Live data starts after page init
-setTimeout(startLiveDataRefresh, 100);
+try{ autoFit(); }catch(e){}
+// NOAA fetch starts immediately — when data arrives it auto-applies and redraws
+(async function(){
+  await fetchLiveSolar();
+  setInterval(fetchLiveSolar, 5 * 60 * 1000);
+  setTimeout(function(){ fetchPSKReporter(); }, 1500);
+})();
 // ══════════════════════════════════════════════════════════════════
 // LIVE DATA MODULE — v3.1
 // Sources:
@@ -5432,16 +5507,18 @@ setTimeout(startLiveDataRefresh, 100);
 // ══════════════════════════════════════════════════════════════════
 
 // ── Live state ────────────────────────────────────────────────
-// ── NOAA Space Weather ────────────────────────────────────────
-// Endpoints (all have Access-Control-Allow-Origin: * — US Gov open data):
-//   SFI: https://services.swpc.noaa.gov/products/summary/10cm-flux.json
-//        → {"Flux":"155","TimeStamp":"2026-03-11 12:00:00"}
-//   Kp:  https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json
-//        → [["time_tag","Kp","Kp_index",...], ["2026-..","2.00",2,...], ...]
-// Uses plain fetch() with AbortController for broad browser compat.
+// ── NOAA Space Weather — Real-Time Sources ────────────────────
+// All endpoints: Access-Control-Allow-Origin: * (US Gov open data, no key needed)
+// Update frequencies:
+//   SFI  : products/summary/10cm-flux.json         — daily F10.7 (freshest available)
+//   Kp   : products/noaa-planetary-k-index.json    — 3-hourly official
+//        + json/planetary_k_index_1m.json          — 1-min nowcast (fallback)
+//   Bz   : products/solar-wind/mag-5-minute.json   — every 1–5 min (DSCOVR/ACE L1)
+//   Xray : json/goes/primary/xrays-6-hour.json     — every 1 min (GOES geostationary)
+// Refresh interval: 5 min — ensures all data ≤1 hour old at all times.
+// Uses plain fetch() + AbortController for broad browser compat.
 
 function _noaaFetch(url, ms){
-  // AbortController-based timeout (broader compat than AbortSignal.timeout)
   const ctrl = new AbortController();
   const tid  = setTimeout(()=>ctrl.abort(), ms || 9000);
   return fetch(url, {cache:'no-cache', signal:ctrl.signal})
@@ -5453,103 +5530,237 @@ async function fetchLiveSolar(){
   if(btn){ btn.textContent='…'; btn.disabled=true; }
   setSolarBadge('', 'Fetching…');
 
-  let sfiVal = null, sfiDesc = '', kpVal = null;
+  let sfiVal = null, sfiDesc = '', sfiStale = false;
+  let kpVal  = null, kpStale  = false;
+  let bzVal  = null, bzStale  = false;
+  let xrayClass = null, xrayStale = false;
 
-  // ── SFI (primary) ──────────────────────────────────────────
+  // Maximum age constants
+  const MAX_SFI_AGE_H  = 24;   // F10.7 daily — accept up to 24h
+  const MAX_KP_AGE_H   =  3;   // Kp official 3h cadence
+  const MAX_BZ_AGE_MIN = 15;   // Solar wind
+  const MAX_XRAY_AGE_MIN = 15; // GOES X-ray
+
+  // Robust NOAA timestamp parser — handles multiple formats
+  function _parseNoaaTime(s){
+    if(!s || typeof s !== 'string') return null;
+    let t = s.trim();
+    // "2026-03-14 20:00:00" → ISO with Z
+    t = t.replace(' ', 'T');
+    if(!t.endsWith('Z') && !t.includes('+')) t += 'Z';
+    const d = new Date(t);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function _ageMin(ts){
+    const d = _parseNoaaTime(String(ts));
+    if(!d) return 0; // unknown age — treat as fresh, don't reject
+    return (Date.now() - d.getTime()) / 60000;
+  }
+  function _ageH(ts){ return _ageMin(ts) / 60; }
+
+  // ── Fetch all sources in parallel ───────────────────────────
+  const [rSfi, rSfiBack, rKp, rKpBack, rBz, rXray] = await Promise.allSettled([
+    _noaaFetch('https://services.swpc.noaa.gov/products/summary/10cm-flux.json'),
+    _noaaFetch('https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json'),
+    _noaaFetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'),
+    _noaaFetch('https://services.swpc.noaa.gov/json/planetary_k_index_1m.json'),
+    _noaaFetch('https://services.swpc.noaa.gov/products/solar-wind/mag-5-minute.json'),
+    _noaaFetch('https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json')
+  ]);
+
+  // ── SFI — daily F10.7, accept up to 24h old ─────────────────
   try{
-    const r = await _noaaFetch('https://services.swpc.noaa.gov/products/summary/10cm-flux.json');
-    if(r.ok){
-      const d = await r.json();
-      if(d && d.Flux != null){ sfiVal = parseFloat(d.Flux); sfiDesc = d.TimeStamp || ''; }
+    if(rSfi.status==='fulfilled' && rSfi.value.ok){
+      const d = await rSfi.value.json();
+      if(d && d.Flux != null){
+        const age = _ageH(d.TimeStamp);
+        if(age <= MAX_SFI_AGE_H){
+          sfiVal  = parseFloat(d.Flux);
+          sfiDesc = d.TimeStamp || '';
+        } else {
+          sfiStale = true;
+          console.warn(`NOAA SFI: stale (${age.toFixed(1)}h old), rejecting`);
+        }
+      }
     }
   } catch(e){ console.warn('NOAA SFI primary:', e.message); }
 
-  // ── SFI (fallback: observed solar cycle indices, has f10.7) ─
-  if(sfiVal === null){
+  // ── SFI fallback ────────────────────────────────────────────
+  if(sfiVal === null && !sfiStale){
     try{
-      const r = await _noaaFetch('https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json');
-      if(r.ok){
-        const arr = await r.json();
+      if(rSfiBack.status==='fulfilled' && rSfiBack.value.ok){
+        const arr = await rSfiBack.value.json();
         if(Array.isArray(arr)){
           for(let i=arr.length-1;i>=0;i--){
             const v = arr[i]['f10.7'] ?? null;
-            if(v != null){ sfiVal = parseFloat(v); sfiDesc = arr[i]['time-tag']||''; break; }
+            if(v != null){
+              const age = _ageH(arr[i]['time-tag']);
+              if(age <= MAX_SFI_AGE_H){
+                sfiVal  = parseFloat(v);
+                sfiDesc = arr[i]['time-tag'] || '';
+              } else {
+                sfiStale = true;
+                console.warn(`NOAA SFI fallback: stale (${age.toFixed(1)}h old), rejecting`);
+              }
+              break;
+            }
           }
         }
       }
     } catch(e){ console.warn('NOAA SFI fallback:', e.message); }
   }
 
-  // ── Kp (primary: array-of-arrays, first row = headers) ─────
+  // ── Kp primary — 3-hourly, reject if >3h old ────────────────
   try{
-    const r = await _noaaFetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
-    if(r.ok){
-      const d = await r.json();
+    if(rKp.status==='fulfilled' && rKp.value.ok){
+      const d = await rKp.value.json();
       if(Array.isArray(d) && d.length > 1){
         const last = d[d.length-1];
-        kpVal = parseFloat(last[1] ?? last[2] ?? 0);
+        const age  = _ageH(last[0]); // first column is time_tag
+        if(age <= MAX_KP_AGE_H){
+          kpVal = parseFloat(last[1] ?? last[2] ?? 0);
+        } else {
+          kpStale = true;
+          console.warn(`NOAA Kp primary: stale (${age.toFixed(1)}h old), rejecting`);
+        }
       }
     }
   } catch(e){ console.warn('NOAA Kp primary:', e.message); }
 
-  // ── Kp (fallback: 1-minute object array) ───────────────────
+  // ── Kp fallback — 1-minute nowcast ──────────────────────────
   if(kpVal === null){
     try{
-      const r = await _noaaFetch('https://services.swpc.noaa.gov/json/planetary_k_index_1m.json');
-      if(r.ok){
-        const arr = await r.json();
+      if(rKpBack.status==='fulfilled' && rKpBack.value.ok){
+        const arr = await rKpBack.value.json();
         if(Array.isArray(arr) && arr.length){
           const last = arr[arr.length-1];
-          kpVal = parseFloat(last.kp_index ?? last.Kp ?? last.kp ?? 0);
+          const age  = _ageMin(last.time_tag || last.TimeStamp || '');
+          if(age <= MAX_KP_AGE_H * 60){
+            kpVal = parseFloat(last.kp_index ?? last.Kp ?? last.kp ?? 0);
+            kpStale = false;
+          } else {
+            kpStale = true;
+            console.warn(`NOAA Kp fallback: stale (${age.toFixed(0)}min old), rejecting`);
+          }
         }
       }
     } catch(e){ console.warn('NOAA Kp fallback:', e.message); }
   }
 
-  LIVE.sfi = sfiVal;
-  LIVE.kp  = kpVal;
+  // ── Bz — solar wind, reject if >15 min old ──────────────────
+  try{
+    if(rBz.status==='fulfilled' && rBz.value.ok){
+      const arr = await rBz.value.json();
+      if(Array.isArray(arr) && arr.length > 1){
+        const headers = arr[0];
+        const bzIdx   = headers.indexOf('bz_gsm');
+        const ttIdx   = headers.indexOf('time_tag');
+        const last    = arr[arr.length-1];
+        const age     = ttIdx >= 0 ? _ageMin(last[ttIdx]) : 0;
+        if(age <= MAX_BZ_AGE_MIN){
+          if(bzIdx >= 0 && last[bzIdx] != null && last[bzIdx] !== 'bz_gsm')
+            bzVal = parseFloat(last[bzIdx]);
+        } else {
+          bzStale = true;
+          console.warn(`NOAA Bz: stale (${age.toFixed(0)}min old), rejecting`);
+        }
+      }
+    }
+  } catch(e){ console.warn('NOAA Bz:', e.message); }
+
+  // ── GOES X-ray — reject if >15 min old ──────────────────────
+  try{
+    if(rXray.status==='fulfilled' && rXray.value.ok){
+      const arr = await rXray.value.json();
+      if(Array.isArray(arr) && arr.length){
+        const longCh = arr.filter(x => x.energy === '0.1-0.8nm' || x.energy === '1-8A');
+        const latest = longCh.length ? longCh[longCh.length-1] : arr[arr.length-1];
+        const age    = _ageMin(latest.time_tag || latest.TimeStamp || '');
+        if(age <= MAX_XRAY_AGE_MIN){
+          const flux = parseFloat(latest.flux);
+          if(!isNaN(flux)){
+            if(flux < 1e-7)      xrayClass = 'A' + (flux/1e-8).toFixed(1);
+            else if(flux < 1e-6) xrayClass = 'B' + (flux/1e-7).toFixed(1);
+            else if(flux < 1e-5) xrayClass = 'C' + (flux/1e-6).toFixed(1);
+            else if(flux < 1e-4) xrayClass = 'M' + (flux/1e-5).toFixed(1);
+            else                 xrayClass = 'X' + (flux/1e-4).toFixed(1);
+          }
+        } else {
+          xrayStale = true;
+          console.warn(`NOAA X-ray: stale (${age.toFixed(0)}min old), rejecting`);
+        }
+      }
+    }
+  } catch(e){ console.warn('NOAA X-ray:', e.message); }
+
+  LIVE.sfi  = sfiVal;
+  LIVE.kp   = kpVal;
+  LIVE.bz   = bzVal;
+  LIVE.xray = xrayClass;
   LIVE.solarAge = Date.now();
   if(sfiVal) LIVE.sfiLast = sfiVal;
 
-  updateSolarUI(sfiVal, kpVal, sfiDesc);
+  // ── Auto-apply SFI — update model state unconditionally ─────
+  if(sfiVal !== null && !sfiStale && sfiVal >= 50 && sfiVal <= 320){
+    const rounded = Math.max(50, Math.min(300, Math.round(sfiVal)));
+    S.sfi = rounded;
+    const sfiInEl  = document.getElementById('sfiIn');
+    const sfiBigEl = document.getElementById('sfiBig');
+    const sfiSlEl  = document.getElementById('sfiSlider');
+    if(sfiInEl)  sfiInEl.value       = rounded;
+    if(sfiBigEl) sfiBigEl.textContent = rounded;
+    if(sfiSlEl)  sfiSlEl.value        = rounded;
+    updateSFIHint();
+  }
 
-  const ab = document.getElementById('applySfiBtn');
-  if(ab) ab.disabled = !(sfiVal && sfiVal >= 50 && sfiVal <= 320);
-  if(kpVal !== null) autoSyncCondFromKp(kpVal);
-  if(sfiVal === null && kpVal === null)
+  // ── Auto-sync condition from Kp and X-ray ───────────────────
+  // These update S.cond silently; rebuildLayers called once below.
+  if(kpVal !== null && !kpStale)   _autoSyncCondSilent(kpVal, xrayClass && !xrayStale ? xrayClass : null);
+
+  // ── Single rebuild with all live values applied ──────────────
+  rebuildLayers();
+
+  updateSolarUI(sfiVal, kpVal, bzVal, xrayClass, sfiStale, kpStale, bzStale, xrayStale);
+
+  if(sfiVal === null && kpVal === null && bzVal === null)
     setSolarBadge('err', 'NOAA unreachable — check console');
 
   if(btn){ btn.textContent='↻'; btn.disabled=false; }
 }
 
-function updateSolarUI(sfi, kp, timeTag){
+function updateSolarUI(sfi, kp, bz, xray, sfiStale, kpStale, bzStale, xrayStale){
   // SFI
   const sfiEl   = document.getElementById('live-sfi');
   const sfiDesc = document.getElementById('live-sfi-desc');
   if(sfiEl){
-    if(sfi !== null){
+    if(sfi !== null && !sfiStale){
       sfiEl.textContent = Math.round(sfi);
       sfiEl.className   = 'rtd-val ' + (sfi < 90 ? 'warn' : sfi > 180 ? 'good' : '');
       sfiDesc.textContent = sfi < 90 ? 'Solar minimum' : sfi < 120 ? 'Low activity' :
                             sfi < 160 ? 'Moderate' : sfi < 210 ? 'Active' : 'Solar max!';
     } else {
       sfiEl.textContent = '—';
-      sfiDesc.textContent = 'Unavailable';
+      sfiEl.className = 'rtd-val warn';
+      sfiDesc.textContent = sfiStale ? '⚠ Stale — not applied' : 'Unavailable';
     }
   }
   // Kp
   const kpEl   = document.getElementById('live-kp');
   const kpDesc = document.getElementById('live-kp-desc');
-  if(kpEl && kp !== null){
-    kpEl.textContent = kp.toFixed(1);
-    kpEl.className   = 'rtd-val ' + (kp < 2 ? 'good' : kp < 4 ? '' : kp < 6 ? 'warn' : 'bad');
-    const kpLabels = ['Quiet','Quiet','Unsettled','Active','Minor storm','Moderate storm','Strong storm','Severe storm','Extreme storm'];
-    kpDesc.textContent = kpLabels[Math.min(8, Math.floor(kp))];
-  } else if(kpEl){
-    kpEl.textContent = '—';
+  if(kpEl){
+    if(kp !== null && !kpStale){
+      kpEl.textContent = kp.toFixed(1);
+      kpEl.className   = 'rtd-val ' + (kp < 2 ? 'good' : kp < 4 ? '' : kp < 6 ? 'warn' : 'bad');
+      const kpLabels = ['Quiet','Quiet','Unsettled','Active','Minor storm','Moderate storm','Strong storm','Severe storm','Extreme storm'];
+      kpDesc.textContent = kpLabels[Math.min(8, Math.floor(kp))];
+    } else {
+      kpEl.textContent = '—';
+      kpEl.className = 'rtd-val warn';
+      if(kpDesc) kpDesc.textContent = kpStale ? '⚠ Stale — not applied' : '';
+    }
   }
   // Kp bar
-  if(kp !== null){
+  if(kp !== null && !kpStale){
     const kpIdx = Math.min(8, Math.floor(kp));
     for(let i=0;i<9;i++){
       const seg = document.getElementById('kps'+i);
@@ -5559,17 +5770,52 @@ function updateSolarUI(sfi, kp, timeTag){
       seg.style.color = col;
       seg.classList.toggle('active', i === kpIdx);
     }
+  } else {
+    // Grey out bar when stale
+    for(let i=0;i<9;i++){
+      const seg = document.getElementById('kps'+i);
+      if(seg){ seg.style.background='#0d1f28'; seg.classList.remove('active'); }
+    }
   }
-  // Badge
+  // Bz
+  const bzEl   = document.getElementById('live-bz');
+  const bzDesc = document.getElementById('live-bz-desc');
+  if(bzEl){
+    if(bz !== null && !isNaN(bz) && !bzStale){
+      bzEl.textContent = bz.toFixed(1) + ' nT';
+      bzEl.className = 'rtd-val ' + (bz < -10 ? 'bad' : bz < -3 ? 'warn' : bz > 3 ? 'good' : '');
+      bzDesc.textContent = bz < -10 ? 'Strong southward' : bz < -3 ? 'Southward' :
+                           bz > 3   ? 'Northward · quiet' : 'Near-zero';
+    } else {
+      bzEl.textContent = '—';
+      bzEl.className = 'rtd-val warn';
+      if(bzDesc) bzDesc.textContent = bzStale ? '⚠ Stale' : '';
+    }
+  }
+  // X-ray
+  const xrEl   = document.getElementById('live-xray');
+  const xrDesc = document.getElementById('live-xray-desc');
+  if(xrEl){
+    if(xray && !xrayStale){
+      xrEl.textContent = xray;
+      const letter = xray[0];
+      xrEl.className = 'rtd-val ' + (letter === 'X' ? 'bad' : letter === 'M' ? 'warn' : letter === 'C' ? '' : 'good');
+      xrDesc.textContent = letter === 'X' ? 'X-class flare!' : letter === 'M' ? 'M-class flare' :
+                           letter === 'C' ? 'C-class · minor' : 'Background · quiet';
+    } else {
+      xrEl.textContent = '—';
+      xrEl.className = 'rtd-val warn';
+      if(xrDesc) xrDesc.textContent = xrayStale ? '⚠ Stale' : '';
+    }
+  }
+  // Badge — timestamp is fetch time, not data timestamp (data timestamps vary wildly by source)
   const age = LIVE.solarAge ? Math.round((Date.now()-LIVE.solarAge)/60000) : null;
   const ageStr = age !== null ? `${age}m ago` : '';
-  setSolarBadge(age !== null && age < 20 ? 'live' : 'stale', `NOAA · ${ageStr}${timeTag ? ' · '+timeTag.slice(0,16) : ''}`);
+  const anyFresh = (sfi && !sfiStale) || (kp !== null && !kpStale) || (bz !== null && !bzStale);
+  setSolarBadge(anyFresh ? 'live' : 'stale', `NOAA · ${ageStr}`);
 
-  // Note
   const noteEl = document.getElementById('live-solar-note');
-  if(noteEl) noteEl.textContent = sfi
-    ? `SFI source: NOAA F10.7 daily (10cm-flux.json) · Kp: planetary K-index · Model baseline SFI=150`
-    : `NOAA services.swpc.noaa.gov · products/summary/10cm-flux.json`;
+  if(noteEl) noteEl.style.display = 'none';
 }
 
 function setSolarBadge(type, text){
@@ -5577,35 +5823,86 @@ function setSolarBadge(type, text){
   if(!el) return;
   el.className = 'live-badge ' + (type === 'live' ? '' : type);
   el.textContent = text;
+  // Also update the always-visible header indicator
+  const ns = document.getElementById('noaaStatus');
+  if(ns){
+    if(type === 'live'){
+      ns.style.color = 'var(--accent)';
+      ns.textContent = `NOAA ⚡ SFI=${Math.round(S.sfi)}`;
+    } else if(type === 'err'){
+      ns.style.color = 'var(--r4)';
+      ns.textContent = 'NOAA offline';
+    } else if(type === 'stale'){
+      ns.style.color = 'var(--dim)';
+      ns.textContent = 'NOAA stale';
+    } else {
+      ns.style.color = 'var(--dim)';
+      ns.textContent = 'NOAA…';
+    }
+  }
 }
 
-function applyLiveSFI(){
-  if(!LIVE.sfiLast) return;
-  const v = Math.max(50, Math.min(300, Math.round(LIVE.sfiLast)));
-  setSFI(v);
-  document.getElementById('applySfiBtn').textContent = `✓ Applied SFI=${v}`;
-  setTimeout(()=>{ document.getElementById('applySfiBtn').textContent = `⚡ Apply Live SFI to Model`; }, 2500);
+
+
+// Shared guard: returns true if auto-sync is allowed to write S.cond.
+// Manual user selection blocks auto-sync until conditions return to average.
+// Two auto-sources (Kp, X-ray) can update each other freely.
+function _condAutoAllowed(source){
+  // If the user manually set cond (condAutoSource===null and cond!=='average'), block.
+  if(LIVE.condAutoSource === null && S.cond !== 'average') return false;
+  return true;
+}
+
+function _condAutoSet(newCond, source, labelEl, suffix){
+  if(!_condAutoAllowed(source)) return;
+  if(S.cond === newCond) return; // no change needed
+  S.cond = newCond;
+  LIVE.condAutoSource = (newCond === 'average') ? null : source;
+  buildConds();
+  rebuildLayers();
+  if(labelEl){ const el = document.getElementById(labelEl); if(el) el.textContent += suffix; }
+}
+
+// Silent condition sync — updates S.cond only, no rebuild (caller does one rebuild)
+function _autoSyncCondSilent(kp, xrayClass){
+  // Kp → condition (NOAA G-scale)
+  let newCond = 'average';
+  if(kp < 0.5)      newCond = 'excellent';
+  else if(kp < 1.5) newCond = 'good';
+  else if(kp < 3.0) newCond = 'average';
+  else if(kp < 5.5) newCond = 'poor';
+  else               newCond = 'disturbed';
+
+  // X-ray can only upgrade severity, never downgrade
+  if(xrayClass){
+    const letter = xrayClass[0];
+    const val    = parseFloat(xrayClass.slice(1)) || 1;
+    const severity = {excellent:0, good:1, average:2, poor:3, disturbed:4};
+    let xrayCond = null;
+    if(letter === 'X' && val >= 5.0)      xrayCond = 'disturbed';
+    else if(letter === 'X')               xrayCond = 'poor';
+    else if(letter === 'M' && val >= 5.0) xrayCond = 'poor';
+    if(xrayCond && (severity[xrayCond] || 0) > (severity[newCond] || 0))
+      newCond = xrayCond;
+  }
+
+  // Respect manual override — if user manually set cond, don't overwrite
+  if(LIVE.condAutoSource === null && S.cond !== 'average') return;
+
+  if(S.cond !== newCond){
+    S.cond = newCond;
+    LIVE.condAutoSource = (newCond === 'average') ? null : 'kp';
+    buildConds();
+  }
 }
 
 function autoSyncCondFromKp(kp){
-  // Map Kp index to condition setting
-  // K=0: excellent, K=1: good, K=2: average, K=3-4: poor, K≥5: disturbed
-  let newCond = 'average';
-  if(kp < 0.5) newCond = 'excellent';
-  else if(kp < 1.5) newCond = 'good';
-  else if(kp < 2.5) newCond = 'average';
-  else if(kp < 4.5) newCond = 'poor';
-  else newCond = 'disturbed';
+  _autoSyncCondSilent(kp, null);
+  rebuildLayers();
+}
 
-  // Only auto-apply if current cond is 'average' (i.e. not manually set)
-  // We don't forcefully override a manual selection
-  if(S.cond === 'average' && newCond !== 'average'){
-    S.cond = newCond;
-    buildConds();
-    rebuildLayers();
-    const kpDesc = document.getElementById('live-kp-desc');
-    if(kpDesc) kpDesc.textContent += ` · ⚡ Auto-applied`;
-  }
+function autoSyncCondFromXray(xrayClass){
+  // standalone call not used — handled inside _autoSyncCondSilent
 }
 
 // ── PSKReporter ──────────────────────────────────────────────
@@ -6291,19 +6588,8 @@ function toggleSpotsLayer(){
   drawSpotMarkers();
 }
 
-// ── Periodic auto-refresh ─────────────────────────────────────
-function startLiveDataRefresh(){
-  // Solar: fetch immediately, refresh every 15 min
-  fetchLiveSolar();
-  setInterval(fetchLiveSolar, 15 * 60 * 1000);
-  // PSKReporter: connect immediately on load if callsign is saved.
-  // The persistent MQTT client handles all reconnects internally —
-  // no polling interval needed here.
-  // Auto-connect on startup — always attempt; fetchPSKReporter() handles missing callsign gracefully
-  setTimeout(function(){
-    fetchPSKReporter();
-  }, 1500);
-}
+
+
 
 // ── Evict stale PSK markers when tab becomes visible again ───
 // setInterval timers (tickRTC, _pskAgeTimer) are throttled or suspended
