@@ -805,7 +805,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.120';
+const APP_VERSION = 'v1.121';
 const APP_DATE    = '2026-03-15';
 
 // PSK constants — declared here as var (not const) so they are hoisted and
@@ -831,7 +831,7 @@ const LIVE = {
   // foF2Floor: highest implied foF2 from any active spot path through TX region
   // activeBands: Set of band strings currently confirmed open by spots
   spotCorrections: {
-    bearingMufFloor: new Float32Array(360),  // MHz per 1° bearing
+    bearingMufFloor: {},  // band → Float32Array(360): proven open bearings per band
     condFactorAdj: 1.0,
     foF2Floor: 0,
     activeBands: new Set(),
@@ -2015,7 +2015,7 @@ function midpointIono(txLat, txLon, bearingDeg, skipDistKm){
 // or the subsolar point), the full range is open at the true max, so the binary search
 // converges to the full scaled distance. The foF2 ratio scaling below then further
 // extends range toward those bearings, matching observed DX patterns.
-function bearingSkipOuter(txLat, txLon, bearingDeg, baseSkipOuterKm, freqMHz, skipGeomMax, power, condFactor, gLin){
+function bearingSkipOuter(txLat, txLon, bearingDeg, baseSkipOuterKm, freqMHz, skipGeomMax, power, condFactor, gLin, band){
   if(!baseSkipOuterKm) return null;
 
   const fullDist = Math.min(skipGeomMax, scaledIono(baseSkipOuterKm * gLin, power, condFactor));
@@ -2024,10 +2024,11 @@ function bearingSkipOuter(txLat, txLon, bearingDeg, baseSkipOuterKm, freqMHz, sk
   // return fullDist immediately — bypass all model MUF gating.
   const bearingIdx = Math.round(((bearingDeg % 360) + 360) % 360) % 360;
   const _sc = LIVE.spotCorrections;
-  const spotMufFloor = _sc && _sc.bearingMufFloor ? (_sc.bearingMufFloor[bearingIdx] || 0) : 0;
-  const spotProvenOpen = spotMufFloor >= freqMHz;
+  const _bandArr = band && _sc && _sc.bearingMufFloor && _sc.bearingMufFloor[band];
+  const spotProvenOpen = _bandArr ? (_bandArr[bearingIdx] === 1) : false;
   if(spotProvenOpen){
-    const spotLegFloor = (_sc && _sc.legFloor && _sc.legFloor[bearingIdx]) || 0;
+    const _bandLeg = band && _sc && _sc.legFloor && _sc.legFloor[band];
+    const spotLegFloor = (_bandLeg && _bandLeg[bearingIdx]) || 0;
     const spotDist = spotLegFloor > 0
       ? Math.min(skipGeomMax, Math.round(spotLegFloor * Math.sqrt(power/100) * condFactor))
       : 0;
@@ -3767,10 +3768,10 @@ ${phaseStr}`,
         if(ant.dir){
           const delta = Math.abs(((brg - S.bearing)+540)%360-180);
           oKm = delta <= ant.bw/2
-            ? bearingSkipOuter(S.lat,S.lon,brg,z.skipOuterKm,b.freqMHz,z.skipGeomKm||b.skipGeomMax,p,c.factor,gLin)
+            ? bearingSkipOuter(S.lat,S.lon,brg,z.skipOuterKm,b.freqMHz,z.skipGeomKm||b.skipGeomMax,p,c.factor,gLin,S.band)
             : 0;
         } else {
-          oKm = bearingSkipOuter(S.lat,S.lon,brg,z.skipOuterKm,b.freqMHz,z.skipGeomKm||b.skipGeomMax,p,c.factor,gLin);
+          oKm = bearingSkipOuter(S.lat,S.lon,brg,z.skipOuterKm,b.freqMHz,z.skipGeomKm||b.skipGeomMax,p,c.factor,gLin,S.band);
         }
         if(oKm > 0) anyOpen = true;
         if(pi===0) skipOuterPerBearing[i] = oKm || 0;
@@ -6209,7 +6210,7 @@ function fetchPSKReporter(){
 // ══════════════════════════════════════════════════════════════════
 function inferSpotCorrections(){
   const sc = LIVE.spotCorrections;
-  if(sc.bearingMufFloor) sc.bearingMufFloor.fill(0); else sc.bearingMufFloor = new Float32Array(360);
+  sc.bearingMufFloor = {};
   sc.legFloor = {};
   sc.activeBands.clear();
   sc.foF2Floor = 0;
@@ -6293,8 +6294,11 @@ function inferSpotCorrections(){
         const provenLegKm = pathKm / estHops;
         for(let d = -10; d <= 10; d++){
           const bi = (bearing + d + 360) % 360;
-          if(bandCentreFreq > sc.bearingMufFloor[bi]) sc.bearingMufFloor[bi] = bandCentreFreq;
-          if(!sc.legFloor[bi] || provenLegKm > sc.legFloor[bi]) sc.legFloor[bi] = provenLegKm;
+          if(!sc.bearingMufFloor[spot.band]) sc.bearingMufFloor[spot.band] = new Float32Array(360);
+          sc.bearingMufFloor[spot.band][bi] = 1;
+          if(!sc.legFloor[spot.band]) sc.legFloor[spot.band] = {};
+          if(!sc.legFloor[spot.band][bi] || provenLegKm > sc.legFloor[spot.band][bi])
+            sc.legFloor[spot.band][bi] = provenLegKm;
         }
 
         // Refine foF2 floor using actual midpoint M3k
