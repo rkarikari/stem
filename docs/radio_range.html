@@ -805,8 +805,8 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.112';
-const APP_DATE    = '2026-03-12';
+const APP_VERSION = 'v1.120';
+const APP_DATE    = '2026-03-15';
 
 // PSK constants — declared here as var (not const) so they are hoisted and
 // never in the temporal dead zone when timers or MQTT callbacks fire early.
@@ -825,6 +825,18 @@ const LIVE = {
   // Persistent spot layers: key → {marker, line, expiresAt, band, onMap}
   // Spots stay on the map for 15 minutes from TX time (matches PSKReporter window).
   spotLayers: new Map(),
+  // PSKReporter-derived propagation corrections — updated on every spot flush.
+  // bearingMufFloor[i]: observed MUF lower bound (MHz) on bearing i° (1° resolution, 360 entries)
+  // condFactorAdj: multiplicative adjustment to condFactor from spot density evidence
+  // foF2Floor: highest implied foF2 from any active spot path through TX region
+  // activeBands: Set of band strings currently confirmed open by spots
+  spotCorrections: {
+    bearingMufFloor: new Float32Array(360),  // MHz per 1° bearing
+    condFactorAdj: 1.0,
+    foF2Floor: 0,
+    activeBands: new Set(),
+    lastUpdated: 0,
+  },
 };
 
 // Band colour lookup (matching HF bands colour palette)
@@ -1620,7 +1632,11 @@ function currentFoF2(){
   const st = solarTimes(S.lat);
   const isDay = (lt >= st.sunriseLT && lt < st.sunsetLT);
   const raw = interpProfile(foF2Profile(S.lat), lt);
-  return scaledFoF2(raw, isDay, S.lat);
+  const modelFoF2 = scaledFoF2(raw, isDay, S.lat);
+  // Apply PSKReporter-derived foF2 floor: if spots prove the ionosphere is
+  // richer than the model predicts, use the spot-implied value.
+  const spotFloor = LIVE.spotCorrections ? LIVE.spotCorrections.foF2Floor : 0;
+  return Math.max(modelFoF2, spotFloor);
 }
 
 function currentDlayer(){
@@ -2004,13 +2020,25 @@ function bearingSkipOuter(txLat, txLon, bearingDeg, baseSkipOuterKm, freqMHz, sk
 
   const fullDist = Math.min(skipGeomMax, scaledIono(baseSkipOuterKm * gLin, power, condFactor));
 
-  // Quick check: if the midpoint at the minimum plausible skip distance already
-  // fails the MUF test, this bearing is truly closed — return 0 early.
+  // If spots have directly confirmed this bearing is open at freqMHz,
+  // return fullDist immediately — bypass all model MUF gating.
+  const bearingIdx = Math.round(((bearingDeg % 360) + 360) % 360) % 360;
+  const _sc = LIVE.spotCorrections;
+  const spotMufFloor = _sc && _sc.bearingMufFloor ? (_sc.bearingMufFloor[bearingIdx] || 0) : 0;
+  const spotProvenOpen = spotMufFloor >= freqMHz;
+  if(spotProvenOpen){
+    const spotLegFloor = (_sc && _sc.legFloor && _sc.legFloor[bearingIdx]) || 0;
+    const spotDist = spotLegFloor > 0
+      ? Math.min(skipGeomMax, Math.round(spotLegFloor * Math.sqrt(power/100) * condFactor))
+      : 0;
+    return Math.max(fullDist, spotDist);
+  }
+
+  // Model MUF gate: if midpoint at 200 km fails, bearing is closed.
   const mpMin = midpointIono(txLat, txLon, bearingDeg, 200);
   if(mpMin.muf3000 < freqMHz) return 0;
 
-  // Quick check: if the full distance midpoint passes, skip the binary search —
-  // the band is open all the way out. Apply foF2 ratio scaling and return.
+  // If the full distance midpoint passes, skip binary search.
   const mpFull = midpointIono(txLat, txLon, bearingDeg, fullDist);
   if(mpFull.muf3000 >= freqMHz){
     const txF2  = currentFoF2();
@@ -2018,7 +2046,7 @@ function bearingSkipOuter(txLat, txLon, bearingDeg, baseSkipOuterKm, freqMHz, sk
     return Math.min(skipGeomMax, Math.round(fullDist * ratio));
   }
 
-  // Binary search: find the longest range lo where MUF(midpoint) ≥ freqMHz.
+  // Binary search: find longest range where MUF(midpoint) ≥ freqMHz.
   let lo = 200, hi = fullDist;
   for(let i = 0; i < 8; i++){
     const mid = (lo + hi) / 2;
@@ -2342,7 +2370,11 @@ let cvLayers=[], txMk=null;
 // Conditions factor applies to ionospheric paths ONLY (not groundwave).
 function scaledIono(baseKm, powerW, condFactor){
   if(!baseKm || baseKm <= 0) return 0;
-  return Math.min(MAX_KM, Math.round(baseKm * Math.sqrt(powerW/100) * condFactor));
+  // Apply PSKReporter SNR-derived condition adjustment on top of model condFactor.
+  // spotCorrections.condFactorAdj: <1.0 = spots show worse conditions than model,
+  //                                >1.0 = spots show better conditions than model.
+  const spotAdj = (LIVE && LIVE.spotCorrections) ? LIVE.spotCorrections.condFactorAdj : 1.0;
+  return Math.min(MAX_KM, Math.round(baseKm * Math.sqrt(powerW/100) * condFactor * spotAdj));
 }
 function scaledGW(baseKm, powerW){
   if(!baseKm || baseKm <= 0) return 0;
@@ -3156,7 +3188,27 @@ function liveZones(band){
       skipNote = `E-layer skip · foE ${foE_now.toFixed(1)} MHz > ${freq} MHz ✓ · F2 MUF(3000) ${muf3000.toFixed(1)} MHz (closed)`;
     }
   } else {
-    skipNote = `Band closed · MUF(3000) ${muf3000.toFixed(1)} MHz < ${freq} MHz${foE_now > 0 ? ` · foE ${foE_now.toFixed(1)} MHz` : ''}`;
+    // ── PSKReporter override: spots prove band is open despite model saying closed ──
+    // A decoded spot on this band from a path through the TX region is harder
+    // evidence than the foF2 model. If spots confirm the band is open, use the
+    // band's night/day skipOuter reference value and let per-bearing bearingSkipOuter()
+    // further refine which specific bearings are active.
+    const spotsBandOpen = LIVE.spotCorrections && LIVE.spotCorrections.activeBands.has(band);
+    if(spotsBandOpen){
+      const soRef = isDaytime ? (b.skipOuter.day || b.skipOuter.night) : (b.skipOuter.night || b.skipOuter.day);
+      if(soRef){
+        skipOuterKm = soRef;
+        // skipInner: use night value as conservative default when model is closed
+        const siRef = isDaytime ? (b.skipInner.day || b.skipInner.night) : (b.skipInner.night || b.skipInner.day);
+        if(siRef && !skipInnerKm) skipInnerKm = siRef;
+        skipNote = `Band closed by model · MUF(3000) ${muf3000.toFixed(1)} MHz < ${freq} MHz`
+          + ` · OVERRIDDEN by PSKReporter spots (${LIVE.spotCorrections.activeBands.size} active band(s) confirmed open)`;
+      } else {
+        skipNote = `Band closed · MUF(3000) ${muf3000.toFixed(1)} MHz < ${freq} MHz${foE_now > 0 ? ` · foE ${foE_now.toFixed(1)} MHz` : ''}`;
+      }
+    } else {
+      skipNote = `Band closed · MUF(3000) ${muf3000.toFixed(1)} MHz < ${freq} MHz${foE_now > 0 ? ` · foE ${foE_now.toFixed(1)} MHz` : ''}`;
+    }
   }
 
   // skipGeomKm: hard geometric ceiling for current skip mode.
@@ -3244,16 +3296,13 @@ function calcRangeKm(powerW){
   let hop2 = 0, hop3 = 0, hop4 = 0;
   const hopGeomLeg = z.skipGeomKm || b.skipGeomMax;
   if(z.hop2OuterBase && skip1 > 0){
-    const hop2Leg = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase * gLin, powerW, c.factor));
-    hop2 = Math.min(2 * b.skipGeomMax, skip1 + hop2Leg);
+    hop2 = Math.min(2 * b.skipGeomMax, skip1 + skip1);
   }
   if(z.hop3OuterBase && hop2 > 0){
-    const hop3Leg = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase * gLin, powerW, c.factor));
-    hop3 = Math.min(3 * b.skipGeomMax, hop2 + hop3Leg);
+    hop3 = Math.min(3 * b.skipGeomMax, hop2 + skip1);
   }
   if(z.hop4OuterBase && hop3 > 0){
-    const hop4Leg = Math.min(hopGeomLeg, scaledIono(z.hop4OuterBase * gLin, powerW, c.factor));
-    hop4 = Math.min(MAX_KM, Math.min(4 * b.skipGeomMax, hop3 + hop4Leg));
+    hop4 = Math.min(MAX_KM, Math.min(4 * b.skipGeomMax, hop3 + skip1));
   }
   return Math.max(nvis, skip1, hop2, hop3, hop4, scaledGW(z.gwBase, powerW));
 }
@@ -3758,7 +3807,9 @@ ${phaseStr}`,
         const brg = (i/N_HF_RADIALS)*360;
         const skip1 = skipOuterPerBearing[i];
         if(skip1 <= 0){ outerPts2.push(destPt(S.lat,S.lon,brg,0.5)); innerPts2.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
-        const hop2Leg   = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase*gLin,p,c.factor));
+        // Each hop leg covers the same geographic distance as hop1 (skip1).
+        // hop2OuterBase gates whether signal is viable — it does NOT shorten the leg.
+        const hop2Leg   = skip1;
         const hop2Total = Math.min(hop2GeomMax, skip1 + hop2Leg);
         if(hop2Total > skip1 + 100) anyOpen2 = true;
         if(hop2Total > maxHop2) maxHop2 = hop2Total;
@@ -3794,9 +3845,9 @@ ${phaseStr}`,
         const brg = (i/N_HF_RADIALS)*360;
         const skip1 = skipOuterPerBearing[i];
         if(skip1<=0){ outerPts3.push(destPt(S.lat,S.lon,brg,0.5)); innerPts3.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
-        const hop2Leg   = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase*gLin,p,c.factor));
+        const hop2Leg   = skip1;
         const hop2Total = Math.min(2*b.skipGeomMax, skip1+hop2Leg);
-        const hop3Leg   = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase*gLin,p,c.factor));
+        const hop3Leg   = skip1;
         const hop3Total = Math.min(hop3GeomMax, hop2Total+hop3Leg);
         if(hop3Total > hop2Total+100) anyOpen3=true;
         if(hop3Total > maxHop3) maxHop3=hop3Total;
@@ -3831,11 +3882,11 @@ ${phaseStr}`,
         const brg=(i/N_HF_RADIALS)*360;
         const skip1=skipOuterPerBearing[i];
         if(skip1<=0){ outerPts4.push(destPt(S.lat,S.lon,brg,0.5)); innerPts4.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
-        const hop2Leg   = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase*gLin,p,c.factor));
+        const hop2Leg   = skip1;
         const hop2Total = Math.min(2*b.skipGeomMax, skip1+hop2Leg);
-        const hop3Leg   = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase*gLin,p,c.factor));
+        const hop3Leg   = skip1;
         const hop3Total = Math.min(3*b.skipGeomMax, hop2Total+hop3Leg);
-        const hop4Leg   = Math.min(hopGeomLeg, scaledIono(z.hop4OuterBase*gLin,p,c.factor));
+        const hop4Leg   = skip1;
         const hop4Total = Math.min(hop4GeomMax, hop3Total+hop4Leg);
         if(hop4Total > hop3Total+100) anyOpen4=true;
         if(hop4Total > maxHop4) maxHop4=hop4Total;
@@ -5460,7 +5511,7 @@ function switchMode(mode){
   const v = document.getElementById('appVer');
   if(v) v.textContent = APP_VERSION;
   const f = document.getElementById('sbFootVer');
-  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Per-bearing midpoint foF2 · ITU-R P.368 conductivity · ITU-R P.526 diffraction · SFI solar scaling · Seasonal foF2 · Troposcatter · Spencer(1971) solar geometry · Magneto-ionic gyrofrequency · Diurnal hmF2 · foE solar-zenith · GW P.368 recal · Grey-line D-layer (I) · M3k skip inner (J) · Hata rural recal (K) · Equatorial seasonal recal (L) · Binary-search midpoint MUF (M) · Eq.sector SFI+7% (N) · Sporadic-E overlay (O)`;
+  if(f) f.textContent = `${APP_VERSION} · ${APP_DATE} · Per-bearing midpoint foF2 · ITU-R P.368 conductivity · ITU-R P.526 diffraction · SFI solar scaling · Seasonal foF2 · Troposcatter · Spencer(1971) solar geometry · Magneto-ionic gyrofrequency · Diurnal hmF2 · foE solar-zenith · GW P.368 recal · Grey-line D-layer (I) · M3k skip inner (J) · Hata rural recal (K) · Equatorial seasonal recal (L) · Binary-search midpoint MUF (M) · Eq.sector SFI+7% (N) · Sporadic-E overlay (O) · 1° radial resolution (P) · Per-bearing skip inner+dead zone (Q) · PSK spot MUF/foF2/condFactor inference (R)`;
 })();
 buildBands();
 buildConds();
@@ -5537,9 +5588,9 @@ async function fetchLiveSolar(){
 
   // Maximum age constants
   const MAX_SFI_AGE_H  = 24;   // F10.7 daily — accept up to 24h
-  const MAX_KP_AGE_H   =  3;   // Kp official 3h cadence
-  const MAX_BZ_AGE_MIN = 15;   // Solar wind
-  const MAX_XRAY_AGE_MIN = 15; // GOES X-ray
+  const MAX_KP_AGE_H   =  6;   // Kp official 3h cadence — accept up to 6h to handle delivery lag
+  const MAX_BZ_AGE_MIN = 30;   // Solar wind — accept up to 30min
+  const MAX_XRAY_AGE_MIN = 30; // GOES X-ray — accept up to 30min
 
   // Robust NOAA timestamp parser — handles multiple formats
   function _parseNoaaTime(s){
@@ -5559,12 +5610,20 @@ async function fetchLiveSolar(){
   function _ageH(ts){ return _ageMin(ts) / 60; }
 
   // ── Fetch all sources in parallel ───────────────────────────
-  const [rSfi, rSfiBack, rKp, rKpBack, rBz, rXray] = await Promise.allSettled([
+  // Sources chosen for maximum freshness:
+  //   Kp-1m : json/planetary_k_index_1m.json     — 1-min estimated Kp (PRIMARY)
+  //   Kp-3h : products/noaa-planetary-k-index.json — 3-hourly completed windows (FALLBACK)
+  //   Scales: products/noaa-scales.json            — G/S/R scale, updated every minute
+  //   Bz    : products/solar-wind/mag-2-hour.json  — reliable 2h window (mag-5-minute is often empty)
+  //   Xray  : json/goes/primary/xrays-6-hour.json  — 1-min GOES measurements
+  //   SFI   : products/summary/10cm-flux.json      — daily F10.7
+  const [rSfi, rSfiBack, rKp1m, rKp3h, rScales, rBz, rXray] = await Promise.allSettled([
     _noaaFetch('https://services.swpc.noaa.gov/products/summary/10cm-flux.json'),
     _noaaFetch('https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json'),
-    _noaaFetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'),
     _noaaFetch('https://services.swpc.noaa.gov/json/planetary_k_index_1m.json'),
-    _noaaFetch('https://services.swpc.noaa.gov/products/solar-wind/mag-5-minute.json'),
+    _noaaFetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'),
+    _noaaFetch('https://services.swpc.noaa.gov/products/noaa-scales.json'),
+    _noaaFetch('https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json'),
     _noaaFetch('https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json')
   ]);
 
@@ -5610,44 +5669,76 @@ async function fetchLiveSolar(){
     } catch(e){ console.warn('NOAA SFI fallback:', e.message); }
   }
 
-  // ── Kp primary — 3-hourly, reject if >3h old ────────────────
+  // ── Kp PRIMARY — 1-minute estimated Kp (most real-time) ──────
+  // planetary_k_index_1m.json: array of objects with time_tag (current minute) + kp_index
+  // Updated every minute — this is the freshest available Kp source.
   try{
-    if(rKp.status==='fulfilled' && rKp.value.ok){
-      const d = await rKp.value.json();
-      if(Array.isArray(d) && d.length > 1){
-        const last = d[d.length-1];
-        const age  = _ageH(last[0]); // first column is time_tag
-        if(age <= MAX_KP_AGE_H){
-          kpVal = parseFloat(last[1] ?? last[2] ?? 0);
-        } else {
-          kpStale = true;
-          console.warn(`NOAA Kp primary: stale (${age.toFixed(1)}h old), rejecting`);
-        }
-      }
-    }
-  } catch(e){ console.warn('NOAA Kp primary:', e.message); }
-
-  // ── Kp fallback — 1-minute nowcast ──────────────────────────
-  if(kpVal === null){
-    try{
-      if(rKpBack.status==='fulfilled' && rKpBack.value.ok){
-        const arr = await rKpBack.value.json();
-        if(Array.isArray(arr) && arr.length){
-          const last = arr[arr.length-1];
-          const age  = _ageMin(last.time_tag || last.TimeStamp || '');
-          if(age <= MAX_KP_AGE_H * 60){
-            kpVal = parseFloat(last.kp_index ?? last.Kp ?? last.kp ?? 0);
+    if(rKp1m.status==='fulfilled' && rKp1m.value.ok){
+      const arr = await rKp1m.value.json();
+      if(Array.isArray(arr) && arr.length){
+        // Walk backwards to find the most recent non-null entry
+        for(let i = arr.length-1; i >= 0; i--){
+          const entry = arr[i];
+          const kpRaw = entry.kp_index ?? entry.Kp ?? entry.kp ?? entry.estimated_kp ?? null;
+          if(kpRaw == null) continue;
+          const age = _ageMin(entry.time_tag || entry.TimeStamp || '');
+          if(age <= 15){ // 1-min data — accept only if within 15 minutes
+            kpVal = parseFloat(kpRaw);
             kpStale = false;
+            break;
           } else {
             kpStale = true;
-            console.warn(`NOAA Kp fallback: stale (${age.toFixed(0)}min old), rejecting`);
+            console.warn(`NOAA Kp 1m: stale (${age.toFixed(0)}min old), rejecting`);
+            break;
           }
         }
       }
-    } catch(e){ console.warn('NOAA Kp fallback:', e.message); }
+    }
+  } catch(e){ console.warn('NOAA Kp 1m:', e.message); }
+
+  // ── Kp FALLBACK 1 — NOAA Scales (G-scale → Kp, updated every minute) ──
+  if(kpVal === null){
+    try{
+      if(rScales.status==='fulfilled' && rScales.value.ok){
+        const sc = await rScales.value.json();
+        // noaa-scales.json: { "G": {"Scale":"1","Text":"...",...}, ... }
+        // G-scale maps to Kp: G0=Kp<5, G1=Kp5, G2=Kp6, G3=Kp7, G4=Kp8, G5=Kp9
+        const gScale = sc && (sc.G || sc.Geomagnetic);
+        if(gScale){
+          const gVal = parseInt(gScale.Scale || gScale.scale || '0') || 0;
+          // Convert G-scale to approximate Kp midpoint
+          const gToKp = [1, 5, 6, 7, 8, 9];
+          kpVal = gToKp[Math.min(gVal, 5)];
+          kpStale = false;
+        }
+      }
+    } catch(e){ console.warn('NOAA Scales Kp:', e.message); }
   }
 
-  // ── Bz — solar wind, reject if >15 min old ──────────────────
+  // ── Kp FALLBACK 2 — 3-hourly completed windows ───────────────
+  if(kpVal === null){
+    try{
+      if(rKp3h.status==='fulfilled' && rKp3h.value.ok){
+        const d = await rKp3h.value.json();
+        if(Array.isArray(d) && d.length > 1){
+          // Walk back to find most recent entry within MAX_KP_AGE_H
+          for(let i = d.length-1; i >= 0; i--){
+            const age = _ageH(d[i][0]);
+            if(age <= MAX_KP_AGE_H){
+              kpVal = parseFloat(d[i][1] ?? d[i][2] ?? 0);
+              break;
+            }
+          }
+          if(kpVal === null){
+            kpStale = true;
+            console.warn('NOAA Kp 3h: all entries stale');
+          }
+        }
+      }
+    } catch(e){ console.warn('NOAA Kp 3h:', e.message); }
+  }
+
+  // ── Bz — solar wind from mag-2-hour.json (mag-5-minute is frequently empty) ──
   try{
     if(rBz.status==='fulfilled' && rBz.value.ok){
       const arr = await rBz.value.json();
@@ -5714,7 +5805,6 @@ async function fetchLiveSolar(){
   }
 
   // ── Auto-sync condition from Kp and X-ray ───────────────────
-  // These update S.cond silently; rebuildLayers called once below.
   if(kpVal !== null && !kpStale)   _autoSyncCondSilent(kpVal, xrayClass && !xrayStale ? xrayClass : null);
 
   // ── Single rebuild with all live values applied ──────────────
@@ -5722,8 +5812,12 @@ async function fetchLiveSolar(){
 
   updateSolarUI(sfiVal, kpVal, bzVal, xrayClass, sfiStale, kpStale, bzStale, xrayStale);
 
-  if(sfiVal === null && kpVal === null && bzVal === null)
-    setSolarBadge('err', 'NOAA unreachable — check console');
+  if(sfiVal === null && kpVal === null && bzVal === null){
+    const isFileOrigin = window.location.protocol === 'file:';
+    setSolarBadge('err', isFileOrigin
+      ? 'NOAA blocked — open via HTTP server (not file://)'
+      : 'NOAA unreachable — check console');
+  }
 
   if(btn){ btn.textContent='↻'; btn.disabled=false; }
 }
@@ -6093,6 +6187,142 @@ function fetchPSKReporter(){
   _pskConnect(call);
 }
 
+// ══════════════════════════════════════════════════════════════════
+// PSK PROPAGATION INFERENCE ENGINE
+// Analyses live spot buffer to derive hard ionospheric constraints:
+//
+// 1. Per-bearing MUF floor: for each spot, the path geometry gives a
+//    lower bound on MUF at the reflection midpoint. A decoded spot at
+//    frequency F MHz over path distance D km proves:
+//      MUF(path) ≥ F   →   foF2_midpoint ≥ F / M3k(D)
+//    The highest confirmed frequency on each bearing sets a floor that
+//    prevents bearingSkipOuter() from closing bands that spots prove open.
+//
+// 2. condFactor adjustment: spot density vs model expectation.
+//    More active spots than predicted → conditions better than model says.
+//    Fewer spots (band dead despite model open) → absorb/degrade conditions.
+//
+// 3. foF2 floor: highest implied foF2 from any active spot through TX region.
+//    Overrides the profile-derived foF2 when spots prove it higher.
+//
+// 4. activeBands: set of bands with at least one confirmed active spot.
+// ══════════════════════════════════════════════════════════════════
+function inferSpotCorrections(){
+  const sc = LIVE.spotCorrections;
+  if(sc.bearingMufFloor) sc.bearingMufFloor.fill(0); else sc.bearingMufFloor = new Float32Array(360);
+  sc.legFloor = {};
+  sc.activeBands.clear();
+  sc.foF2Floor = 0;
+
+  const spots = LIVE.pskSpots;
+  if(!spots || !spots.length){
+    sc.condFactorAdj = 1.0;
+    sc.lastUpdated = Date.now();
+    return;
+  }
+
+  const txLat = S.lat, txLon = S.lon;
+  // Get the active callsign so we can recognise our own spots regardless of coord resolution
+  const myCall = (document.getElementById('pskCallIn')?.value||'').trim().toUpperCase();
+  let snrWeights = [];
+
+  spots.forEach(function(spot){
+    try{
+    const freqMHz = spot.freq / 1000;
+    if(!freqMHz || freqMHz < 1 || !spot.band) return;
+
+    // A spot is "ours" if either callsign matches, OR one end resolves near TX.
+    // We use TX coords for our end so bearing calculation is accurate.
+    const dxIsMe = myCall && (spot.dx_call === myCall);
+    const deIsMe = myCall && (spot.de_call === myCall);
+
+    // Resolve near end: prefer our exact TX coords if it's our callsign,
+    // otherwise use whatever coords were resolved from the MQTT message.
+    let nearLat, nearLon, remoteLat, remoteLon;
+    if(dxIsMe){
+      nearLat = txLat; nearLon = txLon;
+      remoteLat = spot.de_lat; remoteLon = spot.de_lon;
+    } else if(deIsMe){
+      nearLat = txLat; nearLon = txLon;
+      remoteLat = spot.dx_lat; remoteLon = spot.dx_lon;
+    } else {
+      // Not our callsign — check if one resolved end is near TX
+      const dxDist = spot.dx_lat !== null ? haversineKm(txLat,txLon,spot.dx_lat,spot.dx_lon) : Infinity;
+      const deDist = spot.de_lat !== null ? haversineKm(txLat,txLon,spot.de_lat,spot.de_lon) : Infinity;
+      const nearDist = Math.min(dxDist, deDist);
+      if(nearDist > 2000) return;  // not relevant to our TX location
+      if(dxDist <= deDist){
+        nearLat = spot.dx_lat; nearLon = spot.dx_lon;
+        remoteLat = spot.de_lat; remoteLon = spot.de_lon;
+      } else {
+        nearLat = spot.de_lat; nearLon = spot.de_lon;
+        remoteLat = spot.dx_lat; remoteLon = spot.dx_lon;
+      }
+    }
+
+    // Band is confirmed open regardless of whether remote coords are known
+    sc.activeBands.add(spot.band);
+
+    // foF2 floor from frequency alone — a decoded spot proves foF2 ≥ freqMHz / M3k
+    // Use TX-side M3k as conservative estimate when remote coords unknown
+    const ltTx = S.autoTime ? localSolarTimeAt(txLon) : (S.time==='day' ? 13.0 : 1.0);
+    const m3kTx = m3kAt(txLat, txLon, ltTx) || 3.1;
+    const impliedFoF2 = (BANDS[spot.band] ? BANDS[spot.band].freqMHz : freqMHz) / m3kTx;
+    if(impliedFoF2 > sc.foF2Floor) sc.foF2Floor = impliedFoF2;
+
+    // Per-bearing MUF floor and precise foF2 — only when we have remote coords
+    if(remoteLat !== null && remoteLon !== null){
+      const pathKm = haversineKm(txLat, txLon, remoteLat, remoteLon);
+      if(pathKm >= 100){
+        const bearing = Math.round(((Math.atan2(
+          Math.sin((remoteLon-txLon)*Math.PI/180)*Math.cos(remoteLat*Math.PI/180),
+          Math.cos(txLat*Math.PI/180)*Math.sin(remoteLat*Math.PI/180) -
+          Math.sin(txLat*Math.PI/180)*Math.cos(remoteLat*Math.PI/180)*Math.cos((remoteLon-txLon)*Math.PI/180)
+        ) * 180 / Math.PI) + 360) % 360);
+
+        // Smear ±10°. Store band CENTRE freq so comparison works:
+        // FT8 at 14.074 proves 20m (14.175) is open.
+        const bandCentreFreq = (BANDS && spot.band && BANDS[spot.band] && BANDS[spot.band].freqMHz) || freqMHz;
+        // Proven 1-hop leg floor from actual spot distance.
+        // If pathKm <= skipGeomMax: direct proof this bearing reaches pathKm in 1 hop.
+        // If pathKm > skipGeomMax: infer leg = pathKm / ceil(pathKm/skipGeomMax).
+        // A Tokyo spot at 13,808 km on 20m (skipGeomMax=5000) → ceil=3 hops → leg=4,603 km.
+        const _bd = BANDS && spot.band && BANDS[spot.band];
+        const bandGeomMax = (_bd && _bd.skipGeomMax) || 4500;
+        const estHops = Math.max(1, Math.ceil(pathKm / bandGeomMax));
+        const provenLegKm = pathKm / estHops;
+        for(let d = -10; d <= 10; d++){
+          const bi = (bearing + d + 360) % 360;
+          if(bandCentreFreq > sc.bearingMufFloor[bi]) sc.bearingMufFloor[bi] = bandCentreFreq;
+          if(!sc.legFloor[bi] || provenLegKm > sc.legFloor[bi]) sc.legFloor[bi] = provenLegKm;
+        }
+
+        // Refine foF2 floor using actual midpoint M3k
+        const mpLat = (txLat + remoteLat) / 2;
+        const mpLon = (txLon + remoteLon) / 2;
+        const mpLt  = S.autoTime ? localSolarTimeAt(mpLon) : (S.time==='day' ? 13.0 : 1.0);
+        const m3kMp = m3kAt(mpLat, mpLon, mpLt) || 3.1;
+        const impliedFoF2mp = (BANDS[spot.band] ? BANDS[spot.band].freqMHz : freqMHz) / m3kMp;
+        if(impliedFoF2mp > sc.foF2Floor) sc.foF2Floor = impliedFoF2mp;
+      }
+    }
+
+    // SNR weight for condFactor
+    snrWeights.push(Math.max(0, (spot.snr + 24) / 34));
+    } catch(e){ /* skip malformed spot */ }
+  });
+
+  // condFactor from SNR evidence
+  if(snrWeights.length > 0){
+    const avg = snrWeights.reduce(function(a,b){return a+b;},0) / snrWeights.length;
+    sc.condFactorAdj = 0.7 + avg * 0.65;
+  } else {
+    sc.condFactorAdj = 1.0;
+  }
+
+  sc.lastUpdated = Date.now();
+}
+
 function _pskFlushToUI(badge){
   // Buffer entries are already deduplicated on arrival (_key per tx+band).
   // Re-compute age from wall clock so "X ago" values stay current.
@@ -6102,6 +6332,8 @@ function _pskFlushToUI(badge){
   });
   var spots = _pskMqttBuffer.slice().sort(function(a,b){return a.age-b.age;});
   LIVE.pskSpots = spots;
+  inferSpotCorrections();  // update per-bearing MUF floors and condFactor from spots
+  rebuildLayers();          // redraw coverage zones with updated spot corrections
   renderSpotList(spots,'spotList','spotsCount','psk-badge',LIVE.spotBandFilter);
   LIVE.spotsVisible = true;
   var toggleBtn = document.getElementById('spotsToggleBtn');
