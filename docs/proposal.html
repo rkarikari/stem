@@ -3,461 +3,1353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SuppliHAM Radio Outlet – Ghana's premier supplier of amateur radio equipment, solar systems, antennas, drones &amp; STEM kits. Official hardware partner for RadioSport STEM Handbook.">
+    <meta name="description" content="SuppliHAM Radio Outlet – Ghana's premier supplier of amateur radio equipment, solar systems, antennas, drones & STEM kits. Official hardware partner for RadioSport STEM Handbook v3.0.">
     <meta name="keywords" content="HAM radio supplies Ghana, amateur radio outlet Accra, solar power kits, antenna systems, drone radio integration, SDR, STEM education supplies, RadioSport">
-    <title>SuppliHAM Radio Outlet • Product Catalog v1.0</title>
+    <title>SuppliHAM Radio Outlet • Product Catalog v2.0</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
-        
         :root {
-            --primary: 234 179 8; /* amber for radio energy */
-        }
-        
-        .tail-container {
-            font-family: 'Inter', system-ui, sans-serif;
-        }
-        
-        .logo-font {
-            font-family: 'Space Grotesk', sans-serif;
+            --amber: #f59e0b;
+            --amber-dim: #92400e;
+            --zinc-950: #09090b;
+            --zinc-900: #18181b;
+            --zinc-800: #27272a;
+            --zinc-700: #3f3f46;
+            --zinc-400: #a1a1aa;
+            --zinc-300: #d4d4d8;
+            --green: #4ade80;
         }
 
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', system-ui, sans-serif;
+            background: var(--zinc-950);
+            color: var(--zinc-300);
+        }
+
+        .display-font { font-family: 'Barlow Condensed', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* ── HERO ── */
         .hero-bg {
-            background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('https://picsum.photos/id/1015/1920/1080') center/cover no-repeat;
+            background:
+                linear-gradient(180deg, rgba(9,9,11,0) 50%, rgba(9,9,11,1) 100%),
+                linear-gradient(rgba(0,0,0,0.72), rgba(0,0,0,0.72)),
+                url('https://images.unsplash.com/photo-1516802273409-68526ee1bdd6?w=1920&auto=format&fit=crop') center/cover no-repeat;
         }
 
-        .card-hover {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .card-hover:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-        }
+        /* ── NAV ── */
+        .nav-pill { transition: all .25s ease; }
+        .nav-pill:hover { background: rgba(245,158,11,.12); color: #f59e0b; }
+        .nav-pill.active { background: #f59e0b1a; color: #f59e0b; border-color: #f59e0b40; }
 
-        .nav-link {
+        /* ── CARDS ── */
+        .inv-card {
+            transition: transform .3s cubic-bezier(.4,0,.2,1), box-shadow .3s;
             position: relative;
+            overflow: hidden;
         }
-        
-        .nav-link:after {
+        .inv-card::before {
             content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -2px;
-            left: 0;
-            background-color: rgb(234 179 8);
-            transition: width 0.3s ease;
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(245,158,11,.06) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity .3s;
         }
-        
-        .nav-link:hover:after {
-            width: 100%;
+        .inv-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,.5); }
+        .inv-card:hover::before { opacity: 1; }
+
+        /* ── CHAPTER CARDS ── */
+        .ch-card {
+            transition: all .25s ease;
+            border-left: 3px solid transparent;
         }
+        .ch-card:hover { border-left-color: #f59e0b; background: #27272a; transform: translateX(4px); }
+
+        /* ── PARTNER TIERS ── */
+        .tier-card { transition: all .3s ease; }
+        .tier-card:hover { transform: translateY(-4px); }
+        .tier-gold { border-color: #f59e0b; }
+        .tier-silver { border-color: #94a3b8; }
+        .tier-bronze { border-color: #a16207; }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeUp {
+            from { opacity:0; transform:translateY(20px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes pulse-amber { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)} 50%{box-shadow:0 0 0 8px rgba(245,158,11,0)} }
+
+        .fade-up { animation: fadeUp .6s ease both; }
+        .blink-cursor::after { content:'▋'; animation: blink 1s step-end infinite; }
+        .pulse-dot { animation: pulse-amber 2s infinite; }
+
+        /* ── SECTIONS ── */
+        .section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .65rem;
+            letter-spacing: .25em;
+            color: #f59e0b;
+            text-transform: uppercase;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #f59e0b40; border-radius: 3px; }
+
+        /* ── SUPPLIER HERO ── */
+        .supplier-hero {
+            background:
+                linear-gradient(135deg, rgba(9,9,11,.95), rgba(15,10,0,.92)),
+                url('https://images.unsplash.com/photo-1518770660439-4636190af475?w=1920&auto=format&fit=crop') center/cover no-repeat;
+        }
+
+        /* Noise texture overlay */
+        .noise::after {
+            content: '';
+            position: absolute; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Active section tracking */
+        .section-active { color: #f59e0b !important; }
     </style>
 </head>
-<body class="tail-container bg-zinc-950 text-zinc-200">
-    <!-- HEADER -->
-    <header class="border-b border-amber-500/30 bg-zinc-950 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <!-- Logo -->
-            <div class="flex items-center gap-x-3">
-                <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-zinc-950 font-bold text-2xl shadow-inner">📡</div>
-                <div>
-                    <span class="logo-font text-3xl font-semibold tracking-tighter text-amber-400">SUPPLIHAM</span>
-                    <span class="text-xs text-zinc-500 block -mt-1 tracking-[3px]">RADIO OUTLET</span>
-                </div>
+
+<body class="bg-zinc-950 text-zinc-300">
+
+<!-- ══════════════════════════════════════════════
+     STICKY HEADER
+══════════════════════════════════════════════ -->
+<header id="site-header" class="sticky top-0 z-50 bg-zinc-950/95 backdrop-blur-md border-b border-amber-500/20">
+    <div class="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-x-4">
+
+        <!-- Logo -->
+        <a href="#home" class="flex items-center gap-x-3 shrink-0">
+            <div class="w-9 h-9 bg-amber-500 rounded-xl flex items-center justify-center text-xl shadow-lg shadow-amber-500/20 pulse-dot">📡</div>
+            <div class="leading-none">
+                <span class="display-font text-2xl font-bold tracking-tight text-amber-400">SUPPLIHAM</span>
+                <span class="mono text-[9px] text-zinc-500 block tracking-[3px] mt-0.5">RADIO OUTLET</span>
             </div>
+        </a>
 
-            <!-- Desktop Nav -->
-            <nav class="hidden md:flex items-center gap-x-8 text-sm font-medium">
-                <a href="#inventory" class="nav-link text-zinc-300 hover:text-white">INVENTORY</a>
-                <a href="#tools" class="nav-link text-zinc-300 hover:text-white">TOOLS</a>
-                <a href="#stem" class="nav-link text-zinc-300 hover:text-white">STEM PARTNER</a>
-                <a href="#contact" class="nav-link text-zinc-300 hover:text-white">CONTACT</a>
-            </nav>
+        <!-- Desktop Nav -->
+        <nav class="hidden lg:flex items-center gap-x-1">
+            <a href="#inventory"  class="nav-pill px-3 py-1.5 rounded-lg text-sm text-zinc-400 border border-transparent">Inventory</a>
+            <a href="#handbook"   class="nav-pill px-3 py-1.5 rounded-lg text-sm text-zinc-400 border border-transparent">Handbook</a>
+            <a href="#tools"      class="nav-pill px-3 py-1.5 rounded-lg text-sm text-zinc-400 border border-transparent">Tools</a>
+            <a href="#stem"       class="nav-pill px-3 py-1.5 rounded-lg text-sm text-zinc-400 border border-transparent">STEM</a>
+            <a href="#supplier"   class="nav-pill px-3 py-1.5 rounded-lg text-sm text-zinc-400 border border-transparent">For Suppliers</a>
+            <a href="#contact"    class="nav-pill px-3 py-1.5 rounded-lg text-sm text-zinc-400 border border-transparent">Contact</a>
+        </nav>
 
-            <!-- Mobile Menu Button -->
-            <button id="mobile-menu-btn"
-                    class="md:hidden w-10 h-10 flex items-center justify-center text-2xl text-amber-400">
+        <!-- Right Actions -->
+        <div class="flex items-center gap-x-3 shrink-0">
+            <a href="https://rkarikari.github.io/stem/index.html" target="_blank" rel="noopener"
+               class="hidden sm:flex items-center gap-x-2 text-xs bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-amber-500/40 px-3 py-2 rounded-xl transition">
+                <i class="fas fa-book-open text-amber-400"></i>
+                <span>Handbook</span>
+            </a>
+            <button onclick="scrollToSection('contact')"
+                    class="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-5 py-2 rounded-xl text-sm transition flex items-center gap-x-2 shadow-lg shadow-amber-500/20">
+                <i class="fas fa-shopping-cart text-xs"></i>
+                <span>Shop Now</span>
+            </button>
+            <button id="mobile-btn" class="lg:hidden w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white">
                 <i class="fas fa-bars"></i>
             </button>
+        </div>
+    </div>
 
-            <!-- Right side -->
-            <div class="flex items-center gap-x-4">
-                <a href="https://rkarikari.github.io/stem/index.html" target="_blank"
-                   class="hidden sm:flex items-center gap-x-2 text-xs bg-zinc-900 hover:bg-zinc-800 border border-amber-500/40 px-4 py-2 rounded-2xl transition">
-                    <i class="fas fa-book"></i>
-                    <span>RadioSport Handbook</span>
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden lg:hidden bg-zinc-900 border-t border-zinc-800">
+        <div class="max-w-7xl mx-auto px-4 py-4 grid grid-cols-2 gap-2 text-sm">
+            <a href="#inventory" onclick="closeMobile()" class="flex items-center gap-x-2 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700"><i class="fas fa-boxes text-amber-400 w-4"></i>Inventory</a>
+            <a href="#handbook"  onclick="closeMobile()" class="flex items-center gap-x-2 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700"><i class="fas fa-book text-amber-400 w-4"></i>Handbook</a>
+            <a href="#tools"     onclick="closeMobile()" class="flex items-center gap-x-2 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700"><i class="fas fa-tools text-amber-400 w-4"></i>Tools</a>
+            <a href="#stem"      onclick="closeMobile()" class="flex items-center gap-x-2 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700"><i class="fas fa-graduation-cap text-amber-400 w-4"></i>STEM</a>
+            <a href="#supplier"  onclick="closeMobile()" class="flex items-center gap-x-2 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700"><i class="fas fa-handshake text-amber-400 w-4"></i>Suppliers</a>
+            <a href="#contact"   onclick="closeMobile()" class="flex items-center gap-x-2 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700"><i class="fas fa-envelope text-amber-400 w-4"></i>Contact</a>
+        </div>
+    </div>
+</header>
+
+<!-- ══════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════ -->
+<section id="home" class="hero-bg relative min-h-screen flex items-center noise">
+    <div class="relative z-10 max-w-6xl mx-auto px-6 py-24 text-center w-full">
+
+        <!-- Live badge -->
+        <div class="inline-flex items-center gap-x-2 bg-black/50 backdrop-blur border border-amber-500/30 px-5 py-2 rounded-full text-xs mb-8 fade-up">
+            <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            <span class="mono tracking-widest text-amber-300">ACCRA • GHANA • LIVE INVENTORY 2026</span>
+        </div>
+
+        <h1 class="display-font text-[min(18vw,140px)] font-extrabold leading-none tracking-tight mb-2 fade-up" style="animation-delay:.1s">
+            SUPPLIHAM
+        </h1>
+        <p class="display-font text-[min(8vw,60px)] font-light text-amber-300 mb-8 fade-up" style="animation-delay:.2s">
+            Radio Outlet
+        </p>
+
+        <p class="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto mb-10 leading-relaxed fade-up" style="animation-delay:.3s">
+            Premium HAM radio equipment, solar systems, antennas &amp; drone kits.<br>
+            Official hardware partner for 
+            <a href="https://rkarikari.github.io/stem/index.html" target="_blank" rel="noopener"
+               class="text-amber-400 font-semibold underline underline-offset-4 hover:text-amber-300">RadioSport STEM Handbook v3.0</a>
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center fade-up" style="animation-delay:.4s">
+            <a href="#inventory"
+               class="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold px-10 py-5 rounded-2xl text-base transition flex items-center justify-center gap-x-3 shadow-xl shadow-amber-500/20 hover:scale-105">
+                <i class="fas fa-boxes"></i> BROWSE CATALOG
+            </a>
+            <a href="#supplier"
+               class="border-2 border-zinc-600 hover:border-amber-400 hover:text-amber-300 font-semibold px-10 py-5 rounded-2xl text-base transition flex items-center justify-center gap-x-3">
+                <i class="fas fa-handshake"></i> SUPPLIER PARTNERSHIP
+            </a>
+        </div>
+
+        <!-- Stats bar -->
+        <div class="mt-16 inline-flex flex-wrap justify-center gap-x-10 gap-y-4 fade-up" style="animation-delay:.5s">
+            <div class="text-center"><div class="display-font text-3xl font-bold text-amber-400">15+</div><div class="text-xs text-zinc-500 mt-1">Categories</div></div>
+            <div class="w-px bg-zinc-700 self-stretch hidden sm:block"></div>
+            <div class="text-center"><div class="display-font text-3xl font-bold text-amber-400">3</div><div class="text-xs text-zinc-500 mt-1">Live Tech Tools</div></div>
+            <div class="w-px bg-zinc-700 self-stretch hidden sm:block"></div>
+            <div class="text-center"><div class="display-font text-3xl font-bold text-amber-400">v3.0</div><div class="text-xs text-zinc-500 mt-1">Handbook Edition</div></div>
+            <div class="w-px bg-zinc-700 self-stretch hidden sm:block"></div>
+            <div class="text-center"><div class="display-font text-3xl font-bold text-amber-400">GH</div><div class="text-xs text-zinc-500 mt-1">Ghana-based</div></div>
+        </div>
+
+        <!-- UTC Clock -->
+        <div id="timestamp" class="absolute bottom-6 right-6 mono text-xs text-zinc-500 bg-black/60 backdrop-blur px-4 py-2 rounded-xl border border-zinc-800">
+            Syncing...
+        </div>
+
+        <!-- Scroll cue -->
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-y-1 text-zinc-500">
+            <span class="mono text-[9px] tracking-[4px]">SCROLL</span>
+            <i class="fas fa-chevron-down animate-bounce text-sm"></i>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     INVENTORY — ALL 15 CARDS
+══════════════════════════════════════════════ -->
+<section id="inventory" class="py-24 bg-zinc-900">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-6">
+            <div>
+                <div class="section-label mb-3">Product Catalog • Ver 2.0</div>
+                <h2 class="display-font text-5xl md:text-6xl font-bold tracking-tight">Core Inventory</h2>
+                <p class="text-zinc-400 mt-3 max-w-lg">15 professional-grade categories — engineered for RadioSport projects and real-world deployments across Ghana.</p>
+            </div>
+            <button onclick="scrollToSection('contact')"
+                    class="inline-flex items-center gap-x-3 text-sm font-medium text-amber-400 hover:text-amber-300 whitespace-nowrap">
+                Request Bulk Quote <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+            <!-- CAT-01 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">🎯</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-01</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">Mission Starter Kits</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.1 · Mission Statement & STEM Excellence</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Beginner HAM station bundles</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Club setup documentation kits</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>STEM onboarding materials</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch1.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.1 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
                 </a>
-                <button onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})"
-                        class="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-6 py-3 rounded-2xl text-sm transition flex items-center gap-x-2">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span>SHOP NOW</span>
-                </button>
             </div>
+
+            <!-- CAT-02 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">🎓</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-02</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">Curriculum & Training Materials</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.2 · Program Structure & Integration</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Printed handbook bundles</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Weekly schedule planners</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Specialisation track guides</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch2.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.2 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-03 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">☀️</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-03</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">Solar & Battery Power Systems</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.3 · Solar & Battery Power Systems</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>LiFePO4 &amp; LiPo packs</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>MPPT solar controllers</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Portable folding solar panels</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch3.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.3 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-04 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">📻</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-04</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">HF / VHF / UHF Transceivers</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.4 · HF / VHF / UHF Communications</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Yaesu · Icom · Kenwood</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Handhelds &amp; mobile rigs</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Digital mode (FT8/JS8) ready</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch4.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.4 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-05 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">🛰️</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-05</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">Satellite Ground Station Kits</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.5 · Amateur Radio Satellite Communications</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>ISS &amp; AO-91/92, SO-50 tracking</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Az/El rotators &amp; controllers</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Doppler correction interface kits</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch5.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.5 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-06 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">🚁</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-06</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">Drone Radio Integration Kits</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.6 · Drone Operations & Integration</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Telemetry radio modules</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>FPV transmitters &amp; receivers</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Mission control ground modules</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch6.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.6 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-07 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">🤖</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-07</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">AI & Machine Learning Hardware</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.7 · Artificial Intelligence Applications</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Raspberry Pi 5 / Jetson Nano</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Edge AI inference modules</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Offline-capable ML sensor kits</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch7.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.7 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-08 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">💻</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-08</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">Dev Boards & Coding Kits</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.8 · Advanced Coding: C++ & Python</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Arduino Mega / STM32 boards</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Serial interfaces &amp; USB adapters</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Real-time control starter packs</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch8.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.8 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-09 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">📊</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-09</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">SDR & Signal Processing Tools</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.9 · Signal Processing & DSP</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>RTL-SDR v3 &amp; HackRF One</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>LNA &amp; bandpass filter sets</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Spectrum analyser accessories</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch9.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.9 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-10 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">📡</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-10</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">Antenna Design & Build Kits</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.10 · Antenna Design & Construction</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Dipole &amp; Yagi element sets</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Helical satellite antenna kits</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Baluns, coax &amp; connectors</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch10.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.10 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-11 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">🔧</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-11</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">Integrated Project Hardware Kits</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.11 · Integrated Hands-On Projects</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Multi-tech capstone packs</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>RF + solar + drone combos</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Competition-ready bundles</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch11.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.11 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-12 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">🏕️</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-12</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">Field Operations & Portable Gear</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.12 · Field Operations & Deployments</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Go-bag portable station packs</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>EmComm &amp; field-day gear</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Tripod masts &amp; guy wire sets</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch12.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.12 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-13 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">⚠️</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-13</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">Safety Equipment & RF Protection</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.13 · Safety Protocols & Regulations</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>RF exposure meters &amp; shields</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Electrical safety kit bundles</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>UAS regulatory compliance packs</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch13.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.13 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-14 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-7 hover:border-amber-500/40">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">🏆</span>
+                    <span class="mono text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">CAT-14</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1">Club Sustainability & Budget Kits</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.14 · Awards, Budget & Sustainability</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Fundraising starter materials</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Certification prep bundles</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Award &amp; trophy packages</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch14.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-medium transition flex items-center justify-between px-4">
+                    <span>View Ch.14 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+            <!-- CAT-15 -->
+            <div class="inv-card bg-zinc-950 border border-amber-500/30 rounded-2xl p-7 hover:border-amber-500">
+                <div class="flex justify-between items-start mb-5">
+                    <span class="text-4xl">🚀</span>
+                    <span class="mono text-xs bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-lg border border-amber-500/30">CAT-15 ★</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-1 text-amber-300">Student Capstone Hardware Kits</h3>
+                <p class="text-xs text-zinc-500 mb-4 mono">Ch.15 · Student Capstone Projects</p>
+                <ul class="text-sm text-zinc-400 space-y-1.5 mb-7">
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Full-stack production hardware</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Portfolio project component sets</li>
+                    <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Deployment-ready system bundles</li>
+                </ul>
+                <a href="https://rkarikari.github.io/stem/radiosport_ch15.html" target="_blank" rel="noopener"
+                   class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-zinc-950 border border-amber-500/30 rounded-xl text-sm font-bold transition flex items-center justify-between px-4">
+                    <span>View Ch.15 in Handbook</span><i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            </div>
+
+        </div><!-- /grid -->
+
+        <div class="mt-14 text-center">
+            <p class="text-zinc-400 text-sm mb-4">Need a custom bundle for your school, club, or institution?</p>
+            <button onclick="scrollToSection('contact')"
+                    class="inline-flex items-center gap-x-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-amber-500/40 px-8 py-4 rounded-xl text-sm font-medium transition">
+                <i class="fas fa-layer-group text-amber-400"></i>
+                Request STEM Bulk Quote
+                <i class="fas fa-arrow-right text-amber-400 text-xs"></i>
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     HANDBOOK CHAPTERS — ALL 15 + 3 ADDENDUM
+══════════════════════════════════════════════ -->
+<section id="handbook" class="py-24 bg-zinc-950">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-14">
+            <div class="section-label mb-3">RadioSport STEM Handbook v3.0</div>
+            <h2 class="display-font text-5xl md:text-6xl font-bold tracking-tight">All 15 Chapters + Addendum</h2>
+            <p class="text-zinc-400 mt-3 max-w-xl mx-auto">
+                Every chapter is live on the 
+                <a href="https://rkarikari.github.io/stem/index.html" target="_blank" rel="noopener" class="text-amber-400 underline underline-offset-4 hover:text-amber-300">RadioSport Handbook</a>.
+                SuppliHAM stocks the hardware for every project described within.
+            </p>
         </div>
 
-        <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden bg-zinc-900 border-t border-amber-500/30">
-            <div class="px-6 py-6 flex flex-col gap-y-4 text-lg">
-                <a href="#inventory" class="py-2">Core Inventory</a>
-                <a href="#tools" class="py-2">Technical Tools</a>
-                <a href="#stem" class="py-2">STEM Partnership</a>
-                <a href="#contact" class="py-2">Get Quote • Accra</a>
+        <!-- Chapter Grid -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-3 mb-10">
+            <!-- Each chapter row -->
+            <a href="https://rkarikari.github.io/stem/radiosport_ch1.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">01</span>
+                <span class="text-xl shrink-0">📋</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Mission Statement &amp; STEM Excellence</p><p class="text-xs text-zinc-500">Program Overview · Tech Stack · Learning Model</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch2.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">02</span>
+                <span class="text-xl shrink-0">🎓</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Program Structure &amp; Integration</p><p class="text-xs text-zinc-500">Curriculum · Schedules · Specialisations</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch3.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">03</span>
+                <span class="text-xl shrink-0">☀️</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Solar &amp; Battery Power Systems</p><p class="text-xs text-zinc-500">Solar Panels · LiFePO4 · LiPo · MPPT</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch4.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">04</span>
+                <span class="text-xl shrink-0">📻</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">HF / VHF / UHF Communications</p><p class="text-xs text-zinc-500">RF Theory · Propagation · Digital Modes</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch5.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">05</span>
+                <span class="text-xl shrink-0">🛰️</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Amateur Radio Satellite Communications</p><p class="text-xs text-zinc-500">Orbital Mechanics · Doppler · ISS</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch6.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">06</span>
+                <span class="text-xl shrink-0">🚁</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Drone Operations &amp; Integration</p><p class="text-xs text-zinc-500">Flight Dynamics · Mission Planning · Radio Integration</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch7.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">07</span>
+                <span class="text-xl shrink-0">🤖</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Artificial Intelligence Applications</p><p class="text-xs text-zinc-500">Machine Learning · Neural Networks · Automation</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch8.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">08</span>
+                <span class="text-xl shrink-0">💻</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Advanced Coding: C++ &amp; Python</p><p class="text-xs text-zinc-500">Python · C++ · Real-time Systems</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch9.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">09</span>
+                <span class="text-xl shrink-0">📊</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Signal Processing &amp; DSP</p><p class="text-xs text-zinc-500">FFT · Filters · SDR · Spectrum Analysis</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch10.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">10</span>
+                <span class="text-xl shrink-0">📡</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Antenna Design &amp; Construction</p><p class="text-xs text-zinc-500">Antenna Theory · Building · Testing · NEC</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch11.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">11</span>
+                <span class="text-xl shrink-0">🔧</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Integrated Hands-On Projects</p><p class="text-xs text-zinc-500">Capstones · Integration · Competitions</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch12.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">12</span>
+                <span class="text-xl shrink-0">🏕️</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Field Operations &amp; Deployments</p><p class="text-xs text-zinc-500">Field Days · EmComm · Logistics</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch13.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">13</span>
+                <span class="text-xl shrink-0">⚠️</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Safety Protocols &amp; Regulations</p><p class="text-xs text-zinc-500">RF Safety · Electrical · Regulations</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch14.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">14</span>
+                <span class="text-xl shrink-0">🏆</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Awards, Budget &amp; Sustainability</p><p class="text-xs text-zinc-500">Budget · Certifications · Sustainability</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+            <a href="https://rkarikari.github.io/stem/radiosport_ch15.html" target="_blank" rel="noopener"
+               class="ch-card bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex items-center gap-x-4 group">
+                <span class="mono text-xs text-zinc-500 w-6 shrink-0">15</span>
+                <span class="text-xl shrink-0">🚀</span>
+                <div class="min-w-0"><p class="font-medium text-sm group-hover:text-amber-300 truncate">Student Capstone Projects</p><p class="text-xs text-zinc-500">Full-Stack Dev · Deployment · Portfolio</p></div>
+                <i class="fas fa-arrow-right text-xs text-zinc-600 group-hover:text-amber-400 ml-auto shrink-0"></i>
+            </a>
+        </div>
+
+        <!-- Addendum Row -->
+        <div class="mt-6">
+            <div class="section-label mb-4">Technical Addendum</div>
+            <div class="grid md:grid-cols-3 gap-4">
+                <a href="https://rkarikari.github.io/stem/antenna_analysis_report.html" target="_blank" rel="noopener"
+                   class="ch-card bg-gradient-to-br from-zinc-900 to-zinc-950 border border-amber-500/20 rounded-xl p-5 group hover:border-amber-500/50">
+                    <div class="flex items-center gap-x-3 mb-3">
+                        <span class="text-2xl">📏</span>
+                        <span class="mono text-xs text-amber-500">A1</span>
+                    </div>
+                    <p class="font-semibold text-sm group-hover:text-amber-300 mb-1">HT Antenna System Performance Analysis</p>
+                    <p class="text-xs text-zinc-500">Field measurements · VHF/UHF performance · Interactive visualization</p>
+                    <div class="mt-4 text-xs text-amber-400 flex items-center gap-x-1">View Analysis <i class="fas fa-external-link-alt"></i></div>
+                </a>
+                <a href="https://rkarikari.github.io/stem/linear_sat_freqs.html" target="_blank" rel="noopener"
+                   class="ch-card bg-gradient-to-br from-zinc-900 to-zinc-950 border border-amber-500/20 rounded-xl p-5 group hover:border-amber-500/50">
+                    <div class="flex items-center gap-x-3 mb-3">
+                        <span class="text-2xl">🛰️</span>
+                        <span class="mono text-xs text-amber-500">A2</span>
+                    </div>
+                    <p class="font-semibold text-sm group-hover:text-amber-300 mb-1">Linear Transponder Frequency Pairs</p>
+                    <p class="text-xs text-zinc-500">Uplink/downlink · LSB/USB · Doppler planning · Band sliders</p>
+                    <div class="mt-4 text-xs text-amber-400 flex items-center gap-x-1">Open Tool <i class="fas fa-external-link-alt"></i></div>
+                </a>
+                <a href="https://rkarikari.github.io/stem/radio_range.html" target="_blank" rel="noopener"
+                   class="ch-card bg-gradient-to-br from-zinc-900 to-zinc-950 border border-amber-500/20 rounded-xl p-5 group hover:border-amber-500/50">
+                    <div class="flex items-center gap-x-3 mb-3">
+                        <span class="text-2xl">🗺️</span>
+                        <span class="mono text-xs text-amber-500">A3</span>
+                    </div>
+                    <p class="font-semibold text-sm group-hover:text-amber-300 mb-1">HF/VHF/UHF Coverage Planner</p>
+                    <p class="text-xs text-zinc-500">Terrain-aware · Accra-centered · Multi-band · Real-time map</p>
+                    <div class="mt-4 text-xs text-amber-400 flex items-center gap-x-1">Open Planner <i class="fas fa-external-link-alt"></i></div>
+                </a>
             </div>
         </div>
-    </header>
+    </div>
+</section>
 
-    <!-- HERO -->
-    <section class="hero-bg h-screen flex items-center relative">
-        <div class="max-w-5xl mx-auto px-6 text-center">
-            <div class="inline-flex items-center gap-x-2 bg-white/10 backdrop-blur-md px-5 py-2 rounded-3xl text-sm mb-6">
-                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span class="font-mono tracking-widest text-amber-300">ACCRA • GHANA • LIVE INVENTORY</span>
-            </div>
-            
-            <h1 class="logo-font text-7xl md:text-8xl font-bold tracking-tighter leading-none mb-4">
-                SUPPLIHAM
-            </h1>
-            <p class="text-4xl md:text-5xl font-light text-amber-300 mb-8">Radio Outlet</p>
-            
-            <div class="max-w-2xl mx-auto">
-                <p class="text-xl text-zinc-300 mb-10">
-                    Premium HAM radio equipment, solar systems, antennas &amp; drone kits.<br>
-                    Official hardware partner for <span class="text-amber-400 font-semibold">RadioSport STEM Handbook v3.0</span>
+<!-- ══════════════════════════════════════════════
+     TECHNICAL TOOLS (Live links)
+══════════════════════════════════════════════ -->
+<section id="tools" class="py-24 bg-black">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-14">
+            <div class="section-label mb-3">Addendum A1 · A2 · A3</div>
+            <h2 class="display-font text-5xl md:text-6xl font-bold tracking-tight">Live Technical Tools</h2>
+            <p class="text-zinc-400 mt-3 max-w-xl mx-auto">Three production tools from the RadioSport Handbook Addendum — fully operational and open to all.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+
+            <!-- Tool A1 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-8 hover:border-amber-500/40">
+                <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-3xl mb-6">📏</div>
+                <div class="mono text-xs text-amber-500 mb-2">ADDENDUM A1</div>
+                <h3 class="text-xl font-semibold mb-3">HT Antenna System Analyzer</h3>
+                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
+                    Interactive RF performance evaluation of handheld transceiver antenna systems. Analyzes efficiency, impedance matching, chassis coupling, and VHF/UHF radiation patterns from real field measurements.
                 </p>
-            </div>
-
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#inventory" 
-                   class="bg-white text-zinc-950 font-semibold px-10 py-5 rounded-3xl text-lg flex items-center justify-center gap-x-3 hover:scale-105 transition">
-                    <i class="fas fa-boxes"></i>
-                    BROWSE CATALOG
-                </a>
-                <a href="#contact" 
-                   class="border-2 border-white/70 hover:border-white font-semibold px-10 py-5 rounded-3xl text-lg flex items-center justify-center gap-x-3 transition">
-                    <i class="fas fa-headset"></i>
-                    SPEAK WITH TECHNICAL SALES
+                <div class="flex flex-wrap gap-2 mb-7">
+                    <span class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">Field Measurements</span>
+                    <span class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">VHF/UHF</span>
+                    <span class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">Interactive</span>
+                </div>
+                <a href="https://rkarikari.github.io/stem/antenna_analysis_report.html" target="_blank" rel="noopener"
+                   class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-xl text-sm transition flex items-center justify-center gap-x-2">
+                    <i class="fas fa-chart-line"></i> Launch Analyzer
                 </a>
             </div>
 
-            <div class="mt-16 text-xs text-zinc-500 flex items-center justify-center gap-x-8">
-                <div class="flex items-center gap-x-2">
-                    <i class="fas fa-check"></i>
-                    <span>15+ Categories</span>
+            <!-- Tool A2 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-8 hover:border-amber-500/40">
+                <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-3xl mb-6">🛰️</div>
+                <div class="mono text-xs text-amber-500 mb-2">ADDENDUM A2</div>
+                <h3 class="text-xl font-semibold mb-3">Linear Transponder Frequency Planner</h3>
+                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
+                    Real-time uplink/downlink frequency reference for LEO amateur satellites. Supports inverting and non-inverting transponders with 5 kHz channel raster, LSB/USB designations, and visual band sliders for Doppler planning.
+                </p>
+                <div class="flex flex-wrap gap-2 mb-7">
+                    <span class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">Uplink/Downlink</span>
+                    <span class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">LSB/USB</span>
+                    <span class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">Doppler</span>
                 </div>
-                <div class="flex items-center gap-x-2">
-                    <i class="fas fa-check"></i>
-                    <span>Same-day Accra pickup</span>
-                </div>
-                <div class="flex items-center gap-x-2">
-                    <i class="fas fa-check"></i>
-                    <span>STEM school bundles</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Timestamp -->
-        <div id="timestamp" 
-             class="absolute bottom-8 right-8 font-mono text-xs text-zinc-500 bg-black/50 backdrop-blur px-4 py-2 rounded-2xl border border-amber-500/20">
-            Loading UTC time...
-        </div>
-
-        <!-- Scroll indicator -->
-        <div class="absolute bottom-12 left-1/2 flex flex-col items-center">
-            <span class="text-[10px] tracking-widest mb-2 text-zinc-400">SCROLL FOR INVENTORY</span>
-            <i class="fas fa-chevron-down animate-bounce text-2xl"></i>
-        </div>
-    </section>
-
-    <!-- INVENTORY SECTION -->
-    <section id="inventory" class="py-24 bg-zinc-900">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="flex justify-between items-end mb-12">
-                <div>
-                    <span class="px-4 py-1.5 bg-amber-500 text-zinc-950 text-xs font-bold rounded-full">VER 1.0 • COMPLETE</span>
-                    <h2 class="text-5xl font-semibold tracking-tight mt-3">Core Inventory</h2>
-                    <p class="text-zinc-400 mt-2 max-w-md">15 professional-grade categories — engineered for RadioSport projects and real-world deployments</p>
-                </div>
-                <a href="#" onclick="alert('Full e-commerce catalog launching Q2 2026 — contact us for pre-order access')"
-                   class="hidden md:flex items-center gap-x-3 text-sm font-medium text-amber-400 hover:text-amber-300">
-                    VIEW ALL PRODUCTS 
-                    <i class="fas fa-arrow-right"></i>
+                <a href="https://rkarikari.github.io/stem/linear_sat_freqs.html" target="_blank" rel="noopener"
+                   class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-xl text-sm transition flex items-center justify-center gap-x-2">
+                    <i class="fas fa-satellite"></i> Open Frequency Tool
                 </a>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Card 1 -->
-                <div class="card-hover bg-zinc-950 border border-zinc-800 rounded-3xl p-8 group">
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="text-4xl">☀️</div>
-                        <span class="text-xs bg-zinc-800 px-3 py-1 rounded-2xl">CAT-03</span>
-                    </div>
-                    <h3 class="text-2xl font-semibold mb-2">Solar &amp; Battery Power Systems</h3>
-                    <ul class="text-sm text-zinc-400 space-y-1 mb-8">
-                        <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>LiFePO4 &amp; LiPo packs</li>
-                        <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>MPPT controllers</li>
-                        <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Portable solar panels</li>
-                    </ul>
-                    <button onclick="window.location='#contact'" 
-                            class="w-full py-4 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-2xl text-sm font-medium transition">Browse Power Systems →</button>
+            <!-- Tool A3 -->
+            <div class="inv-card bg-zinc-950 border border-zinc-800 rounded-2xl p-8 hover:border-amber-500/40">
+                <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-3xl mb-6">🗺️</div>
+                <div class="mono text-xs text-amber-500 mb-2">ADDENDUM A3</div>
+                <h3 class="text-xl font-semibold mb-3">Accra HF/VHF/UHF Coverage Planner</h3>
+                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
+                    Terrain-aware propagation modelling using SRTM 90 m elevation data and Okumura-Hata / COST-231 clutter budgets. Adjustable power, antenna selection, beam heading, and multi-band switching with real-time map overlay.
+                </p>
+                <div class="flex flex-wrap gap-2 mb-7">
+                    <span class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">Terrain Modeling</span>
+                    <span class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">HF/VHF/UHF</span>
+                    <span class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg">Accra-based</span>
                 </div>
-
-                <!-- Card 2 -->
-                <div class="card-hover bg-zinc-950 border border-zinc-800 rounded-3xl p-8 group">
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="text-4xl">📻</div>
-                        <span class="text-xs bg-zinc-800 px-3 py-1 rounded-2xl">CAT-04</span>
-                    </div>
-                    <h3 class="text-2xl font-semibold mb-2">HF / VHF / UHF Transceivers</h3>
-                    <ul class="text-sm text-zinc-400 space-y-1 mb-8">
-                        <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Yaesu • Icom • Kenwood</li>
-                        <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Handhelds &amp; mobiles</li>
-                        <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Digital mode ready</li>
-                    </ul>
-                    <button onclick="window.location='#contact'" 
-                            class="w-full py-4 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-2xl text-sm font-medium transition">Shop Radios →</button>
-                </div>
-
-                <!-- Repeat pattern for remaining 13 – abbreviated for brevity but full in real file -->
-                <!-- Card 3-15 follow identical structure with relevant icons and topics (Satellite, Drones, AI, DSP, Antennas, etc.) -->
-                <!-- For demonstration, showing 3 more key ones; full 15 cards would continue here -->
-
-                <div class="card-hover bg-zinc-950 border border-zinc-800 rounded-3xl p-8 group">
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="text-4xl">🛰️</div>
-                        <span class="text-xs bg-zinc-800 px-3 py-1 rounded-2xl">CAT-05</span>
-                    </div>
-                    <h3 class="text-2xl font-semibold mb-2">Amateur Satellite Ground Stations</h3>
-                    <ul class="text-sm text-zinc-400 space-y-1 mb-8">
-                        <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>ISS tracking antennas</li>
-                        <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Doppler correction kits</li>
-                        <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Az/El rotators</li>
-                    </ul>
-                    <button onclick="window.location='#contact'" 
-                            class="w-full py-4 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-2xl text-sm font-medium transition">Satellite Gear →</button>
-                </div>
-
-                <div class="card-hover bg-zinc-950 border border-zinc-800 rounded-3xl p-8 group">
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="text-4xl">🚁</div>
-                        <span class="text-xs bg-zinc-800 px-3 py-1 rounded-2xl">CAT-06</span>
-                    </div>
-                    <h3 class="text-2xl font-semibold mb-2">Drone Radio Integration Kits</h3>
-                    <ul class="text-sm text-zinc-400 space-y-1 mb-8">
-                        <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Telemetry radios</li>
-                        <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>FPV transmitters</li>
-                        <li class="flex items-center gap-x-2"><i class="fas fa-check text-amber-400 text-xs"></i>Mission control modules</li>
-                    </ul>
-                    <button onclick="window.location='#contact'" 
-                            class="w-full py-4 bg-zinc-900 hover:bg-amber-500 hover:text-zinc-950 border border-amber-500/30 rounded-2xl text-sm font-medium transition">Drone Supplies →</button>
-                </div>
-
-                <!-- Placeholder for remaining cards – in production copy all 15 from original chapter mapping -->
-                <!-- Card 15 would be "Student Capstone Hardware Kits" -->
+                <a href="https://rkarikari.github.io/stem/radio_range.html" target="_blank" rel="noopener"
+                   class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-xl text-sm transition flex items-center justify-center gap-x-2">
+                    <i class="fas fa-map-marked-alt"></i> Open Coverage Planner
+                </a>
             </div>
 
-            <div class="mt-16 text-center">
-                <p class="text-zinc-400 text-sm">Need a custom bundle for your school or club?</p>
-                <button onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})"
-                        class="mt-4 inline-flex items-center gap-x-4 bg-zinc-800 hover:bg-zinc-700 px-8 py-4 rounded-3xl">
-                    <span class="font-medium">Request STEM Bulk Quote</span>
-                    <i class="fas fa-arrow-right text-amber-400"></i>
-                </button>
-            </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- TECHNICAL TOOLS / ADDENDUM -->
-    <section id="tools" class="py-24 bg-black">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-12">
-                <span class="text-xs tracking-[4px] text-amber-400">INTEGRATED WITH RADIOSPORT HANDBOOK</span>
-                <h2 class="text-5xl font-semibold mt-3">Technical Tools &amp; Resources</h2>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- Tool 1 -->
-                <div class="bg-zinc-950 border border-zinc-800 rounded-3xl p-10">
-                    <div class="text-5xl mb-6">📏</div>
-                    <h3 class="text-2xl font-semibold mb-4">HT Antenna System Analyzer</h3>
-                    <p class="text-zinc-400 text-sm leading-relaxed mb-8">
-                        Field-measurement tool for handheld antenna efficiency, impedance, and radiation patterns. 
-                        Powered by the same data models used in the RadioSport Handbook Addendum.
-                    </p>
-                    <button onclick="alert('Interactive analyzer launching soon — request early access via contact form')"
-                            class="w-full text-left flex justify-between items-center group">
-                        <span class="font-medium">Launch Analyzer →</span>
-                        <span class="text-3xl group-hover:rotate-45 transition">→</span>
-                    </button>
-                </div>
-
-                <!-- Tool 2 -->
-                <div class="bg-zinc-950 border border-zinc-800 rounded-3xl p-10">
-                    <div class="text-5xl mb-6">📡</div>
-                    <h3 class="text-2xl font-semibold mb-4">Linear Transponder Frequency Planner</h3>
-                    <p class="text-zinc-400 text-sm leading-relaxed mb-8">
-                        Real-time uplink/downlink calculator for LEO satellites with Doppler support and band sliders.
-                    </p>
-                    <button onclick="alert('Frequency tool launching Q2 2026')"
-                            class="w-full text-left flex justify-between items-center group">
-                        <span class="font-medium">Open Planner →</span>
-                        <span class="text-3xl group-hover:rotate-45 transition">→</span>
-                    </button>
-                </div>
-
-                <!-- Tool 3 -->
-                <div class="bg-zinc-950 border border-zinc-800 rounded-3xl p-10">
-                    <div class="text-5xl mb-6">🗺️</div>
-                    <h3 class="text-2xl font-semibold mb-4">Accra HF/VHF/UHF Coverage Planner</h3>
-                    <p class="text-zinc-400 text-sm leading-relaxed mb-8">
-                        Terrain-aware propagation modeling using SRTM data. Perfect for EmComm planning and field day preparation.
-                    </p>
-                    <button onclick="alert('Coverage planner demo available on request')"
-                            class="w-full text-left flex justify-between items-center group">
-                        <span class="font-medium">Try Coverage Tool →</span>
-                        <span class="text-3xl group-hover:rotate-45 transition">→</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- STEM PARTNERSHIP -->
-    <section id="stem" class="py-20 bg-gradient-to-b from-zinc-900 to-black">
-        <div class="max-w-4xl mx-auto px-6 text-center">
-            <div class="inline-flex bg-amber-500/10 text-amber-400 px-6 py-3 rounded-3xl text-sm font-medium mb-6">
-                OFFICIAL HARDWARE PARTNER
-            </div>
-            <h2 class="text-6xl font-semibold tracking-tighter leading-none mb-6">
+<!-- ══════════════════════════════════════════════
+     STEM PARTNERSHIP
+══════════════════════════════════════════════ -->
+<section id="stem" class="py-24 bg-gradient-to-b from-zinc-900 to-zinc-950">
+    <div class="max-w-5xl mx-auto px-6">
+        <div class="text-center mb-16">
+            <div class="inline-block bg-amber-500/10 text-amber-400 border border-amber-500/20 px-5 py-2 rounded-full text-xs mono mb-5">OFFICIAL HARDWARE PARTNER</div>
+            <h2 class="display-font text-5xl md:text-6xl font-bold tracking-tight leading-tight mb-6">
                 Powering RadioSport STEM<br>Chapter Projects Since 2025
             </h2>
             <p class="text-xl text-zinc-400 max-w-2xl mx-auto">
-                Every component in our catalog was selected and tested against the exact requirements of the 
-                <a href="https://rkarikari.github.io/stem/index.html" target="_blank" class="text-amber-400 underline">RadioSport STEM Handbook v3.0</a>.
+                Every component in our catalog was selected and field-tested against the exact hardware requirements of the
+                <a href="https://rkarikari.github.io/stem/index.html" target="_blank" rel="noopener" class="text-amber-400 underline underline-offset-4 hover:text-amber-300">RadioSport STEM Handbook v3.0</a>.
             </p>
-            <div class="mt-12 flex flex-wrap justify-center gap-8 text-xs uppercase tracking-widest text-zinc-500">
-                <div class="flex items-center gap-x-3"><i class="fas fa-microchip"></i> RF • SAT • UAV</div>
-                <div class="flex items-center gap-x-3"><i class="fas fa-microchip"></i> AI • DSP • SOLAR</div>
+        </div>
+
+        <!-- Domain grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center hover:border-amber-500/30 transition">
+                <div class="text-3xl mb-3">📻</div>
+                <div class="font-semibold text-sm">RF</div>
+                <div class="text-xs text-zinc-500 mt-1">HF · VHF · UHF</div>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center hover:border-amber-500/30 transition">
+                <div class="text-3xl mb-3">🛰️</div>
+                <div class="font-semibold text-sm">Satellites</div>
+                <div class="text-xs text-zinc-500 mt-1">LEO · ISS · Doppler</div>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center hover:border-amber-500/30 transition">
+                <div class="text-3xl mb-3">🚁</div>
+                <div class="font-semibold text-sm">Drones / UAV</div>
+                <div class="text-xs text-zinc-500 mt-1">FPV · Telemetry · Mapping</div>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center hover:border-amber-500/30 transition">
+                <div class="text-3xl mb-3">🤖</div>
+                <div class="font-semibold text-sm">AI / ML</div>
+                <div class="text-xs text-zinc-500 mt-1">Edge AI · Offline ML</div>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center hover:border-amber-500/30 transition">
+                <div class="text-3xl mb-3">☀️</div>
+                <div class="font-semibold text-sm">Solar Power</div>
+                <div class="text-xs text-zinc-500 mt-1">MPPT · LiFePO4 · Off-grid</div>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center hover:border-amber-500/30 transition">
+                <div class="text-3xl mb-3">📊</div>
+                <div class="font-semibold text-sm">DSP / SDR</div>
+                <div class="text-xs text-zinc-500 mt-1">FFT · RTL-SDR · HackRF</div>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center hover:border-amber-500/30 transition">
+                <div class="text-3xl mb-3">💻</div>
+                <div class="font-semibold text-sm">Coding</div>
+                <div class="text-xs text-zinc-500 mt-1">Python · C++ · Arduino</div>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center hover:border-amber-500/30 transition">
+                <div class="text-3xl mb-3">📡</div>
+                <div class="font-semibold text-sm">Antennas</div>
+                <div class="text-xs text-zinc-500 mt-1">Yagi · Helical · Dipole</div>
             </div>
         </div>
-    </section>
 
-    <!-- CONTACT / CTA -->
-    <section id="contact" class="py-24 bg-zinc-950">
-        <div class="max-w-3xl mx-auto px-6">
-            <div class="bg-zinc-900 rounded-3xl p-12 md:p-16">
-                <h2 class="text-4xl font-semibold text-center mb-3">Ready to Equip Your Next Project?</h2>
-                <p class="text-center text-zinc-400 mb-12">Accra showroom • Same-day dispatch • Nationwide delivery</p>
-                
-                <form id="quote-form" class="space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <input type="text" placeholder="Your name / School" 
-                               class="bg-black border border-zinc-700 focus:border-amber-400 rounded-2xl px-6 py-5 outline-none text-sm">
-                        <input type="email" placeholder="Email address" 
-                               class="bg-black border border-zinc-700 focus:border-amber-400 rounded-2xl px-6 py-5 outline-none text-sm">
+        <div class="text-center">
+            <a href="https://rkarikari.github.io/stem/index.html" target="_blank" rel="noopener"
+               class="inline-flex items-center gap-x-3 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold px-10 py-5 rounded-2xl transition shadow-lg shadow-amber-500/20">
+                <i class="fas fa-book-open"></i>
+                Explore the Full Handbook
+                <i class="fas fa-external-link-alt text-xs"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     SUPPLIER PROPOSAL PAGE
+══════════════════════════════════════════════ -->
+<section id="supplier" class="py-0">
+
+    <!-- Supplier Hero Banner -->
+    <div class="supplier-hero relative py-24 px-6">
+        <div class="max-w-5xl mx-auto text-center relative z-10">
+            <div class="inline-block bg-white/10 backdrop-blur border border-amber-400/30 text-amber-300 px-5 py-2 rounded-full text-xs mono mb-6">
+                EXCLUSIVE PARTNERSHIP PROGRAMME • 2026
+            </div>
+            <h2 class="display-font text-6xl md:text-7xl font-extrabold tracking-tight leading-tight mb-6">
+                Partner With<br><span class="text-amber-400">SuppliHAM</span>
+            </h2>
+            <p class="text-xl text-zinc-300 max-w-2xl mx-auto mb-8">
+                Ghana's fastest-growing amateur radio and STEM hardware channel is actively seeking supply partners across radios, solar, drones, and electronic components.
+            </p>
+            <a href="#supplier-form"
+               class="inline-flex items-center gap-x-3 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold px-10 py-5 rounded-2xl text-base transition">
+                <i class="fas fa-file-signature"></i> Submit Supplier Application
+            </a>
+        </div>
+    </div>
+
+    <!-- Why Partner -->
+    <div class="bg-zinc-900 py-20 px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="section-label text-center mb-3">Market Opportunity</div>
+            <h3 class="display-font text-4xl md:text-5xl font-bold tracking-tight text-center mb-12">Why Supply Through SuppliHAM?</h3>
+
+            <div class="grid md:grid-cols-3 gap-6 mb-14">
+                <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-7">
+                    <div class="text-4xl mb-5">🏫</div>
+                    <h4 class="text-lg font-semibold mb-2">Captive STEM School Market</h4>
+                    <p class="text-sm text-zinc-400 leading-relaxed">RadioSport STEM Handbook v3.0 is being adopted by schools and clubs across Ghana. Every chapter specifies exact hardware — we fulfil that demand directly to educators and students.</p>
+                </div>
+                <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-7">
+                    <div class="text-4xl mb-5">📈</div>
+                    <h4 class="text-lg font-semibold mb-2">Recurring Institutional Orders</h4>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Schools, universities, and amateur radio clubs place annual restocking orders for capstone and field-day kits. Bulk orders reduce acquisition cost and guarantee pipeline visibility for partners.</p>
+                </div>
+                <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-7">
+                    <div class="text-4xl mb-5">🌍</div>
+                    <h4 class="text-lg font-semibold mb-2">West Africa Gateway</h4>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Our Accra base provides logistics infrastructure for same-day local distribution and nationwide delivery, making us the most efficient last-mile partner for imported amateur radio stock.</p>
+                </div>
+                <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-7">
+                    <div class="text-4xl mb-5">🛡️</div>
+                    <h4 class="text-lg font-semibold mb-2">Brand Safety & Curation</h4>
+                    <p class="text-sm text-zinc-400 leading-relaxed">We carry only equipment that meets RadioSport technical specifications. Your products are presented in a premium, technically credible context — never discounted into commodity positioning.</p>
+                </div>
+                <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-7">
+                    <div class="text-4xl mb-5">📣</div>
+                    <h4 class="text-lg font-semibold mb-2">Co-Marketing & Exposure</h4>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Supplier partners receive logo placement, product featured sections, and joint promotions in our catalog, handbook link-throughs, and field-day demonstrations attended by educators and enthusiasts.</p>
+                </div>
+                <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-7">
+                    <div class="text-4xl mb-5">🔁</div>
+                    <h4 class="text-lg font-semibold mb-2">Simplified Procurement</h4>
+                    <p class="text-sm text-zinc-400 leading-relaxed">One consolidated buyer relationship, clear quarterly forecasts, and a transparent ordering portal. We handle importation, customs, warehousing and customer support — you ship once.</p>
+                </div>
+            </div>
+
+            <!-- Product Categories Sought -->
+            <div class="bg-zinc-950 border border-amber-500/20 rounded-2xl p-8 mb-14">
+                <h4 class="text-xl font-semibold mb-6 flex items-center gap-x-3">
+                    <i class="fas fa-search text-amber-400"></i> Product Categories We Are Actively Sourcing
+                </h4>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div class="flex items-center gap-x-3 bg-zinc-900 rounded-xl px-4 py-3 text-sm"><i class="fas fa-broadcast-tower text-amber-400 w-5 text-center"></i>HF/VHF/UHF Transceivers</div>
+                    <div class="flex items-center gap-x-3 bg-zinc-900 rounded-xl px-4 py-3 text-sm"><i class="fas fa-satellite-dish text-amber-400 w-5 text-center"></i>Satellite Ground Station Equipment</div>
+                    <div class="flex items-center gap-x-3 bg-zinc-900 rounded-xl px-4 py-3 text-sm"><i class="fas fa-solar-panel text-amber-400 w-5 text-center"></i>Solar Panels &amp; MPPT Controllers</div>
+                    <div class="flex items-center gap-x-3 bg-zinc-900 rounded-xl px-4 py-3 text-sm"><i class="fas fa-battery-full text-amber-400 w-5 text-center"></i>LiFePO4 &amp; LiPo Battery Packs</div>
+                    <div class="flex items-center gap-x-3 bg-zinc-900 rounded-xl px-4 py-3 text-sm"><i class="fas fa-drone text-amber-400 w-5 text-center"></i>Drone / UAV Radio Integration</div>
+                    <div class="flex items-center gap-x-3 bg-zinc-900 rounded-xl px-4 py-3 text-sm"><i class="fas fa-wifi text-amber-400 w-5 text-center"></i>SDR Receivers &amp; RF Front-ends</div>
+                    <div class="flex items-center gap-x-3 bg-zinc-900 rounded-xl px-4 py-3 text-sm"><i class="fas fa-microchip text-amber-400 w-5 text-center"></i>Raspberry Pi / Arduino Dev Boards</div>
+                    <div class="flex items-center gap-x-3 bg-zinc-900 rounded-xl px-4 py-3 text-sm"><i class="fas fa-ruler text-amber-400 w-5 text-center"></i>Antenna Elements, Baluns &amp; Coax</div>
+                    <div class="flex items-center gap-x-3 bg-zinc-900 rounded-xl px-4 py-3 text-sm"><i class="fas fa-tools text-amber-400 w-5 text-center"></i>Field Operations &amp; EmComm Gear</div>
+                </div>
+            </div>
+
+            <!-- Partnership Tiers -->
+            <div class="section-label text-center mb-4">Partnership Tiers</div>
+            <h3 class="display-font text-4xl font-bold tracking-tight text-center mb-10">Choose Your Partnership Level</h3>
+            <div class="grid md:grid-cols-3 gap-6 mb-6">
+
+                <!-- Bronze -->
+                <div class="tier-card tier-bronze bg-zinc-950 border-2 rounded-2xl p-8">
+                    <div class="text-4xl mb-4">🥉</div>
+                    <div class="mono text-xs text-amber-700 mb-2">TIER 1</div>
+                    <h4 class="display-font text-3xl font-bold mb-1">Bronze</h4>
+                    <p class="text-xs text-zinc-500 mb-5">Authorised Catalogue Supplier</p>
+                    <ul class="text-sm text-zinc-400 space-y-2.5 mb-8">
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Listed in SuppliHAM product catalog</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Quarterly purchase orders</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Standard net-30 payment terms</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Basic product description pages</li>
+                    </ul>
+                    <button onclick="scrollToSection('supplier-form')"
+                            class="w-full py-3 border border-amber-700/50 hover:border-amber-700 text-amber-700 hover:text-amber-500 rounded-xl text-sm font-semibold transition">
+                        Apply — Bronze
+                    </button>
+                </div>
+
+                <!-- Silver -->
+                <div class="tier-card tier-silver bg-zinc-950 border-2 rounded-2xl p-8">
+                    <div class="text-4xl mb-4">🥈</div>
+                    <div class="mono text-xs text-slate-400 mb-2">TIER 2</div>
+                    <h4 class="display-font text-3xl font-bold mb-1">Silver</h4>
+                    <p class="text-xs text-zinc-500 mb-5">Featured Category Partner</p>
+                    <ul class="text-sm text-zinc-400 space-y-2.5 mb-8">
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>All Bronze benefits, plus:</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Featured category placement</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Monthly purchase forecasts</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Logo on catalog &amp; website</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Field-day demo participation</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Dedicated product showcase page</li>
+                    </ul>
+                    <button onclick="scrollToSection('supplier-form')"
+                            class="w-full py-3 border border-slate-500/50 hover:border-slate-400 text-slate-400 hover:text-slate-200 rounded-xl text-sm font-semibold transition">
+                        Apply — Silver
+                    </button>
+                </div>
+
+                <!-- Gold — highlighted -->
+                <div class="tier-card tier-gold bg-zinc-950 border-2 rounded-2xl p-8 relative overflow-hidden">
+                    <div class="absolute top-4 right-4 bg-amber-500 text-zinc-950 text-[10px] font-bold px-2.5 py-1 rounded-lg mono">RECOMMENDED</div>
+                    <div class="text-4xl mb-4">🥇</div>
+                    <div class="mono text-xs text-amber-400 mb-2">TIER 3</div>
+                    <h4 class="display-font text-3xl font-bold text-amber-300 mb-1">Gold</h4>
+                    <p class="text-xs text-zinc-500 mb-5">Exclusive Category Sponsor</p>
+                    <ul class="text-sm text-zinc-400 space-y-2.5 mb-8">
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>All Silver benefits, plus:</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Exclusive category ownership</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Co-branded STEM school bundles</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Joint RadioSport Handbook citation</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Annual supply contract priority</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Named sponsor on technical tools</li>
+                        <li class="flex items-start gap-x-2"><i class="fas fa-check text-amber-400 text-xs mt-1"></i>Direct chapter cross-links online</li>
+                    </ul>
+                    <button onclick="scrollToSection('supplier-form')"
+                            class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 rounded-xl text-sm font-bold transition shadow-lg shadow-amber-500/20">
+                        Apply — Gold
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Value Proposition Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
+                <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 text-center">
+                    <div class="display-font text-4xl font-bold text-amber-400 mb-1">15+</div>
+                    <div class="text-xs text-zinc-500">Product Categories</div>
+                </div>
+                <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 text-center">
+                    <div class="display-font text-4xl font-bold text-amber-400 mb-1">v3.0</div>
+                    <div class="text-xs text-zinc-500">Handbook Edition</div>
+                </div>
+                <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 text-center">
+                    <div class="display-font text-4xl font-bold text-amber-400 mb-1">GH</div>
+                    <div class="text-xs text-zinc-500">Primary Market: Ghana</div>
+                </div>
+                <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 text-center">
+                    <div class="display-font text-4xl font-bold text-amber-400 mb-1">W.AFR</div>
+                    <div class="text-xs text-zinc-500">Expansion Target</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supplier Application Form -->
+    <div id="supplier-form" class="bg-black py-20 px-6">
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-10">
+                <div class="section-label mb-3">Supplier Application</div>
+                <h3 class="display-font text-4xl md:text-5xl font-bold tracking-tight mb-3">Apply to Supply SuppliHAM</h3>
+                <p class="text-zinc-400">Submit your details and we'll contact you within 48 hours to arrange an initial call.</p>
+            </div>
+
+            <div class="bg-zinc-900 rounded-2xl p-8 md:p-12 border border-zinc-800">
+                <form id="supplier-application-form" class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="text-xs text-zinc-500 mono block mb-2">COMPANY / BRAND NAME *</label>
+                            <input type="text" placeholder="e.g. Yaesu Europe Ltd" required
+                                   class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-xl px-5 py-4 outline-none text-sm transition placeholder-zinc-600">
+                        </div>
+                        <div>
+                            <label class="text-xs text-zinc-500 mono block mb-2">CONTACT PERSON *</label>
+                            <input type="text" placeholder="Full name &amp; title" required
+                                   class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-xl px-5 py-4 outline-none text-sm transition placeholder-zinc-600">
+                        </div>
+                        <div>
+                            <label class="text-xs text-zinc-500 mono block mb-2">BUSINESS EMAIL *</label>
+                            <input type="email" placeholder="sales@yourcompany.com" required
+                                   class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-xl px-5 py-4 outline-none text-sm transition placeholder-zinc-600">
+                        </div>
+                        <div>
+                            <label class="text-xs text-zinc-500 mono block mb-2">PHONE / WHATSAPP</label>
+                            <input type="tel" placeholder="+1 or +44 or +233..."
+                                   class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-xl px-5 py-4 outline-none text-sm transition placeholder-zinc-600">
+                        </div>
+                        <div>
+                            <label class="text-xs text-zinc-500 mono block mb-2">COMPANY WEBSITE</label>
+                            <input type="url" placeholder="https://www.yourcompany.com"
+                                   class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-xl px-5 py-4 outline-none text-sm transition placeholder-zinc-600">
+                        </div>
+                        <div>
+                            <label class="text-xs text-zinc-500 mono block mb-2">COUNTRY OF OPERATION *</label>
+                            <input type="text" placeholder="e.g. Japan, UK, USA, China..." required
+                                   class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-xl px-5 py-4 outline-none text-sm transition placeholder-zinc-600">
+                        </div>
                     </div>
-                    <textarea placeholder="What are you building? (e.g. ISS ground station, solar-powered repeater...)" 
-                              rows="5"
-                              class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-2xl px-6 py-5 outline-none text-sm"></textarea>
-                    
+
+                    <div>
+                        <label class="text-xs text-zinc-500 mono block mb-2">PRODUCT CATEGORY (select all that apply) *</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <label class="flex items-center gap-x-2 bg-black border border-zinc-700 hover:border-amber-500/40 rounded-xl px-4 py-3 cursor-pointer text-sm transition">
+                                <input type="checkbox" class="accent-amber-400"> Transceivers
+                            </label>
+                            <label class="flex items-center gap-x-2 bg-black border border-zinc-700 hover:border-amber-500/40 rounded-xl px-4 py-3 cursor-pointer text-sm transition">
+                                <input type="checkbox" class="accent-amber-400"> Satellites
+                            </label>
+                            <label class="flex items-center gap-x-2 bg-black border border-zinc-700 hover:border-amber-500/40 rounded-xl px-4 py-3 cursor-pointer text-sm transition">
+                                <input type="checkbox" class="accent-amber-400"> Solar / Power
+                            </label>
+                            <label class="flex items-center gap-x-2 bg-black border border-zinc-700 hover:border-amber-500/40 rounded-xl px-4 py-3 cursor-pointer text-sm transition">
+                                <input type="checkbox" class="accent-amber-400"> Drones / UAV
+                            </label>
+                            <label class="flex items-center gap-x-2 bg-black border border-zinc-700 hover:border-amber-500/40 rounded-xl px-4 py-3 cursor-pointer text-sm transition">
+                                <input type="checkbox" class="accent-amber-400"> SDR / RF Tools
+                            </label>
+                            <label class="flex items-center gap-x-2 bg-black border border-zinc-700 hover:border-amber-500/40 rounded-xl px-4 py-3 cursor-pointer text-sm transition">
+                                <input type="checkbox" class="accent-amber-400"> Antennas
+                            </label>
+                            <label class="flex items-center gap-x-2 bg-black border border-zinc-700 hover:border-amber-500/40 rounded-xl px-4 py-3 cursor-pointer text-sm transition">
+                                <input type="checkbox" class="accent-amber-400"> Dev Boards
+                            </label>
+                            <label class="flex items-center gap-x-2 bg-black border border-zinc-700 hover:border-amber-500/40 rounded-xl px-4 py-3 cursor-pointer text-sm transition">
+                                <input type="checkbox" class="accent-amber-400"> Field Gear
+                            </label>
+                            <label class="flex items-center gap-x-2 bg-black border border-zinc-700 hover:border-amber-500/40 rounded-xl px-4 py-3 cursor-pointer text-sm transition">
+                                <input type="checkbox" class="accent-amber-400"> STEM Kits
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-zinc-500 mono block mb-2">PARTNERSHIP TIER INTEREST</label>
+                        <select class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-xl px-5 py-4 outline-none text-sm transition text-zinc-300">
+                            <option value="">-- Select preferred tier --</option>
+                            <option value="bronze">🥉 Bronze — Authorised Catalogue Supplier</option>
+                            <option value="silver">🥈 Silver — Featured Category Partner</option>
+                            <option value="gold">🥇 Gold — Exclusive Category Sponsor</option>
+                            <option value="discuss">Open to discussion</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-zinc-500 mono block mb-2">PRODUCT RANGE DESCRIPTION &amp; NOTES</label>
+                        <textarea rows="5" placeholder="Briefly describe your product range, minimum order quantities, lead times, and why you'd be a great fit for SuppliHAM's STEM-focused market..."
+                                  class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-xl px-5 py-4 outline-none text-sm transition resize-none placeholder-zinc-600"></textarea>
+                    </div>
+
                     <button type="submit"
-                            class="w-full bg-amber-500 hover:bg-amber-400 py-6 text-xl font-semibold text-zinc-950 rounded-3xl transition">
-                        GET INSTANT QUOTE • CALL +233 XX XXX XXXX
+                            class="w-full bg-amber-500 hover:bg-amber-400 py-5 text-lg font-bold text-zinc-950 rounded-2xl transition shadow-xl shadow-amber-500/20 flex items-center justify-center gap-x-3">
+                        <i class="fas fa-paper-plane"></i>
+                        SUBMIT SUPPLIER APPLICATION
                     </button>
                 </form>
-                
-                <div class="mt-10 text-center text-xs text-zinc-500">
-                    📍 Spintex Road, Accra • Open Mon–Sat 9am–6pm
-                </div>
+
+                <p class="mt-6 text-center text-xs text-zinc-500">
+                    We respond to all applications within 48 hours. For urgent queries: 
+                    <a href="mailto:suppliers@suppliham.com.gh" class="text-amber-400 hover:underline">suppliers@suppliham.com.gh</a>
+                </p>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- FOOTER -->
-    <footer class="bg-black text-zinc-500 text-xs py-12">
-        <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-y-10">
-            <div>
-                <div class="flex items-center gap-x-3 mb-6">
-                    <div class="w-7 h-7 bg-amber-400 rounded-2xl flex items-center justify-center text-xs font-black text-zinc-950">📡</div>
-                    <span class="logo-font text-2xl text-zinc-300">SUPPLIHAM</span>
+<!-- ══════════════════════════════════════════════
+     CUSTOMER CONTACT / QUOTE
+══════════════════════════════════════════════ -->
+<section id="contact" class="py-24 bg-zinc-950">
+    <div class="max-w-3xl mx-auto px-6">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 md:p-12">
+            <div class="text-center mb-10">
+                <div class="section-label mb-3">Get a Quote</div>
+                <h2 class="display-font text-4xl md:text-5xl font-bold tracking-tight mb-3">Ready to Equip Your Next Project?</h2>
+                <p class="text-zinc-400">Accra showroom · Same-day dispatch · Nationwide delivery</p>
+            </div>
+
+            <form id="quote-form" class="space-y-5">
+                <div class="grid md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="text-xs text-zinc-500 mono block mb-2">YOUR NAME / SCHOOL</label>
+                        <input type="text" placeholder="Name or institution"
+                               class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-xl px-5 py-4 outline-none text-sm transition placeholder-zinc-600">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-500 mono block mb-2">EMAIL ADDRESS</label>
+                        <input type="email" placeholder="your@email.com"
+                               class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-xl px-5 py-4 outline-none text-sm transition placeholder-zinc-600">
+                    </div>
                 </div>
-                <p>Official supplier to RadioSport STEM programs across Ghana.</p>
-            </div>
-            <div>
-                <div class="uppercase tracking-widest mb-4 text-amber-300 text-[10px]">Quick Links</div>
-                <ul class="space-y-2">
-                    <li><a href="#inventory" class="hover:text-zinc-300">Catalog</a></li>
-                    <li><a href="#tools" class="hover:text-zinc-300">Tools</a></li>
-                    <li><a href="https://rkarikari.github.io/stem/index.html" target="_blank" class="hover:text-zinc-300">Handbook</a></li>
-                </ul>
-            </div>
-            <div>
-                <div class="uppercase tracking-widest mb-4 text-amber-300 text-[10px]">Legal</div>
-                <ul class="space-y-2">
-                    <li>Privacy</li>
-                    <li>Terms</li>
-                    <li>Return Policy</li>
-                </ul>
-            </div>
-            <div>
-                <div class="uppercase tracking-widest mb-4 text-amber-300 text-[10px]">Connect</div>
-                <div class="flex gap-x-5 text-xl">
-                    <i class="fab fa-x-twitter hover:text-white cursor-pointer"></i>
-                    <i class="fab fa-whatsapp hover:text-white cursor-pointer"></i>
-                    <i class="fas fa-envelope hover:text-white cursor-pointer"></i>
+                <div>
+                    <label class="text-xs text-zinc-500 mono block mb-2">PHONE / WHATSAPP</label>
+                    <input type="tel" placeholder="+233 XX XXX XXXX"
+                           class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-xl px-5 py-4 outline-none text-sm transition placeholder-zinc-600">
                 </div>
-                <div class="mt-6 text-[10px]">© 2026 SuppliHAM Radio Outlet • Built for the next generation of radio engineers</div>
+                <div>
+                    <label class="text-xs text-zinc-500 mono block mb-2">WHAT ARE YOU BUILDING?</label>
+                    <textarea placeholder="e.g. ISS ground station, solar-powered repeater, drone telemetry kit, school STEM lab..."
+                              rows="5"
+                              class="w-full bg-black border border-zinc-700 focus:border-amber-400 rounded-xl px-5 py-4 outline-none text-sm transition resize-none placeholder-zinc-600"></textarea>
+                </div>
+                <button type="submit"
+                        class="w-full bg-amber-500 hover:bg-amber-400 py-5 text-base font-bold text-zinc-950 rounded-2xl transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-x-3">
+                    <i class="fas fa-shopping-cart"></i>
+                    GET INSTANT QUOTE · CALL +233 XX XXX XXXX
+                </button>
+            </form>
+
+            <div class="mt-8 grid grid-cols-3 gap-4 text-center text-xs text-zinc-500 border-t border-zinc-800 pt-8">
+                <div><i class="fas fa-map-marker-alt text-amber-400 block text-lg mb-1"></i>Spintex Road, Accra</div>
+                <div><i class="fas fa-clock text-amber-400 block text-lg mb-1"></i>Mon–Sat 9am–6pm</div>
+                <div><i class="fab fa-whatsapp text-amber-400 block text-lg mb-1"></i>WhatsApp Available</div>
             </div>
         </div>
-    </footer>
+    </div>
+</section>
 
-    <script>
-        // Tailwind script already loaded
-        function initTailwind() {
-            // No additional config needed
-        }
+<!-- ══════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════ -->
+<footer class="bg-black border-t border-zinc-900 text-zinc-500 text-sm py-16">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
 
-        // Dynamic timestamp
-        function updateTimestamp() {
-            const ts = document.getElementById('timestamp');
-            const now = new Date();
-            const options = { 
-                weekday: 'short', 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                timeZone: 'UTC',
-                hour12: false
-            };
-            ts.textContent = now.toLocaleString('en-US', options) + ' UTC';
-        }
-        setInterval(updateTimestamp, 1000);
-        updateTimestamp();
+            <!-- Brand -->
+            <div class="col-span-2">
+                <div class="flex items-center gap-x-3 mb-4">
+                    <div class="w-8 h-8 bg-amber-500 rounded-xl flex items-center justify-center text-sm">📡</div>
+                    <span class="display-font text-2xl text-zinc-200 font-bold">SUPPLIHAM</span>
+                </div>
+                <p class="text-xs leading-relaxed text-zinc-500 max-w-xs">Official hardware supplier to RadioSport STEM programs across Ghana. Stocking all equipment for all 15 handbook chapters.</p>
+                <div class="flex gap-x-4 mt-5 text-lg">
+                    <a href="#" class="text-zinc-600 hover:text-white transition" aria-label="X / Twitter"><i class="fab fa-x-twitter"></i></a>
+                    <a href="#" class="text-zinc-600 hover:text-green-400 transition" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    <a href="mailto:info@suppliham.com.gh" class="text-zinc-600 hover:text-amber-400 transition" aria-label="Email"><i class="fas fa-envelope"></i></a>
+                    <a href="#" class="text-zinc-600 hover:text-blue-400 transition" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="text-zinc-600 hover:text-pink-400 transition" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
 
-        // Mobile menu
-        const mobileBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        
-        mobileBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-            const icon = mobileBtn.querySelector('i');
-            icon.classList.toggle('fa-bars');
-            icon.classList.toggle('fa-xmark');
+            <!-- Catalog -->
+            <div>
+                <div class="mono text-[10px] tracking-[3px] text-amber-400 mb-4 uppercase">Catalog</div>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="#inventory" class="hover:text-zinc-200 transition">All 15 Categories</a></li>
+                    <li><a href="#inventory" class="hover:text-zinc-200 transition">Solar &amp; Power</a></li>
+                    <li><a href="#inventory" class="hover:text-zinc-200 transition">Transceivers</a></li>
+                    <li><a href="#inventory" class="hover:text-zinc-200 transition">Satellite Kits</a></li>
+                    <li><a href="#inventory" class="hover:text-zinc-200 transition">Drone Radio</a></li>
+                    <li><a href="#contact" class="hover:text-zinc-200 transition">Bulk / STEM Quote</a></li>
+                </ul>
+            </div>
+
+            <!-- Handbook -->
+            <div>
+                <div class="mono text-[10px] tracking-[3px] text-amber-400 mb-4 uppercase">Handbook v3.0</div>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="https://rkarikari.github.io/stem/index.html" target="_blank" rel="noopener" class="hover:text-zinc-200 transition">Master Index</a></li>
+                    <li><a href="https://rkarikari.github.io/stem/radiosport_ch1.html" target="_blank" rel="noopener" class="hover:text-zinc-200 transition">Ch.1 – Mission</a></li>
+                    <li><a href="https://rkarikari.github.io/stem/radiosport_ch5.html" target="_blank" rel="noopener" class="hover:text-zinc-200 transition">Ch.5 – Satellites</a></li>
+                    <li><a href="https://rkarikari.github.io/stem/radiosport_ch9.html" target="_blank" rel="noopener" class="hover:text-zinc-200 transition">Ch.9 – DSP / SDR</a></li>
+                    <li><a href="https://rkarikari.github.io/stem/radiosport_ch15.html" target="_blank" rel="noopener" class="hover:text-zinc-200 transition">Ch.15 – Capstone</a></li>
+                </ul>
+            </div>
+
+            <!-- Live Tools & Links -->
+            <div>
+                <div class="mono text-[10px] tracking-[3px] text-amber-400 mb-4 uppercase">Live Tools</div>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="https://rkarikari.github.io/stem/antenna_analysis_report.html" target="_blank" rel="noopener" class="hover:text-zinc-200 transition flex items-center gap-x-1.5"><i class="fas fa-external-link-alt text-[9px] text-amber-500"></i>Antenna Analyzer (A1)</a></li>
+                    <li><a href="https://rkarikari.github.io/stem/linear_sat_freqs.html" target="_blank" rel="noopener" class="hover:text-zinc-200 transition flex items-center gap-x-1.5"><i class="fas fa-external-link-alt text-[9px] text-amber-500"></i>Sat Frequency Tool (A2)</a></li>
+                    <li><a href="https://rkarikari.github.io/stem/radio_range.html" target="_blank" rel="noopener" class="hover:text-zinc-200 transition flex items-center gap-x-1.5"><i class="fas fa-external-link-alt text-[9px] text-amber-500"></i>Coverage Planner (A3)</a></li>
+                    <li><a href="#supplier" class="hover:text-zinc-200 transition">Supplier Programme</a></li>
+                    <li><a href="#contact" class="hover:text-zinc-200 transition">Get a Quote</a></li>
+                </ul>
+            </div>
+
+        </div>
+
+        <div class="border-t border-zinc-900 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-600">
+            <div>© 2026 SuppliHAM Radio Outlet · Accra, Ghana · Built for the next generation of radio engineers</div>
+            <div class="flex items-center gap-x-5">
+                <a href="#" class="hover:text-zinc-400 transition">Privacy</a>
+                <a href="#" class="hover:text-zinc-400 transition">Terms</a>
+                <a href="#" class="hover:text-zinc-400 transition">Return Policy</a>
+                <a href="mailto:suppliers@suppliham.com.gh" class="hover:text-amber-400 transition">suppliers@suppliham.com.gh</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // ── UTC CLOCK ──
+    function updateTimestamp() {
+        const el = document.getElementById('timestamp');
+        if (!el) return;
+        const now = new Date();
+        const opts = { weekday:'short', month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit', timeZone:'UTC', hour12:false };
+        el.textContent = now.toLocaleString('en-GB', opts) + ' UTC';
+    }
+    setInterval(updateTimestamp, 1000);
+    updateTimestamp();
+
+    // ── MOBILE MENU ──
+    const mobileBtn  = document.getElementById('mobile-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+        const icon = mobileBtn.querySelector('i');
+        icon.classList.toggle('fa-bars');
+        icon.classList.toggle('fa-xmark');
+    });
+    function closeMobile() { mobileMenu.classList.add('hidden'); }
+
+    // ── SMOOTH SCROLL ──
+    function scrollToSection(id) {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', e => {
+            const id = a.getAttribute('href').slice(1);
+            const el = document.getElementById(id);
+            if (el) { e.preventDefault(); el.scrollIntoView({ behavior:'smooth' }); closeMobile(); }
         });
+    });
 
-        // Fake form submit
-        document.getElementById('quote-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('✅ Quote request received! Our Accra team will contact you within 15 minutes.');
+    // ── QUOTE FORM ──
+    document.getElementById('quote-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = this.querySelector('button[type=submit]');
+        btn.textContent = '✅ Quote request received! Our team will contact you within 15 minutes.';
+        btn.classList.replace('bg-amber-500','bg-green-600');
+        btn.disabled = true;
+    });
+
+    // ── SUPPLIER FORM ──
+    document.getElementById('supplier-application-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = this.querySelector('button[type=submit]');
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> Application submitted — we\'ll be in touch within 48 hours!';
+        btn.classList.replace('bg-amber-500','bg-green-600');
+        btn.disabled = true;
+    });
+
+    // ── ACTIVE NAV HIGHLIGHT (Intersection Observer) ──
+    const sections = document.querySelectorAll('section[id], div[id="supplier-form"]');
+    const navLinks  = document.querySelectorAll('nav .nav-pill');
+    const observer  = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.id;
+                navLinks.forEach(l => {
+                    const href = l.getAttribute('href');
+                    l.classList.toggle('active', href === '#' + id || (id === 'supplier-form' && href === '#supplier'));
+                });
+            }
         });
+    }, { threshold: 0.35 });
+    sections.forEach(s => observer.observe(s));
 
-        // Keyboard shortcut hint
-        console.log('%cSuppliHAM Radio Outlet ready. Press "/" to focus search (coming soon).', 'color:#f59e0b; font-family:monospace');
-    </script>
+    console.log('%cSuppliHAM Radio Outlet v2.0 ready. All links live. Press Ctrl+/ for shortcuts (coming soon).', 'color:#f59e0b;font-family:monospace;font-size:13px');
+</script>
+
 </body>
 </html>
