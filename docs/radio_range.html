@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.112 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.122 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
@@ -269,6 +269,12 @@ option{background:#0b1820;}
 /* Spot map markers */
 .spot-map-dot{border-radius:50%;width:9px;height:9px;border:1.5px solid;cursor:pointer;transition:transform .1s;}
 .spot-map-dot:hover{transform:scale(1.5);}
+/* RX endpoint (remote station heard us — they are the receiver) */
+.spot-map-rx{border-radius:50%;width:9px;height:9px;border:1.5px solid;cursor:pointer;transition:transform .1s;}
+.spot-map-rx:hover{transform:scale(1.5);}
+/* TX endpoint (remote station was transmitting — we heard them) */
+.spot-map-tx{width:9px;height:9px;border:1.5px solid;cursor:pointer;transition:transform .1s;transform:rotate(45deg);}
+.spot-map-tx:hover{transform:rotate(45deg) scale(1.5);}
 .spot-map-line{pointer-events:none;}
 </style>
 </head>
@@ -575,11 +581,13 @@ option{background:#0b1820;}
       <span style="color:#444">▒</span> ZONE 3a · Dead zone (skip zone) &nbsp;
       <span style="color:var(--accent)">━</span> ZONE 3b · F-layer DX ring<br/>
       <span style="color:var(--accent);opacity:.7">╌╌</span> ZONE 3c · 2-hop DX &nbsp;
-      <span style="color:var(--accent);opacity:.5">╌ ╌</span> ZONE 3d · 3-hop &nbsp;
-      <span style="color:var(--accent);opacity:.4">·  ·</span> ZONE 3e · 4-hop<br/>
+      <span style="color:var(--accent);opacity:.5">╌ ╌</span> ZONE 3d · 3-hop<br/>
       <span style="color:#44ddff;font-weight:bold">╌ ╌</span> ZONE Es · Sporadic-E overlay (statistical, 400–2200 km) &nbsp;
       <span style="color:#44ddff;opacity:.6">·  ·</span> ZONE Es-2h · 2-hop Es (2200–4400 km)<br/>
       Zones are mutually exclusive · skipInner fixed (geometry) · skipOuter scales √P<br/>
+      <span style="opacity:.8">PSKReporter spots: arc &amp; dot color = band (same palette as coverage rings)</span><br/>
+      <span style="display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid #845ef7;background:#845ef722;vertical-align:middle;margin-right:3px;"></span> Circle = remote is <b style="color:var(--text)">RX</b> (our signal reached them) · solid arc &nbsp;
+      <span style="display:inline-block;width:9px;height:9px;border:1.5px solid #845ef7;background:#845ef722;vertical-align:middle;margin-right:3px;transform:rotate(45deg);"></span> Diamond = remote is <b style="color:var(--text)">TX</b> (we received them) · dashed arc<br/>
       Sources: ITU-R P.368 (GW conductivity) · P.533 (skywave) · P.526 (diffraction) · ARRL Handbook<br/>
       ⚠ Average conditions · actual ionosphere varies with solar cycle, season, time
     </div>
@@ -805,7 +813,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.121';
+const APP_VERSION = 'v1.122';
 const APP_DATE    = '2026-03-15';
 
 // PSK constants — declared here as var (not const) so they are hoisted and
@@ -841,9 +849,10 @@ const LIVE = {
 
 // Band colour lookup (matching HF bands colour palette)
 const BAND_COLORS = {
+  // Kept in sync with BANDS[x].color — spots/arcs use the same palette as coverage zone rings
   '160m':'#ff6b9d','80m':'#ff9f43','60m':'#ffd93d','40m':'#6bcb77',
-  '30m':'#00ffc3','20m':'#00e5ff','17m':'#44aaff','15m':'#aa88ff',
-  '12m':'#ff88ff','10m':'#ff7675',
+  '30m':'#4d96ff','20m':'#845ef7','17m':'#f06595','15m':'#cc5de8',
+  '12m':'#74c0fc','10m':'#a9e34b',
 };
 
 function bandFromFreq(freqKHz){
@@ -1037,8 +1046,8 @@ const BANDS = {
     hop3Factor: {day: 0.2239, night: 0.4467},
     hop4Factor: {day: 0.2239, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 50 km · ZONE 2 NVIS 0–600 km · ZONE 3b E-skip 300–2000 km · ZONE 3c 2-hop ~2450 km · ZONE 3d 3-hop ~2900 km · ZONE 3e 4-hop ~3350 km',
-      night:'ZONE 1 GW 50 km · No NVIS · ZONE 3b F2 1-hop 400–3000 km · ZONE 3c 2-hop ~4300 km · ZONE 3d 3-hop ~6500 km · ZONE 3e 4-hop ~8700 km',
+      day:  'ZONE 1 GW 50 km · ZONE 2 NVIS 0–600 km · ZONE 3b E-skip 300–2000 km · ZONE 3c 2-hop ~2450 km · ZONE 3d 3-hop ~2900 km',
+      night:'ZONE 1 GW 50 km · No NVIS · ZONE 3b F2 1-hop 400–3000 km · ZONE 3c 2-hop ~4300 km · ZONE 3d 3-hop ~6500 km',
     },
     gw:        50,
     nvis:      {day:600,  night:null},
@@ -1066,8 +1075,8 @@ const BANDS = {
     hop3Factor: {day: 0.3981, night: 0.4467},
     hop4Factor: {day: 0.3981, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 30 km · ZONE 2 NVIS 0–600 km · ZONE 3b E-skip 500–3000 km · ZONE 3c 2-hop ~3500 km · ZONE 3d 3-hop ~5200 km · ZONE 3e 4-hop ~7000 km (day)',
-      night:'ZONE 1 GW 30 km · No NVIS · ZONE 3b F2 1-hop 300–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop ~11600 km — transpacific/transatlantic antipodal reach at high power',
+      day:  'ZONE 1 GW 30 km · ZONE 2 NVIS 0–600 km · ZONE 3b E-skip 500–3000 km · ZONE 3c 2-hop ~3500 km · ZONE 3d 3-hop ~5200 km (day)',
+      night:'ZONE 1 GW 30 km · No NVIS · ZONE 3b F2 1-hop 300–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km — transpacific/transatlantic antipodal reach at high power',
     },
     gw:        30,
     nvis:      {day:600,  night:null},
@@ -1089,8 +1098,8 @@ const BANDS = {
     hop3Factor: {day: 0.4467, night: 0.4467},
     hop4Factor: {day: 0.4467, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 15 km · ZONE 2 NVIS 0–600 km (when foF2 > 10.1 MHz) · ZONE 3b F-skip 800–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop ~11600 km · CW+digital',
-      night:'ZONE 1 GW 15 km · No NVIS · ZONE 3b F2 1-hop 500–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop ~11600 km · CW+digital',
+      day:  'ZONE 1 GW 15 km · ZONE 2 NVIS 0–600 km (when foF2 > 10.1 MHz) · ZONE 3b F-skip 800–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · CW+digital',
+      night:'ZONE 1 GW 15 km · No NVIS · ZONE 3b F2 1-hop 500–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · CW+digital',
     },
     gw:        15,
     nvis:      {day:600, night:null},
@@ -1119,8 +1128,8 @@ const BANDS = {
     hop3Factor: {day: 0.4467, night: 0.4467},
     hop4Factor: {day: 0.4467, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 8 km · No NVIS · ZONE 3b F2 1-hop 800–4500 km · ZONE 3c 2-hop ~6500 km · ZONE 3d 3-hop ~9750 km · ZONE 3e 4-hop up to 18000 km — worldwide DX · SV1UY–ZL1BK 17549 km at 5W (2001)',
-      night:'ZONE 1 GW 8 km · No NVIS · ZONE 3b F2 1-hop 500–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop up to 18000 km — long path east-west · antipodal QSOs documented',
+      day:  'ZONE 1 GW 8 km · No NVIS · ZONE 3b F2 1-hop 800–4500 km · ZONE 3c 2-hop ~6500 km · ZONE 3d 3-hop ~9750 km',
+      night:'ZONE 1 GW 8 km · No NVIS · ZONE 3b F2 1-hop 500–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km',
     },
     gw:        8,
     nvis:      {day:null, night:null},
@@ -1140,8 +1149,8 @@ const BANDS = {
     hop3Factor: {day: 0.4467, night: 0.4467},
     hop4Factor: {day: 0.4467, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 5 km · No NVIS · ZONE 3b F2 1-hop 1000–5000 km · ZONE 3c 2-hop ~7200 km · ZONE 3d 3-hop ~10800 km · ZONE 3e 4-hop up to 18000 km — solar dependent · antipodal reach at solar max',
-      night:'ZONE 1 GW 5 km · No NVIS · ZONE 3b F2 1-hop 700–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km · ZONE 3e 4-hop ~11600 km (if F2 open) · night DX limited by MUF',
+      day:  'ZONE 1 GW 5 km · No NVIS · ZONE 3b F2 1-hop 1000–5000 km · ZONE 3c 2-hop ~7200 km · ZONE 3d 3-hop ~10800 km',
+      night:'ZONE 1 GW 5 km · No NVIS · ZONE 3b F2 1-hop 700–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km (if F2 open) · night DX limited by MUF',
     },
     gw:        5,
     nvis:      {day:null, night:null},
@@ -1161,7 +1170,7 @@ const BANDS = {
     hop3Factor: {day: 0.4467, night: null},
     hop4Factor: {day: 0.4467, night: null},
     propMode:{
-      day:  'ZONE 1 GW 3 km · No NVIS · ZONE 3b F2 1-hop 1200–5000 km · ZONE 3c 2-hop ~7200 km · ZONE 3d 3-hop ~10800 km · ZONE 3e 4-hop up to 18000 km — solar peak · antipodal reach documented at solar max',
+      day:  'ZONE 1 GW 3 km · No NVIS · ZONE 3b F2 1-hop 1200–5000 km · ZONE 3c 2-hop ~7200 km · ZONE 3d 3-hop ~10800 km',
       night:'ZONE 1 only — 15m closed at night (F2 MUF < 21 MHz) · GW 3 km',
     },
     gw:        3,
@@ -1182,7 +1191,7 @@ const BANDS = {
     hop3Factor: {day: 0.4467, night: null},
     hop4Factor: {day: 0.4467, night: null},
     propMode:{
-      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3b F2 1-hop 1500–5000 km · ZONE 3c 2-hop ~7200 km · ZONE 3d 3-hop ~10800 km · ZONE 3e 4-hop up to 18000 km — solar peak only · antipodal reach at solar max',
+      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3b F2 1-hop 1500–5000 km · ZONE 3c 2-hop ~7200 km · ZONE 3d 3-hop ~10800 km',
       night:'ZONE 1 only — 12m closed at night · GW 2 km',
     },
     gw:        2,
@@ -1206,7 +1215,7 @@ const BANDS = {
     hop3Factor: {day: 0.4467, night: null},
     hop4Factor: {day: 0.4467, night: null},
     propMode:{
-      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3b F2 1-hop 1800–5500 km · ZONE 3c 2-hop ~8000 km · ZONE 3d 3-hop ~12000 km · ZONE 3e 4-hop up to 18000 km — solar peak only · multi-hop F2 at 16990+ km documented',
+      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3b F2 1-hop 1800–5500 km · ZONE 3c 2-hop ~8000 km · ZONE 3d 3-hop ~12000 km',
       night:'ZONE 1 only — 10m dead at night (F2 MUF < 28 MHz) · GW 2 km',
     },
     gw:        2,
@@ -2743,7 +2752,7 @@ function linkBudgetDBm(distKm, nHops, freqMHz, powerW, antGaindBd, condFactor, d
 
   // ── Received power (dBW) — ITU-R P.533 M22 ray-hop, single-link ──
   // This function computes the signal for a single skywave link (used directly
-  // for Z3b / 1-hop DX). For multi-hop zones (Z3c/Z3d/Z3e), the signal is
+  // for Z3b / 1-hop DX). For multi-hop zones (Z3c/Z3d), the signal is
   // derived by cascading the per-hop losses from the Z3b baseline using
   // hopSig() — see updateCovSummary(). This keeps the range model (hopNFactor)
   // and the signal model in a consistent loss accounting.
@@ -3255,22 +3264,11 @@ function liveZones(band){
     hop3Note = `3-hop · −${legdB} dB vs Z3c · −${cum3dB} dB cumul vs Z3b`;
   }
 
-  // ── Fourth-hop DX (ZONE 3e) ────────────────────────────────────
-  // Same per-leg loss model as hop2/hop3. 4-hop paths reach antipodal distances.
-  // The 4th hop incurs the SAME per-leg loss as each prior hop (one more ground reflection).
-  // Cumulative loss vs 1-hop = 3 × per-leg loss (three extra ground reflections total).
-  // Verified: SV1UY/PM–ZL1BK/PM 17549 km at 5W on 20m (Feb 2001, HFpack QRP record) — chordal long path.
-  // Standard 4-ground-reflection F2 contacts at 16000–18000 km on 10m–20m at solar max documented.
-  // Geometric cap: min(4 × skipGeomMax, MAX_KM=18000 km).
-  let hop4OuterBase = null;
-  let hop4Note = '';
-  const h4f = b.hop4Factor ? b.hop4Factor[t] : null;
-  if(skipOuterKm && h4f){
-    hop4OuterBase = skipOuterKm * h4f;
-    const legdB = Math.round(-20*Math.log10(h4f));
-    const cum4dB = 3 * legdB;
-    hop4Note = `4-hop · −${legdB} dB vs Z3d · −${cum4dB} dB cumul vs Z3b`;
-  }
+  // NOTE: 4-hop (ZONE 3e) removed — not realistic for SSB voice coverage.
+  // 4-hop F2 requires solar maximum, ideal ionosphere, and rarely completes
+  // on SSB voice. Max practical SSB range ends at ZONE 3d (3-hop).
+  const hop4OuterBase = null;
+  const hop4Note = '';
 
   // Compute Lh auroral loss at TX position (midpoint proxy for summary table)
   const lh_auroral = auroralloss_Lh(S.lat, S.lon, isDaytime);
@@ -3284,7 +3282,7 @@ function liveZones(band){
            es: esZone(band) };
 }
 
-// Best single range for autoFit — includes Zone 3c/3d/3e (2/3/4-hop) when available
+// Best single range for autoFit — includes Zone 3c/3d (2/3-hop) when available; Zone 3e (4-hop) excluded for SSB realism
 function calcRangeKm(powerW){
   const z = liveZones(S.band);
   const b = BANDS[S.band];
@@ -3294,7 +3292,7 @@ function calcRangeKm(powerW){
   const gLin = Math.pow(10, a.gain/20);
   const nvis = z.nvisBase  ? Math.min(650, scaledIono(z.nvisBase  * gLin, powerW, c.factor)) : 0;
   const skip1= z.skipOuterKm ? Math.min(z.skipGeomKm || b.skipGeomMax, scaledIono(z.skipOuterKm * gLin, powerW, c.factor)) : 0;
-  let hop2 = 0, hop3 = 0, hop4 = 0;
+  let hop2 = 0, hop3 = 0;
   const hopGeomLeg = z.skipGeomKm || b.skipGeomMax;
   if(z.hop2OuterBase && skip1 > 0){
     hop2 = Math.min(2 * b.skipGeomMax, skip1 + skip1);
@@ -3302,10 +3300,7 @@ function calcRangeKm(powerW){
   if(z.hop3OuterBase && hop2 > 0){
     hop3 = Math.min(3 * b.skipGeomMax, hop2 + skip1);
   }
-  if(z.hop4OuterBase && hop3 > 0){
-    hop4 = Math.min(MAX_KM, Math.min(4 * b.skipGeomMax, hop3 + skip1));
-  }
-  return Math.max(nvis, skip1, hop2, hop3, hop4, scaledGW(z.gwBase, powerW));
+  return Math.max(nvis, skip1, hop2, hop3, scaledGW(z.gwBase, powerW));
 }
 
 function ringPowers(){
@@ -3804,13 +3799,17 @@ ${phaseStr}`,
       const hopGeomLeg  = z.skipGeomKm || b.skipGeomMax;
       const outerPts2 = [], innerPts2 = [];
       let anyOpen2 = false, maxHop2 = 0;
+      // Per design spec (line 956): 2-hop outer = skip1 + scaledIono(skipOuter × hop2Factor × gLin, P, cond)
+      // hop2Factor = 10^(-L_extra/20) is a RANGE multiplier. Extra ground-reflection + D-layer
+      // losses on the 2nd hop reduce how far that leg reaches. ITU-R P.533-13 §3.
+      const _c2h = CONDS.find(x=>x.id===S.cond);
+      const _g2h = Math.pow(10, ANTS[S.ant].gain/20);
+      const _hop2LegScaled = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase * _g2h, p, _c2h.factor));
       for(let i=0; i<N_HF_RADIALS; i++){
         const brg = (i/N_HF_RADIALS)*360;
         const skip1 = skipOuterPerBearing[i];
         if(skip1 <= 0){ outerPts2.push(destPt(S.lat,S.lon,brg,0.5)); innerPts2.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
-        // Each hop leg covers the same geographic distance as hop1 (skip1).
-        // hop2OuterBase gates whether signal is viable — it does NOT shorten the leg.
-        const hop2Leg   = skip1;
+        const hop2Leg   = _hop2LegScaled;
         const hop2Total = Math.min(hop2GeomMax, skip1 + hop2Leg);
         if(hop2Total > skip1 + 100) anyOpen2 = true;
         if(hop2Total > maxHop2) maxHop2 = hop2Total;
@@ -3842,13 +3841,20 @@ ${phaseStr}`,
       const hopGeomLeg  = z.skipGeomKm || b.skipGeomMax;
       const outerPts3 = [], innerPts3 = [];
       let anyOpen3=false, maxHop3=0;
+      // Per design spec: each hop leg = scaledIono(hopNOuterBase × gLin, P, cond).
+      // hop3OuterBase = skipOuter × hop3Factor, where hop3Factor = 10^(-L_extra/20).
+      // Cumulative range losses accumulate each hop — matching summary table calculation.
+      const _c3h = CONDS.find(x=>x.id===S.cond);
+      const _g3h = Math.pow(10, ANTS[S.ant].gain/20);
+      const _hop2LegS3 = Math.min(hopGeomLeg, scaledIono(z.hop2OuterBase * _g3h, p, _c3h.factor));
+      const _hop3LegS  = Math.min(hopGeomLeg, scaledIono(z.hop3OuterBase * _g3h, p, _c3h.factor));
       for(let i=0; i<N_HF_RADIALS; i++){
         const brg = (i/N_HF_RADIALS)*360;
         const skip1 = skipOuterPerBearing[i];
         if(skip1<=0){ outerPts3.push(destPt(S.lat,S.lon,brg,0.5)); innerPts3.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
-        const hop2Leg   = skip1;
+        const hop2Leg   = _hop2LegS3;
         const hop2Total = Math.min(2*b.skipGeomMax, skip1+hop2Leg);
-        const hop3Leg   = skip1;
+        const hop3Leg   = _hop3LegS;
         const hop3Total = Math.min(hop3GeomMax, hop2Total+hop3Leg);
         if(hop3Total > hop2Total+100) anyOpen3=true;
         if(hop3Total > maxHop3) maxHop3=hop3Total;
@@ -3869,44 +3875,7 @@ ${phaseStr}`,
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // ZONE 3e — FOURTH HOP DX (per-bearing)
-  // ═══════════════════════════════════════════════════════════════════
-  if(z.hop4OuterBase && S.power >= b.minW){
-    const p = powers[0];
-    if(p >= b.minW){
-      const hop4GeomMax = Math.min(4*b.skipGeomMax, MAX_KM);
-      const hopGeomLeg  = z.skipGeomKm || b.skipGeomMax;
-      const outerPts4=[], innerPts4=[];
-      let anyOpen4=false, maxHop4=0;
-      for(let i=0; i<N_HF_RADIALS; i++){
-        const brg=(i/N_HF_RADIALS)*360;
-        const skip1=skipOuterPerBearing[i];
-        if(skip1<=0){ outerPts4.push(destPt(S.lat,S.lon,brg,0.5)); innerPts4.push(destPt(S.lat,S.lon,brg,0.5)); continue; }
-        const hop2Leg   = skip1;
-        const hop2Total = Math.min(2*b.skipGeomMax, skip1+hop2Leg);
-        const hop3Leg   = skip1;
-        const hop3Total = Math.min(3*b.skipGeomMax, hop2Total+hop3Leg);
-        const hop4Leg   = skip1;
-        const hop4Total = Math.min(hop4GeomMax, hop3Total+hop4Leg);
-        if(hop4Total > hop3Total+100) anyOpen4=true;
-        if(hop4Total > maxHop4) maxHop4=hop4Total;
-        outerPts4.push(destPt(S.lat,S.lon,brg,Math.max(hop4Total,0.5)));
-        innerPts4.push(destPt(S.lat,S.lon,brg,Math.max(hop3Total,0.5)));
-      }
-      outerPts4.push(outerPts4[0]); innerPts4.push(innerPts4[0]);
-      if(anyOpen4){
-        innerPts4.reverse();
-        const hop4Layer = L.polygon([outerPts4,innerPts4],{
-          color:col,fillColor:col,weight:1,opacity:.30,fillOpacity:.03,dashArray:'3 8', smoothFactor:1});
-        hop4Layer.bindTooltip(
-          `ZONE 3e · 4-hop DX · ${fmtPwr(p)} · ~${Math.round(maxHop4)} km max\n`+
-          `${z.hop4Note}\n${z.skipNote}\n${phaseStr}`,{className:'ltt',direction:'top'});
-        addLayer(hop4Layer);
-        addLabel(Math.round(maxHop4), col, 'Z3e·4HOP', 315);
-      }
-    }
-  }
+  // ZONE 3e (4-hop) removed: not realistic for SSB voice propagation planning.
 
   // ── TX Marker ──────────────────────────────────────────────
   const ico=L.divIcon({className:'',iconSize:[0,0],iconAnchor:[0,0],html:`
@@ -3936,8 +3905,21 @@ ${phaseStr}`,
 function autoFit(){
   const km = calcRangeKm(S.power);
   if(km < 1) return;
-  const circle = L.circle([S.lat,S.lon],{radius: Math.max(km,100)*1000});
-  map.fitBounds(circle.getBounds().pad(0.08),{maxZoom:9,animate:true});
+  try {
+    const R_EARTH = 6371;
+    const latDelta = (km / R_EARTH) * (180 / Math.PI);
+    const lonDelta = latDelta / Math.max(0.1, Math.cos(S.lat * Math.PI / 180));
+    const bounds = L.latLngBounds(
+      [S.lat - latDelta, S.lon - lonDelta],
+      [S.lat + latDelta, S.lon + lonDelta]
+    );
+    // Step 1: fit to natural bounds (no maxZoom cap so it finds the true fit level)
+    map.fitBounds(bounds.pad(0.08), {maxZoom:11, animate:false});
+    // Step 2: zoom in 2 more levels above the natural fit, capped at 11
+    map.setZoom(Math.min(11, map.getZoom() + 2), {animate:true});
+  } catch(e) {
+    map.setView([S.lat, S.lon], 3);
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -4136,21 +4118,7 @@ function updateCovSummary(){
               '',
               z3dSig);
 
-            // Zone 3e — 4-hop DX
-            if(z.hop4OuterBase){
-              const hop4Leg   = Math.min(hopGeomLeg, scaledIono(z.hop4OuterBase * gLin, S.power, cond.factor));
-              const hop4Total = Math.min(Math.min(4 * b.skipGeomMax, MAX_KM), hop3Total + hop4Leg);
-              if(hop4Total > hop3Total + 100){
-                const z3eSig = hopSig(z3dSig, z.hop4OuterBase, z.skipOuterKm);
-                row(b.color, 'Z3e · 4-hop',
-                  `~${hop3Total}–${hop4Total} km`,
-                  geoTag(hop4Total),
-                  '',
-                  z3eSig);
-              } else {
-                row('#1a1a2a', 'Z3e · 4-hop', 'Below threshold', '—', '');
-              }
-            }
+            // Zone 3e (4-hop) removed — not realistic for SSB voice
           } else {
             row('#1a1a2a', 'Z3d · 3-hop', 'Below threshold', '—', '');
           }
@@ -4165,12 +4133,10 @@ function updateCovSummary(){
     row(b.color, 'Z3b · F-DX', `Below min power (${b.minW}W)`, '—', '');
     row('#1a1a2a', 'Z3c · 2-hop', `Below min power (${b.minW}W)`, '—', '');
     row('#1a1a2a', 'Z3d · 3-hop', `Below min power (${b.minW}W)`, '—', '');
-    row('#1a1a2a', 'Z3e · 4-hop', `Below min power (${b.minW}W)`, '—', '');
   } else {
     row('#1a1a2a', 'Z3b · F-DX', 'Closed', '—', z.skipNote);
     row('#1a1a2a', 'Z3c · 2-hop', 'Closed', '—', '');
     row('#1a1a2a', 'Z3d · 3-hop', 'Closed', '—', '');
-    row('#1a1a2a', 'Z3e · 4-hop', 'Closed', '—', '');
   }
 }
 
@@ -6657,11 +6623,16 @@ function drawSpotMarkers(){
     }
 
     // ── Dot marker at remote endpoint ──
+    // nearIsTX=true  → our station is TX, remote is RX → circle dot, solid arc
+    // nearIsTX=false → our station is RX, remote is TX → diamond dot, dashed arc
+    const remoteIsRX = nearDX;   // nearDX=true means near endpoint is TX (us), remote is RX
     const distKm = haversineKm(txLat, txLon, plotLat, plotLon);
     const distStr = Math.round(distKm).toLocaleString() + ' km';
+    const dotClass   = remoteIsRX ? 'spot-map-rx' : 'spot-map-tx';
+    const dotTitle   = `${plotCall} · ${remoteIsRX ? 'RX' : 'TX'} · ${spot.band} · ${spot.mode} · ${distStr}`;
     const icon = L.divIcon({
       className:'', iconSize:[10,10], iconAnchor:[5,5],
-      html:`<div class="spot-map-dot" style="background:${col}22;border-color:${col};box-shadow:0 0 4px ${col}88;" title="${plotCall} · ${spot.band} · ${spot.mode} · ${distStr}"></div>`
+      html:`<div class="${dotClass}" style="background:${col}22;border-color:${col};box-shadow:0 0 4px ${col}88;" title="${dotTitle}"></div>`
     });
     const marker = L.marker([plotLat, plotLon], {icon, zIndexOffset:200});
 
@@ -6739,9 +6710,12 @@ function drawSpotMarkers(){
     });
 
     // ── Geodesic (great-circle) arc from TX to remote endpoint ──
+    // Solid arc  = remote is RX (our signal reached them)
+    // Dashed arc = remote is TX (we received their signal)
     const arcPts = gcPoints(txLat, txLon, plotLat, plotLon, 64);
     const line = L.polyline(arcPts, {
-      color: col, weight: 1.5, opacity: 0.55, dashArray: null
+      color: col, weight: 1.5, opacity: 0.55,
+      dashArray: remoteIsRX ? null : '5 5'
     });
 
     // Apply band filter visibility before adding to map
