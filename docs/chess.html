@@ -1329,33 +1329,52 @@ class Engine {
       return;
     }
 
-    const SF18 = 'https://cdn.jsdelivr.net/npm/stockfish@18.0.5/src/';
+    // CDN notes:
+    // - jsdelivr 403s files >50MB (blocks the full SF18 builds)
+    // - unpkg has no size limit and is reliable for npm packages
+    // - lite builds (~7MB .wasm) work on both CDNs
+    // - full single-threaded build (~45MB) only on unpkg
+    // - multi-threaded build (>100MB) needs COOP/COEP headers + unpkg
 
-    // Detect if multi-threaded WASM is available.
-    // Requires: SharedArrayBuffer + Atomics (enabled by COOP/COEP headers).
-    const canMultiThread = typeof SharedArrayBuffer !== 'undefined' &&
-                           typeof Atomics !== 'undefined';
+    const canSAB = typeof SharedArrayBuffer !== 'undefined' &&
+                   typeof Atomics !== 'undefined';
+
+    const UNPKG  = 'https://unpkg.com/stockfish@18.0.5/src/';
+    const JSD    = 'https://cdn.jsdelivr.net/npm/stockfish@18.0.5/src/';
 
     this._candidates = [
-      // ── Multi-threaded (fastest, requires COOP/COEP headers) ──────────────
-      ...(canMultiThread ? [
-        { url: SF18 + 'stockfish-18.js',
-          wasmUrl: SF18 + 'stockfish-18.wasm',
-          threaded: true, label: 'Stockfish 18 (multi-thread)' },
+      // 1. Multi-thread full — fastest, needs COOP/COEP + SAB (~100MB, unpkg only)
+      ...(canSAB ? [{
+        url: UNPKG + 'stockfish-18.js',
+        wasmUrl: UNPKG + 'stockfish-18.wasm',
+        label: 'Stockfish 18 (multi-thread)'
+      }] : []),
+
+      // 2. Single-thread full — strong, no SAB, ~45MB, unpkg only (jsdelivr 403s it)
+      { url: UNPKG + 'stockfish-18-single.js',
+        wasmUrl: UNPKG + 'stockfish-18-single.wasm',
+        label: 'Stockfish 18' },
+
+      // 3. Lite multi-thread — ~7MB, needs SAB, try jsdelivr then unpkg
+      ...(canSAB ? [
+        { url: JSD   + 'stockfish-18-lite.js',
+          wasmUrl: JSD + 'stockfish-18-lite.wasm',
+          label: 'Stockfish 18 Lite (multi-thread)' },
+        { url: UNPKG + 'stockfish-18-lite.js',
+          wasmUrl: UNPKG + 'stockfish-18-lite.wasm',
+          label: 'Stockfish 18 Lite (multi-thread)' },
       ] : []),
 
-      // ── Single-threaded (works everywhere on http/https, no SAB needed) ───
-      { url: SF18 + 'stockfish-18-single.js',
-        wasmUrl: SF18 + 'stockfish-18-single.wasm',
-        threaded: false, label: 'Stockfish 18' },
-
-      // ── Lite single (faster to load, ~7MB, slightly weaker) ───────────────
-      { url: SF18 + 'stockfish-18-lite-single.js',
-        wasmUrl: SF18 + 'stockfish-18-lite-single.wasm',
-        threaded: false, label: 'Stockfish 18 Lite' },
+      // 4. Lite single-thread — ~7MB, no SAB, works on any http/https
+      { url: JSD   + 'stockfish-18-lite-single.js',
+        wasmUrl: JSD + 'stockfish-18-lite-single.wasm',
+        label: 'Stockfish 18 Lite' },
+      { url: UNPKG + 'stockfish-18-lite-single.js',
+        wasmUrl: UNPKG + 'stockfish-18-lite-single.wasm',
+        label: 'Stockfish 18 Lite' },
     ];
 
-    console.info('[Engine] SharedArrayBuffer available:', canMultiThread,
+    console.info('[Engine] SAB/multi-thread available:', canSAB,
       '→ trying', this._candidates[0].label);
     this._candidateIdx = 0;
     this._tryNextCandidate(0);
