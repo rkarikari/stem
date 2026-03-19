@@ -771,25 +771,27 @@
       </div>
     </div>
 
-    <!-- Stockfish file loader (file:// workaround) -->
+    <!-- Stockfish setup panel -->
     <div class="panel-card" id="sf-loader-panel">
-      <div class="panel-title">Load Engine</div>
-      <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;">
-        <div style="font-size:10px;color:var(--ivory-dim);line-height:1.8;letter-spacing:.3px;">
-          On <code style="color:var(--gold)">file://</code>, download the non-NNUE JS build:<br>
+      <div class="panel-title">Engine Setup</div>
+      <div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
+
+        <div style="font-size:10px;color:var(--ivory-dim);line-height:1.8;">
+          <strong style="color:var(--gold)">One-time setup</strong> for full Stockfish 18:<br>
+          1. Download engine files from:<br>
           <a href="https://github.com/nmrugg/stockfish.js/releases" target="_blank"
-             style="color:var(--gold-light);word-break:break-all;">
-            nmrugg/stockfish.js → stockfish-18-lite-single.js
-          </a><br>
-          <span style="color:var(--ivory-dim);font-size:9px;">
-            On http/https: Stockfish 18 loads automatically from CDN.<br>
-          </span>
-          <span style="color:#c0392b;font-size:9px;">
-            ✗ stockfish-nnue-*.js needs HTTPS+COOP headers<br>
-            ✗ .exe is native binary, won't work
-          </span>
+             style="color:var(--gold-light)">github.com/nmrugg/stockfish.js</a><br>
+          2. Add to your repo (same folder as chess.html):<br>
+          <code style="color:var(--gold);font-size:9px;">stockfish-18-lite-single.js<br>stockfish-18-lite-single.wasm</code><br>
+          3. Also add <code style="color:var(--gold);font-size:9px;">coi-serviceworker.js</code>
+          for the full 110MB multi-thread build.
         </div>
-        <label id="sf-pick-btn" style="
+
+        <div style="border-top:1px solid var(--border);padding-top:10px;font-size:10px;color:var(--ivory-dim);">
+          <strong style="color:var(--gold-dim)">Local file (file://)</strong> — pick manually:
+        </div>
+
+        <label style="
           display:flex;align-items:center;justify-content:center;gap:6px;
           padding:9px 10px;cursor:pointer;border-radius:2px;
           background:rgba(201,168,76,.1);border:1px solid var(--gold-dim);
@@ -797,7 +799,7 @@
           text-transform:uppercase;transition:background .2s;
         " onmouseover="this.style.background='rgba(201,168,76,.2)'"
            onmouseout="this.style.background='rgba(201,168,76,.1)'">
-          ⬆ Select stockfish.js
+          ⬆ Browse stockfish-18-lite-single.js
           <input type="file" accept=".js" style="display:none" onchange="loadEngineFile(this)">
         </label>
         <div id="sf-load-status" style="font-size:10px;color:var(--ivory-dim);text-align:center;min-height:14px;"></div>
@@ -1362,91 +1364,58 @@ class Engine {
     this._initStockfish();
   }
 
-  // ── Stockfish loader ──────────────────────────────────
+  // ── Stockfish loader ──────────────────────────────────────────────────────
+  // DEFINITIVE APPROACH after full research:
+  //
+  // The browser same-origin policy cannot be bypassed for Workers:
+  //   new Worker(url)    → must be same-origin
+  //   importScripts(url) → same restriction from blob: workers
+  //   fetch(cdnUrl)      → CDNs block cross-origin fetch
+  //
+  // The ONLY correct solution: host engine files on your own origin.
+  // Chess.com and lichess both self-host. There is no CDN trick.
+  //
+  // HOW TO SET UP (one time):
+  //   1. Go to: https://github.com/nmrugg/stockfish.js/releases
+  //   2. Download stockfish-18-lite-single.js + .wasm  (7MB, recommended)
+  //      OR stockfish-18-single.js + .wasm             (45MB, stronger)
+  //      OR stockfish-18.js + .wasm                    (110MB, strongest, needs COI SW)
+  //   3. Put them in the SAME FOLDER as chess.html on your GitHub Pages repo
+  //   4. Commit and push — engine loads automatically next visit
+  //
   _initStockfish() {
     const isLocal = location.protocol === 'file:';
+    const coi     = window.crossOriginIsolated === true;
+    const canSAB  = coi && typeof SharedArrayBuffer !== 'undefined';
+
     if (isLocal) {
-      console.info('[Engine] file:// detected — awaiting manual engine file selection');
-      this._setEngineLabel('Select stockfish.js below ↓');
+      this._setEngineLabel('Select stockfish file ↓');
       this.mode = 'js';
       this._initJSWorker();
       return;
     }
 
-    // KEY INSIGHT: we must NOT fetch() CDN source text — cross-origin fetch is
-    // blocked even when the CDN has CORS headers (the response headers allow
-    // script loading but not arbitrary fetch from a different origin in all cases).
-    //
-    // SOLUTION: create a Blob Worker that calls importScripts(cdnUrl) internally.
-    // importScripts() inside a worker follows script-loading CORS rules (not fetch
-    // rules) — CDNs that serve Access-Control-Allow-Origin: * work fine this way.
-    // The .wasm is fetched by the engine itself using its own locateFile, also
-    // as a script-context load, which works cross-origin.
-    //
-    // CDN choice:
-    // - cdnjs (Cloudflare): serves stockfish.js v10 (lichess, ~1.4MB) with CORS ✓
-    // - jsdelivr: serves stockfish@18 lite-single (~7MB) with CORS ✓ via importScripts
-    // - jsdelivr 403s on >50MB files (full SF18 single/multi blocked)
-    // - unpkg blocks cross-origin fetch (but importScripts may work)
-
-    // crossOriginIsolated = true means COOP/COEP headers are present
-    // (either from server or from our inline COI service worker).
-    // Only then is SharedArrayBuffer + multi-threading available.
-    const coi  = window.crossOriginIsolated === true;
-    const canSAB = coi && typeof SharedArrayBuffer !== 'undefined';
-
-    const SF18   = 'https://cdn.jsdelivr.net/npm/stockfish@18.0.5/src/';
-    const UNPKG  = 'https://unpkg.com/stockfish@18.0.5/src/';
-    const CDNJS  = 'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/';
-
+    // Same-origin candidates — new Worker('./file.js') always allowed, no CORS.
+    // The .js file IS the worker; it fetches its own .wasm from same directory.
     this._candidates = [
-      // ── Multi-threaded (fastest) — only when crossOriginIsolated ───────────
       ...(canSAB ? [
-        // Full SF18 multi-thread (~110MB) — strongest possible
-        // jsdelivr 403s >50MB; use unpkg which has no size limit
-        { jsUrl:  UNPKG + 'stockfish-18.js',
-          wasmUrl: UNPKG + 'stockfish-18.wasm',
-          label: 'Stockfish 18 (multi-thread)' },
-        // SF18 lite multi-thread (~7MB) — fast to load, good strength
-        { jsUrl:  SF18  + 'stockfish-18-lite.js',
-          wasmUrl: SF18  + 'stockfish-18-lite.wasm',
-          label: 'Stockfish 18 Lite (multi-thread)' },
-        { jsUrl:  UNPKG + 'stockfish-18-lite.js',
-          wasmUrl: UNPKG + 'stockfish-18-lite.wasm',
-          label: 'Stockfish 18 Lite (multi-thread)' },
+        { url: './stockfish-18.js',      label: 'Stockfish 18 (multi-thread)' },
+        { url: './stockfish-18-lite.js', label: 'Stockfish 18 Lite (multi-thread)' },
       ] : []),
-
-      // ── Single-threaded — no SAB needed, works on any https ────────────────
-      // Full SF18 single (~45MB) — strong, no COOP needed
-      { jsUrl:  UNPKG + 'stockfish-18-single.js',
-        wasmUrl: UNPKG + 'stockfish-18-single.wasm',
-        label: 'Stockfish 18' },
-      // SF18 lite single (~7MB) — small, fast, no COOP needed
-      { jsUrl:  SF18  + 'stockfish-18-lite-single.js',
-        wasmUrl: SF18  + 'stockfish-18-lite-single.wasm',
-        label: 'Stockfish 18 Lite' },
-      { jsUrl:  UNPKG + 'stockfish-18-lite-single.js',
-        wasmUrl: UNPKG + 'stockfish-18-lite-single.wasm',
-        label: 'Stockfish 18 Lite' },
-
-      // ── Ultimate fallback: Stockfish 10 via cdnjs (Cloudflare, rock-solid) ─
-      { jsUrl:  CDNJS + 'stockfish.wasm.js',
-        wasmUrl: CDNJS + 'stockfish.wasm',
-        label: 'Stockfish 10 (WASM)' },
-      { jsUrl:  CDNJS + 'stockfish.js',
-        wasmUrl: null,
-        label: 'Stockfish 10 (asm.js)' },
+      { url: './stockfish-18-single.js',      label: 'Stockfish 18' },
+      { url: './stockfish-18-lite-single.js', label: 'Stockfish 18 Lite' },
+      { url: './stockfish.js',                label: 'Stockfish' },
     ];
 
-    console.info('[Engine] crossOriginIsolated:', coi, '| canSAB:', canSAB,
-      '→ first candidate:', this._candidates[0].label);
+    console.info('[Engine] crossOriginIsolated:', coi, 'canSAB:', canSAB,
+      '→ trying', this._candidates[0].label, 'first');
     this._candidateIdx = 0;
     this._tryNextCandidate(0);
   }
 
   _tryNextCandidate(idx) {
     if (idx >= this._candidates.length) {
-      console.info('[Engine] No CDN engine loaded — using built-in JS engine');
+      console.info('[Engine] No engine file found — using built-in JS engine');
       this._setEngineLabel('JS Engine (built-in)');
       this.mode = 'js';
       this._initJSWorker();
@@ -1455,33 +1424,17 @@ class Engine {
     this._candidateIdx = idx;
     const cand = this._candidates[idx];
     this._setEngineLabel('Loading ' + cand.label + '…');
-    console.info('[Engine] Trying:', cand.label, cand.jsUrl);
+    console.info('[Engine] Trying:', cand.url);
 
-    // Use importScripts() inside a blob worker — this bypasses cross-origin
-    // fetch restrictions. importScripts follows script-tag CORS rules, not
-    // fetch rules, so CDNs with Access-Control-Allow-Origin: * work fine.
-    const wasmUrlJson = JSON.stringify(cand.wasmUrl || '');
-    const workerSrc = `
-var Module = Module || {};
-${cand.wasmUrl ? `Module.locateFile = function(p) {
-  return (p.endsWith('.wasm') || p.endsWith('.wasm.br')) ? ${wasmUrlJson} : p;
-};` : ''}
-try {
-  importScripts(${JSON.stringify(cand.jsUrl)});
-} catch(e) {
-  // importScripts threw — signal failure via a fake message then stop
-  self.postMessage('__LOAD_FAILED__:' + e.message);
-}
-`;
     try {
-      const blob = new Blob([workerSrc], {type: 'application/javascript'});
-      const blobUrl = URL.createObjectURL(blob);
-      this._probeWorker(blobUrl, cand.jsUrl, true, cand.label);
+      // new Worker(same-origin-relative-url) — always works, no CORS needed
+      const w = new Worker(cand.url);
+      this._probeWorker(w, cand.url, false, cand.label);
     } catch(e) {
+      console.info('[Engine]', cand.url, 'failed:', e.message);
       this._tryNextCandidate(idx + 1);
     }
   }
-
   // Called by the file input picker
   loadFromFile(file) {
     const status = document.getElementById('sf-load-status');
@@ -1669,26 +1622,27 @@ self.abort = function(reason) {
     }
   }
 
-  _probeWorker(workerUrl, srcUrl, revoke, labelHint) {
+  // workerOrUrl: already-created Worker instance (from _tryNextCandidate)
+  //              OR a blob URL string (from _probeWorkerFromBlob / file picker)
+  _probeWorker(workerOrUrl, srcUrl, revoke, labelHint) {
     try {
-      const w = new Worker(workerUrl);
+      const w = (typeof workerOrUrl === 'string') ? new Worker(workerOrUrl) : workerOrUrl;
+      const blobUrl = (typeof workerOrUrl === 'string') ? workerOrUrl : null;
       let gotMessage = false;
+      // 15s timeout — large WASM files take time to parse
       const timeout = setTimeout(() => {
         if (!gotMessage) {
           w.terminate();
-          if (revoke) URL.revokeObjectURL(workerUrl);
+          if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
           this._tryNextCandidate(this._candidateIdx + 1);
         }
-      }, 8000);
-      let engineName = labelHint || 'Stockfish 18';
+      }, 15000);
+      let engineName = labelHint || 'Stockfish';
       w.onmessage = (e) => {
         if (typeof e.data !== 'string') return;
-        // importScripts failure sentinel
         if (e.data.startsWith('__LOAD_FAILED__')) {
-          clearTimeout(timeout);
-          console.warn('[Engine] importScripts failed for', srcUrl, e.data);
-          w.terminate();
-          if (revoke) URL.revokeObjectURL(workerUrl);
+          clearTimeout(timeout); w.terminate();
+          if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
           this._tryNextCandidate(this._candidateIdx + 1);
           return;
         }
@@ -1697,18 +1651,18 @@ self.abort = function(reason) {
         if (e.data.includes('uciok')) {
           clearTimeout(timeout);
           gotMessage = true;
-          if (revoke) URL.revokeObjectURL(workerUrl);
+          if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
           this._bindSFInstance(w, srcUrl, engineName);
         } else if (!gotMessage && !e.data.startsWith('id ') && !e.data.startsWith('option ')) {
-          clearTimeout(timeout);
-          w.terminate();
-          if (revoke) URL.revokeObjectURL(workerUrl);
+          clearTimeout(timeout); w.terminate();
+          if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
           this._tryNextCandidate(this._candidateIdx + 1);
         }
       };
-      w.onerror = () => {
+      w.onerror = (err) => {
         clearTimeout(timeout);
-        if (revoke) URL.revokeObjectURL(workerUrl);
+        if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
+        console.info('[Engine] Worker error for', srcUrl, err.message || '');
         this._tryNextCandidate(this._candidateIdx + 1);
       };
       w.postMessage('uci');
