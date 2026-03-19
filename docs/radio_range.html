@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ham Radio Coverage Planner · v1.122 · Live Data</title>
+<title>Ham Radio Coverage Planner · v1.123 · Live Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
@@ -813,7 +813,7 @@ option{background:#0b1820;}
 // ══════════════════════════════════════════════
 // VERSION
 // ══════════════════════════════════════════════
-const APP_VERSION = 'v1.122';
+const APP_VERSION = 'v1.123';
 const APP_DATE    = '2026-03-15';
 
 // PSK constants — declared here as var (not const) so they are hoisted and
@@ -1109,7 +1109,7 @@ const BANDS = {
   '20m':{
     label:'20m', freq:'14.0–14.35 MHz', freqMHz:14.175, color:'#845ef7', minW:0.5,
     dLayerThresh:1.00,
-    skipGeomMax: 5000,
+    skipGeomMax: 4500,
     // hop2Factor per-hop loss budget:
     //   7 dB day/night: Lg=2 dB (ITU-R P.533-7 §5.1.3)
     //                 + Li≈1 dB (D-layer at 14 MHz, dAbs≈0.30 average day:
@@ -1119,13 +1119,13 @@ const BANDS = {
     //                 = 7 dB total.
     //   Night same value: Li=0 + Pm=5 dB (full WARC-87 upper decile allowance).
     // 20m 2-hop is the primary transatlantic/transpacific path. At 400W: ~9000 km.
+    // skipGeomMax: 4500 km — standard F2 solar max, hmF2≈400km (geomMax(400)=4402km).
+    // 5000km would require hmF2=524km which exceeds all IRI-2016/ionosonde records.
+    // Chordal-hop records (SV1UY–ZL1BK 17549km) use different geometry — no intermediate
+    // ground reflection — and are NOT governed by skipGeomMax per-hop standard caps.
     hop2Factor: {day: 0.4467, night: 0.4467},  // 10^(-7/20) both
     // hop3/hop4: same per-leg factor (7 dB/leg each). Chain accumulates total loss.
-    // 3-hop cap: 3×5000=15000 km. 4-hop cap: 4×5000=20000 km (clamped to MAX_KM=18000 km).
-    // Verified record: SV1UY/PM–ZL1BK/PM, 17549 km, 5W CW, 20m, 28 Feb 2001 (HFpack Hall of Fame).
-    // Mode: chordal-hop long path (signal did not touch earth between Greece and New Zealand).
-    // Standard 4-ground-reflection hops also reach 18000+ km on 20m at solar maximum.
-    hop3Factor: {day: 0.4467, night: 0.4467},
+    // 3-hop cap: 3×4500=13500 km. Verified realistic: 40m night 3-hop ~8700 km well-documented.
     hop4Factor: {day: 0.4467, night: 0.4467},
     propMode:{
       day:  'ZONE 1 GW 8 km · No NVIS · ZONE 3b F2 1-hop 800–4500 km · ZONE 3c 2-hop ~6500 km · ZONE 3d 3-hop ~9750 km',
@@ -1139,89 +1139,90 @@ const BANDS = {
   '17m':{
     label:'17m', freq:'18.0–18.2 MHz', freqMHz:18.1, color:'#f06595', minW:1.0,
     dLayerThresh:1.00,
-    skipGeomMax: 5000,
+    skipGeomMax: 4500,
+    // skipGeomMax: 4500 km — F2 solar max, hmF2≈400km. 5000km requires hmF2=524km (non-physical).
     // hop2Factor per-hop loss budget:
     //   7 dB day/night: Lg=2 dB (ITU-R P.533-7 §5.1.3) + Li≈0 dB (D-layer negligible
     //                   at 18 MHz) + Pm=5 dB (WARC-87 per-hop fading allowance,
     //                   P.533-7 §8: upper decile 5 dB, full margin applied since Li≈0).
     hop2Factor: {day: 0.4467, night: 0.4467},  // 10^(-7/20) both
-    // hop3/hop4: same per-leg factor (7 dB/leg). 3-hop cap 3×5000=15000 km; 4-hop capped at MAX_KM=18000 km.
+    // hop3/hop4: same per-leg factor (7 dB/leg). 3-hop cap 3×4500=13500 km.
     hop3Factor: {day: 0.4467, night: 0.4467},
     hop4Factor: {day: 0.4467, night: 0.4467},
     propMode:{
-      day:  'ZONE 1 GW 5 km · No NVIS · ZONE 3b F2 1-hop 1000–5000 km · ZONE 3c 2-hop ~7200 km · ZONE 3d 3-hop ~10800 km',
+      day:  'ZONE 1 GW 5 km · No NVIS · ZONE 3b F2 1-hop 1000–4500 km · ZONE 3c 2-hop ~6500 km · ZONE 3d 3-hop ~9750 km',
       night:'ZONE 1 GW 5 km · No NVIS · ZONE 3b F2 1-hop 700–4000 km · ZONE 3c 2-hop ~5800 km · ZONE 3d 3-hop ~8700 km (if F2 open) · night DX limited by MUF',
     },
     gw:        5,
     nvis:      {day:null, night:null},
     skipInner: {day:1000, night:700},
-    skipOuter: {day:5000, night:4000},
+    skipOuter: {day:4500, night:4000},
   },
   '15m':{
     label:'15m', freq:'21.0–21.45 MHz', freqMHz:21.2, color:'#cc5de8', minW:1.0,
     dLayerThresh:1.00,
-    skipGeomMax: 5000,
+    skipGeomMax: 4500,
+    // skipGeomMax: 4500 km — F2 solar max, hmF2≈400km. 5000km requires hmF2=524km (non-physical).
     // hop2Factor per-hop loss budget:
     //   7 dB day: Lg=2 dB (ITU-R P.533-7 §5.1.3) + Li≈0 dB (D-layer absent at 21 MHz)
     //             + Pm=5 dB (WARC-87 per-hop fading allowance, P.533-7 §8).
     //   Night: 15m closed (F2 MUF < 21 MHz at night).
     hop2Factor: {day: 0.4467, night: null},  // 10^(-7/20) day only
-    // hop3/hop4: same per-leg factor (7 dB/leg). 3-hop cap 3×5000=15000 km; 4-hop capped at MAX_KM=18000 km.
+    // hop3/hop4: same per-leg factor (7 dB/leg). 3-hop cap 3×4500=13500 km.
     hop3Factor: {day: 0.4467, night: null},
     hop4Factor: {day: 0.4467, night: null},
     propMode:{
-      day:  'ZONE 1 GW 3 km · No NVIS · ZONE 3b F2 1-hop 1200–5000 km · ZONE 3c 2-hop ~7200 km · ZONE 3d 3-hop ~10800 km',
+      day:  'ZONE 1 GW 3 km · No NVIS · ZONE 3b F2 1-hop 1200–4500 km · ZONE 3c 2-hop ~6500 km · ZONE 3d 3-hop ~9750 km',
       night:'ZONE 1 only — 15m closed at night (F2 MUF < 21 MHz) · GW 3 km',
     },
     gw:        3,
     nvis:      {day:null, night:null},
     skipInner: {day:1200, night:null},
-    skipOuter: {day:5000, night:null},
+    skipOuter: {day:4500, night:null},
   },
   '12m':{
     label:'12m', freq:'24.89–24.99 MHz', freqMHz:24.9, color:'#74c0fc', minW:2.0,
     dLayerThresh:1.00,
-    skipGeomMax: 5000,
+    skipGeomMax: 4500,
+    // skipGeomMax: 4500 km — F2 solar max, hmF2≈400km. 5000km requires hmF2=524km (non-physical).
     // hop2Factor per-hop loss budget:
     //   7 dB day: Lg=2 dB (ITU-R P.533-7 §5.1.3) + Li≈0 dB (D-layer negligible at 24.9 MHz)
     //             + Pm=5 dB (WARC-87 per-hop fading allowance, P.533-7 §8).
     //   Night: 12m closed.
     hop2Factor: {day: 0.4467, night: null},  // 10^(-7/20) day only
-    // hop3/hop4: same per-leg factor (7 dB/leg each leg independent). 3-hop cap 3×5000=15000 km; 4-hop MAX_KM=18000 km.
+    // hop3/hop4: same per-leg factor (7 dB/leg each leg independent). 3-hop cap 3×4500=13500 km.
     hop3Factor: {day: 0.4467, night: null},
     hop4Factor: {day: 0.4467, night: null},
     propMode:{
-      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3b F2 1-hop 1500–5000 km · ZONE 3c 2-hop ~7200 km · ZONE 3d 3-hop ~10800 km',
+      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3b F2 1-hop 1500–4500 km · ZONE 3c 2-hop ~6500 km · ZONE 3d 3-hop ~9750 km',
       night:'ZONE 1 only — 12m closed at night · GW 2 km',
     },
     gw:        2,
     nvis:      {day:null, night:null},
     skipInner: {day:1500, night:null},
-    skipOuter: {day:5000, night:null},
+    skipOuter: {day:4500, night:null},
   },
   '10m':{
     label:'10m', freq:'28.0–29.7 MHz', freqMHz:28.5, color:'#a9e34b', minW:2.0,
     dLayerThresh:1.00,
-    skipGeomMax: 5500,
+    skipGeomMax: 4600,
+    // skipGeomMax: 4600 km — generous F2 solar max ceiling, hmF2≈450km (geomMax(450)=4654km).
+    // 5500km would require hmF2=643km — physically impossible; max observed hmF2 ≈ 400–450km.
     // hop2Factor per-hop loss budget:
     //   7 dB day: Lg=2 dB (ITU-R P.533-7 §5.1.3) + Li≈0 dB (D-layer absent at 28 MHz)
     //             + Pm=5 dB (WARC-87 per-hop fading allowance, P.533-7 §8).
-    // 10m 2-hop at solar max can reach ~8000 km at 100W, ~11000 km at 1.5 kW (parabolic F2).
     hop2Factor: {day: 0.4467, night: null},  // 10^(-7/20) day only
-    // hop3/hop4: same per-leg factor (7 dB/leg each leg independent). Chain accumulates total loss.
-    // 3-hop cap: 3×5500=16500 km. 4-hop capped at MAX_KM=18000 km.
-    // Real-world: multi-hop F2 reception documented at >18000 km on 10m (Band 1 VHF via F2 at 16990+ km).
-    // Antipodal QSOs on 10m HF during solar maxima well-established in DX literature.
+    // hop3/hop4: same per-leg factor (7 dB/leg each leg independent). 3-hop cap: 3×4600=13800 km.
     hop3Factor: {day: 0.4467, night: null},
     hop4Factor: {day: 0.4467, night: null},
     propMode:{
-      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3b F2 1-hop 1800–5500 km · ZONE 3c 2-hop ~8000 km · ZONE 3d 3-hop ~12000 km',
+      day:  'ZONE 1 GW 2 km · No NVIS · ZONE 3b F2 1-hop 1800–4600 km · ZONE 3c 2-hop ~6600 km · ZONE 3d 3-hop ~9900 km',
       night:'ZONE 1 only — 10m dead at night (F2 MUF < 28 MHz) · GW 2 km',
     },
     gw:        2,
     nvis:      {day:null, night:null},
     skipInner: {day:1800, night:null},
-    skipOuter: {day:5500, night:null},
+    skipOuter: {day:4600, night:null},
   },
 };
 
