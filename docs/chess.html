@@ -1298,10 +1298,10 @@ class Chess {
 //  ENGINE — Stockfish 18 loader with JS fallback
 //
 //  Priority order (http/https):
-//  1. CDN: stockfish-18-single (nmrugg, no CORS headers needed, ~7MB WASM)
-//  2. CDN: stockfish-18-lite-single (smaller, weaker fallback)
-//  3. Local stockfish.js in same directory
-//  4. Built-in JS minimax (always works, offline/local)
+//  1. Multi-threaded SF18 (fastest) — only if SharedArrayBuffer available (COOP/COEP headers)
+//  2. Single-threaded SF18 full  (~45MB WASM, no SAB needed)
+//  3. Single-threaded SF18 lite  (~7MB WASM, faster to load, slightly weaker)
+//  4. Built-in JS minimax (always works, no network)
 //
 //  On file:// — browser blocks all network; user picks the file manually.
 // ─────────────────────────────────────────────────────────
@@ -1329,28 +1329,34 @@ class Engine {
       return;
     }
 
-    // http(s): CDN candidates in priority order.
-    //
-    // stockfish-18-single: single-threaded WASM, ~7MB, no SharedArrayBuffer/COOP needed.
-    // This is the recommended build for sites without COOP/COEP headers.
-    // jsdelivr serves the .wasm alongside the .js automatically.
-    //
-    // The JS loader calls fetch() internally for the .wasm — we pass locateFile
-    // via a tiny wrapper injected before the source so it resolves correctly.
-    const SF18_BASE = 'https://cdn.jsdelivr.net/npm/stockfish@18.0.5/src/';
+    const SF18 = 'https://cdn.jsdelivr.net/npm/stockfish@18.0.5/src/';
+
+    // Detect if multi-threaded WASM is available.
+    // Requires: SharedArrayBuffer + Atomics (enabled by COOP/COEP headers).
+    const canMultiThread = typeof SharedArrayBuffer !== 'undefined' &&
+                           typeof Atomics !== 'undefined';
 
     this._candidates = [
-      // Best: SF18 single-threaded WASM (no COOP needed, works on any http/https)
-      { url: SF18_BASE + 'stockfish-18-single.js',
-        wasmBase: SF18_BASE,
-        wasmFile: 'stockfish-18-single.wasm' },
-      // Fallback: SF18 lite single (smaller, weaker, same requirements)
-      { url: SF18_BASE + 'stockfish-18-lite-single.js',
-        wasmBase: SF18_BASE,
-        wasmFile: 'stockfish-18-lite-single.wasm' },
-      // Last resort: local file in same directory
-      { url: 'stockfish.js', wasmBase: null, wasmFile: null },
+      // ── Multi-threaded (fastest, requires COOP/COEP headers) ──────────────
+      ...(canMultiThread ? [
+        { url: SF18 + 'stockfish-18.js',
+          wasmUrl: SF18 + 'stockfish-18.wasm',
+          threaded: true, label: 'Stockfish 18 (multi-thread)' },
+      ] : []),
+
+      // ── Single-threaded (works everywhere on http/https, no SAB needed) ───
+      { url: SF18 + 'stockfish-18-single.js',
+        wasmUrl: SF18 + 'stockfish-18-single.wasm',
+        threaded: false, label: 'Stockfish 18' },
+
+      // ── Lite single (faster to load, ~7MB, slightly weaker) ───────────────
+      { url: SF18 + 'stockfish-18-lite-single.js',
+        wasmUrl: SF18 + 'stockfish-18-lite-single.wasm',
+        threaded: false, label: 'Stockfish 18 Lite' },
     ];
+
+    console.info('[Engine] SharedArrayBuffer available:', canMultiThread,
+      '→ trying', this._candidates[0].label);
     this._candidateIdx = 0;
     this._tryNextCandidate(0);
   }
@@ -1365,40 +1371,19 @@ class Engine {
     }
     this._candidateIdx = idx;
     const cand = this._candidates[idx];
-    this._setEngineLabel('Loading Stockfish 18…');
-
+    this._setEngineLabel('Loading ' + cand.label + '…');
     fetch(cand.url, {cache: 'no-cache'})
       .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
       .then(src => {
-        // Inject locateFile so the JS loader finds the .wasm on the CDN
-        const prefix = cand.wasmBase ? `
-self._SF_WASM_BASE = ${JSON.stringify(cand.wasmBase)};
-self._SF_WASM_FILE = ${JSON.stringify(cand.wasmFile)};
-const _origModule = self.Module || {};
-self.Module = Object.assign(_origModule, {
-  locateFile: (path) => {
-    if (path.endsWith('.wasm')) return self._SF_WASM_BASE + self._SF_WASM_FILE;
-    return path;
-  },
-  TOTAL_MEMORY: 256 * 1024 * 1024,
-});
-if (typeof SharedArrayBuffer === 'undefined') self.SharedArrayBuffer = ArrayBuffer;
-if (typeof Atomics === 'undefined') self.Atomics = {
-  wait:()=>'ok',notify:()=>0,load:(a,i)=>a[i],store:(a,i,v)=>{a[i]=v;return v;},
-  add:(a,i,v)=>{const o=a[i];a[i]+=v;return o;},
-  and:(a,i,v)=>{const o=a[i];a[i]&=v;return o;},
-  or:(a,i,v)=>{const o=a[i];a[i]|=v;return o;},
-  xor:(a,i,v)=>{const o=a[i];a[i]^=v;return o;},
-  exchange:(a,i,v)=>{const o=a[i];a[i]=v;return o;},
-  compareExchange:(a,i,e,r)=>{const o=a[i];if(o===e)a[i]=r;return o;},
-  isLockFree:()=>true,
-};
-` : `
-if (typeof SharedArrayBuffer === 'undefined') self.SharedArrayBuffer = ArrayBuffer;
-`;
-        const blob = new Blob([prefix + '\n' + src], {type: 'application/javascript'});
+        const wasmUrl = JSON.stringify(cand.wasmUrl);
+        // Inject locateFile so blob: worker can resolve the .wasm back to CDN.
+        // For single-threaded builds ONLY — do not touch SharedArrayBuffer.
+        // For multi-threaded builds the browser already has real SAB available
+        // (we only added them to candidates when canMultiThread === true).
+        const prefix = `var Module=Module||{};Module.locateFile=function(p){return(p.endsWith('.wasm')||p.endsWith('.wasm.br'))?${wasmUrl}:p;};`;
+        const blob = new Blob([prefix + '\n' + src], {type:'application/javascript'});
         const blobUrl = URL.createObjectURL(blob);
-        this._probeWorker(blobUrl, cand.url, true);
+        this._probeWorker(blobUrl, cand.url, true, cand.label);
       })
       .catch(() => this._tryNextCandidate(idx + 1));
   }
@@ -1590,7 +1575,7 @@ self.abort = function(reason) {
     }
   }
 
-  _probeWorker(workerUrl, srcUrl, revoke) {
+  _probeWorker(workerUrl, srcUrl, revoke, labelHint) {
     try {
       const w = new Worker(workerUrl);
       let gotMessage = false;
@@ -1601,7 +1586,7 @@ self.abort = function(reason) {
           this._tryNextCandidate(this._candidateIdx + 1);
         }
       }, 8000);
-      let engineName = 'Stockfish';
+      let engineName = labelHint || 'Stockfish 18';
       w.onmessage = (e) => {
         if (typeof e.data !== 'string') return;
         const nm = e.data.match(/^id name (.+)/);
