@@ -13,41 +13,40 @@
 (function() {
   if (!window.isSecureContext) return;
   if (!('serviceWorker' in navigator)) return;
+  if (window.crossOriginIsolated) return; // already isolated — done
 
-  // Already isolated — nothing to do
-  if (window.crossOriginIsolated) return;
+  const base  = location.pathname.replace(/[^/]*$/, '');
+  const swUrl = base + 'coi-serviceworker.js';
 
-  // Register coi-serviceworker.js from same directory as chess.html
-  const base   = location.pathname.replace(/[^/]*$/, ''); // e.g. /stem/
-  const swUrl  = base + 'coi-serviceworker.js';
+  // controllerchange fires when the SW takes control of this page —
+  // that is the exact moment we need to reload to get COOP/COEP headers.
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!sessionStorage.getItem('_coi_reload')) {
+      sessionStorage.setItem('_coi_reload', '1');
+      console.info('[COI-SW] controller changed → reloading for isolation');
+      location.reload();
+    }
+  });
+  // Clear the flag once we're actually isolated (on the reloaded page)
+  // (This block is skipped on the isolated page because of the early return above)
 
   navigator.serviceWorker.register(swUrl, {scope: base || '/'})
     .then(reg => {
       console.info('[COI-SW] registered, scope:', reg.scope);
-      const reload = () => {
-        if (!sessionStorage.getItem('_coi_reloaded')) {
-          sessionStorage.setItem('_coi_reloaded', '1');
+      // If SW is already active and controlling, just reload now
+      if (reg.active && navigator.serviceWorker.controller) {
+        if (!sessionStorage.getItem('_coi_reload')) {
+          sessionStorage.setItem('_coi_reload', '1');
           location.reload();
         }
-      };
-      // Listen for SW activation message
-      navigator.serviceWorker.addEventListener('message', e => {
-        if (e.data && e.data.type === 'COI_ACTIVATED') {
-          sessionStorage.removeItem('_coi_reloaded');
-        }
-      });
-      if (reg.installing) reg.installing.addEventListener('statechange', e => {
-        if (e.target.state === 'activated') reload();
-      });
-      else if (reg.waiting) { reg.waiting.postMessage({type:'SKIP_WAITING'}); reload(); }
-      else if (reg.active && !navigator.serviceWorker.controller) reload();
+      }
     })
     .catch(e => console.warn('[COI-SW] failed:', e.message));
 })();
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport — Chess Online</title>
+<title>RadioSport — Chess Online v1.001</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -677,7 +676,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport
-    <span>© R.N.K ( 9G5AR ) · Online Chess</span>
+    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.001</span></span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -1426,14 +1425,58 @@ class Engine {
     this._setEngineLabel('Loading ' + cand.label + '…');
     console.info('[Engine] Trying:', cand.url);
 
-    try {
-      // new Worker(same-origin-relative-url) — always works, no CORS needed
-      const w = new Worker(cand.url);
-      this._probeWorker(w, cand.url, false, cand.label);
-    } catch(e) {
-      console.info('[Engine]', cand.url, 'failed:', e.message);
-      this._tryNextCandidate(idx + 1);
-    }
+    // KEY: fetch() to same-origin URLs is ALWAYS allowed (no CORS restriction).
+    // We fetch the source text, prepend a SharedArrayBuffer shim, then create
+    // a blob: Worker. This works even when crossOriginIsolated is false and
+    // even for asm.js builds that reference SharedArrayBuffer at parse time.
+    fetch(cand.url, {cache: 'no-cache'})
+      .then(r => {
+        if (!r.ok) throw new Error(r.status);
+        return r.text();
+      })
+      .then(src => {
+        // Prepend shim BEFORE any engine code runs:
+        // • Stubs SharedArrayBuffer / Atomics for asm.js builds that reference
+        //   them even in single-threaded mode.
+        // • Sets locateFile so the WASM fetch resolves relative to the page
+        //   origin (blob: workers lose the base URL otherwise).
+        const origin = location.origin + location.pathname.replace(/[^/]*$/, '');
+        const shim = `
+// ── SharedArrayBuffer shim (allows asm.js builds without COOP/COEP) ─────────
+if (typeof SharedArrayBuffer === 'undefined') {
+  self.SharedArrayBuffer = ArrayBuffer;
+}
+if (typeof Atomics === 'undefined') {
+  self.Atomics = {
+    wait:()=>'ok', notify:()=>0, load:(a,i)=>a[i],
+    store:(a,i,v)=>{a[i]=v;return v;},
+    add:(a,i,v)=>{const o=a[i];a[i]+=v;return o;},
+    and:(a,i,v)=>{const o=a[i];a[i]&=v;return o;},
+    or: (a,i,v)=>{const o=a[i];a[i]|=v;return o;},
+    xor:(a,i,v)=>{const o=a[i];a[i]^=v;return o;},
+    exchange:(a,i,v)=>{const o=a[i];a[i]=v;return o;},
+    compareExchange:(a,i,e,r)=>{const o=a[i];if(o===e)a[i]=r;return o;},
+    isLockFree:()=>true,
+  };
+}
+// ── locateFile: resolve .wasm relative to page origin (blob: has no base URL) ─
+var Module = self.Module || {};
+self.Module = Module;
+if (!Module.locateFile) {
+  Module.locateFile = function(path) {
+    return ${JSON.stringify(origin)} + path;
+  };
+}
+`;
+        const blob   = new Blob([shim + '\n' + src], {type: 'application/javascript'});
+        const blobUrl = URL.createObjectURL(blob);
+        this._probeWorker(blobUrl, cand.url, true, cand.label);
+      })
+      .catch(err => {
+        // fetch failed → file doesn't exist or network error → try next
+        console.info('[Engine]', cand.url, 'not found:', err.message || err);
+        this._tryNextCandidate(idx + 1);
+      });
   }
   // Called by the file input picker
   loadFromFile(file) {
