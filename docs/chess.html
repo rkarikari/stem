@@ -3,56 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <script>
-// ── COI Service Worker (inline) ─────────────────────────────────────────────
-// Registers a Service Worker from a Blob URL that injects COOP/COEP headers
-// into every response. This gives us SharedArrayBuffer on GitHub Pages and
-// any static host where you can't set HTTP headers.
-// Based on: github.com/gzuidhof/coi-serviceworker (MIT)
-// Must run before anything else. Page reloads once after SW activates.
+// ── Self-Registering COI Service Worker ─────────────────────────────────────
+// Problem: Blob-URL SWs are blocked by all browsers (must be same-origin).
+// Solution: This HTML file registers ITSELF as a Service Worker by loading
+//   its own URL with ?chess-sw appended. The SW detection block below
+//   (before </head>) intercepts that and responds with SW code instead of HTML.
+// This gives COOP/COEP headers → SharedArrayBuffer → full Stockfish 18.
+// Works on GitHub Pages, Netlify, any static host — no extra files needed.
 (function() {
-  if (!window.isSecureContext) return; // needs HTTPS or localhost
+  if (!window.isSecureContext) return;
   if (!('serviceWorker' in navigator)) return;
 
-  const reloadedBySelf = sessionStorage.getItem('coiReloadedBySelf');
-  sessionStorage.removeItem('coiReloadedBySelf');
+  // Already isolated — nothing to do
+  if (window.crossOriginIsolated) return;
 
-  // Already cross-origin isolated — SW did its job, nothing to do
-  if (window.crossOriginIsolated !== false) return;
+  // Register coi-serviceworker.js from same directory as chess.html
+  const base   = location.pathname.replace(/[^/]*$/, ''); // e.g. /stem/
+  const swUrl  = base + 'coi-serviceworker.js';
 
-  // SW source: intercepts every fetch and adds COOP/COEP headers
-  const swSrc = `
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-self.addEventListener('fetch', function(e) {
-  if (e.request.cache === 'only-if-cached' && e.request.mode !== 'same-origin') return;
-  e.respondWith(
-    fetch(e.request).then(function(r) {
-      if (r.status === 0) return r;
-      const h = new Headers(r.headers);
-      h.set('Cross-Origin-Opener-Policy', 'same-origin');
-      h.set('Cross-Origin-Embedder-Policy', 'credentialless');
-      return new Response(r.body, { status: r.status, statusText: r.statusText, headers: h });
-    }).catch(function(e) { console.error('[COI-SW]', e); })
-  );
-});
-`;
-
-  const blob = new Blob([swSrc], {type: 'application/javascript'});
-  const swUrl = URL.createObjectURL(blob);
-
-  navigator.serviceWorker.register(swUrl).then(reg => {
-    reg.addEventListener('updatefound', () => {
-      sessionStorage.setItem('coiReloadedBySelf', '1');
-      window.location.reload();
-    });
-    if (!reg.active || !navigator.serviceWorker.controller) {
-      // SW not yet controlling — reload to activate
-      if (!reloadedBySelf) {
-        sessionStorage.setItem('coiReloadedBySelf', '1');
-        window.location.reload();
-      }
-    }
-  }).catch(e => console.warn('[COI-SW] registration failed:', e));
+  navigator.serviceWorker.register(swUrl, {scope: base || '/'})
+    .then(reg => {
+      console.info('[COI-SW] registered, scope:', reg.scope);
+      const reload = () => {
+        if (!sessionStorage.getItem('_coi_reloaded')) {
+          sessionStorage.setItem('_coi_reloaded', '1');
+          location.reload();
+        }
+      };
+      // Listen for SW activation message
+      navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data && e.data.type === 'COI_ACTIVATED') {
+          sessionStorage.removeItem('_coi_reloaded');
+        }
+      });
+      if (reg.installing) reg.installing.addEventListener('statechange', e => {
+        if (e.target.state === 'activated') reload();
+      });
+      else if (reg.waiting) { reg.waiting.postMessage({type:'SKIP_WAITING'}); reload(); }
+      else if (reg.active && !navigator.serviceWorker.controller) reload();
+    })
+    .catch(e => console.warn('[COI-SW] failed:', e.message));
 })();
 </script>
 
