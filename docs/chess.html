@@ -51,8 +51,9 @@
 })();
 </script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.029</title>
+<title>RadioSport Chess v1.030</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -709,7 +710,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport Chess
-    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.029</span>
+    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.030</span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -895,9 +896,9 @@
     <div class="mp-card">
       <div class="mp-title">ℹ About Multiplayer</div>
       <div style="font-size:11px; color:var(--ivory-dim); line-height:1.8; letter-spacing:.5px">
-        Multiplayer uses <strong style="color:var(--gold)">WebRTC peer-to-peer</strong> for direct connection.<br><br>
-        For a full online experience, a signaling server is needed. This demo simulates local two-tab play using BroadcastChannel API.<br><br>
-        Open this page in <strong style="color:var(--gold)">two browser tabs</strong>, create a room in one tab, then join with the same code in the other tab.
+        Uses <strong style="color:var(--gold)">WebRTC P2P</strong> via PeerJS.<br>
+        Works across different devices and networks.<br><br>
+        Share the room code with your opponent — they enter it to join.
       </div>
     </div>
   </div>
@@ -2379,7 +2380,7 @@ let timers={w:300, b:300};
 let timerInterval=null;
 let engineDepth=15, engineSkill=12;
 let moveHistory=[];
-let multiChannel=null, multiRoomCode='', multiPlayerColor='w';
+let multiRoomCode='', multiPlayerColor='w';
 
 function loadEngineFile(input) {
   if (input.files && input.files[0]) engine.loadFromFile(input.files[0]);
@@ -2501,7 +2502,7 @@ function updatePieces() {
 // ─── Square click handling ───
 function handleSquareClick(sq) {
   if(game.gameOver) return;
-  if(mode==='multi' && !multiChannel) return;
+  if(mode==='multi' && !multiConn) return;
 
   const isHumanTurn = () => {
     if(mode==='solo') return game.turn===playerColor;
@@ -2549,8 +2550,8 @@ function executeMove(mv, promo='Q') {
   selectedSq=-1; legalMovesCache=[];
   moveHistory.push(san);
 
-  if(mode==='multi' && multiChannel) {
-    multiChannel.postMessage({type:'move', move:mv, promo, fen:game.toFen()});
+  if(mode==='multi') {
+    _mpSend({type:'move', move:mv, promo, san, fen:game.toFen()});
   }
 
   updatePieces();
@@ -2814,6 +2815,11 @@ function rebuildFromMoveList(sans) {
 }
 
 function offerDraw() {
+  if(mode==='multi') {
+    _mpSend({type:'draw_offer'});
+    setStatus('Draw offer sent — waiting for response…', 'gold');
+    return;
+  }
   if(confirm('Offer a draw?')) {
     game.gameOver=true; game.result={type:'draw'};
     clearInterval(timerInterval);
@@ -2823,6 +2829,7 @@ function offerDraw() {
 
 function resignGame() {
   if(confirm('Resign the game?')) {
+    if(mode==='multi') _mpSend({type:'resign'});
     game.gameOver=true;
     game.result={type:'checkmate',winner:game.turn==='w'?'b':'w'};
     clearInterval(timerInterval);
@@ -2889,105 +2896,205 @@ function switchMode(m) {
   }
 }
 
-// ─── Multiplayer via BroadcastChannel ───
-function createRoom() {
-  const code = Math.random().toString(36).substr(2,6).toUpperCase();
-  multiRoomCode=code;
-  const colorChoice=document.getElementById('mp-color-select')?.value||'random';
-  multiPlayerColor = colorChoice==='random'?(Math.random()<.5?'w':'b'):(colorChoice==='black'?'b':'w');
+// ─── Multiplayer via PeerJS (WebRTC P2P) ────────────────────────────────────
+// Uses PeerJS free cloud signaling server for cross-device/cross-browser play.
+// Room code = host's Peer ID. Joiner connects to that ID directly.
+let multiPeer = null;   // our Peer instance
+let multiConn = null;   // active DataConnection
 
-  multiChannel=new BroadcastChannel('chess-'+code);
-  multiChannel.onmessage=handleMultiMessage;
-
-  document.getElementById('room-code-display').style.display='block';
-  document.getElementById('room-code-text').textContent=code;
-  document.getElementById('join-code-input').value=code;
-
-  // Switch to board
-  setTimeout(()=>{
-    document.getElementById('mp-section').classList.remove('visible');
-    document.getElementById('board-area').style.display='';
-    document.getElementById('side-panel-left').style.display='';
-    document.getElementById('right-panel').style.display='';
-    document.getElementById('online-info-panel').style.display='';
-    // Populate room info
-    document.getElementById('online-room-code').textContent = code;
-    document.getElementById('p1-status-label').textContent = 'Host · Waiting for opponent…';
-    document.getElementById('p1-status-dot').style.background = 'var(--gold)';
-    document.getElementById('p1-color-chip').style.background = multiPlayerColor==='w' ? '#f0d9b5' : '#1a1008';
-    document.getElementById('p2-status-dot').style.background = 'var(--border)';
-    document.getElementById('p2-status-name').textContent = 'Opponent';
-    document.getElementById('p2-status-label').textContent = 'Not connected';
-    document.getElementById('p2-color-chip').style.background = multiPlayerColor==='w' ? '#1a1008' : '#f0d9b5';
-    game=new Chess(); moveHistory=[]; lastMove=null;
-    renderBoard(); updateAll(); startTimers();
-    setStatus('Waiting for opponent to join...','gold');
-  },1000);
+function _mpSend(data) {
+  if (multiConn && multiConn.open) multiConn.send(data);
 }
 
-function joinRoom() {
-  const code=document.getElementById('join-code-input')?.value.toUpperCase().trim();
-  if(!code||code.length<4) { alert('Enter a valid room code'); return; }
-
-  multiRoomCode=code;
-  multiPlayerColor = multiPlayerColor==='w'?'b':'w'; // opponent takes other color
-  multiChannel=new BroadcastChannel('chess-'+code);
-  multiChannel.onmessage=handleMultiMessage;
-  multiChannel.postMessage({type:'join', color:multiPlayerColor});
-
+function _mpShowBoard(code) {
   document.getElementById('mp-section').classList.remove('visible');
   document.getElementById('board-area').style.display='';
   document.getElementById('side-panel-left').style.display='';
   document.getElementById('right-panel').style.display='';
   document.getElementById('online-info-panel').style.display='';
-  // Populate room info
   document.getElementById('online-room-code').textContent = code;
-  document.getElementById('p1-status-label').textContent = 'Joined · Connected';
-  document.getElementById('p1-status-dot').style.background = 'var(--green)';
-  document.getElementById('p1-color-chip').style.background = multiPlayerColor==='w' ? '#f0d9b5' : '#1a1008';
-  document.getElementById('p2-status-dot').style.background = 'var(--gold)';
-  document.getElementById('p2-status-name').textContent = 'Host';
-  document.getElementById('p2-status-label').textContent = 'Connecting…';
-  document.getElementById('p2-color-chip').style.background = multiPlayerColor==='w' ? '#1a1008' : '#f0d9b5';
   game=new Chess(); moveHistory=[]; lastMove=null;
   renderBoard(); updateAll(); startTimers();
-  setStatus('Connected! Waiting for opponent move...','normal');
+}
+
+function _mpSetP1(label, dotColor, chipColor) {
+  document.getElementById('p1-status-label').textContent = label;
+  document.getElementById('p1-status-dot').style.background = dotColor;
+  document.getElementById('p1-color-chip').style.background = chipColor;
+}
+function _mpSetP2(name, label, dotColor, chipColor) {
+  document.getElementById('p2-status-name').textContent = name;
+  document.getElementById('p2-status-label').textContent = label;
+  document.getElementById('p2-status-dot').style.background = dotColor;
+  document.getElementById('p2-color-chip').style.background = chipColor;
+}
+
+function _mpWireConn(conn, isHost) {
+  multiConn = conn;
+  conn.on('open', () => {
+    const myColor  = multiPlayerColor;
+    const oppColor = myColor==='w' ? 'b' : 'w';
+    const myChip   = myColor==='w' ? '#f0d9b5' : '#1a1008';
+    const oppChip  = oppColor==='w' ? '#f0d9b5' : '#1a1008';
+    if (isHost) {
+      _mpSetP1('Host · Connected', 'var(--green)', myChip);
+      _mpSetP2('Opponent', 'Connected · ' + (oppColor==='w'?'White':'Black'), 'var(--green)', oppChip);
+      setStatus('Opponent connected — your move!', 'normal');
+      // Host sends initial sync
+      conn.send({type:'sync', fen:game.toFen(), moves:moveHistory,
+                 color: oppColor, hostColor: myColor});
+    } else {
+      _mpSetP1('Joined · Connected', 'var(--green)', myChip);
+      _mpSetP2('Host', 'Connected', 'var(--green)', oppChip);
+      setStatus('Connected — waiting for host sync', 'normal');
+    }
+  });
+
+  conn.on('data', (data) => {
+    if (!data || !data.type) return;
+
+    if (data.type === 'sync') {
+      // Joiner receives color assignment + board state
+      if (data.color) {
+        multiPlayerColor = data.color;
+        const myChip  = data.color==='w' ? '#f0d9b5' : '#1a1008';
+        const oppChip = data.hostColor==='w' ? '#f0d9b5' : '#1a1008';
+        _mpSetP1('Joined · ' + (data.color==='w'?'White':'Black'), 'var(--green)', myChip);
+        _mpSetP2('Host', 'Connected · ' + (data.hostColor==='w'?'White':'Black'), 'var(--green)', oppChip);
+      }
+      game = new Chess(data.fen);
+      moveHistory = data.moves || [];
+      updatePieces(); updateAll();
+      setStatus((game.turn===multiPlayerColor ? 'Your turn' : 'Opponent's turn') + ' — game started!', 'normal');
+    }
+
+    if (data.type === 'move') {
+      game = new Chess(data.fen);
+      lastMove = data.move;
+      if (data.san) moveHistory.push(data.san);
+      updatePieces(); updateBoardHighlights(); updateAll();
+      if (game.gameOver) showGameOver();
+    }
+
+    if (data.type === 'resign') {
+      setStatus('Opponent resigned.', 'normal');
+      game.gameOver = true;
+      game.result = {type:'checkmate', winner: multiPlayerColor};
+      showGameOver();
+    }
+
+    if (data.type === 'draw_offer') {
+      if (confirm('Opponent offers a draw. Accept?')) {
+        _mpSend({type:'draw_accept'});
+        game.gameOver = true; game.result = {type:'draw'};
+        clearInterval(timerInterval); showGameOver();
+      } else {
+        _mpSend({type:'draw_decline'});
+      }
+    }
+    if (data.type === 'draw_accept') {
+      game.gameOver = true; game.result = {type:'draw'};
+      clearInterval(timerInterval); showGameOver();
+    }
+    if (data.type === 'draw_decline') {
+      setStatus('Draw offer declined.', 'normal');
+    }
+  });
+
+  conn.on('close', () => {
+    _mpSetP2(
+      document.getElementById('p2-status-name').textContent,
+      'Disconnected', '#c0392b', document.getElementById('p2-color-chip').style.background
+    );
+    setStatus('Opponent disconnected.', 'red');
+  });
+
+  conn.on('error', (err) => {
+    setStatus('Connection error: ' + (err.message||err), 'red');
+  });
+}
+
+function _mpDestroyPeer() {
+  if (multiConn) { try { multiConn.close(); } catch(e){} multiConn = null; }
+  if (multiPeer) { try { multiPeer.destroy(); } catch(e){} multiPeer = null; }
+}
+
+function createRoom() {
+  _mpDestroyPeer();
+  const colorChoice = document.getElementById('mp-color-select')?.value || 'random';
+  multiPlayerColor  = colorChoice==='random' ? (Math.random()<.5?'w':'b')
+                    : colorChoice==='black' ? 'b' : 'w';
+
+  setStatus('Connecting to PeerJS server…', 'gold');
+
+  // Use the 6-char room code as our Peer ID so opponent can connect to it directly
+  const code = Math.random().toString(36).substr(2,6).toUpperCase();
+  multiRoomCode = code;
+
+  multiPeer = new Peer('RS-' + code);   // prefix avoids ID conflicts
+
+  multiPeer.on('open', (id) => {
+    document.getElementById('room-code-display').style.display = 'block';
+    document.getElementById('room-code-text').textContent = code;
+    setStatus('Room ready — share code with opponent', 'gold');
+    _mpShowBoard(code);
+    _mpSetP1('Host · Waiting for opponent…', 'var(--gold)',
+             multiPlayerColor==='w' ? '#f0d9b5' : '#1a1008');
+    _mpSetP2('Opponent', 'Not connected', 'var(--border)', '#333');
+    setStatus('Waiting for opponent to join…', 'gold');
+  });
+
+  multiPeer.on('connection', (conn) => {
+    _mpWireConn(conn, true);
+  });
+
+  multiPeer.on('error', (err) => {
+    const msg = err.message || String(err);
+    if (msg.includes('unavailable') || msg.includes('taken')) {
+      // ID collision — retry with new code
+      createRoom(); return;
+    }
+    setStatus('PeerJS error: ' + msg, 'red');
+  });
+}
+
+function joinRoom() {
+  const code = document.getElementById('join-code-input')?.value.toUpperCase().trim();
+  if (!code || code.length < 4) { alert('Enter a valid room code'); return; }
+
+  _mpDestroyPeer();
+  multiRoomCode = code;
+  // We don't know our color yet — host assigns it on sync
+  multiPlayerColor = 'b'; // default until overridden by sync message
+
+  setStatus('Connecting to PeerJS server…', 'gold');
+  multiPeer = new Peer();   // random ID for joiner
+
+  multiPeer.on('open', () => {
+    setStatus('Connecting to room ' + code + '…', 'gold');
+    _mpShowBoard(code);
+    _mpSetP1('Joined · Connecting…', 'var(--gold)', '#888');
+    _mpSetP2('Host', 'Connecting…', 'var(--gold)', '#888');
+
+    const conn = multiPeer.connect('RS-' + code, {reliable: true});
+    _mpWireConn(conn, false);
+
+    // Connection timeout
+    setTimeout(() => {
+      if (!conn.open) {
+        setStatus('Could not reach room ' + code + '. Check the code.', 'red');
+        _mpSetP2('Host', 'Unreachable', '#c0392b', '#333');
+      }
+    }, 10000);
+  });
+
+  multiPeer.on('error', (err) => {
+    setStatus('Connection failed: ' + (err.message||err), 'red');
+  });
 }
 
 function handleMultiMessage(e) {
-  const data=e.data;
-  if(data.type==='join') {
-    setStatus('Opponent connected!','normal');
-    // Update P2 status
-    document.getElementById('p2-status-dot').style.background = 'var(--green)';
-    document.getElementById('p2-status-label').textContent = 'Connected · ' + (data.color==='w'?'White':'Black');
-    document.getElementById('p2-color-chip').style.background = data.color==='w' ? '#f0d9b5' : '#1a1008';
-    multiChannel.postMessage({type:'sync', fen:game.toFen(), moves:moveHistory});
-  }
-  if(data.type==='sync') {
-    game.loadFen(data.fen);
-    moveHistory=data.moves||[];
-    // Host responded — mark as connected
-    document.getElementById('p2-status-dot').style.background = 'var(--green)';
-    document.getElementById('p2-status-label').textContent = 'Connected · Host';
-    updatePieces(); updateAll();
-  }
-  if(data.type==='move') {
-    game.loadFen ? (()=>{
-      // Apply the move
-      const tmp=new Chess(data.fen);
-      game=tmp;
-      lastMove=data.move;
-      moveHistory.push(data.san||'');
-      updatePieces(); updateBoardHighlights(); updateAll();
-      if(game.gameOver) showGameOver();
-    })() : null;
-    // Simpler: just load fen
-    game=new Chess(data.fen);
-    lastMove=data.move;
-    updatePieces(); updateBoardHighlights(); updateAll();
-    if(game.gameOver) showGameOver();
-  }
+  // Legacy BroadcastChannel shim — not used with PeerJS but kept for safety
 }
 
 // ─── Init ───
