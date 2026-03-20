@@ -52,7 +52,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.019</title>
+<title>RadioSport Chess v1.020</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -709,7 +709,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport Chess
-    <span style="white-space:nowrap;"><span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.019</span>  |  © RNK ( 9G5AR )</span>
+    <span style="white-space:nowrap;"><span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.020</span>  |  © RNK ( 9G5AR )</span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -780,8 +780,8 @@
           <select id="time-control" onchange="updateTimeControl(this.value)">
             <option value="0">No Limit</option>
             <option value="180">3 min Blitz</option>
-            <option value="300" selected>5 min Blitz</option>
-            <option value="600">10 min Rapid</option>
+            <option value="300">5 min Blitz</option>
+            <option value="600" selected>10 min Rapid</option>
             <option value="900">15 min Rapid</option>
             <option value="1800">30 min Classical</option>
           </select>
@@ -2345,7 +2345,7 @@ let game, engine, flipped=false, selectedSq=-1;
 let legalMovesCache=[], lastMove=null;
 let mode='solo'; // 'solo' | 'local' | 'multi'
 let playerColor='w'; // human plays white by default
-let timeControl=300;
+let timeControl=600;
 let timers={w:300, b:300};
 let timerInterval=null;
 let engineDepth=15, engineSkill=12;
