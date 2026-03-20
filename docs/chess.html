@@ -52,7 +52,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport — Chess Online v1.017</title>
+<title>RadioSport — Chess Online v1.018</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -709,7 +709,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport
-    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.017</span></span>
+    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.018</span></span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -805,7 +805,8 @@
           <div class="setting-label">Piece Style</div>
           <select id="piece-style" onchange="setPieceStyle(this.value)">
             <option value="2d">2D Classic</option>
-            <option value="3d" selected>3D Staunton</option>
+            <option value="3d">3D Modern</option>
+            <option value="3dt" selected>3D Traditional</option>
           </select>
         </div>
       </div>
@@ -974,19 +975,159 @@ const PIECE_COLOR = {
 
 // ── 3D SVG Pieces ────────────────────────────────────────────────────────────
 // Staunton-style SVG pieces with gradient lighting for realistic 3D appearance
-let pieceStyle = '3d'; // '2d' | '3d' — default to 3D
+let pieceStyle = '3dt'; // '2d' | '3d' | '3dt'
 
 function setPieceStyle(style) {
   pieceStyle = style;
-  document.getElementById('board-rows-container').classList.toggle('mode-3d', style==='3d');
+  const is3d = style === '3d' || style === '3dt';
+  document.getElementById('board-rows-container').classList.toggle('mode-3d', is3d);
   const btn = document.getElementById('style-toggle-btn');
-  if (btn) { btn.textContent = style==='3d' ? '◈ 3D' : '◇ 2D'; btn.style.color = style==='3d' ? 'var(--gold)' : ''; }
+  if (btn) { btn.textContent = is3d ? '◈ 3D' : '◇ 2D'; btn.style.color = is3d ? 'var(--gold)' : ''; }
   const sel = document.getElementById('piece-style');
   if (sel) sel.value = style;
   updatePieces();
 }
 function togglePieceStyle() {
-  setPieceStyle(pieceStyle === '3d' ? '2d' : '3d');
+  const next = pieceStyle === '2d' ? '3dt' : pieceStyle === '3dt' ? '3d' : '2d';
+  setPieceStyle(next);
+}
+
+// ── Traditional Staunton 3D SVG Pieces ────────────────────────────────────────
+// Accurate Staunton silhouettes with proper proportions and 3D lighting
+function makeTraditionalSVG(type, color) {
+  const W = color === 'w';
+  const id = 'T' + color + type;
+
+  const p = W ? {
+    body:   '#f0e0c0', hi:    '#fffef8', mid:   '#d4bfa0',
+    low:    '#b8945c', dark:  '#8a6030', rim:   '#5a3a14',
+    shdw:   'rgba(60,30,5,0.5)',
+  } : {
+    body:   '#1e120a', hi:    'rgba(160,90,30,0.5)', mid:   '#2e1c0e',
+    low:    '#140b04', dark:  '#0a0502', rim:   '#050200',
+    shdw:   'rgba(0,0,0,0.7)',
+  };
+
+  const defs = `<defs>
+    <radialGradient id="rT${id}" cx="33%" cy="25%" r="65%">
+      <stop offset="0%"   stop-color="${p.hi}"/>
+      <stop offset="35%"  stop-color="${p.body}"/>
+      <stop offset="75%"  stop-color="${p.mid}"/>
+      <stop offset="100%" stop-color="${p.dark}"/>
+    </radialGradient>
+    <linearGradient id="lT${id}" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="${p.dark}"/>
+      <stop offset="30%"  stop-color="${p.body}"/>
+      <stop offset="60%"  stop-color="${p.hi}"/>
+      <stop offset="100%" stop-color="${p.low}"/>
+    </linearGradient>
+    <linearGradient id="lTv${id}" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="${p.body}"/>
+      <stop offset="100%" stop-color="${p.dark}"/>
+    </linearGradient>
+    <filter id="fT${id}">
+      <feDropShadow dx="0.5" dy="2" stdDeviation="1.5" flood-color="${p.shdw}"/>
+    </filter>
+  </defs>`;
+
+  // Shared base — broad stepped pedestal
+  const base = `
+    <ellipse cx="32" cy="62" rx="17" ry="3.5" fill="${p.shdw}" opacity="0.45"/>
+    <path d="M13 58 Q13 54 32 54 Q51 54 51 58 L51 60 Q51 63 32 63 Q13 63 13 60 Z"
+          fill="url(#lT${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <path d="M16 53 Q16 50 32 50 Q48 50 48 53 L48 55 Q48 57 32 57 Q16 57 16 55 Z"
+          fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.4"/>
+    <ellipse cx="32" cy="50" rx="16" ry="1.8" fill="${W?p.hi:'rgba(255,255,255,0.05)'}"/>`;
+
+  let body = '';
+
+  if (type === 'P') { // Pawn — sphere on tapered column on base
+    body = base + `
+    <path d="M26 50 Q24 46 24.5 42 Q25 36 27 34 Q29 32 32 32 Q35 32 37 34 Q39 36 39.5 42 Q40 46 38 50 Z"
+          fill="url(#lT${id})" stroke="${p.rim}" stroke-width="0.5" filter="url(#fT${id})"/>
+    <ellipse cx="32" cy="42" rx="5.5" ry="1.5" fill="${p.rim}" opacity="0.2"/>
+    <circle cx="32" cy="25" r="10" fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.8" filter="url(#fT${id})"/>
+    <ellipse cx="29" cy="21.5" rx="3.5" ry="3" fill="${p.hi}" opacity="${W?'.55':'.2'}"/>`;
+
+  } else if (type === 'R') { // Rook — battlements on cylinder
+    body = base + `
+    <path d="M23 50 L23 42 Q23 38 24 35 L40 35 Q41 38 41 42 L41 50 Z"
+          fill="url(#lT${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <ellipse cx="32" cy="35" rx="9" ry="3" fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <path d="M22 32 L22 35 L42 35 L42 32 Z" fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.4"/>
+    <rect x="21" y="22" width="5"  height="11" rx="1" fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <rect x="29" y="22" width="6"  height="11" rx="1" fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <rect x="37" y="22" width="5"  height="11" rx="1" fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <rect x="26" y="22" width="3"  height="6"  rx="0" fill="${p.dark}"/>
+    <rect x="35" y="22" width="2"  height="6"  rx="0" fill="${p.dark}"/>
+    <ellipse cx="32" cy="38" rx="8" ry="2" fill="${p.hi}" opacity="${W?'.25':'.08'}"/>`;
+
+  } else if (type === 'N') { // Knight — horse head
+    body = base + `
+    <path d="M22 50 Q21 46 21.5 42 Q22 38 21 34 Q20 30 21 26
+             Q22 22 25 19 Q28 15 32 14 Q37 13 40 16
+             Q43 19 43 23 Q43 27 41 29 Q44 31 44 35
+             Q44 39 41 41 Q41.5 45 41 50 Z"
+          fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.8" filter="url(#fT${id})"/>
+    <path d="M25 19 Q27 15.5 32 14.5 Q36 14 39 16.5
+             Q36.5 15 33 15 Q29.5 15 27 18 Z"
+          fill="${p.hi}" opacity="${W?'.35':'.12'}"/>
+    <path d="M21 35 Q23.5 32 27 33 Q26 37 23 38 Z"
+          fill="${p.dark}" opacity="0.5"/>
+    <path d="M21.5 27 Q23 25 25.5 26" fill="none" stroke="${p.rim}" stroke-width="1.2" stroke-linecap="round"/>
+    <circle cx="28" cy="19.5" r="2.5" fill="${p.rim}"/>
+    <circle cx="28.5" cy="18.7" r="1.1" fill="${p.hi}" opacity="0.9"/>
+    <path d="M33 15.5 Q37 15.5 40.5 18" fill="none" stroke="${p.hi}" stroke-width="0.8" opacity="${W?'.45':'.2'}"/>
+    <path d="M38.5 14 Q40.5 14.5 42 16 Q40 15 38 15.5 Z" fill="${p.body}" opacity="0.6"/>`;
+
+  } else if (type === 'B') { // Bishop — mitre with ball finial and cross notch
+    body = base + `
+    <path d="M25 50 Q23 44 23.5 39 Q24 33 25.5 28
+             Q27 23 32 20 Q37 23 38.5 28 Q40 33 40.5 39 Q41 44 39 50 Z"
+          fill="url(#lT${id})" stroke="${p.rim}" stroke-width="0.5" filter="url(#fT${id})"/>
+    <path d="M27.5 33 Q30 11 34.5 33" fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.6"/>
+    <ellipse cx="32" cy="39" rx="8" ry="3" fill="${p.rim}" opacity="0.2"/>
+    <circle cx="32" cy="11" r="5" fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.8" filter="url(#fT${id})"/>
+    <circle cx="30.5" cy="9.5" r="2" fill="${p.hi}" opacity="${W?'.7':'.3'}"/>
+    <path d="M30.5 7 Q32 4.5 33.5 7" fill="none" stroke="#c9a84c" stroke-width="2" stroke-linecap="round"/>
+    <line x1="32" y1="5" x2="32" y2="8.5" stroke="#c9a84c" stroke-width="2" stroke-linecap="round"/>
+    <line x1="29.8" y1="6.8" x2="34.2" y2="6.8" stroke="#c9a84c" stroke-width="2" stroke-linecap="round"/>`;
+
+  } else if (type === 'Q') { // Queen — crown with orbs
+    body = base + `
+    <path d="M20 50 Q18 43 18.5 37 Q19 31 20.5 28
+             Q22 25 32 22 Q42 25 43.5 28 Q45 31 45.5 37 Q46 43 44 50 Z"
+          fill="url(#lT${id})" stroke="${p.rim}" stroke-width="0.6" filter="url(#fT${id})"/>
+    <path d="M20 30 L24 13 L32 23 L40 13 L44 30
+             Q40 26 32 26 Q24 26 20 30 Z"
+          fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.6"/>
+    <ellipse cx="32" cy="38" rx="11" ry="4" fill="${p.rim}" opacity="0.2"/>
+    <ellipse cx="32" cy="30" rx="10" ry="2.5" fill="${p.hi}" opacity="${W?'.2':'.07'}"/>
+    <circle cx="24"  cy="12" r="4"   fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.6"/>
+    <circle cx="32"  cy="10" r="4.5" fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.7"/>
+    <circle cx="40"  cy="12" r="4"   fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.6"/>
+    <circle cx="22.5" cy="11" r="1.5" fill="${p.hi}" opacity="${W?'.75':'.35'}"/>
+    <circle cx="30.5" cy="9"  r="1.8" fill="${p.hi}" opacity="${W?'.75':'.35'}"/>
+    <circle cx="38.5" cy="11" r="1.5" fill="${p.hi}" opacity="${W?'.75':'.35'}"/>`;
+
+  } else if (type === 'K') { // King — cross crown on tall body
+    body = base + `
+    <path d="M19 50 Q17 42 17.5 36 Q18 29 20 26
+             Q22 23 32 21 Q42 23 44 26 Q46 29 46.5 36 Q47 42 45 50 Z"
+          fill="url(#lT${id})" stroke="${p.rim}" stroke-width="0.6" filter="url(#fT${id})"/>
+    <path d="M21 29 Q20 24 32 22 Q44 24 43 29
+             Q39 25.5 32 25.5 Q25 25.5 21 29 Z"
+          fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <ellipse cx="32" cy="38" rx="12" ry="4.5" fill="${p.rim}" opacity="0.2"/>
+    <ellipse cx="32" cy="29" rx="10" ry="2.5" fill="${p.hi}" opacity="${W?'.18':'.06'}"/>
+    <rect x="29" y="7"  width="6"  height="16" rx="2.2" fill="url(#lT${id})" stroke="${p.rim}" stroke-width="0.7"/>
+    <rect x="24" y="11" width="16" height="6"  rx="2.2" fill="url(#lT${id})" stroke="${p.rim}" stroke-width="0.7"/>
+    <rect x="29.5" y="7.5" width="3" height="5.5" rx="0.8" fill="${p.hi}" opacity="${W?'.4':'.18'}"/>
+    <rect x="24.5" y="12" width="6" height="2.5" rx="0.5" fill="${p.hi}" opacity="${W?'.3':'.12'}"/>
+    <circle cx="32" cy="7" r="1.5" fill="#e8c97a"/>`;
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 68" width="66" height="66">${defs}${body}</svg>`;
 }
 
 function makePieceSVG(type, color) {
@@ -1157,11 +1298,11 @@ function makePieceSVG(type, color) {
 }
 
 function createPieceElement(pieceCode) {
-  if (pieceStyle === '3d') {
+  if (pieceStyle === '3d' || pieceStyle === '3dt') {
     const [color, type] = [pieceCode[0], pieceCode[1]];
     const el = document.createElement('div');
     el.className = 'piece-3d';
-    el.innerHTML = makePieceSVG(type, color);
+    el.innerHTML = pieceStyle === '3dt' ? makeTraditionalSVG(type, color) : makePieceSVG(type, color);
     return el;
   } else {
     const el = document.createElement('div');
@@ -2219,7 +2360,7 @@ function init() {
   game = new Chess();
   engine = new Engine();
   // Apply default piece style
-  document.getElementById('board-rows-container')?.classList.toggle('mode-3d', pieceStyle==='3d');
+  document.getElementById('board-rows-container')?.classList.toggle('mode-3d', pieceStyle==='3d'||pieceStyle==='3dt');
   renderBoard();
   updateAll();
   startTimers();
