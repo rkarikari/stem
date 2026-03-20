@@ -53,7 +53,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.034</title>
+<title>RadioSport Chess v1.035</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -724,7 +724,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport Chess
-    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.034</span>
+    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.035</span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -3104,7 +3104,7 @@ function _lobbyRefreshList() {
         '<div class="room-item-code">' + code + '</div>' +
         '<div class="room-item-info">Waiting · ' + (info.color==='w'?'Host is White':'Host is Black') + '</div>' +
       '</div>' +
-      '<button class="room-item-btn" onclick="quickJoin('' + code + '')">Connect</button>';
+      '<button class="room-item-btn" onclick="quickJoin(\'' + code + '\')">Connect</button>';
     list.appendChild(item);
   });
 }
