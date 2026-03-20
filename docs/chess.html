@@ -65,7 +65,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport — Chess Online v1.005</title>
+<title>RadioSport — Chess Online v1.006</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -695,7 +695,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport
-    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.005</span></span>
+    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.006</span></span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -1452,59 +1452,75 @@ class Engine {
     this._setEngineLabel('Loading ' + cand.label + '…');
     console.info('[Engine] Trying:', cand.url);
 
-    const base = location.origin + location.pathname.replace(/[^/]*$/, '');
-    // Resolve exact wasm URL from candidate definition
-    const wasmAbsUrl = cand.wasm ? (base + cand.wasm.replace('./', '')) : null;
+    // Strategy depends on whether real SharedArrayBuffer is available:
+    //
+    // canSAB=true  (crossOriginIsolated, COI SW active):
+    //   → new Worker(url) directly. Real SAB exists, no shim needed.
+    //     The .wasm is fetched by the worker itself from same origin — works fine.
+    //
+    // canSAB=false:
+    //   → Skip needsSAB candidates entirely (they require real threading).
+    //   → For non-SAB candidates: fetch source + prepend shims + blob Worker.
+    //     The COI SW would intercept our fetch and potentially mangle it,
+    //     so we use XMLHttpRequest instead (not intercepted by SW fetch handler).
 
-    // fetch() to same-origin is always allowed — no CORS, no restrictions.
-    // We get the source text, prepend shims, create a blob Worker.
-    // This lets us fix SharedArrayBuffer & locateFile before any engine code runs.
-    fetch(cand.url, {cache: 'no-cache'})
-      .then(r => {
-        if (!r.ok) throw new Error(r.status);
-        return r.text();
-      })
-      .then(src => {
-        const wasmJson = JSON.stringify(wasmAbsUrl || (base + 'stockfish.wasm'));
-        const shim = `
-// ── SharedArrayBuffer + Atomics shim ─────────────────────────────────
-// Allows asm.js/WASM builds to load even without COOP/COEP headers.
-// Real multi-threading won't work without true SAB, but the engine
-// will still run in single-threaded mode using this stub.
+    if (cand.needsSAB && !canSAB) {
+      // Multi-thread build needs real SAB — skip silently
+      console.info('[Engine] skipping', cand.label, '(no SharedArrayBuffer)');
+      this._tryNextCandidate(idx + 1);
+      return;
+    }
+
+    if (canSAB) {
+      // crossOriginIsolated=true: just use new Worker() directly — cleanest path
+      try {
+        const w = new Worker(cand.url);
+        this._probeWorker(w, cand.url, false, cand.label);
+      } catch(e) {
+        console.info('[Engine]', cand.url, 'worker error:', e.message);
+        this._tryNextCandidate(idx + 1);
+      }
+      return;
+    }
+
+    // canSAB=false, non-SAB candidate: load via XHR (not intercepted by COI SW)
+    // then prepend shims and create a blob Worker.
+    const base       = location.origin + location.pathname.replace(/[^/]*$/, '');
+    const wasmAbsUrl = base + cand.wasm.replace('./', '');
+    const xhr        = new XMLHttpRequest();
+    xhr.open('GET', cand.url, true);
+    xhr.onload = () => {
+      if (xhr.status !== 200 && xhr.status !== 0) {
+        console.info('[Engine]', cand.url, 'not found:', xhr.status);
+        this._tryNextCandidate(idx + 1);
+        return;
+      }
+      const wasmJson = JSON.stringify(wasmAbsUrl);
+      const shim = `
 if (typeof SharedArrayBuffer === 'undefined') self.SharedArrayBuffer = ArrayBuffer;
 if (typeof Atomics === 'undefined') self.Atomics = {
-  wait:()=>'ok', notify:()=>0, load:(a,i)=>a[i],
-  store:(a,i,v)=>{a[i]=v;return v;},
-  add:(a,i,v)=>{const o=a[i];a[i]+=v;return o;},
-  and:(a,i,v)=>{const o=a[i];a[i]&=v;return o;},
-  or: (a,i,v)=>{const o=a[i];a[i]|=v;return o;},
-  xor:(a,i,v)=>{const o=a[i];a[i]^=v;return o;},
+  wait:()=>'ok',notify:()=>0,load:(a,i)=>a[i],store:(a,i,v)=>{a[i]=v;return v;},
+  add:(a,i,v)=>{const o=a[i];a[i]+=v;return o;},and:(a,i,v)=>{const o=a[i];a[i]&=v;return o;},
+  or:(a,i,v)=>{const o=a[i];a[i]|=v;return o;},xor:(a,i,v)=>{const o=a[i];a[i]^=v;return o;},
   exchange:(a,i,v)=>{const o=a[i];a[i]=v;return o;},
   compareExchange:(a,i,e,r)=>{const o=a[i];if(o===e)a[i]=r;return o;},
   isLockFree:()=>true,
 };
-// ── Emscripten memory (asm.js) — must precede engine source ──────────
 if (typeof TOTAL_MEMORY === 'undefined') self.TOTAL_MEMORY = 256*1024*1024;
 if (typeof TOTAL_STACK  === 'undefined') self.TOTAL_STACK  =  32*1024*1024;
-// ── Module config — locateFile resolves .wasm to absolute same-origin URL ─
-var Module = self.Module || {};
-self.Module = Module;
-Module.TOTAL_MEMORY = 256*1024*1024;
-Module.TOTAL_STACK  =  32*1024*1024;
-Module.locateFile = function(path) {
-  // Always return the exact wasm URL we know about, ignore the path argument
-  if (path.endsWith('.wasm') || path.endsWith('.wasm.br')) return ${wasmJson};
-  return path;
-};
+var Module=self.Module||{};self.Module=Module;
+Module.TOTAL_MEMORY=256*1024*1024;Module.TOTAL_STACK=32*1024*1024;
+Module.locateFile=function(p){return(p.endsWith('.wasm')||p.endsWith('.wasm.br'))?${wasmJson}:p;};
 `;
-        const blob    = new Blob([shim + '\n' + src], {type: 'application/javascript'});
-        const blobUrl = URL.createObjectURL(blob);
-        this._probeWorker(blobUrl, cand.url, true, cand.label);
-      })
-      .catch(err => {
-        console.info('[Engine]', cand.url, 'not found:', err.message || err);
-        this._tryNextCandidate(idx + 1);
-      });
+      const blob    = new Blob([shim + '\n' + xhr.responseText], {type:'application/javascript'});
+      const blobUrl = URL.createObjectURL(blob);
+      this._probeWorker(blobUrl, cand.url, true, cand.label);
+    };
+    xhr.onerror = () => {
+      console.info('[Engine]', cand.url, 'not found (XHR error)');
+      this._tryNextCandidate(idx + 1);
+    };
+    xhr.send();
   }
   // Called by the file input picker
   loadFromFile(file) {
