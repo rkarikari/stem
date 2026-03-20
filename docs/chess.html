@@ -52,7 +52,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport — Chess Online v1.012</title>
+<title>RadioSport — Chess Online v1.013</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -682,7 +682,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport
-    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.012</span></span>
+    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.013</span></span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -1455,14 +1455,34 @@ class Engine {
       // DO NOT use XHR+blob here: blob workers lose their base URL so internal
       // fetch('stockfish.wasm') gets intercepted by the SW which concatenates
       // the origin twice, producing a broken URL like "https://host.comhttps://host.com/...".
-      try {
-        console.info('[Engine] canSAB=true → new Worker directly:', cand.url);
-        const w = new Worker(cand.url);
-        this._probeWorker(w, cand.url, false, cand.label);
-      } catch(e) {
-        console.info('[Engine]', cand.url, 'failed:', e.message);
-        next();
-      }
+      // Pre-check: verify the .wasm file is actually there and is binary.
+      // "expected magic word 00 61 73 6d" means the wasm fetch returned HTML (404 page).
+      const wasmCheckUrl = base + cand.wasm.replace('./', '');
+      fetch(wasmCheckUrl, {method:'HEAD', cache:'no-cache'})
+        .then(r => {
+          const ct = r.headers.get('content-type') || '';
+          if (!r.ok) {
+            console.warn('[Engine] WASM file missing:', wasmCheckUrl, r.status,
+              '— check that stockfish.wasm is committed to your repo at docs/stockfish.wasm');
+            next(); return;
+          }
+          if (ct.includes('text/html')) {
+            console.warn('[Engine] WASM URL returns HTML (likely a 404 page):', wasmCheckUrl);
+            next(); return;
+          }
+          console.info('[Engine] canSAB=true → new Worker directly:', cand.url);
+          try {
+            const w = new Worker(cand.url);
+            this._probeWorker(w, cand.url, false, cand.label);
+          } catch(e) {
+            console.info('[Engine]', cand.url, 'worker failed:', e.message);
+            next();
+          }
+        })
+        .catch(() => {
+          console.warn('[Engine] WASM pre-check fetch failed for:', wasmCheckUrl);
+          next();
+        });
       return;
     }
     const xhr = new XMLHttpRequest();
