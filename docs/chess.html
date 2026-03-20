@@ -53,7 +53,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.037</title>
+<title>RadioSport Chess v1.038</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -79,6 +79,12 @@
     --sq-dark-last: #aaa23a;
     --sq-light-check: #ff6b6b;
     --sq-dark-check: #cc4444;
+    /* Board themes */
+    --theme-classic-light: #f0d9b5; --theme-classic-dark: #b58863;
+    --theme-walnut-light:  #d4a56a; --theme-walnut-dark:  #6b3a1f;
+    --theme-slate-light:   #c8d8e8; --theme-slate-dark:   #4a6680;
+    --theme-midnight-light:#a8c0a0; --theme-midnight-dark:#2a4a2a;
+    --theme-obsidian-light:#c8c8c8; --theme-obsidian-dark:#2a2a2a;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -724,7 +730,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport Chess
-    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.037</span>
+    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.038</span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -851,6 +857,16 @@
             <option value="2d">2D Classic</option>
             <option value="3d">3D Modern</option>
             <option value="3dt" selected>3D Traditional</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">Board Theme</div>
+          <select id="board-theme" onchange="setBoardTheme(this.value)">
+            <option value="classic">Classic (Maple)</option>
+            <option value="walnut">Walnut (Dark)</option>
+            <option value="slate">Slate (Blue-Grey)</option>
+            <option value="midnight">Midnight (Dark Green)</option>
+            <option value="obsidian">Obsidian (B&amp;W)</option>
           </select>
         </div>
       </div>
@@ -1015,8 +1031,8 @@ const PIECES = {
   bP:'♟', bN:'♞', bB:'♝', bR:'♜', bQ:'♛', bK:'♚'
 };
 const PIECE_COLOR = {
-  wP:'white', wN:'white', wB:'white', wR:'white', wQ:'white', wK:'white',
-  bP:'#1a1008', bN:'#1a1008', bB:'#1a1008', bR:'#1a1008', bQ:'#1a1008', bK:'#1a1008'
+  wP:'#f8f0d8', wN:'#f8f0d8', wB:'#f8f0d8', wR:'#f8f0d8', wQ:'#f8f0d8', wK:'#f8f0d8',
+  bP:'#0d0806', bN:'#0d0806', bB:'#0d0806', bR:'#0d0806', bQ:'#0d0806', bK:'#0d0806'
 };
 
 // ── 3D SVG Pieces ────────────────────────────────────────────────────────────
@@ -1045,9 +1061,9 @@ function makeTraditionalSVG(type, color) {
   const id = 'T' + color + type;
 
   const p = W ? {
-    body:   '#f0e0c0', hi:    '#fffef8', mid:   '#d4bfa0',
-    low:    '#b8945c', dark:  '#8a6030', rim:   '#5a3a14',
-    shdw:   'rgba(60,30,5,0.5)',
+    body:   '#f8f0dc', hi:    '#ffffff',  mid:   '#e0c890',
+    low:    '#c0a050', dark:  '#7a5020',  rim:   '#1a0a00',
+    shdw:   'rgba(0,0,0,0.75)',
   } : {
     body:   '#1e120a', hi:    'rgba(160,90,30,0.5)', mid:   '#2e1c0e',
     low:    '#140b04', dark:  '#0a0502', rim:   '#050200',
@@ -1181,17 +1197,17 @@ function makePieceSVG(type, color) {
 
   // ── Colour palette: warm ivory whites vs deep ebony blacks ───────────────
   const p = W ? {
-    // White pieces: warm ivory with golden-walnut shadows
-    hi:   '#fffdf7',   // specular highlight
-    base: '#f5e8cc',   // main surface
-    mid:  '#d9c4a0',   // mid tone
-    low:  '#b89a6a',   // shadow side
-    dark: '#8a6640',   // deep shadow
-    rim:  '#6b4e28',   // outline / rim
-    grd1: '#fff5e0',   // gradient top
-    grd2: '#c8a870',   // gradient bottom
-    shdw: 'rgba(80,45,10,0.55)',
-    glow: 'rgba(255,235,180,0.25)',
+    // White pieces: pure bright ivory with very dark outlines for max contrast
+    hi:   '#ffffff',   // specular highlight
+    base: '#f8f0dc',   // main surface — warm bright white
+    mid:  '#e0c890',   // mid tone
+    low:  '#c0a050',   // shadow side
+    dark: '#7a5020',   // deep shadow (rich brown for warmth)
+    rim:  '#2a1400',   // outline — near-black for contrast on any square
+    grd1: '#ffffff',   // gradient top
+    grd2: '#d8b870',   // gradient bottom
+    shdw: 'rgba(0,0,0,0.75)',
+    glow: 'rgba(255,255,255,0.5)',
   } : {
     // Black pieces: ebony with deep espresso tones
     hi:   'rgba(180,120,60,0.55)',
@@ -1354,13 +1370,20 @@ function createPieceElement(pieceCode) {
     const el = document.createElement('div');
     el.className = 'piece';
     el.textContent = PIECES[pieceCode];
-    el.style.color = PIECE_COLOR[pieceCode] || 'white';
+    el.style.color = PIECE_COLOR[pieceCode] || '#f8f0d8';
     if (pieceCode[0] === 'w') {
-      el.style.textShadow = '0 1px 3px rgba(0,0,0,0.6)';
-      el.style.filter = 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))';
+      // White pieces: warm cream fill + heavy black outline for max contrast on any square
+      el.style.textShadow =
+        '-1.5px -1.5px 0 #1a0e00, 1.5px -1.5px 0 #1a0e00, -1.5px 1.5px 0 #1a0e00, 1.5px 1.5px 0 #1a0e00,' +
+        '0 2px 4px rgba(0,0,0,0.7)';
+      el.style.filter = 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))';
     } else {
-      el.style.textShadow = '0 1px 2px rgba(255,255,255,0.15)';
-      el.style.filter = 'drop-shadow(0 1px 3px rgba(0,0,0,0.8))';
+      // Black pieces: deep near-black + subtle warm glow for visibility on light squares
+      el.style.textShadow =
+        '-1px -1px 0 rgba(255,200,100,0.2), 1px -1px 0 rgba(255,200,100,0.2),' +
+        '-1px 1px 0 rgba(255,200,100,0.2), 1px 1px 0 rgba(255,200,100,0.2),' +
+        '0 2px 5px rgba(0,0,0,0.9)';
+      el.style.filter = 'drop-shadow(0 1px 4px rgba(0,0,0,0.9))';
     }
     return el;
   }
@@ -2405,6 +2428,27 @@ let timerInterval=null;
 let engineDepth=15, engineSkill=12;
 let moveHistory=[];
 let multiRoomCode='', multiPlayerColor='w';
+
+const BOARD_THEMES = {
+  classic:  { light: '#f0d9b5', dark: '#b58863', selL: '#f6f669', selD: '#baca2b', lastL: '#cdd16e', lastD: '#aaa23a' },
+  walnut:   { light: '#d4a56a', dark: '#6b3a1f', selL: '#e8d44d', selD: '#c4a020', lastL: '#d4c060', lastD: '#9a7818' },
+  slate:    { light: '#c8d8e8', dark: '#4a6680', selL: '#e0e870', selD: '#a0b030', lastL: '#b8c870', lastD: '#7a9030' },
+  midnight: { light: '#a8c0a0', dark: '#2a4a2a', selL: '#e8e060', selD: '#b0a820', lastL: '#c8d060', lastD: '#848820' },
+  obsidian: { light: '#c8c8c8', dark: '#2a2a2a', selL: '#f0f060', selD: '#a0a020', lastL: '#d0d060', lastD: '#707020' },
+};
+function setBoardTheme(theme) {
+  const t = BOARD_THEMES[theme] || BOARD_THEMES.classic;
+  const r = document.documentElement.style;
+  r.setProperty('--sq-light',      t.light);
+  r.setProperty('--sq-dark',       t.dark);
+  r.setProperty('--sq-light-sel',  t.selL);
+  r.setProperty('--sq-dark-sel',   t.selD);
+  r.setProperty('--sq-light-last', t.lastL);
+  r.setProperty('--sq-dark-last',  t.lastD);
+  // Selection move dots adapt to theme
+  r.setProperty('--sq-light-move', t.selL);
+  r.setProperty('--sq-dark-move',  t.selD);
+}
 
 function loadEngineFile(input) {
   if (input.files && input.files[0]) engine.loadFromFile(input.files[0]);
