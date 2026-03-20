@@ -52,7 +52,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport — Chess Online v1.010</title>
+<title>RadioSport — Chess Online v1.011</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -682,7 +682,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport
-    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.010</span></span>
+    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.011</span></span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -1445,18 +1445,10 @@ class Engine {
     this._setEngineLabel('Loading ' + cand.label + '…');
     console.info('[Engine] Trying:', cand.url);
 
-    if (canSAB) {
-      try {
-        const w = new Worker(cand.url);
-        this._probeWorker(w, cand.url, false, cand.label);
-      } catch(e) {
-        console.info('[Engine]', cand.url, 'failed:', e.message);
-        next();
-      }
-      return;
-    }
-
-    // No real SAB — XHR (not intercepted by SW) + shim + blob Worker
+    // Always use XHR+shim to inject Module config before the engine script runs.
+    // Multi-thread builds need Module.mainScriptUrlOrBlob + Module.locateFile set
+    // BEFORE the script executes, so sub-workers can find stockfish.js and stockfish.wasm.
+    // (We cannot inject config if we use new Worker(url) directly.)
     const base       = location.origin + location.pathname.replace(/[^/]*$/, '');
     const wasmAbsUrl = JSON.stringify(base + cand.wasm.replace('./', ''));
     const xhr = new XMLHttpRequest();
@@ -1467,20 +1459,41 @@ class Engine {
         console.info('[Engine]', cand.url, 'not found:', xhr.status);
         next(); return;
       }
+      const jsAbsUrl   = base + cand.url.replace('./', '');
+      const jsUrlJson  = JSON.stringify(jsAbsUrl);
       const shim = `
-if(typeof SharedArrayBuffer==='undefined')self.SharedArrayBuffer=ArrayBuffer;
-if(typeof Atomics==='undefined')self.Atomics={
-  wait:()=>'ok',notify:()=>0,load:(a,i)=>a[i],store:(a,i,v)=>{a[i]=v;return v;},
-  add:(a,i,v)=>{const o=a[i];a[i]+=v;return o;},and:(a,i,v)=>{const o=a[i];a[i]&=v;return o;},
-  or:(a,i,v)=>{const o=a[i];a[i]|=v;return o;},xor:(a,i,v)=>{const o=a[i];a[i]^=v;return o;},
-  exchange:(a,i,v)=>{const o=a[i];a[i]=v;return o;},
-  compareExchange:(a,i,e,r)=>{const o=a[i];if(o===e)a[i]=r;return o;},
-  isLockFree:()=>true,
-};
-self.TOTAL_MEMORY=512*1024*1024;self.TOTAL_STACK=64*1024*1024;
+// ── SharedArrayBuffer + Atomics stubs (when real SAB unavailable) ────────────
+if(typeof SharedArrayBuffer==='undefined'){
+  self.SharedArrayBuffer=ArrayBuffer;
+}
+if(typeof Atomics==='undefined'){
+  self.Atomics={
+    wait:()=>'ok',notify:()=>0,load:(a,i)=>a[i],store:(a,i,v)=>{a[i]=v;return v;},
+    add:(a,i,v)=>{const o=a[i];a[i]+=v;return o;},and:(a,i,v)=>{const o=a[i];a[i]&=v;return o;},
+    or:(a,i,v)=>{const o=a[i];a[i]|=v;return o;},xor:(a,i,v)=>{const o=a[i];a[i]^=v;return o;},
+    exchange:(a,i,v)=>{const o=a[i];a[i]=v;return o;},
+    compareExchange:(a,i,e,r)=>{const o=a[i];if(o===e)a[i]=r;return o;},
+    isLockFree:()=>true,
+  };
+}
+// ── Module config — injected BEFORE engine source so it takes effect ─────────
 var Module=self.Module||{};self.Module=Module;
-Module.TOTAL_MEMORY=512*1024*1024;Module.TOTAL_STACK=64*1024*1024;
-Module.locateFile=function(p){return(p.endsWith('.wasm')||p.endsWith('.wasm.br'))?${wasmAbsUrl}:p;};
+// print: routes Emscripten stdout (UCI output) to postMessage.
+// Without this, stdout goes to console.log and the parent never sees 'uciok'.
+if(!Module.print) Module.print=function(line){postMessage(line);};
+// mainScriptUrlOrBlob: required by multi-thread builds so Emscripten knows
+// the real URL of the script. blob: workers have no document.currentScript.
+if(!Module.mainScriptUrlOrBlob) Module.mainScriptUrlOrBlob=${jsUrlJson};
+// locateFile: resolve all relative resource paths to absolute same-origin URLs.
+//   .wasm          → stockfish.wasm (absolute)
+//   .worker.js     → stockfish.js + '#,worker' hash
+//     The '#,worker' hash signals the script to enter pthread sub-worker mode.
+//     Sub-workers load the SAME stockfish.js — just with this hash set.
+if(!Module.locateFile) Module.locateFile=function(p){
+  if(p.endsWith('.wasm')||p.endsWith('.wasm.br')) return ${wasmAbsUrl};
+  if(p==='stockfish.worker.js'||p.includes('.worker.js')) return ${jsUrlJson}+'#,worker';
+  return ${JSON.stringify(base)}+p;
+};
 `;
       const blobUrl = URL.createObjectURL(
         new Blob([shim+'\n'+xhr.responseText],{type:'application/javascript'})
@@ -1695,6 +1708,9 @@ self.abort = function(reason) {
       let engineName = labelHint || 'Stockfish';
       w.onmessage = (e) => {
         if (typeof e.data !== 'string') return;
+        // Only fail on explicit load-failure sentinel — never on unknown messages.
+        // Engines send various init/ready messages before 'id name'/'uciok';
+        // killing on those causes premature fallback.
         if (e.data.startsWith('__LOAD_FAILED__')) {
           clearTimeout(timeout); w.terminate();
           if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
@@ -1708,11 +1724,9 @@ self.abort = function(reason) {
           gotMessage = true;
           if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
           this._bindSFInstance(w, srcUrl, engineName);
-        } else if (!gotMessage && !e.data.startsWith('id ') && !e.data.startsWith('option ')) {
-          clearTimeout(timeout); w.terminate();
-          if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
-          this._tryNextCandidate(this._candidateIdx + 1);
         }
+        // Any other message: just keep waiting for uciok.
+        // Timeout handles genuine non-responding files.
       };
       w.onerror = (err) => {
         clearTimeout(timeout);
