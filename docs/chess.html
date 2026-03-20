@@ -52,7 +52,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport — Chess Online v1.011</title>
+<title>RadioSport — Chess Online v1.012</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -682,7 +682,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport
-    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.011</span></span>
+    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.012</span></span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -1445,12 +1445,26 @@ class Engine {
     this._setEngineLabel('Loading ' + cand.label + '…');
     console.info('[Engine] Trying:', cand.url);
 
-    // Always use XHR+shim to inject Module config before the engine script runs.
-    // Multi-thread builds need Module.mainScriptUrlOrBlob + Module.locateFile set
-    // BEFORE the script executes, so sub-workers can find stockfish.js and stockfish.wasm.
-    // (We cannot inject config if we use new Worker(url) directly.)
     const base       = location.origin + location.pathname.replace(/[^/]*$/, '');
     const wasmAbsUrl = JSON.stringify(base + cand.wasm.replace('./', ''));
+
+    if (canSAB) {
+      // crossOriginIsolated=true: COI SW is active and already injects COOP/COEP.
+      // Use new Worker(url) DIRECTLY — the engine fetches stockfish.wasm itself
+      // using same-origin fetch which the SW handles correctly.
+      // DO NOT use XHR+blob here: blob workers lose their base URL so internal
+      // fetch('stockfish.wasm') gets intercepted by the SW which concatenates
+      // the origin twice, producing a broken URL like "https://host.comhttps://host.com/...".
+      try {
+        console.info('[Engine] canSAB=true → new Worker directly:', cand.url);
+        const w = new Worker(cand.url);
+        this._probeWorker(w, cand.url, false, cand.label);
+      } catch(e) {
+        console.info('[Engine]', cand.url, 'failed:', e.message);
+        next();
+      }
+      return;
+    }
     const xhr = new XMLHttpRequest();
     xhr.open('GET', cand.url, true);
     xhr.onload = () => {
