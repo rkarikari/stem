@@ -33,12 +33,31 @@
   navigator.serviceWorker.register(swUrl, {scope: base || '/'})
     .then(reg => {
       console.info('[COI-SW] registered, scope:', reg.scope);
-      // If SW is already active and controlling, just reload now
-      if (reg.active && navigator.serviceWorker.controller) {
+      const doReload = () => {
         if (!sessionStorage.getItem('_coi_reload')) {
           sessionStorage.setItem('_coi_reload', '1');
+          console.info('[COI-SW] reloading for cross-origin isolation…');
           location.reload();
         }
+      };
+      // Case 1: SW just installed — wait for it to activate then reload
+      if (reg.installing) {
+        reg.installing.addEventListener('statechange', e => {
+          if (e.target.state === 'activated') doReload();
+        });
+      }
+      // Case 2: SW waiting (old SW still active) — skip waiting then reload
+      else if (reg.waiting) {
+        reg.waiting.postMessage({type: 'SKIP_WAITING'});
+        doReload();
+      }
+      // Case 3: SW active but not yet controlling this page — reload to let it control
+      else if (reg.active && !navigator.serviceWorker.controller) {
+        doReload();
+      }
+      // Case 4: SW active and controlling but page not isolated — force reload
+      else if (reg.active && navigator.serviceWorker.controller && !window.crossOriginIsolated) {
+        doReload();
       }
     })
     .catch(e => console.warn('[COI-SW] failed:', e.message));
@@ -46,7 +65,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport — Chess Online v1.001</title>
+<title>RadioSport — Chess Online v1.005</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -676,7 +695,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport
-    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.001</span></span>
+    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.005</span></span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -1394,16 +1413,24 @@ class Engine {
       return;
     }
 
-    // Same-origin candidates — new Worker('./file.js') always allowed, no CORS.
-    // The .js file IS the worker; it fetches its own .wasm from same directory.
+    // Same-origin candidates — fetch() to same-origin is always allowed.
+    // Try whatever files the user has deployed, strongest first.
+    // Multi-thread builds need real SharedArrayBuffer (canSAB) to work fully,
+    // but we still attempt them — if SAB is stubbed they'll error and we skip.
     this._candidates = [
-      ...(canSAB ? [
-        { url: './stockfish-18.js',      label: 'Stockfish 18 (multi-thread)' },
-        { url: './stockfish-18-lite.js', label: 'Stockfish 18 Lite (multi-thread)' },
-      ] : []),
-      { url: './stockfish-18-single.js',      label: 'Stockfish 18' },
-      { url: './stockfish-18-lite-single.js', label: 'Stockfish 18 Lite' },
-      { url: './stockfish.js',                label: 'Stockfish' },
+      // ── User's deployed files ─────────────────────────────────────────────
+      // stockfish.js is in same dir as chess.html; stockfish.wasm is in docs/
+      // All files (chess.html, coi-serviceworker.js, stockfish.*) are in docs/
+      { url: './stockfish.js',                wasm: './stockfish.wasm',
+        label: 'Stockfish (multi-thread)',    needsSAB: true  },
+      { url: './stockfish-18.js',             wasm: './stockfish-18.wasm',
+        label: 'Stockfish 18 (multi-thread)', needsSAB: true  },
+      { url: './stockfish-18-lite.js',        wasm: './stockfish-18-lite.wasm',
+        label: 'Stockfish 18 Lite (multi)',   needsSAB: true  },
+      { url: './stockfish-18-single.js',      wasm: './stockfish-18-single.wasm',
+        label: 'Stockfish 18',                needsSAB: false },
+      { url: './stockfish-18-lite-single.js', wasm: './stockfish-18-lite-single.wasm',
+        label: 'Stockfish 18 Lite',           needsSAB: false },
     ];
 
     console.info('[Engine] crossOriginIsolated:', coi, 'canSAB:', canSAB,
@@ -1425,55 +1452,56 @@ class Engine {
     this._setEngineLabel('Loading ' + cand.label + '…');
     console.info('[Engine] Trying:', cand.url);
 
-    // KEY: fetch() to same-origin URLs is ALWAYS allowed (no CORS restriction).
-    // We fetch the source text, prepend a SharedArrayBuffer shim, then create
-    // a blob: Worker. This works even when crossOriginIsolated is false and
-    // even for asm.js builds that reference SharedArrayBuffer at parse time.
+    const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+    // Resolve exact wasm URL from candidate definition
+    const wasmAbsUrl = cand.wasm ? (base + cand.wasm.replace('./', '')) : null;
+
+    // fetch() to same-origin is always allowed — no CORS, no restrictions.
+    // We get the source text, prepend shims, create a blob Worker.
+    // This lets us fix SharedArrayBuffer & locateFile before any engine code runs.
     fetch(cand.url, {cache: 'no-cache'})
       .then(r => {
         if (!r.ok) throw new Error(r.status);
         return r.text();
       })
       .then(src => {
-        // Prepend shim BEFORE any engine code runs:
-        // • Stubs SharedArrayBuffer / Atomics for asm.js builds that reference
-        //   them even in single-threaded mode.
-        // • Sets locateFile so the WASM fetch resolves relative to the page
-        //   origin (blob: workers lose the base URL otherwise).
-        const origin = location.origin + location.pathname.replace(/[^/]*$/, '');
+        const wasmJson = JSON.stringify(wasmAbsUrl || (base + 'stockfish.wasm'));
         const shim = `
-// ── SharedArrayBuffer shim (allows asm.js builds without COOP/COEP) ─────────
-if (typeof SharedArrayBuffer === 'undefined') {
-  self.SharedArrayBuffer = ArrayBuffer;
-}
-if (typeof Atomics === 'undefined') {
-  self.Atomics = {
-    wait:()=>'ok', notify:()=>0, load:(a,i)=>a[i],
-    store:(a,i,v)=>{a[i]=v;return v;},
-    add:(a,i,v)=>{const o=a[i];a[i]+=v;return o;},
-    and:(a,i,v)=>{const o=a[i];a[i]&=v;return o;},
-    or: (a,i,v)=>{const o=a[i];a[i]|=v;return o;},
-    xor:(a,i,v)=>{const o=a[i];a[i]^=v;return o;},
-    exchange:(a,i,v)=>{const o=a[i];a[i]=v;return o;},
-    compareExchange:(a,i,e,r)=>{const o=a[i];if(o===e)a[i]=r;return o;},
-    isLockFree:()=>true,
-  };
-}
-// ── locateFile: resolve .wasm relative to page origin (blob: has no base URL) ─
+// ── SharedArrayBuffer + Atomics shim ─────────────────────────────────
+// Allows asm.js/WASM builds to load even without COOP/COEP headers.
+// Real multi-threading won't work without true SAB, but the engine
+// will still run in single-threaded mode using this stub.
+if (typeof SharedArrayBuffer === 'undefined') self.SharedArrayBuffer = ArrayBuffer;
+if (typeof Atomics === 'undefined') self.Atomics = {
+  wait:()=>'ok', notify:()=>0, load:(a,i)=>a[i],
+  store:(a,i,v)=>{a[i]=v;return v;},
+  add:(a,i,v)=>{const o=a[i];a[i]+=v;return o;},
+  and:(a,i,v)=>{const o=a[i];a[i]&=v;return o;},
+  or: (a,i,v)=>{const o=a[i];a[i]|=v;return o;},
+  xor:(a,i,v)=>{const o=a[i];a[i]^=v;return o;},
+  exchange:(a,i,v)=>{const o=a[i];a[i]=v;return o;},
+  compareExchange:(a,i,e,r)=>{const o=a[i];if(o===e)a[i]=r;return o;},
+  isLockFree:()=>true,
+};
+// ── Emscripten memory (asm.js) — must precede engine source ──────────
+if (typeof TOTAL_MEMORY === 'undefined') self.TOTAL_MEMORY = 256*1024*1024;
+if (typeof TOTAL_STACK  === 'undefined') self.TOTAL_STACK  =  32*1024*1024;
+// ── Module config — locateFile resolves .wasm to absolute same-origin URL ─
 var Module = self.Module || {};
 self.Module = Module;
-if (!Module.locateFile) {
-  Module.locateFile = function(path) {
-    return ${JSON.stringify(origin)} + path;
-  };
-}
+Module.TOTAL_MEMORY = 256*1024*1024;
+Module.TOTAL_STACK  =  32*1024*1024;
+Module.locateFile = function(path) {
+  // Always return the exact wasm URL we know about, ignore the path argument
+  if (path.endsWith('.wasm') || path.endsWith('.wasm.br')) return ${wasmJson};
+  return path;
+};
 `;
-        const blob   = new Blob([shim + '\n' + src], {type: 'application/javascript'});
+        const blob    = new Blob([shim + '\n' + src], {type: 'application/javascript'});
         const blobUrl = URL.createObjectURL(blob);
         this._probeWorker(blobUrl, cand.url, true, cand.label);
       })
       .catch(err => {
-        // fetch failed → file doesn't exist or network error → try next
         console.info('[Engine]', cand.url, 'not found:', err.message || err);
         this._tryNextCandidate(idx + 1);
       });
