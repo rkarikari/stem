@@ -53,7 +53,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.035</title>
+<title>RadioSport Chess v1.037</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -724,7 +724,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport Chess
-    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.035</span>
+    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.037</span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -1890,9 +1890,10 @@ class Engine {
             next(); return;
           }
           console.info('[Engine] canSAB=true → new Worker directly:', cand.url);
+          this._setEngineLabel('Loading ' + cand.label + '…');
           try {
             const w = new Worker(cand.url);
-            this._probeWorker(w, cand.url, false, cand.label);
+            this._probeWorker(w, cand.url, false, cand.label, 90000);
           } catch(e) {
             console.info('[Engine]', cand.url, 'worker failed:', e.message);
             next();
@@ -2145,19 +2146,22 @@ self.abort = function(reason) {
 
   // workerOrUrl: already-created Worker instance (from _tryNextCandidate)
   //              OR a blob URL string (from _probeWorkerFromBlob / file picker)
-  _probeWorker(workerOrUrl, srcUrl, revoke, labelHint) {
+  _probeWorker(workerOrUrl, srcUrl, revoke, labelHint, timeoutMs) {
     try {
       const w = (typeof workerOrUrl === 'string') ? new Worker(workerOrUrl) : workerOrUrl;
       const blobUrl = (typeof workerOrUrl === 'string') ? workerOrUrl : null;
       let gotMessage = false;
-      // 15s timeout — large WASM files take time to parse
+      // Capture idx NOW — not at timeout fire time (candidateIdx may have changed)
+      const myIdx = this._candidateIdx;
+      const ms = timeoutMs || (revoke ? 30000 : 90000);
       const timeout = setTimeout(() => {
         if (!gotMessage) {
           w.terminate();
           if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
-          this._tryNextCandidate(this._candidateIdx + 1);
+          console.warn('[Engine] Probe timeout after', ms/1000 + 's for', srcUrl);
+          this._tryNextCandidate(myIdx + 1);
         }
-      }, 15000);
+      }, ms);
       let engineName = labelHint || 'Stockfish';
       w.onmessage = (e) => {
         if (typeof e.data !== 'string') return;
@@ -2167,7 +2171,7 @@ self.abort = function(reason) {
         if (e.data.startsWith('__LOAD_FAILED__')) {
           clearTimeout(timeout); w.terminate();
           if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
-          this._tryNextCandidate(this._candidateIdx + 1);
+          this._tryNextCandidate(myIdx + 1);
           return;
         }
         const nm = e.data.match(/^id name (.+)/);
@@ -2185,7 +2189,7 @@ self.abort = function(reason) {
         clearTimeout(timeout);
         if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
         console.info('[Engine] Worker error for', srcUrl, err.message || '');
-        this._tryNextCandidate(this._candidateIdx + 1);
+        this._tryNextCandidate(myIdx + 1);
       };
       w.postMessage('uci');
     } catch(e) {
@@ -2194,7 +2198,6 @@ self.abort = function(reason) {
   }
 
   _bindSFInstance(sf, srcUrl, engineName) {
-    this._engineDone = true;
     this._engineDone = true;
     // sf can be a Worker or a stockfish.js module instance
     engineName = engineName || 'Stockfish';
