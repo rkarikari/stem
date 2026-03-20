@@ -3,69 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <script>
-// ── Self-Registering COI Service Worker ─────────────────────────────────────
-// Problem: Blob-URL SWs are blocked by all browsers (must be same-origin).
-// Solution: This HTML file registers ITSELF as a Service Worker by loading
-//   its own URL with ?chess-sw appended. The SW detection block below
-//   (before </head>) intercepts that and responds with SW code instead of HTML.
-// This gives COOP/COEP headers → SharedArrayBuffer → full Stockfish 18.
-// Works on GitHub Pages, Netlify, any static host — no extra files needed.
 (function() {
   if (!window.isSecureContext) return;
   if (!('serviceWorker' in navigator)) return;
-  if (window.crossOriginIsolated) return; // already isolated — done
 
+  // Already isolated — clear reload flag so future registrations work
+  if (window.crossOriginIsolated) {
+    sessionStorage.removeItem('_coi_reload');
+    console.info('[COI-SW] crossOriginIsolated ✓');
+    return;
+  }
+
+  const RELOAD_KEY = '_coi_reload';
   const base  = location.pathname.replace(/[^/]*$/, '');
   const swUrl = base + 'coi-serviceworker.js';
 
-  // controllerchange fires when the SW takes control of this page —
-  // that is the exact moment we need to reload to get COOP/COEP headers.
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!sessionStorage.getItem('_coi_reload')) {
-      sessionStorage.setItem('_coi_reload', '1');
-      console.info('[COI-SW] controller changed → reloading for isolation');
-      location.reload();
-    }
-  });
-  // Clear the flag once we're actually isolated (on the reloaded page)
-  // (This block is skipped on the isolated page because of the early return above)
+  const reload = () => {
+    if (sessionStorage.getItem(RELOAD_KEY)) return; // already reloading
+    sessionStorage.setItem(RELOAD_KEY, '1');
+    console.info('[COI-SW] reloading to activate isolation…');
+    location.reload();
+  };
+
+  // controllerchange = SW just took control → reload immediately
+  navigator.serviceWorker.addEventListener('controllerchange', reload);
 
   navigator.serviceWorker.register(swUrl, {scope: base || '/'})
     .then(reg => {
-      console.info('[COI-SW] registered, scope:', reg.scope);
-      const doReload = () => {
-        if (!sessionStorage.getItem('_coi_reload')) {
-          sessionStorage.setItem('_coi_reload', '1');
-          console.info('[COI-SW] reloading for cross-origin isolation…');
-          location.reload();
-        }
-      };
-      // Case 1: SW just installed — wait for it to activate then reload
-      if (reg.installing) {
-        reg.installing.addEventListener('statechange', e => {
-          if (e.target.state === 'activated') doReload();
-        });
+      console.info('[COI-SW] registered scope:', reg.scope);
+
+      const sw = reg.installing || reg.waiting || reg.active;
+      if (!sw) { reload(); return; }
+
+      if (sw.state === 'activated') {
+        // SW already active — reload now so it can inject headers
+        reload();
+        return;
       }
-      // Case 2: SW waiting (old SW still active) — skip waiting then reload
-      else if (reg.waiting) {
-        reg.waiting.postMessage({type: 'SKIP_WAITING'});
-        doReload();
-      }
-      // Case 3: SW active but not yet controlling this page — reload to let it control
-      else if (reg.active && !navigator.serviceWorker.controller) {
-        doReload();
-      }
-      // Case 4: SW active and controlling but page not isolated — force reload
-      else if (reg.active && navigator.serviceWorker.controller && !window.crossOriginIsolated) {
-        doReload();
-      }
+      // Wait for it to activate
+      sw.addEventListener('statechange', function() {
+        if (this.state === 'activated') reload();
+      });
+      // Also send skipWaiting in case it's stuck waiting
+      if (reg.waiting) reg.waiting.postMessage({type: 'SKIP_WAITING'});
     })
-    .catch(e => console.warn('[COI-SW] failed:', e.message));
+    .catch(e => console.warn('[COI-SW] registration failed:', e.message));
 })();
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport — Chess Online v1.007</title>
+<title>RadioSport — Chess Online v1.008</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -695,7 +682,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport
-    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.007</span></span>
+    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.008</span></span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -1466,24 +1453,21 @@ class Engine {
     //     so we use XMLHttpRequest instead (not intercepted by SW fetch handler).
 
     const canSAB = this._canSAB;
-    if (cand.needsSAB && !canSAB) {
-      // Multi-thread build needs real SAB — skip silently
-      console.info('[Engine] skipping', cand.label, '(no SharedArrayBuffer)');
-      this._tryNextCandidate(idx + 1);
-      return;
-    }
-
     if (canSAB) {
-      // crossOriginIsolated=true: just use new Worker() directly — cleanest path
+      // crossOriginIsolated=true: new Worker() directly — real SAB available,
+      // engine handles its own .wasm fetch from same origin. Cleanest path.
       try {
         const w = new Worker(cand.url);
         this._probeWorker(w, cand.url, false, cand.label);
       } catch(e) {
-        console.info('[Engine]', cand.url, 'worker error:', e.message);
+        console.info('[Engine]', cand.url, 'worker failed:', e.message);
         this._tryNextCandidate(idx + 1);
       }
       return;
     }
+    // canSAB=false: try ALL candidates using XHR + SAB shim blob worker.
+    // Multi-thread builds won't use real threads but will still play chess.
+    // XHR used (not fetch) so the COI SW doesn't intercept and mangle the request.
 
     // canSAB=false, non-SAB candidate: load via XHR (not intercepted by COI SW)
     // then prepend shims and create a blob Worker.
