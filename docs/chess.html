@@ -53,7 +53,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.049</title>
+<title>RadioSport Chess v1.051</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -988,7 +988,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.049</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.051</div>
       </div>
     </div>
 
@@ -1854,39 +1854,45 @@ class Engine {
     // Try whatever files the user has deployed, strongest first.
     // Multi-thread builds need real SharedArrayBuffer (canSAB) to work fully,
     // but we still attempt them — if SAB is stubbed they'll error and we skip.
-    // Build candidate list dynamically by pre-checking which files exist.
-    // This eliminates 404 console noise for files not in the repo.
+    // All engine candidates — only files committed to the repo will load.
+    // Results cached in sessionStorage so HEAD checks only run once per session.
     const allCandidates = [
-      ...(canSAB ? [
-        { url: './stockfish.js',              wasm: './stockfish.wasm',              label: 'Stockfish 18 (multi-thread)' },
-        { url: './stockfish-18.js',           wasm: './stockfish-18.wasm',           label: 'Stockfish 18 (multi-thread)' },
-      ] : []),
-      { url: './stockfish-18-lite.js',        wasm: './stockfish-18-lite.wasm',      label: 'Stockfish 18 Lite' },
-      { url: './stockfish-18-lite-single.js', wasm: './stockfish-18-lite-single.wasm', label: 'Stockfish 18 Lite (single)' },
-      { url: './stockfish-18-single.js',      wasm: './stockfish-18-single.wasm',    label: 'Stockfish 18' },
+      { url: './stockfish-18-lite.js', wasm: './stockfish-18-lite.wasm', label: 'Stockfish 18 Lite' },
     ];
 
-    // Pre-check which JS files actually exist (single HEAD per JS file, quiet)
-    const checks = allCandidates.map(cand =>
-      Promise.all([
-        fetch(cand.url,  {method:'HEAD', cache:'no-cache'}).then(r => r.ok).catch(() => false),
-        fetch(cand.wasm, {method:'HEAD', cache:'no-cache'}).then(r => r.ok && !(r.headers.get('content-type')||'').includes('text/')).catch(() => false),
-      ]).then(([jsOk, wasmOk]) => (jsOk && wasmOk) ? cand : null)
-    );
+    const CACHE_KEY = 'rs-engine-files';
+    let knownFiles = null;
+    try { knownFiles = JSON.parse(sessionStorage.getItem(CACHE_KEY)); } catch(e) {}
 
-    Promise.all(checks).then(results => {
-      this._candidates = results.filter(Boolean);
+    const checkAndBuild = (files) => {
+      this._candidates = allCandidates.filter(c =>
+        files[c.url] && files[c.wasm]
+      );
       if (!this._candidates.length) {
         this._setEngineLabel('JS Engine (built-in)');
-        this.mode = 'js';
-        this._initJSWorker();
-        return;
+        this.mode = 'js'; this._initJSWorker(); return;
       }
-      console.info('[Engine] crossOriginIsolated:', coi, 'canSAB:', canSAB,
-        '→', this._candidates.length, 'engine(s) found, trying', this._candidates[0].label);
+      console.info('[Engine] canSAB:', canSAB, '→ using', this._candidates[0].label);
       this._candidateIdx = 0;
       this._tryNextCandidate(0);
-    });
+    };
+
+    if (knownFiles) {
+      // Use cached results — no network requests, no console noise
+      checkAndBuild(knownFiles);
+    } else {
+      // First visit: check all files once, cache results
+      const uniqueUrls = [...new Set(allCandidates.flatMap(c => [c.url, c.wasm]))];
+      Promise.all(uniqueUrls.map(url =>
+        fetch(url, {method:'HEAD', cache:'no-cache'})
+          .then(r => [url, r.ok && !(r.headers.get('content-type')||'').includes('text/')])
+          .catch(() => [url, false])
+      )).then(results => {
+        const files = Object.fromEntries(results);
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(files)); } catch(e) {}
+        checkAndBuild(files);
+      });
+    }
   }
 
   _tryNextCandidate(idx) {
