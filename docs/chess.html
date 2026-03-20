@@ -52,7 +52,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport — Chess Online v1.009</title>
+<title>RadioSport — Chess Online v1.010</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -682,7 +682,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport
-    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.009</span></span>
+    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.010</span></span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -1467,7 +1467,7 @@ class Engine {
         console.info('[Engine]', cand.url, 'not found:', xhr.status);
         next(); return;
       }
-      const shim = \`
+      const shim = `
 if(typeof SharedArrayBuffer==='undefined')self.SharedArrayBuffer=ArrayBuffer;
 if(typeof Atomics==='undefined')self.Atomics={
   wait:()=>'ok',notify:()=>0,load:(a,i)=>a[i],store:(a,i,v)=>{a[i]=v;return v;},
@@ -1480,8 +1480,8 @@ if(typeof Atomics==='undefined')self.Atomics={
 self.TOTAL_MEMORY=512*1024*1024;self.TOTAL_STACK=64*1024*1024;
 var Module=self.Module||{};self.Module=Module;
 Module.TOTAL_MEMORY=512*1024*1024;Module.TOTAL_STACK=64*1024*1024;
-Module.locateFile=function(p){return(p.endsWith('.wasm')||p.endsWith('.wasm.br'))?\${wasmAbsUrl}:p;};
-\`;
+Module.locateFile=function(p){return(p.endsWith('.wasm')||p.endsWith('.wasm.br'))?${wasmAbsUrl}:p;};
+`;
       const blobUrl = URL.createObjectURL(
         new Blob([shim+'\n'+xhr.responseText],{type:'application/javascript'})
       );
