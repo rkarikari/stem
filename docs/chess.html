@@ -52,7 +52,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.025</title>
+<title>RadioSport Chess v1.026</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -709,7 +709,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport Chess
-    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.025</span>
+    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.026</span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -813,35 +813,6 @@
     </div>
 
     <!-- Stockfish setup panel -->
-    <div class="panel-card" id="sf-loader-panel">
-      <div class="panel-title">Load Engine</div>
-      <div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
-        <label style="
-          display:flex;align-items:center;justify-content:center;gap:6px;
-          padding:10px;cursor:pointer;border-radius:2px;
-          background:rgba(201,168,76,.1);border:1px solid var(--gold-dim);
-          color:var(--gold);font-size:11px;letter-spacing:1px;
-          text-transform:uppercase;transition:background .2s;
-        " onmouseover="this.style.background='rgba(201,168,76,.2)'"
-           onmouseout="this.style.background='rgba(201,168,76,.1)'">
-          ⬆ Select stockfish.js
-          <input type="file" accept=".js" style="display:none" onchange="loadEngineFile(this)">
-        </label>
-        <div id="sf-load-status" style="font-size:10px;color:var(--ivory-dim);text-align:center;min-height:14px;"></div>
-      </div>
-    </div>
-
-    <!-- Engine eval -->
-    <div class="panel-card" id="eval-panel">
-      <div class="panel-title">Analysis</div>
-      <div class="eval-container">
-        <div class="eval-label">Position Eval</div>
-        <div class="eval-bar-wrap"><div class="eval-bar" id="eval-bar"></div></div>
-        <div class="eval-score" id="eval-score">0.00</div>
-        <div class="eval-depth" id="eval-depth">depth —</div>
-        <div class="best-move" id="best-move-display"></div>
-      </div>
-    </div>
 
   </div>
 
@@ -926,6 +897,23 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic" id="opening-name">Starting Position</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px" id="opening-eco"></div>
+      </div>
+    </div>
+    <div class="panel-card" id="sf-loader-panel">
+      <div class="panel-title">Load Engine</div>
+      <div style="padding:10px 12px;">
+        <label style="
+          display:flex;align-items:center;justify-content:center;gap:6px;
+          padding:9px 10px;cursor:pointer;border-radius:2px;
+          background:rgba(201,168,76,.1);border:1px solid var(--gold-dim);
+          color:var(--gold);font-size:11px;letter-spacing:1px;
+          text-transform:uppercase;transition:background .2s;
+        " onmouseover="this.style.background='rgba(201,168,76,.2)'"
+           onmouseout="this.style.background='rgba(201,168,76,.1)'">
+          ⬆ Select stockfish.js
+          <input type="file" accept=".js" style="display:none" onchange="loadEngineFile(this)">
+        </label>
+        <div id="sf-load-status" style="font-size:10px;color:var(--ivory-dim);text-align:center;min-height:12px;margin-top:6px;"></div>
       </div>
     </div>
     <div class="panel-card">
@@ -2555,15 +2543,7 @@ function triggerEngine() {
   });
 }
 
-function updateEval(score, depth) {
-  const normalized = Math.max(-1000, Math.min(1000, score||0));
-  const pct = 50 + (normalized/20);
-  document.getElementById('eval-bar').style.width = Math.max(5,Math.min(95,pct))+'%';
-  const disp = Math.abs(score)>9000 ? (score>0?'M':'−M')+Math.ceil((20000-Math.abs(score))/2)
-    : (score>=0?'+':'')+((score||0)/100).toFixed(2);
-  document.getElementById('eval-score').textContent=disp;
-  document.getElementById('eval-depth').textContent='depth '+(depth||'—');
-}
+function updateEval(score, depth) { /* eval panel removed */ }
 
 // ─── Promotion ───
 function showPromotion(from, to, mv) {
@@ -2849,7 +2829,6 @@ function switchMode(m) {
   const leftPanel=document.getElementById('side-panel-left');
   const rightPanel=document.getElementById('right-panel');
   const enginePanel=document.getElementById('engine-panel');
-  const evalPanel=document.getElementById('eval-panel');
 
   if(m==='multi') {
     mpSection.classList.add('visible');
@@ -2862,7 +2841,6 @@ function switchMode(m) {
     leftPanel.style.display='';
     rightPanel.style.display='';
     if(enginePanel) enginePanel.style.display=m==='solo'?'':'none';
-    if(evalPanel) evalPanel.style.display=m==='solo'?'':'none';
     const bn=document.getElementById('black-name');
     const br=document.getElementById('black-rating');
     if(m==='local') {
