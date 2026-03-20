@@ -53,7 +53,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.040</title>
+<title>RadioSport Chess v1.041</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -730,7 +730,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport Chess
-    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.040</span>
+    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.041</span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -854,9 +854,9 @@
         <div class="setting-row">
           <div class="setting-label">Piece Style</div>
           <select id="piece-style" onchange="setPieceStyle(this.value)">
-            <option value="2d">2D Classic</option>
+            <option value="2d" selected>2D Classic</option>
             <option value="3d">3D Modern</option>
-            <option value="3dt" selected>3D Traditional</option>
+            <option value="3dt">3D Traditional</option>
           </select>
         </div>
         <div class="setting-row">
@@ -1037,7 +1037,7 @@ const PIECE_COLOR = {
 
 // ── 3D SVG Pieces ────────────────────────────────────────────────────────────
 // Staunton-style SVG pieces with gradient lighting for realistic 3D appearance
-let pieceStyle = '3dt'; // '2d' | '3d' | '3dt'
+let pieceStyle = '2d'; // '2d' | '3d' | '3dt'
 
 function setPieceStyle(style) {
   pieceStyle = style;
@@ -2470,7 +2470,7 @@ function init() {
   game = new Chess();
   engine = new Engine();
   // Apply default piece style
-  document.getElementById('board-rows-container')?.classList.toggle('mode-3d', pieceStyle==='3d'||pieceStyle==='3dt');
+  document.getElementById('board-rows-container')?.classList.toggle('mode-3d', false);
   renderBoard();
   updateAll();
   startTimers();
