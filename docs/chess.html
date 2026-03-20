@@ -53,7 +53,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.043</title>
+<title>RadioSport Chess v1.045</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -988,7 +988,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.043</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.045</div>
       </div>
     </div>
 
@@ -1930,9 +1930,31 @@ class Engine {
       };
 
       if (wasmIsExternal) {
-        // External wasm URL (e.g. GitHub release) — skip HEAD check, just launch.
-        // The worker's internal fetch() can retrieve it cross-origin without preflight.
-        launchWorker();
+        // GitHub release URLs redirect to S3 which blocks worker fetch().
+        // Fix: fetch WASM binary in main thread (redirects work), create a blob:
+        // URL from it, inject that blob URL via Module.locateFile so the worker
+        // uses the pre-fetched binary instead of trying to fetch it cross-origin.
+        console.info('[Engine] Fetching external WASM from main thread:', cand.wasm);
+        this._setEngineLabel('Downloading ' + cand.label + '…');
+
+        Promise.all([
+          fetch(cand.wasm).then(r => { if(!r.ok) throw new Error('WASM '+r.status); return r.arrayBuffer(); }),
+          fetch(cand.url).then(r  => { if(!r.ok) throw new Error('JS '+r.status);   return r.text(); })
+        ])
+        .then(([wasmBuf, jsSrc]) => {
+          if (this._engineDone) return;
+          const mb = (wasmBuf.byteLength/1024/1024).toFixed(1);
+          console.info('[Engine] Fetched', mb+'MB WASM + JS — creating blob worker');
+          // Blob URL for the WASM binary — blob: URLs are accessible from workers
+          const wasmBlobUrl = URL.createObjectURL(new Blob([wasmBuf], {type:'application/wasm'}));
+          const wasmJson    = JSON.stringify(wasmBlobUrl);
+          const shim = 'var Module=Module||{};Module.locateFile=function(p){return(p.endsWith(".wasm")||p.endsWith(".wasm.br"))?'+wasmJson+':p;};';
+          const workerBlobUrl = URL.createObjectURL(new Blob([shim+'\n'+jsSrc], {type:'application/javascript'}));
+          this._setEngineLabel('Loading ' + cand.label + '…');
+          this._probeWorker(workerBlobUrl, cand.url, true, cand.label, 120000);
+        })
+        .catch(err => { console.warn('[Engine] External fetch failed:', err.message); next(); });
+        return;
       } else {
         // Same-origin wasm — do HEAD check to catch missing or LFS pointer files.
         fetch(wasmCheckUrl, {method:'HEAD', cache:'no-cache'})
