@@ -53,7 +53,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.048</title>
+<title>RadioSport Chess v1.049</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -988,7 +988,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.048</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.049</div>
       </div>
     </div>
 
@@ -1868,9 +1868,10 @@ class Engine {
 
     // Pre-check which JS files actually exist (single HEAD per JS file, quiet)
     const checks = allCandidates.map(cand =>
-      fetch(cand.url, {method:'HEAD', cache:'no-cache'})
-        .then(r => r.ok ? cand : null)
-        .catch(() => null)
+      Promise.all([
+        fetch(cand.url,  {method:'HEAD', cache:'no-cache'}).then(r => r.ok).catch(() => false),
+        fetch(cand.wasm, {method:'HEAD', cache:'no-cache'}).then(r => r.ok && !(r.headers.get('content-type')||'').includes('text/')).catch(() => false),
+      ]).then(([jsOk, wasmOk]) => (jsOk && wasmOk) ? cand : null)
     );
 
     Promise.all(checks).then(results => {
