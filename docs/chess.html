@@ -53,7 +53,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.032</title>
+<title>RadioSport Chess v1.034</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -595,6 +595,20 @@
   }
   .mp-btn:hover { background: rgba(201,168,76,0.22); }
 
+  .room-list { display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto; }
+  .room-list::-webkit-scrollbar { width:3px; }
+  .room-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .room-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 12px; border:1px solid var(--border); border-radius:2px;
+    background:var(--panel); cursor:pointer; transition:all .2s;
+  }
+  .room-item:hover { border-color:var(--gold-dim); background:rgba(201,168,76,.08); }
+  .room-item-code { font-family:'Playfair Display',serif; font-size:16px; color:var(--gold); letter-spacing:3px; font-weight:700; }
+  .room-item-info { font-size:10px; color:var(--ivory-dim); margin-top:2px; }
+  .room-item-btn { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); border:1px solid var(--gold-dim); background:rgba(201,168,76,.1); padding:5px 10px; border-radius:2px; cursor:pointer; transition:background .2s; }
+  .room-item-btn:hover { background:rgba(201,168,76,.2); }
+  .room-scanning { font-size:10px; color:var(--ivory-dim); text-align:center; padding:8px; letter-spacing:1px; }
   .room-code-display {
     background: var(--panel);
     border: 1px solid var(--gold-dim);
@@ -710,7 +724,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport Chess
-    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.032</span>
+    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.034</span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -888,9 +902,16 @@
     </div>
     <div class="mp-card">
       <div class="mp-title">⚔ Join Game</div>
-      <div class="mp-subtitle">Enter the room code to join</div>
-      <input class="mp-input" type="text" id="join-code-input" placeholder="Enter 6-digit code" maxlength="6" style="text-align:center; letter-spacing:4px; font-size:18px; text-transform:uppercase">
-      <input class="mp-input" type="text" id="join-name-input" placeholder="Your username">
+      <div class="mp-subtitle">Available rooms</div>
+      <div id="room-list" class="room-list">
+        <div class="room-scanning" id="room-scan-msg">⟳ Scanning for open rooms…</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+        <span style="font-size:10px;color:var(--ivory-dim);letter-spacing:1px;">OR ENTER CODE</span>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+      <input class="mp-input" type="text" id="join-code-input" placeholder="Enter room code" maxlength="6" style="text-align:center; letter-spacing:4px; font-size:18px; text-transform:uppercase; margin-top:10px;">
       <button class="mp-btn" onclick="joinRoom()">Join Game</button>
     </div>
     <div class="mp-card">
@@ -2877,7 +2898,10 @@ function switchMode(m) {
     leftPanel.style.display='none';
     rightPanel.style.display='none';
     document.getElementById('online-info-panel').style.display='none';
+    _startLobbyPoll();
+    _lobbyRefreshList();
   } else {
+    _stopLobbyPoll();
     mpSection.classList.remove('visible');
     boardArea.style.display='';
     leftPanel.style.display='';
@@ -2937,6 +2961,9 @@ function _mpWireConn(conn, isHost) {
     const myChip   = myColor==='w' ? '#f0d9b5' : '#1a1008';
     const oppChip  = oppColor==='w' ? '#f0d9b5' : '#1a1008';
     if (isHost) {
+      // Room is now taken — remove from lobby
+      if (multiPeer && multiPeer._lobbyInterval) clearInterval(multiPeer._lobbyInterval);
+      _lobbyAnnounce(multiRoomCode, multiPlayerColor, 'closed');
       _mpSetP1('Host · Connected', 'var(--green)', myChip);
       _mpSetP2('Opponent', 'Connected · ' + (oppColor==='w'?'White':'Black'), 'var(--green)', oppChip);
       setStatus('Opponent connected — your move!', 'normal');
@@ -3019,6 +3046,218 @@ function _mpDestroyPeer() {
   if (multiPeer) { try { multiPeer.destroy(); } catch(e){} multiPeer = null; }
 }
 
+// ─── Lobby: cross-device room discovery via PeerJS relay + BroadcastChannel ──
+//
+// Architecture:
+//   - A "lobby peer" with a well-known daily ID acts as a bulletin board.
+//   - Hosts connect to the lobby and register their room.
+//   - Joiners connect to the lobby and receive the live room list.
+//   - The first peer to register that ID becomes the lobby host and relays for others.
+//   - BroadcastChannel handles same-browser tab discovery instantly.
+//   - Both mechanisms update the same room list UI.
+//
+const _lobbyRooms   = {};  // code → {color, ts, label}
+const _lobbyLocal   = new BroadcastChannel('RS-lobby'); // same-browser
+let   _lobbyPeer    = null;  // our lobby PeerJS connection
+let   _lobbyHostConn = null; // connection to lobby host peer
+let   _lobbyClients  = [];   // if we ARE the lobby host, connected joiner peers
+let   _lobbyIsHost   = false;
+let   _lobbyPollTimer = null;
+
+// Daily-rotating lobby ID — anyone on the same day joins the same lobby
+function _lobbyId() {
+  const d = new Date();
+  return 'RS-LBY-' + d.getFullYear() +
+    String(d.getMonth()+1).padStart(2,'0') +
+    String(d.getDate()).padStart(2,'0');
+}
+
+function _lobbyAddRoom(code, color, label) {
+  _lobbyRooms[code] = {color, label: label||'', ts: Date.now()};
+  _lobbyRefreshList();
+}
+function _lobbyRemoveRoom(code) {
+  delete _lobbyRooms[code];
+  _lobbyRefreshList();
+}
+
+function _lobbyRefreshList() {
+  const list = document.getElementById('room-list');
+  const msg  = document.getElementById('room-scan-msg');
+  if (!list) return;
+  const now = Date.now();
+  Object.keys(_lobbyRooms).forEach(k => {
+    if (now - _lobbyRooms[k].ts > 15000) delete _lobbyRooms[k];
+  });
+  Array.from(list.querySelectorAll('.room-item')).forEach(el => el.remove());
+  const rooms = Object.entries(_lobbyRooms);
+  if (rooms.length === 0) {
+    if (msg) { msg.style.display=''; msg.textContent='No open rooms found. Create one or enter a code.'; }
+    return;
+  }
+  if (msg) msg.style.display = 'none';
+  rooms.forEach(([code, info]) => {
+    const item = document.createElement('div');
+    item.className = 'room-item';
+    item.innerHTML =
+      '<div>' +
+        '<div class="room-item-code">' + code + '</div>' +
+        '<div class="room-item-info">Waiting · ' + (info.color==='w'?'Host is White':'Host is Black') + '</div>' +
+      '</div>' +
+      '<button class="room-item-btn" onclick="quickJoin('' + code + '')">Connect</button>';
+    list.appendChild(item);
+  });
+}
+
+function quickJoin(code) {
+  document.getElementById('join-code-input').value = code;
+  joinRoom();
+}
+
+// ── Lobby peer message router ─────────────────────────────────────────────────
+function _lobbyHandleMsg(data, fromConn) {
+  if (!data || !data.type) return;
+  if (data.type === 'room_open') {
+    _lobbyAddRoom(data.code, data.color, data.label);
+    // If we are the lobby host, relay to all other clients
+    if (_lobbyIsHost) {
+      _lobbyClients.forEach(c => { try { if(c.open) c.send(data); } catch(e){} });
+    }
+  } else if (data.type === 'room_closed') {
+    _lobbyRemoveRoom(data.code);
+    if (_lobbyIsHost) {
+      _lobbyClients.forEach(c => { try { if(c.open) c.send(data); } catch(e){} });
+    }
+  } else if (data.type === 'get_rooms') {
+    // Send current room list to the requester
+    if (fromConn && fromConn.open) {
+      fromConn.send({type:'room_list', rooms: _lobbyRooms});
+    }
+  } else if (data.type === 'room_list') {
+    // Received full room list from lobby host
+    Object.entries(data.rooms||{}).forEach(([code, info]) => {
+      _lobbyRooms[code] = info;
+    });
+    _lobbyRefreshList();
+  } else if (data.type === 'heartbeat') {
+    // Update room timestamp
+    if (data.code && _lobbyRooms[data.code]) {
+      _lobbyRooms[data.code].ts = Date.now();
+    }
+    if (_lobbyIsHost) {
+      _lobbyClients.forEach(c => { try { if(c.open) c.send(data); } catch(e){} });
+    }
+  }
+}
+
+// ── Connect to / become the lobby ────────────────────────────────────────────
+function _lobbyConnect() {
+  if (_lobbyPeer) return; // already connecting/connected
+  const lid = _lobbyId();
+  _lobbyPeer = new Peer(lid);
+
+  _lobbyPeer.on('open', () => {
+    // We created the lobby — become the host
+    _lobbyIsHost = true;
+    console.info('[Lobby] Created lobby as host:', lid);
+    if (document.getElementById('room-scan-msg'))
+      document.getElementById('room-scan-msg').textContent = 'Lobby active — waiting for rooms…';
+  });
+
+  _lobbyPeer.on('connection', (conn) => {
+    // A new client connected to our lobby
+    conn.on('open', () => {
+      _lobbyClients.push(conn);
+      // Send them the current room list
+      conn.send({type:'room_list', rooms: _lobbyRooms});
+    });
+    conn.on('data', (data) => _lobbyHandleMsg(data, conn));
+    conn.on('close', () => {
+      _lobbyClients = _lobbyClients.filter(c => c !== conn);
+    });
+  });
+
+  _lobbyPeer.on('error', (err) => {
+    const msg = err.message || String(err);
+    if (msg.includes('unavailable') || msg.includes('taken') || msg.includes('ID')) {
+      // Lobby already exists — connect to it as a client
+      _lobbyPeer.destroy(); _lobbyPeer = null;
+      _lobbyJoinAsClient(lid);
+    }
+  });
+}
+
+function _lobbyJoinAsClient(lid) {
+  // Use a temporary peer to connect to the lobby host
+  const tmpPeer = new Peer();
+  tmpPeer.on('open', () => {
+    const conn = tmpPeer.connect(lid, {reliable:true});
+    _lobbyHostConn = conn;
+    conn.on('open', () => {
+      console.info('[Lobby] Connected to lobby host:', lid);
+      conn.send({type:'get_rooms'});
+      if (document.getElementById('room-scan-msg'))
+        document.getElementById('room-scan-msg').textContent = 'Connected to lobby…';
+    });
+    conn.on('data', (data) => _lobbyHandleMsg(data, null));
+    conn.on('close', () => {
+      _lobbyHostConn = null;
+      // Lobby host went away — try again
+      setTimeout(() => { tmpPeer.destroy(); _lobbyPeer = null; _lobbyConnect(); }, 2000);
+    });
+  });
+  tmpPeer.on('error', () => {
+    setTimeout(() => { tmpPeer.destroy(); _lobbyPeer = null; _lobbyConnect(); }, 3000);
+  });
+}
+
+// ── Announce room to lobby (PeerJS + BroadcastChannel) ───────────────────────
+function _lobbyAnnounce(code, color, status) {
+  const msg = {type: status==='open'?'room_open':'room_closed', code, color, ts: Date.now()};
+  // BroadcastChannel: same-browser tabs
+  _lobbyLocal.postMessage(msg);
+  // PeerJS lobby: cross-device
+  if (_lobbyIsHost) {
+    _lobbyHandleMsg(msg, null); // process locally and relay
+  } else if (_lobbyHostConn && _lobbyHostConn.open) {
+    _lobbyHostConn.send(msg);
+  }
+}
+
+// ── Heartbeat: keep room alive in lobby ──────────────────────────────────────
+function _lobbyHeartbeat(code, color) {
+  const msg = {type:'heartbeat', code, color, ts: Date.now()};
+  _lobbyLocal.postMessage(msg);
+  if (_lobbyIsHost) _lobbyHandleMsg(msg, null);
+  else if (_lobbyHostConn && _lobbyHostConn.open) _lobbyHostConn.send(msg);
+}
+
+// ── BroadcastChannel (same browser) ──────────────────────────────────────────
+_lobbyLocal.onmessage = (e) => {
+  const d = e.data;
+  if (!d) return;
+  if (d.type === 'room_open')    { _lobbyAddRoom(d.code, d.color, d.label); }
+  if (d.type === 'room_closed')  { _lobbyRemoveRoom(d.code); }
+  if (d.type === 'heartbeat' && _lobbyRooms[d.code]) { _lobbyRooms[d.code].ts = Date.now(); }
+};
+
+function _startLobbyPoll() {
+  _stopLobbyPoll();
+  _lobbyConnect();
+  _lobbyPollTimer = setInterval(() => {
+    _lobbyRefreshList();
+    // Re-request room list periodically in case we missed updates
+    if (_lobbyHostConn && _lobbyHostConn.open) {
+      _lobbyHostConn.send({type:'get_rooms'});
+    }
+  }, 4000);
+}
+function _stopLobbyPoll() {
+  if (_lobbyPollTimer) { clearInterval(_lobbyPollTimer); _lobbyPollTimer = null; }
+  // Disconnect lobby client connection (but leave lobby host running — others may use it)
+  if (_lobbyHostConn) { try { _lobbyHostConn.close(); } catch(e){} _lobbyHostConn = null; }
+}
+
 function createRoom() {
   _mpDestroyPeer();
   const colorChoice = document.getElementById('mp-color-select')?.value || 'random';
@@ -3042,6 +3281,13 @@ function createRoom() {
              multiPlayerColor==='w' ? '#f0d9b5' : '#1a1008');
     _mpSetP2('Opponent', 'Not connected', 'var(--border)', '#333');
     setStatus('Waiting for opponent to join…', 'gold');
+    // Announce room via BroadcastChannel (same-browser discovery)
+    _lobbyAnnounce(code, multiPlayerColor, 'open');
+    // Heartbeat every 4s while waiting so room stays alive in lobby
+    multiPeer._lobbyInterval = setInterval(() => {
+      if (!multiConn) _lobbyHeartbeat(code, multiPlayerColor);
+      else { clearInterval(multiPeer._lobbyInterval); }
+    }, 4000);
   });
 
   multiPeer.on('connection', (conn) => {
