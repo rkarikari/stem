@@ -53,7 +53,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.039</title>
+<title>RadioSport Chess v1.040</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -730,7 +730,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport Chess
-    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.039</span>
+    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.040</span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -1124,59 +1124,40 @@ function makeTraditionalSVG(type, color) {
     <rect x="35" y="22" width="2"  height="6"  rx="0" fill="${p.dark}"/>
     <ellipse cx="32" cy="38" rx="8" ry="2" fill="${p.hi}" opacity="${W?'.25':'.08'}"/>`;
 
-  } else if (type === 'N') { // Knight — proper horse head profile
+  } else if (type === 'N') { // Knight — Staunton horse head profile
     body = base + `
-    <!-- Neck base connecting to platform -->
-    <path d="M24 50 Q23 46 23 42 Q23 38 24 35 Q22 31 21 27 Q20 22 23 18 Q26 13 32 12 Q38 11 42 15 Q45 19 44 24 Q43 29 40 31 Q44 34 44 38 Q44 42 41 44 Q40.5 47 40 50 Z"
+    <ellipse cx="32" cy="50" rx="11" ry="3" fill="url(#base${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <path d="M24 50 Q23 47 23 44 Q23 41 25 39 Q27 37 29 36 Q27 33 26 29 Q25 25 25 21 Q25 17 28 14 Q31 11 35 11 Q39 11 42 14 Q44 16 44 20 Q44 24 41 27 Q39 29 37 30 Q40 32 41 35 Q42 38 42 42 Q42 46 40 49 Q39 50 38 50 Z"
           fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.8" filter="url(#fT${id})"/>
-    <!-- Forehead highlight sweep -->
-    <path d="M26 18 Q29 13.5 34 12.5 Q38.5 12 42 15.5 Q38.5 14 34.5 14 Q30 14 27 17 Z"
+    <path d="M25 25 Q22 24 20 22 Q18 20 19 17 Q20 15 23 14 Q25 13 27 14 Q25 16 25 19 Q25 22 26 25 Z"
+          fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.7"/>
+    <path d="M28 14 Q32 11.5 36 11.5 Q39.5 11.5 42 14 Q39 12.5 35.5 12.5 Q32 12.5 29.5 14.5 Z"
           fill="${p.hi}" opacity="${W?'.4':'.15'}"/>
-    <!-- Mane -->
-    <path d="M23 42 Q21.5 38 21.5 33 Q21.5 28 24 24 Q22.5 28 22.5 33 Q22.5 38 24.5 43 Z"
-          fill="${p.dark}" opacity="0.55"/>
-    <!-- Nose/jaw area definition -->
-    <path d="M22 28 Q24 25 27.5 26 Q26 30 23.5 31 Z"
-          fill="${p.dark}" opacity="0.55"/>
-    <!-- Ear — pointed -->
-    <path d="M37.5 11.5 Q40 9 42.5 11.5 Q40.5 12 38.5 13.5 Z"
-          fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.6"/>
-    <!-- Eye -->
-    <circle cx="29.5" cy="19.5" r="2.8" fill="${p.rim}"/>
-    <circle cx="30.2" cy="18.7" r="1.3" fill="${p.hi}" opacity="0.9"/>
-    <circle cx="30.5" cy="18.5" r="0.5" fill="${p.rim}"/>
-    <!-- Nostril -->
-    <ellipse cx="24.5" cy="31.5" rx="1.5" ry="1" fill="${p.dark}" opacity="0.7" transform="rotate(-15 24.5 31.5)"/>
-    <!-- Mouth line -->
-    <path d="M23 28 Q25.5 26 28.5 27" fill="none" stroke="${p.rim}" stroke-width="1.3" stroke-linecap="round"/>
-    <!-- Bridle strap -->
-    <path d="M25 25 Q27 23 30 24" fill="none" stroke="${p.rim}" stroke-width="0.8" opacity="0.5"/>
-    <!-- Neck sheen -->
-    <ellipse cx="39.5" cy="19" rx="3" ry="2" fill="${p.hi}" opacity="${W?'.35':'.12'}" transform="rotate(-25 39.5 19)"/>`;
+    <ellipse cx="21" cy="21" rx="1.8" ry="1.2" fill="${p.dark}" opacity="0.7" transform="rotate(15 21 21)"/>
+    <path d="M38 11 Q40 7 42 9 Q41 10 39.5 12 Z" fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <path d="M38 30 Q40 27 41.5 23 Q42 19 41 15 Q42 19 42 23 Q42 27 40 32 Z" fill="${p.dark}" opacity="0.4"/>
+    <path d="M19.5 20 Q21 18.5 23.5 19" fill="none" stroke="${p.rim}" stroke-width="1.3" stroke-linecap="round"/>
+    <circle cx="28" cy="18" r="3" fill="${p.rim}"/>
+    <circle cx="28.8" cy="17.2" r="1.4" fill="${p.hi}" opacity="${W?'.9':'.4'}"/>
+    <circle cx="29.2" cy="17" r="0.5" fill="${p.rim}"/>
+    <path d="M24 22 Q26 20 28.5 21" fill="none" stroke="${p.rim}" stroke-width="0.9" opacity="0.55" stroke-linecap="round"/>`;
 
-  } else if (type === 'B') { // Bishop — classic Staunton mitre shape
+  } else if (type === 'B') { // Bishop — tall mitre with collar ring and cross
     body = base + `
-    <!-- Wide lower body -->
-    <path d="M22 50 Q20.5 43 21 38 Q21.5 33 24 29 Q27 26 32 25 Q37 26 40 29 Q42.5 33 43 38 Q43.5 43 42 50 Z"
+    <ellipse cx="32" cy="50" rx="11" ry="3" fill="url(#base${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <path d="M22 50 Q21 44 21.5 40 Q22 36 25 33 Q28 30 32 29 Q36 30 39 33 Q42 36 42.5 40 Q43 44 42 50 Z"
           fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.6" filter="url(#fT${id})"/>
-    <!-- Collar ring — distinctive bishop feature -->
-    <ellipse cx="32" cy="38" rx="9.5" ry="3" fill="${p.mid}" stroke="${p.rim}" stroke-width="0.8" opacity="0.85"/>
-    <ellipse cx="32" cy="37.5" rx="9.5" ry="1.5" fill="${p.hi}" opacity="${W?'.2':'.08'}"/>
-    <!-- Tall tapering mitre — wide at collar, pointed at top -->
-    <path d="M26 37 Q25 30 26.5 23 Q28 17 30 14 Q31 12 32 11.5 Q33 12 34 14 Q36 17 37.5 23 Q39 30 38 37 Z"
-          fill="url(#lT${id})" stroke="${p.rim}" stroke-width="0.6" filter="url(#fT${id})"/>
-    <!-- Mitre left-side highlight -->
-    <path d="M27.5 37 Q27 30 28 23 Q29 17 31 14" fill="none"
-          stroke="${p.hi}" stroke-width="1.5" opacity="${W?'.45':'.18'}" stroke-linecap="round"/>
-    <!-- Mitre split line (the gap at top of mitre) -->
-    <line x1="32" y1="11.5" x2="32" y2="18" stroke="${p.rim}" stroke-width="1" opacity="0.4"/>
-    <!-- Ball finial at tip of mitre -->
-    <circle cx="32" cy="10" r="4" fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.8" filter="url(#fT${id})"/>
-    <circle cx="30.5" cy="8.5" r="1.7" fill="${p.hi}" opacity="${W?'.8':'.35'}"/>
-    <!-- Gold cross -->
-    <line x1="32" y1="6.2" x2="32" y2="11.5" stroke="#c9a84c" stroke-width="2" stroke-linecap="round"/>
-    <line x1="29.5" y1="8.5" x2="34.5" y2="8.5" stroke="#c9a84c" stroke-width="2" stroke-linecap="round"/>
-    <circle cx="32" cy="8.5" r="1.1" fill="#e8c97a"/>`;
+    <ellipse cx="32" cy="35" rx="9" ry="3.5" fill="url(#lT${id})" stroke="${p.rim}" stroke-width="1"/>
+    <ellipse cx="32" cy="34" rx="9" ry="2" fill="${p.hi}" opacity="${W?'.35':'.12'}"/>
+    <path d="M27.5 35 Q26.5 28 27 22 Q27.5 17 30 13 Q31 11 32 10.5 Q33 11 34 13 Q36.5 17 37 22 Q37.5 28 36.5 35 Z"
+          fill="url(#lTv${id})" stroke="${p.rim}" stroke-width="0.6" filter="url(#fT${id})"/>
+    <path d="M29.5 35 Q29 28 29.5 22 Q30 17 32 12" fill="none"
+          stroke="${p.hi}" stroke-width="1.8" opacity="${W?'.5':'.18'}" stroke-linecap="round"/>
+    <circle cx="32" cy="9" r="4.5" fill="url(#rT${id})" stroke="${p.rim}" stroke-width="0.8" filter="url(#fT${id})"/>
+    <circle cx="30.5" cy="7.5" r="1.8" fill="${p.hi}" opacity="${W?'.85':'.35'}"/>
+    <line x1="32" y1="5.2" x2="32" y2="10.5" stroke="#c9a84c" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="29.5" y1="7.8" x2="34.5" y2="7.8" stroke="#c9a84c" stroke-width="2.2" stroke-linecap="round"/>
+    <circle cx="32" cy="7.8" r="1.2" fill="#e8c97a"/>`;
 
   } else if (type === 'Q') { // Queen — crown with orbs
     body = base + `
@@ -1319,54 +1300,39 @@ function makePieceSVG(type, color) {
   } else if (type === 'N') {
     body = `
     ${platform}
-    <ellipse cx="32" cy="50" rx="11" ry="3.2" fill="url(#base${id})" stroke="${p.rim}" stroke-width="0.5"/>
-    <!-- Neck/body -->
-    <path d="M24 50 Q23 46 23 42 Q23 38 25 35 Q27 32 26 28 Q25 24 27 21 Q29 17 33 15 Q38 13 42 16 Q45 19 44 24 Q43 28 40 30 Q44 32 44 36 Q44 40 41 42 Q40 46 40 50 Z"
-          fill="url(#rg${id})" stroke="${p.rim}" stroke-width="0.7" filter="url(#sh${id})"/>
-    <!-- Mane on back of neck -->
-    <path d="M24 42 Q22 38 22 33 Q22 28 25 24 Q23 28 23.5 33 Q24 38 26 42 Z"
-          fill="${p.dark}" opacity="0.5"/>
-    <!-- Forehead/nose bridge highlight -->
-    <path d="M27 21 Q30 17 34 15.5 Q38 14 41.5 16.5 Q38.5 15 34.5 15.5 Q30.5 16 28 19 Z"
-          fill="${p.hi}" opacity="${W?'0.45':'0.18'}"/>
-    <!-- Nostril area -->
-    <path d="M25 34 Q27 31 30 32 Q29 35.5 26.5 36.5 Z"
-          fill="${p.dark}" opacity="0.6"/>
-    <!-- Ear -->
-    <path d="M38 13 Q41 11 43 13 Q41 13.5 39.5 15 Z"
-          fill="url(#rg${id})" stroke="${p.rim}" stroke-width="0.5"/>
-    <!-- Eye -->
-    <circle cx="29" cy="21" r="2.5" fill="${p.rim}"/>
-    <circle cx="29.5" cy="20.3" r="1.1" fill="${p.hi}" opacity="0.9"/>
-    <!-- Mouth line -->
-    <path d="M25 30 Q27 28 29.5 29" fill="none" stroke="${p.rim}" stroke-width="1.2" stroke-linecap="round"/>
-    <!-- Bridle/cheek detail -->
-    <path d="M26 26 Q27.5 24 30 25" fill="none" stroke="${p.rim}" stroke-width="0.7" opacity="0.6"/>
-    <!-- Neck highlight -->
-    <ellipse cx="39" cy="18" rx="3.5" ry="2" fill="${p.hi}" opacity="${W?'0.3':'0.12'}" transform="rotate(-20 39 18)"/>`;
+    <ellipse cx="32" cy="50" rx="11" ry="3" fill="url(#base${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <path d="M24 50 Q23 47 23 44 Q23 41 25 39 Q27 37 29 36 Q27 33 26 29 Q25 25 25 21 Q25 17 28 14 Q31 11 35 11 Q39 11 42 14 Q44 16 44 20 Q44 24 41 27 Q39 29 37 30 Q40 32 41 35 Q42 38 42 42 Q42 46 40 49 Q39 50 38 50 Z"
+          fill="url(#rg${id})" stroke="${p.rim}" stroke-width="0.8" filter="url(#sh${id})"/>
+    <path d="M25 25 Q22 24 20 22 Q18 20 19 17 Q20 15 23 14 Q25 13 27 14 Q25 16 25 19 Q25 22 26 25 Z"
+          fill="url(#rg${id})" stroke="${p.rim}" stroke-width="0.7"/>
+    <path d="M28 14 Q32 11.5 36 11.5 Q39.5 11.5 42 14 Q39 12.5 35.5 12.5 Q32 12.5 29.5 14.5 Z"
+          fill="${p.hi}" opacity="${W?'0.5':'0.18'}"/>
+    <ellipse cx="21" cy="21" rx="1.8" ry="1.2" fill="${p.dark}" opacity="0.7" transform="rotate(15 21 21)"/>
+    <path d="M38 11 Q40 7 42 9 Q41 10 39.5 12 Z" fill="url(#rg${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <path d="M38 30 Q40 27 41.5 23 Q42 19 41 15 Q42 19 42 23 Q42 27 40 32 Z" fill="${p.dark}" opacity="0.4"/>
+    <path d="M19.5 20 Q21 18.5 23.5 19" fill="none" stroke="${p.rim}" stroke-width="1.3" stroke-linecap="round"/>
+    <circle cx="28" cy="18" r="3" fill="${p.rim}"/>
+    <circle cx="28.8" cy="17.2" r="1.4" fill="${p.hi}" opacity="${W?'0.9':'0.4'}"/>
+    <circle cx="29.2" cy="17" r="0.5" fill="${p.rim}"/>
+    <path d="M24 22 Q26 20 28.5 21" fill="none" stroke="${p.rim}" stroke-width="0.9" opacity="0.55" stroke-linecap="round"/>`;
 
   } else if (type === 'B') {
     body = `
     ${platform}
-    <ellipse cx="32" cy="50" rx="11" ry="3.2" fill="url(#base${id})" stroke="${p.rim}" stroke-width="0.5"/>
-    <!-- Wide lower body -->
-    <path d="M23 50 Q21.5 44 22 39 Q22.5 34 25 31 Q28 28 32 27 Q36 28 39 31 Q41.5 34 42 39 Q42.5 44 41 50 Z"
+    <ellipse cx="32" cy="50" rx="11" ry="3" fill="url(#base${id})" stroke="${p.rim}" stroke-width="0.5"/>
+    <path d="M22 50 Q21 44 21.5 40 Q22 36 25 33 Q28 30 32 29 Q36 30 39 33 Q42 36 42.5 40 Q43 44 42 50 Z"
           fill="url(#rg${id})" stroke="${p.rim}" stroke-width="0.6" filter="url(#sh${id})"/>
-    <!-- Collar band — the classic bishop diagonal band -->
-    <path d="M24.5 39 Q32 36 39.5 39" fill="none" stroke="${p.rim}" stroke-width="2.5" opacity="0.35"/>
-    <ellipse cx="32" cy="39" rx="8" ry="2.5" fill="${p.mid}" stroke="${p.rim}" stroke-width="0.5" opacity="0.6"/>
-    <!-- Tall tapering mitre shaft -->
-    <path d="M27.5 37 Q26 30 27 22 Q28 16 32 12 Q36 16 37 22 Q38 30 36.5 37 Z"
+    <ellipse cx="32" cy="35" rx="9" ry="3.5" fill="url(#lg${id})" stroke="${p.rim}" stroke-width="1"/>
+    <ellipse cx="32" cy="34" rx="9" ry="2" fill="${p.hi}" opacity="${W?'0.35':'0.12'}"/>
+    <path d="M27.5 35 Q26.5 28 27 22 Q27.5 17 30 13 Q31 11 32 10.5 Q33 11 34 13 Q36.5 17 37 22 Q37.5 28 36.5 35 Z"
           fill="url(#lg${id})" stroke="${p.rim}" stroke-width="0.6" filter="url(#sh${id})"/>
-    <!-- Mitre highlight -->
-    <path d="M29 37 Q28 30 29 22 Q30 17 32 13.5" fill="none" stroke="${p.hi}" stroke-width="1.2" opacity="${W?'0.5':'0.2'}" stroke-linecap="round"/>
-    <!-- Ball finial at tip -->
-    <circle cx="32" cy="10.5" r="3.8" fill="url(#rg2${id})" stroke="${p.rim}" stroke-width="0.8"/>
-    <circle cx="30.8" cy="9.2" r="1.5" fill="${p.hi}" opacity="${W?'0.8':'0.35'}"/>
-    <!-- Gold cross on finial -->
-    <line x1="32" y1="7" x2="32" y2="11.5" stroke="#c9a84c" stroke-width="1.8" stroke-linecap="round"/>
-    <line x1="29.8" y1="9" x2="34.2" y2="9" stroke="#c9a84c" stroke-width="1.8" stroke-linecap="round"/>
-    <circle cx="32" cy="9" r="1" fill="#e8c97a"/>`;
+    <path d="M29.5 35 Q29 28 29.5 22 Q30 17 32 12" fill="none"
+          stroke="${p.hi}" stroke-width="1.8" opacity="${W?'0.5':'0.18'}" stroke-linecap="round"/>
+    <circle cx="32" cy="9" r="4.5" fill="url(#rg${id})" stroke="${p.rim}" stroke-width="0.8" filter="url(#sh${id})"/>
+    <circle cx="30.5" cy="7.5" r="1.8" fill="${p.hi}" opacity="${W?'0.85':'0.35'}"/>
+    <line x1="32" y1="5.2" x2="32" y2="10.5" stroke="#c9a84c" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="29.5" y1="7.8" x2="34.5" y2="7.8" stroke="#c9a84c" stroke-width="2.2" stroke-linecap="round"/>
+    <circle cx="32" cy="7.8" r="1.2" fill="#e8c97a"/>`;
 
   } else if (type === 'Q') {
     body = `
