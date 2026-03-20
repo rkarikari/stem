@@ -52,7 +52,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.026</title>
+<title>RadioSport Chess v1.027</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -709,7 +709,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport Chess
-    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.026</span>
+    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.027</span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -1825,12 +1825,17 @@ class Engine {
         .then(r => {
           const ct = r.headers.get('content-type') || '';
           if (!r.ok) {
-            console.warn('[Engine] WASM file missing:', wasmCheckUrl, r.status,
-              '— check that stockfish.wasm is committed to your repo at docs/stockfish.wasm');
+            console.warn('[Engine] WASM 404:', wasmCheckUrl);
             next(); return;
           }
-          if (ct.includes('text/html')) {
-            console.warn('[Engine] WASM URL returns HTML (likely a 404 page):', wasmCheckUrl);
+          // LFS pointer files are served as text/plain with 200 — reject them.
+          // Valid WASM must be application/wasm or application/octet-stream.
+          const isWasm = ct.includes('application/wasm') ||
+                         ct.includes('application/octet-stream') ||
+                         ct.includes('binary');
+          const isBad  = ct.includes('text/') || ct.includes('html');
+          if (isBad || (!isWasm && ct !== '')) {
+            console.warn('[Engine] WASM is not binary (got "' + ct + '") — likely a Git LFS pointer:', wasmCheckUrl);
             next(); return;
           }
           console.info('[Engine] canSAB=true → new Worker directly:', cand.url);
