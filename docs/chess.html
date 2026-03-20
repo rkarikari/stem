@@ -52,7 +52,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.023</title>
+<title>RadioSport Chess v1.025</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -709,7 +709,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport Chess
-    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.023</span>
+    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.025</span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -729,8 +729,8 @@
       <div class="player-card" id="black-player-card">
         <div class="player-avatar black-avatar" id="black-avatar">♛</div>
         <div class="player-info">
-          <div class="player-name" id="black-name">Stockfish 18</div>
-          <div class="player-rating" id="black-rating">Elo ~3500</div>
+          <div class="player-name" id="black-name">Engine</div>
+          <div class="player-rating" id="black-rating"></div>
         </div>
         <div class="player-time" id="black-time">10:00</div>
       </div>
@@ -1769,7 +1769,7 @@ class Engine {
     const canSAB  = this._canSAB;
 
     if (isLocal) {
-      this._setEngineLabel('Select stockfish file ↓');
+      this._setEngineLabel('');
       this.mode = 'js';
       this._initJSWorker();
       return;
@@ -1807,7 +1807,7 @@ class Engine {
     if (idx >= this._candidates.length) {
       this._engineDone = true;
       console.info('[Engine] No engine file found — using built-in JS engine');
-      this._setEngineLabel('JS Engine (built-in)');
+      this._setEngineLabel('JS Engine');
       this.mode = 'js';
       this._initJSWorker();
       return;
@@ -2029,7 +2029,7 @@ self.abort = function(reason) {
   _tryNext(urls, idx) {
     if (idx >= urls.length) {
       console.info('[Engine] Stockfish not found — using built-in JS engine');
-      this._setEngineLabel('JS Engine (built-in)');
+      this._setEngineLabel('JS Engine');
       this.mode = 'js';
       this._initJSWorker();
       return;
@@ -2763,8 +2763,9 @@ function newGame() {
   const bn=document.getElementById('black-name');
   const wn=document.getElementById('white-name');
   if(mode==='solo') {
-    if(playerColor==='w') { if(wn) wn.textContent='You'; if(bn) bn.textContent='Stockfish'; }
-    else { if(bn) bn.textContent='You'; if(wn) wn.textContent='Stockfish'; }
+    const en=(engine&&engine.engineName)?engine.engineName:'Engine';
+    if(playerColor==='w') { if(wn) wn.textContent='You'; if(bn) bn.textContent=en; }
+    else { if(bn) bn.textContent='You'; if(wn) wn.textContent=en; }
   }
 
   renderBoard();
@@ -2868,7 +2869,7 @@ function switchMode(m) {
       if(bn) bn.textContent='Player 2';
       if(br) br.textContent='Human Player';
     } else {
-      if(bn) bn.textContent=(engine && engine.engineName) ? engine.engineName : 'Stockfish 18';
+      if(bn) bn.textContent=(engine && engine.engineName) ? engine.engineName : 'Engine';
       if(br) br.textContent='Elo ~3500';
     }
     newGame();
