@@ -65,7 +65,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport — Chess Online v1.006</title>
+<title>RadioSport — Chess Online v1.007</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -695,7 +695,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport
-    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.006</span></span>
+    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.007</span></span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -1404,7 +1404,8 @@ class Engine {
   _initStockfish() {
     const isLocal = location.protocol === 'file:';
     const coi     = window.crossOriginIsolated === true;
-    const canSAB  = coi && typeof SharedArrayBuffer !== 'undefined';
+    this._canSAB  = coi && typeof SharedArrayBuffer !== 'undefined';
+    const canSAB  = this._canSAB;
 
     if (isLocal) {
       this._setEngineLabel('Select stockfish file ↓');
@@ -1464,6 +1465,7 @@ class Engine {
     //     The COI SW would intercept our fetch and potentially mangle it,
     //     so we use XMLHttpRequest instead (not intercepted by SW fetch handler).
 
+    const canSAB = this._canSAB;
     if (cand.needsSAB && !canSAB) {
       // Multi-thread build needs real SAB — skip silently
       console.info('[Engine] skipping', cand.label, '(no SharedArrayBuffer)');
