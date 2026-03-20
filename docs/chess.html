@@ -52,7 +52,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport — Chess Online v1.013</title>
+<title>RadioSport — Chess Online v1.015</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -682,7 +682,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport
-    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.013</span></span>
+    <span>© R.N.K ( 9G5AR ) · Online Chess <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.015</span></span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -782,14 +782,17 @@
       <div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
 
         <div style="font-size:10px;color:var(--ivory-dim);line-height:1.8;">
-          <strong style="color:var(--gold)">One-time setup</strong> for full Stockfish 18:<br>
-          1. Download engine files from:<br>
+          <strong style="color:var(--gold)">Engine Setup</strong><br><br>
+          <strong style="color:#e74c3c">⚠ Git LFS Warning:</strong><br>
+          <span style="color:#e74c3c;font-size:9px;">GitHub Pages cannot serve LFS files.<br>
+          stockfish.wasm must NOT be in LFS.</span><br><br>
+          <strong style="color:var(--gold-dim)">Fix LFS issue:</strong><br>
+          <code style="color:var(--gold);font-size:9px;line-height:2">
+          git lfs migrate export --include="*.wasm"<br>
+          git push --force</code><br><br>
+          <strong style="color:var(--gold-dim)">Or use lite build (&lt;50MB, no LFS):</strong><br>
           <a href="https://github.com/nmrugg/stockfish.js/releases" target="_blank"
-             style="color:var(--gold-light)">github.com/nmrugg/stockfish.js</a><br>
-          2. Add to your repo (same folder as chess.html):<br>
-          <code style="color:var(--gold);font-size:9px;">stockfish-18-lite-single.js<br>stockfish-18-lite-single.wasm</code><br>
-          3. Also add <code style="color:var(--gold);font-size:9px;">coi-serviceworker.js</code>
-          for the full 110MB multi-thread build.
+             style="color:var(--gold-light);font-size:9px;">stockfish-18-lite-single.js + .wasm</a>
         </div>
 
         <div style="border-top:1px solid var(--border);padding-top:10px;font-size:10px;color:var(--ivory-dim);">
@@ -1408,17 +1411,18 @@ class Engine {
     this._candidates = [
       // ── User's deployed files ─────────────────────────────────────────────
       // stockfish.js is in same dir as chess.html; stockfish.wasm is in docs/
-      // All files (chess.html, coi-serviceworker.js, stockfish.*) are in docs/
+      // Primary: stockfish-18-lite.js + stockfish-18-lite.wasm (multi-thread, ~7MB)
+      { url: './stockfish-18-lite.js',        wasm: './stockfish-18-lite.wasm',
+        label: 'Stockfish 18 Lite',           needsSAB: true  },
+      // Fallbacks
+      { url: './stockfish-18-lite-single.js', wasm: './stockfish-18-lite-single.wasm',
+        label: 'Stockfish 18 Lite (single)',  needsSAB: false },
       { url: './stockfish.js',                wasm: './stockfish.wasm',
         label: 'Stockfish (multi-thread)',    needsSAB: true  },
       { url: './stockfish-18.js',             wasm: './stockfish-18.wasm',
         label: 'Stockfish 18 (multi-thread)', needsSAB: true  },
-      { url: './stockfish-18-lite.js',        wasm: './stockfish-18-lite.wasm',
-        label: 'Stockfish 18 Lite (multi)',   needsSAB: true  },
       { url: './stockfish-18-single.js',      wasm: './stockfish-18-single.wasm',
         label: 'Stockfish 18',                needsSAB: false },
-      { url: './stockfish-18-lite-single.js', wasm: './stockfish-18-lite-single.wasm',
-        label: 'Stockfish 18 Lite',           needsSAB: false },
     ];
 
     console.info('[Engine] crossOriginIsolated:', coi, 'canSAB:', canSAB,
