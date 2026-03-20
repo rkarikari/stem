@@ -52,7 +52,7 @@
 </script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.028</title>
+<title>RadioSport Chess v1.029</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -709,7 +709,7 @@
 <header>
   <div class="logo">
     ♛ RadioSport Chess
-    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.028</span>
+    <span style="color:var(--gold-dim);font-size:9px;letter-spacing:2px;">v1.029</span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
@@ -747,6 +747,35 @@
       </div>
       <div class="captured-row" id="black-captured"></div>
       <div class="material-score" id="white-material"></div>
+    </div>
+
+    <!-- Online room info (shown in multi mode) -->
+    <div class="panel-card" id="online-info-panel" style="display:none">
+      <div class="panel-title">Online Game</div>
+      <div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:10px;color:var(--ivory-dim);letter-spacing:2px;text-transform:uppercase;">Room</div>
+          <div id="online-room-code" style="font-family:'Playfair Display',serif;font-size:18px;color:var(--gold);font-weight:700;letter-spacing:4px;">—</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div id="p1-status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;"></div>
+            <div style="flex:1">
+              <div id="p1-status-name" style="font-size:12px;color:var(--ivory);">You</div>
+              <div id="p1-status-label" style="font-size:10px;color:var(--ivory-dim);">Host · Waiting…</div>
+            </div>
+            <div id="p1-color-chip" style="width:14px;height:14px;border-radius:2px;border:1px solid var(--border);"></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div id="p2-status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;"></div>
+            <div style="flex:1">
+              <div id="p2-status-name" style="font-size:12px;color:var(--ivory-dim);">Opponent</div>
+              <div id="p2-status-label" style="font-size:10px;color:var(--ivory-dim);">Not connected</div>
+            </div>
+            <div id="p2-color-chip" style="width:14px;height:14px;border-radius:2px;border:1px solid var(--border);"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Game controls -->
@@ -2840,6 +2869,7 @@ function switchMode(m) {
     boardArea.style.display='none';
     leftPanel.style.display='none';
     rightPanel.style.display='none';
+    document.getElementById('online-info-panel').style.display='none';
   } else {
     mpSection.classList.remove('visible');
     boardArea.style.display='';
@@ -2879,6 +2909,16 @@ function createRoom() {
     document.getElementById('board-area').style.display='';
     document.getElementById('side-panel-left').style.display='';
     document.getElementById('right-panel').style.display='';
+    document.getElementById('online-info-panel').style.display='';
+    // Populate room info
+    document.getElementById('online-room-code').textContent = code;
+    document.getElementById('p1-status-label').textContent = 'Host · Waiting for opponent…';
+    document.getElementById('p1-status-dot').style.background = 'var(--gold)';
+    document.getElementById('p1-color-chip').style.background = multiPlayerColor==='w' ? '#f0d9b5' : '#1a1008';
+    document.getElementById('p2-status-dot').style.background = 'var(--border)';
+    document.getElementById('p2-status-name').textContent = 'Opponent';
+    document.getElementById('p2-status-label').textContent = 'Not connected';
+    document.getElementById('p2-color-chip').style.background = multiPlayerColor==='w' ? '#1a1008' : '#f0d9b5';
     game=new Chess(); moveHistory=[]; lastMove=null;
     renderBoard(); updateAll(); startTimers();
     setStatus('Waiting for opponent to join...','gold');
@@ -2899,6 +2939,16 @@ function joinRoom() {
   document.getElementById('board-area').style.display='';
   document.getElementById('side-panel-left').style.display='';
   document.getElementById('right-panel').style.display='';
+  document.getElementById('online-info-panel').style.display='';
+  // Populate room info
+  document.getElementById('online-room-code').textContent = code;
+  document.getElementById('p1-status-label').textContent = 'Joined · Connected';
+  document.getElementById('p1-status-dot').style.background = 'var(--green)';
+  document.getElementById('p1-color-chip').style.background = multiPlayerColor==='w' ? '#f0d9b5' : '#1a1008';
+  document.getElementById('p2-status-dot').style.background = 'var(--gold)';
+  document.getElementById('p2-status-name').textContent = 'Host';
+  document.getElementById('p2-status-label').textContent = 'Connecting…';
+  document.getElementById('p2-color-chip').style.background = multiPlayerColor==='w' ? '#1a1008' : '#f0d9b5';
   game=new Chess(); moveHistory=[]; lastMove=null;
   renderBoard(); updateAll(); startTimers();
   setStatus('Connected! Waiting for opponent move...','normal');
@@ -2908,11 +2958,18 @@ function handleMultiMessage(e) {
   const data=e.data;
   if(data.type==='join') {
     setStatus('Opponent connected!','normal');
+    // Update P2 status
+    document.getElementById('p2-status-dot').style.background = 'var(--green)';
+    document.getElementById('p2-status-label').textContent = 'Connected · ' + (data.color==='w'?'White':'Black');
+    document.getElementById('p2-color-chip').style.background = data.color==='w' ? '#f0d9b5' : '#1a1008';
     multiChannel.postMessage({type:'sync', fen:game.toFen(), moves:moveHistory});
   }
   if(data.type==='sync') {
     game.loadFen(data.fen);
     moveHistory=data.moves||[];
+    // Host responded — mark as connected
+    document.getElementById('p2-status-dot').style.background = 'var(--green)';
+    document.getElementById('p2-status-label').textContent = 'Connected · Host';
     updatePieces(); updateAll();
   }
   if(data.type==='move') {
