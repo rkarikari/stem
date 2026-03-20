@@ -53,7 +53,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.045</title>
+<title>RadioSport Chess v1.047</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -988,7 +988,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.045</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.047</div>
       </div>
     </div>
 
@@ -1854,28 +1854,25 @@ class Engine {
     // Try whatever files the user has deployed, strongest first.
     // Multi-thread builds need real SharedArrayBuffer (canSAB) to work fully,
     // but we still attempt them — if SAB is stubbed they'll error and we skip.
-    // GitHub release URL for the full SF18 WASM binary.
-    // The .js loader is served from same origin (no CORS issue).
-    // The .wasm is fetched internally by the worker — GitHub's S3 redirect
-    // allows GET without preflight, so the worker can fetch it cross-origin.
-    const SF18_WASM_URL = 'https://github.com/rkarikari/stem/releases/download/stockfish-asm-18/stockfish.wasm';
-
+    // All WASM files MUST be committed directly to the repo (same origin).
+    // GitHub release URLs and all external CDNs block cross-origin binary fetch.
+    // To use full SF18: commit stockfish.js + stockfish.wasm to docs/ without Git LFS.
     this._candidates = [
-      // ── Full SF18 multi-thread — .js from same origin, .wasm from GH release ──
+      // ── Full SF18 multi-thread (~100MB, needs SAB + same-origin WASM) ─────
       ...(canSAB ? [
-        { url: './stockfish.js',   wasm: SF18_WASM_URL,
-          label: 'Stockfish 18 (multi-thread)', needsSAB: true, externalWasm: true },
-        { url: './stockfish-18.js', wasm: SF18_WASM_URL,
-          label: 'Stockfish 18 (multi-thread)', needsSAB: true, externalWasm: true },
+        { url: './stockfish.js',   wasm: './stockfish.wasm',
+          label: 'Stockfish 18 (multi-thread)' },
+        { url: './stockfish-18.js', wasm: './stockfish-18.wasm',
+          label: 'Stockfish 18 (multi-thread)' },
       ] : []),
-      // ── Lite multi-thread (~7MB, .wasm same origin) ───────────────────────
+      // ── Lite multi-thread (~7MB) ──────────────────────────────────────────
       { url: './stockfish-18-lite.js',        wasm: './stockfish-18-lite.wasm',
-        label: 'Stockfish 18 Lite',           needsSAB: true  },
+        label: 'Stockfish 18 Lite' },
       // ── Single-thread fallbacks ───────────────────────────────────────────
       { url: './stockfish-18-lite-single.js', wasm: './stockfish-18-lite-single.wasm',
-        label: 'Stockfish 18 Lite (single)',  needsSAB: false },
+        label: 'Stockfish 18 Lite (single)' },
       { url: './stockfish-18-single.js',      wasm: './stockfish-18-single.wasm',
-        label: 'Stockfish 18',                needsSAB: false },
+        label: 'Stockfish 18' },
     ];
 
     console.info('[Engine] crossOriginIsolated:', coi, 'canSAB:', canSAB,
@@ -1903,7 +1900,7 @@ class Engine {
     console.info('[Engine] Trying:', cand.url);
 
     const base       = location.origin + location.pathname.replace(/[^/]*$/, '');
-    const wasmAbsUrl = JSON.stringify(cand.externalWasm || cand.wasm.startsWith('http') ? cand.wasm : base + cand.wasm.replace('./', ''));
+    const wasmAbsUrl = JSON.stringify(base + cand.wasm.replace('./', ''));
 
     if (canSAB) {
       // crossOriginIsolated=true: COI SW is active and already injects COOP/COEP.
@@ -1914,8 +1911,7 @@ class Engine {
       // the origin twice, producing a broken URL like "https://host.comhttps://host.com/...".
       // Pre-check: verify the .wasm file is actually there and is binary.
       // "expected magic word 00 61 73 6d" means the wasm fetch returned HTML (404 page).
-      const wasmIsExternal = cand.externalWasm || cand.wasm.startsWith('http');
-      const wasmCheckUrl   = wasmIsExternal ? cand.wasm : base + cand.wasm.replace('./', '');
+      const wasmCheckUrl = base + cand.wasm.replace('./', '');
 
       const launchWorker = () => {
         console.info('[Engine] canSAB=true → new Worker directly:', cand.url);
@@ -1929,44 +1925,16 @@ class Engine {
         }
       };
 
-      if (wasmIsExternal) {
-        // GitHub release URLs redirect to S3 which blocks worker fetch().
-        // Fix: fetch WASM binary in main thread (redirects work), create a blob:
-        // URL from it, inject that blob URL via Module.locateFile so the worker
-        // uses the pre-fetched binary instead of trying to fetch it cross-origin.
-        console.info('[Engine] Fetching external WASM from main thread:', cand.wasm);
-        this._setEngineLabel('Downloading ' + cand.label + '…');
-
-        Promise.all([
-          fetch(cand.wasm).then(r => { if(!r.ok) throw new Error('WASM '+r.status); return r.arrayBuffer(); }),
-          fetch(cand.url).then(r  => { if(!r.ok) throw new Error('JS '+r.status);   return r.text(); })
-        ])
-        .then(([wasmBuf, jsSrc]) => {
-          if (this._engineDone) return;
-          const mb = (wasmBuf.byteLength/1024/1024).toFixed(1);
-          console.info('[Engine] Fetched', mb+'MB WASM + JS — creating blob worker');
-          // Blob URL for the WASM binary — blob: URLs are accessible from workers
-          const wasmBlobUrl = URL.createObjectURL(new Blob([wasmBuf], {type:'application/wasm'}));
-          const wasmJson    = JSON.stringify(wasmBlobUrl);
-          const shim = 'var Module=Module||{};Module.locateFile=function(p){return(p.endsWith(".wasm")||p.endsWith(".wasm.br"))?'+wasmJson+':p;};';
-          const workerBlobUrl = URL.createObjectURL(new Blob([shim+'\n'+jsSrc], {type:'application/javascript'}));
-          this._setEngineLabel('Loading ' + cand.label + '…');
-          this._probeWorker(workerBlobUrl, cand.url, true, cand.label, 120000);
+      // Same-origin wasm — HEAD check to catch missing or LFS pointer files.
+      fetch(wasmCheckUrl, {method:'HEAD', cache:'no-cache'})
+        .then(r => {
+          const ct = r.headers.get('content-type') || '';
+          if (!r.ok) { console.warn('[Engine] WASM 404:', wasmCheckUrl); next(); return; }
+          const isBad = ct.includes('text/') || ct.includes('html');
+          if (isBad) { console.warn('[Engine] WASM is LFS pointer:', wasmCheckUrl); next(); return; }
+          launchWorker();
         })
-        .catch(err => { console.warn('[Engine] External fetch failed:', err.message); next(); });
-        return;
-      } else {
-        // Same-origin wasm — do HEAD check to catch missing or LFS pointer files.
-        fetch(wasmCheckUrl, {method:'HEAD', cache:'no-cache'})
-          .then(r => {
-            const ct = r.headers.get('content-type') || '';
-            if (!r.ok) { console.warn('[Engine] WASM 404:', wasmCheckUrl); next(); return; }
-            const isBad = ct.includes('text/') || ct.includes('html');
-            if (isBad) { console.warn('[Engine] WASM is LFS pointer or HTML:', wasmCheckUrl); next(); return; }
-            launchWorker();
-          })
-          .catch(() => { console.warn('[Engine] WASM HEAD failed:', wasmCheckUrl); next(); });
-      }
+        .catch(() => { console.warn('[Engine] WASM HEAD failed:', wasmCheckUrl); next(); });
       return;
     }
     const xhr = new XMLHttpRequest();
