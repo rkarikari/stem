@@ -9,7 +9,6 @@
 
   if (window.crossOriginIsolated) {
     sessionStorage.removeItem('_coi_reloading');
-    console.info('[COI-SW] crossOriginIsolated ✓ — engine will use full multi-thread');
     return;
   }
 
@@ -52,8 +51,9 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♛</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.051</title>
+<title>RadioSport Chess v1.052</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -988,7 +988,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.051</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.052</div>
       </div>
     </div>
 
@@ -1872,7 +1872,6 @@ class Engine {
         this._setEngineLabel('JS Engine (built-in)');
         this.mode = 'js'; this._initJSWorker(); return;
       }
-      console.info('[Engine] canSAB:', canSAB, '→ using', this._candidates[0].label);
       this._candidateIdx = 0;
       this._tryNextCandidate(0);
     };
@@ -1911,7 +1910,6 @@ class Engine {
     const next   = () => { if (!this._engineDone) this._tryNextCandidate(idx + 1); };
 
     this._setEngineLabel('Loading ' + cand.label + '…');
-    console.info('[Engine] Trying:', cand.url);
 
     const base       = location.origin + location.pathname.replace(/[^/]*$/, '');
     const wasmAbsUrl = JSON.stringify(base + cand.wasm.replace('./', ''));
@@ -1928,13 +1926,11 @@ class Engine {
       const wasmCheckUrl = base + cand.wasm.replace('./', '');
 
       const launchWorker = () => {
-        console.info('[Engine] canSAB=true → new Worker directly:', cand.url);
         this._setEngineLabel('Loading ' + cand.label + '…');
         try {
           const w = new Worker(cand.url);
           this._probeWorker(w, cand.url, false, cand.label, 90000);
         } catch(e) {
-          console.info('[Engine]', cand.url, 'worker failed:', e.message);
           next();
         }
       };
@@ -1956,7 +1952,6 @@ class Engine {
     xhr.onload = () => {
       if (this._engineDone) return;
       if (xhr.status !== 200 && !(xhr.status === 0 && xhr.responseText)) {
-        console.info('[Engine]', cand.url, 'not found:', xhr.status);
         next(); return;
       }
       const jsAbsUrl   = base + cand.url.replace('./', '');
@@ -2000,7 +1995,6 @@ if(!Module.locateFile) Module.locateFile=function(p){
       );
       this._probeWorker(blobUrl, cand.url, true, cand.label);
     };
-    xhr.onerror = () => { if(!this._engineDone){console.info('[Engine]',cand.url,'XHR error');next();} };
     xhr.send();
   }
   // Called by the file input picker
@@ -2119,7 +2113,6 @@ self.abort = function(reason) {
 
   _tryNext(urls, idx) {
     if (idx >= urls.length) {
-      console.info('[Engine] Stockfish not found — using built-in JS engine');
       this._setEngineLabel('JS Engine');
       this.mode = 'js';
       this._initJSWorker();
