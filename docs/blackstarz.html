@@ -730,7 +730,21 @@ select.fsel option{background:#0c1912;color:var(--txt);font-size:14px}
         <button class="ai-prov-btn on" id="prov-anthropic" onclick="setProv('anthropic')">Anthropic</button>
         <button class="ai-prov-btn" id="prov-openrouter" onclick="setProv('openrouter')">OpenRouter</button>
       </div>
-      <input type="password" class="ai-key" id="ai-key" placeholder="Paste API key…">
+      <input type="password" class="ai-key" id="ai-key" placeholder="Anthropic key (sk-ant-…)">
+      <div class="fsel-wrap" id="or-model-wrap" style="display:none;margin-bottom:7px">
+        <select class="fsel" id="or-model" style="font-size:12px;padding:7px 32px 7px 10px;color:var(--txt)">
+          <option value="openrouter/free">🆓 Free Router (auto-selects best free model)</option>
+          <option value="meta-llama/llama-3.3-70b-instruct:free">🦙 Llama 3.3 70B (free)</option>
+          <option value="google/gemma-3-27b-it:free">💎 Gemma 3 27B (free)</option>
+          <option value="deepseek/deepseek-r1:free">🔮 DeepSeek R1 (free)</option>
+          <option value="mistralai/mistral-small-3.2-24b-instruct:free">⚡ Mistral Small 3.2 24B (free)</option>
+          <option value="anthropic/claude-sonnet-4">Claude Sonnet 4 (paid)</option>
+          <option value="anthropic/claude-opus-4">Claude Opus 4 (paid)</option>
+          <option value="openai/gpt-4o">GPT-4o (paid)</option>
+          <option value="google/gemini-pro-1.5">Gemini Pro 1.5 (paid)</option>
+          <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B (paid)</option>
+        </select>
+      </div>
       <button class="btn btn-primary" id="btn-analyze" onclick="runAI()">🧠 Analyze Lineup</button>
       <div class="ai-out" id="ai-out">Fill all 11 positions then run analysis for AI tactical insights on your lineup.</div>
     </div>
@@ -1321,6 +1335,7 @@ function setProv(p){
   document.getElementById('prov-anthropic').className='ai-prov-btn'+(p==='anthropic'?' on':'');
   document.getElementById('prov-openrouter').className='ai-prov-btn'+(p==='openrouter'?' on':'');
   document.getElementById('ai-key').placeholder=p==='anthropic'?'Anthropic key (sk-ant-…)':'OpenRouter key (sk-or-…)';
+  document.getElementById('or-model-wrap').style.display=p==='openrouter'?'block':'none';
 }
 async function runAI(){
   const key=document.getElementById('ai-key').value.trim();
@@ -1342,26 +1357,55 @@ async function runAI(){
     if(S.provider==='anthropic'){
       const res=await fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',
-        headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
-        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key':key,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})
       });
+      if(!res.ok){
+        const err=await res.json().catch(()=>({}));
+        throw new Error(err?.error?.message||'HTTP '+res.status+': '+res.statusText);
+      }
       const d=await res.json();
-      if(d.error)throw new Error(d.error.message);
-      text=d.content[0].text;
+      text=d.content?.[0]?.text;
+      if(!text) throw new Error('Empty response from Anthropic');
     }else{
+      const model=document.getElementById('or-model').value;
       const res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key,'HTTP-Referer':'https://blackstars.gh','X-Title':'Ghana Black Stars Hub'},
-        body:JSON.stringify({model:'mistralai/mistral-7b-instruct',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':'Bearer '+key,
+          'HTTP-Referer':location.href,
+          'X-Title':'Ghana Black Stars Tactical Hub'
+        },
+        body:JSON.stringify({
+          model,
+          max_completion_tokens:1200,
+          messages:[{role:'user',content:prompt}]
+        })
       });
+      if(!res.ok){
+        let errMsg='HTTP '+res.status;
+        try{const e=await res.json();errMsg=e?.error?.message||e?.message||errMsg;}catch(_){}
+        throw new Error(errMsg);
+      }
       const d=await res.json();
-      if(d.error)throw new Error(d.error.message||'API error');
-      text=d.choices[0].message.content;
+      // handle both streaming-style and standard responses
+      text=d.choices?.[0]?.message?.content||d.choices?.[0]?.text;
+      if(!text) throw new Error('Empty response — the selected model may be unavailable. Try "Free Router" or a different model.');
     }
     out.className='ai-out';out.textContent=text;
     toast('✓ Analysis complete','ok');
   }catch(e){
-    out.className='ai-out';out.textContent='Error: '+e.message+'\n\nCheck your API key and try again.';
+    out.className='ai-out';
+    const tips=S.provider==='anthropic'
+      ?'• Your Anthropic key must start with sk-ant-\n• Ensure your key has API access (not just Claude.ai)\n• Check you have credits at console.anthropic.com'
+      :'• Your OpenRouter key must start with sk-or-\n• Create a key at openrouter.ai/keys\n• Free models have 50 req/day limit (10 credits = 1000/day)\n• Try switching to the "Free Router" model option';
+    out.textContent='❌ '+e.message+'\n\n'+tips;
     toast('Analysis failed','err');
   }
   btn.disabled=false;btn.innerHTML='🧠 Analyze Lineup';
