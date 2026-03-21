@@ -53,7 +53,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♛</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.052</title>
+<title>RadioSport Chess v1.054</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -818,12 +818,12 @@
       <div class="panel-title">Engine Settings</div>
       <div class="settings-body">
         <div class="setting-row">
-          <div class="setting-label">Skill Level <span class="setting-value" id="skill-display">12 / 20</span></div>
-          <input type="range" min="0" max="20" value="12" id="skill-slider" oninput="updateSkill(this.value)">
+          <div class="setting-label">Skill Level <span class="setting-value" id="skill-display">20 / 20</span></div>
+          <input type="range" min="0" max="20" value="20" id="skill-slider" oninput="updateSkill(this.value)">
         </div>
         <div class="setting-row">
-          <div class="setting-label">Search Depth <span class="setting-value" id="depth-display">15</span></div>
-          <input type="range" min="1" max="20" value="15" id="depth-slider" oninput="updateDepth(this.value)">
+          <div class="setting-label">Search Depth <span class="setting-value" id="depth-display">20</span></div>
+          <input type="range" min="1" max="20" value="20" id="depth-slider" oninput="updateDepth(this.value)">
         </div>
         <div class="setting-row">
           <div class="setting-label">Time Control</div>
@@ -988,7 +988,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.052</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.054</div>
       </div>
     </div>
 
@@ -1810,8 +1810,8 @@ class Engine {
     this.sf = null;           // Stockfish worker
     this.sfReady = false;
     this.sfCallback = null;
-    this.sfDepth = 15;
-    this.sfSkill = 12;
+    this.sfDepth = 20;
+    this.sfSkill = 20;
     this._pendingCall = null;
     this.jsWorker = null;     // JS fallback worker
     this.mode = 'loading';    // 'stockfish' | 'js' | 'sync'
@@ -2441,7 +2441,7 @@ let playerColor='w'; // human plays white by default
 let timeControl=600;
 let timers={w:300, b:300};
 let timerInterval=null;
-let engineDepth=15, engineSkill=12;
+let engineDepth=20, engineSkill=20;
 let moveHistory=[];
 let multiRoomCode='', multiPlayerColor='w';
 
