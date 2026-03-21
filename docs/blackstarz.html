@@ -248,6 +248,49 @@ select.fsel option{background:#0c1912;color:var(--txt);font-size:14px}
 .ai-typing::after{content:'▋';animation:blink .7s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
+/* ── CHAT ── */
+#chat-wrap{display:none;flex-direction:column;gap:0;margin-top:8px;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden}
+#chat-wrap.on{display:flex}
+#chat-log{
+  max-height:260px;overflow-y:auto;padding:10px;
+  display:flex;flex-direction:column;gap:8px;
+  background:rgba(0,0,0,.22);
+}
+.cmsg{display:flex;flex-direction:column;gap:2px;animation:msgIn .2s ease both}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.cmsg-role{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txt2)}
+.cmsg-role.u{color:var(--gold)}
+.cmsg-body{
+  font-size:11.5px;line-height:1.65;color:var(--txt);
+  background:var(--surface);border:1px solid var(--edge);border-radius:5px;
+  padding:8px 10px;white-space:pre-wrap;
+}
+.cmsg-body.u{background:var(--gold-xs);border-color:var(--edge2)}
+.chat-input-row{
+  display:flex;gap:0;border-top:1px solid var(--edge);
+}
+#chat-input{
+  flex:1;background:rgba(0,0,0,.3);border:none;
+  padding:9px 11px;color:var(--txt);font-family:var(--f-ui);font-size:12px;
+  resize:none;outline:none;min-height:38px;max-height:90px;
+  line-height:1.4;
+}
+#chat-input::placeholder{color:var(--txt2)}
+#chat-send{
+  padding:0 13px;background:var(--gold);border:none;color:#000;
+  font-family:var(--f-ui);font-size:18px;font-weight:900;
+  cursor:pointer;transition:all .15s;flex-shrink:0;
+}
+#chat-send:hover{background:#ffe033}
+#chat-send:disabled{opacity:.3;cursor:not-allowed}
+.chat-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:5px 9px;background:rgba(0,0,0,.15);border-top:1px solid var(--edge);
+}
+.chat-bar-label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--txt2)}
+.chat-clear{background:none;border:none;color:var(--txt2);font-size:10px;font-weight:700;cursor:pointer;padding:2px 6px;border-radius:4px;transition:all .15s;text-transform:uppercase;letter-spacing:.5px}
+.chat-clear:hover{color:var(--red)}
+
 /* ═══════════════════════════════════════════
    PITCH CENTRE COLUMN
 ═══════════════════════════════════════════ */
@@ -747,6 +790,19 @@ select.fsel option{background:#0c1912;color:var(--txt);font-size:14px}
       </div>
       <button class="btn btn-primary" id="btn-analyze" onclick="runAI()">🧠 Analyze Lineup</button>
       <div class="ai-out" id="ai-out">Fill all 11 positions then run analysis for AI tactical insights on your lineup.</div>
+
+      <!-- Follow-up chat -->
+      <div id="chat-wrap">
+        <div class="chat-bar">
+          <div class="chat-bar-label">💬 Follow-up Questions</div>
+          <button class="chat-clear" onclick="clearChat()">Clear chat</button>
+        </div>
+        <div id="chat-log"></div>
+        <div class="chat-input-row">
+          <textarea id="chat-input" placeholder="Ask a follow-up question…" rows="1" onkeydown="chatKey(event)" oninput="autoGrow(this)"></textarea>
+          <button id="chat-send" onclick="sendChat()" title="Send (Enter)">↑</button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -986,6 +1042,8 @@ const S={
   mFilter:'All',
   mSort:'rating',
   mSearch:'',
+  chatHistory:[],  // [{role,content}] conversation turns
+  analysisText:'', // last analysis response (system context)
 };
 
 /* ═══════════════════════════════════════════
@@ -1399,6 +1457,10 @@ async function runAI(){
       if(!text) throw new Error('Empty response — the selected model may be unavailable. Try "Free Router" or a different model.');
     }
     out.className='ai-out';out.textContent=text;
+    S.analysisText=text;
+    S.chatHistory=[];
+    document.getElementById('chat-log').innerHTML='';
+    document.getElementById('chat-wrap').classList.add('on');
     toast('✓ Analysis complete','ok');
   }catch(e){
     out.className='ai-out';
@@ -1409,6 +1471,123 @@ async function runAI(){
     toast('Analysis failed','err');
   }
   btn.disabled=false;btn.innerHTML='🧠 Analyze Lineup';
+}
+
+/* ═══════════════════════════════════════════
+   CHAT
+═══════════════════════════════════════════ */
+function chatKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}
+}
+function autoGrow(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,90)+'px';
+}
+function appendMsg(role,text){
+  const log=document.getElementById('chat-log');
+  const div=document.createElement('div');
+  div.className='cmsg';
+  div.innerHTML=`<div class="cmsg-role${role==='user'?' u':''}">${role==='user'?'You':'AI Analyst'}</div>`
+               +`<div class="cmsg-body${role==='user'?' u':''}">${text}</div>`;
+  log.appendChild(div);
+  log.scrollTop=log.scrollHeight;
+  return div;
+}
+function clearChat(){
+  S.chatHistory=[];
+  document.getElementById('chat-log').innerHTML='';
+}
+async function sendChat(){
+  const inp=document.getElementById('chat-input');
+  const q=inp.value.trim();
+  if(!q)return;
+  const key=document.getElementById('ai-key').value.trim();
+  if(!key){toast('API key required','err');return;}
+  if(!S.analysisText){toast('Run lineup analysis first','err');return;}
+
+  inp.value='';inp.style.height='auto';
+  const send=document.getElementById('chat-send');
+  send.disabled=true;
+
+  appendMsg('user',q);
+
+  // Build context: system message with lineup + analysis, then history, then new question
+  const st=calcStats();
+  const lineupText=FORMS[S.form].map(sd=>{
+    const p=S.lineup[sd.s];
+    return p?`${sd.s}: ${p.fn} (${p.club}, rating ${p.r})`:`${sd.s}: empty`;
+  }).join('\n');
+  const systemCtx=`You are an elite football tactician specialising in Ghana Black Stars. You previously analyzed this lineup:\n\nFormation: ${S.form}\nStats: Avg Rating ${st.rat} | Chemistry ${st.chem}% | Attack ${st.atk} | Defense ${st.def}\nLineup:\n${lineupText}\n\nYour previous analysis:\n${S.analysisText}\n\nNow answer follow-up questions concisely and specifically about this lineup.`;
+
+  // add user turn to history
+  S.chatHistory.push({role:'user',content:q});
+
+  // placeholder bubble
+  const placeholder=appendMsg('assistant','…');
+  const bodyEl=placeholder.querySelector('.cmsg-body');
+
+  try{
+    let reply;
+    if(S.provider==='anthropic'){
+      const messages=[
+        {role:'user',content:systemCtx+'\n\n---\nNow answer this follow-up question: '+S.chatHistory[0].content},
+        ...S.chatHistory.slice(1)
+      ];
+      // For multi-turn: system as first user message, then alternating
+      const builtMsgs=[];
+      builtMsgs.push({role:'user',content:systemCtx});
+      builtMsgs.push({role:'assistant',content:S.analysisText});
+      S.chatHistory.forEach(m=>builtMsgs.push(m));
+      const res=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key':key,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:builtMsgs})
+      });
+      if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
+      const d=await res.json();
+      reply=d.content?.[0]?.text;
+    }else{
+      const model=document.getElementById('or-model').value;
+      const msgs=[
+        {role:'system',content:systemCtx},
+        ...S.chatHistory
+      ];
+      // inject the prior AI response as assistant turn before new history
+      const builtMsgs=[
+        {role:'system',content:systemCtx},
+        {role:'user',content:'Please acknowledge the lineup and analysis above, then wait for my questions.'},
+        {role:'assistant',content:S.analysisText},
+        ...S.chatHistory
+      ];
+      const res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':'Bearer '+key,
+          'HTTP-Referer':location.href,
+          'X-Title':'Ghana Black Stars Tactical Hub'
+        },
+        body:JSON.stringify({model,max_completion_tokens:600,messages:builtMsgs})
+      });
+      if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
+      const d=await res.json();
+      reply=d.choices?.[0]?.message?.content;
+    }
+    if(!reply) throw new Error('Empty response');
+    bodyEl.textContent=reply;
+    S.chatHistory.push({role:'assistant',content:reply});
+  }catch(e){
+    bodyEl.textContent='Error: '+e.message;
+    bodyEl.style.color='#f87171';
+    S.chatHistory.pop(); // remove failed user turn
+  }
+  send.disabled=false;
+  document.getElementById('chat-log').scrollTop=99999;
 }
 
 /* ═══════════════════════════════════════════
