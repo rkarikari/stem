@@ -254,7 +254,7 @@ select.fsel option{background:#0c1912;color:var(--txt);font-size:14px}
 #centre{
   display:flex;flex-direction:column;align-items:center;
   background:radial-gradient(ellipse 80% 60% at 50% 30%,#0d2017 0%,var(--bg) 100%);
-  padding:14px 12px 8px;overflow:hidden;position:relative;
+  padding:10px 16px 6px;overflow:hidden;position:relative;
 }
 .dir-label{
   font-family:var(--f-head);font-size:10px;letter-spacing:3px;color:var(--txt2);
@@ -267,9 +267,11 @@ select.fsel option{background:#0c1912;color:var(--txt);font-size:14px}
    PITCH
 ═══════════════════════════════════════════ */
 #pitch-wrap{
-  position:relative;width:100%;max-width:430px;flex:1;max-height:calc(100vh - 180px);
+  position:relative;
+  height:calc(100vh - 148px);
+  aspect-ratio:68/105;
+  flex-shrink:0;
 }
-#pitch-wrap::before{content:'';display:block;padding-bottom:149%}
 #pitch-box{
   position:absolute;inset:0;border-radius:4px;
   overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 8px 40px rgba(0,0,0,.7),0 0 80px rgba(0,100,50,.08);
