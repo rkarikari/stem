@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Library: v1.004</title>
+<title>RadioSport Library: v1.005</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -927,7 +927,7 @@
 <nav class="sidebar">
   <div class="logo">
     <div class="logo-title">📻 RadioSport</div>
-    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.004</span></div>
+    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.005</span></div>
     <div style="font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:0.5px;">© RNK <span style="font-family:'DM Mono',monospace;color:var(--gold)">( 9G5AR )</span></div>
   </div>
 
@@ -1002,8 +1002,8 @@
     <div class="user-card">
       <div class="user-avatar">LA</div>
       <div>
-        <div class="user-name">Librarian Admin</div>
-        <div class="user-role">Accra Academy HS</div>
+        <div class="user-name" id="sidebar-librarian">Librarian Admin</div>
+        <div class="user-role">RadioSport</div>
       </div>
     </div>
   </div>
@@ -1036,25 +1036,25 @@
       <div class="stats-grid">
         <div class="stat-card gold">
           <div class="stat-icon">📚</div>
-          <div class="stat-value">2,847</div>
+          <div class="stat-value" id="stat-total-books">2,847</div>
           <div class="stat-label">Total Books</div>
           <div class="stat-change up">↑ 12 this month</div>
         </div>
         <div class="stat-card teal">
           <div class="stat-icon">🔄</div>
-          <div class="stat-value">342</div>
+          <div class="stat-value" id="stat-active-loans">342</div>
           <div class="stat-label">Active Loans</div>
           <div class="stat-change up">↑ 23 this week</div>
         </div>
         <div class="stat-card rose">
           <div class="stat-icon">⚠️</div>
-          <div class="stat-value">28</div>
+          <div class="stat-value" id="stat-overdue">28</div>
           <div class="stat-label">Overdue Books</div>
           <div class="stat-change down">↑ 5 since yesterday</div>
         </div>
         <div class="stat-card sky">
           <div class="stat-icon">👥</div>
-          <div class="stat-value">1,204</div>
+          <div class="stat-value" id="stat-members">1,204</div>
           <div class="stat-label">Registered Members</div>
           <div class="stat-change up">↑ 8 new this week</div>
         </div>
@@ -1066,36 +1066,8 @@
             <div class="card-title">Recent Activity</div>
             <span style="font-size:12px;color:var(--text3);cursor:pointer;" onclick="switchPanel('borrow',document.querySelector('[onclick*=borrow]'))">View all →</span>
           </div>
-          <div class="activity-item">
-            <div class="activity-dot" style="background:var(--teal)"></div>
-            <div class="activity-text"><strong>Ama Owusu</strong> borrowed "Things Fall Apart" — Form 3B</div>
-            <div class="activity-time">2m ago</div>
-          </div>
-          <div class="activity-item">
-            <div class="activity-dot" style="background:var(--sky)"></div>
-            <div class="activity-text"><strong>Kofi Mensah</strong> returned "The Alchemist" — 2 days early</div>
-            <div class="activity-time">14m ago</div>
-          </div>
-          <div class="activity-item">
-            <div class="activity-dot" style="background:var(--gold)"></div>
-            <div class="activity-text"><strong>New book added</strong> — "Homegoing" by Yaa Gyasi (×4 copies)</div>
-            <div class="activity-time">1h ago</div>
-          </div>
-          <div class="activity-item">
-            <div class="activity-dot" style="background:var(--rose)"></div>
-            <div class="activity-text"><strong>Abena Asante</strong> — overdue notice sent for "Rich Dad Poor Dad"</div>
-            <div class="activity-time">2h ago</div>
-          </div>
-          <div class="activity-item">
-            <div class="activity-dot" style="background:var(--teal)"></div>
-            <div class="activity-text"><strong>Kwame Boateng</strong> reserved "Animal Farm" — Form 5A</div>
-            <div class="activity-time">3h ago</div>
-          </div>
-          <div class="activity-item">
-            <div class="activity-dot" style="background:var(--sky)"></div>
-            <div class="activity-text"><strong>Yaw Darko</strong> returned "A Brief History of Time"</div>
-            <div class="activity-time">5h ago</div>
-          </div>
+          <div id="activity-feed"></div>
+        </div>
         </div>
 
         <div class="card">
@@ -1483,14 +1455,13 @@
       <div class="page-header">
         <div>
           <div class="page-title">Student Members</div>
-          <div class="page-subtitle">1,204 registered students</div>
+          <div class="page-subtitle" id="members-subtitle">Loading…</div>
         </div>
         <div style="display:flex;gap:10px;">
-          <input class="form-input" placeholder="Search members…" style="width:220px;" type="text">
-          <div class="btn btn-primary" onclick="showToast('👤 Opening new member form…')">+ New Member</div>
+          <input class="form-input" id="member-search" placeholder="Search by name or ID…" style="width:220px;" type="text" oninput="searchMembers(this.value)">
+          <div class="btn btn-primary" onclick="openNewMemberModal()">+ New Member</div>
         </div>
       </div>
-
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;" id="members-grid"></div>
     </div>
 
@@ -1529,7 +1500,7 @@
             <div class="ai-avatar">🤖</div>
             <div>
               <div class="ai-name">RadioSport AI Research Assistant</div>
-              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.004</span></div>
+              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.005</span></div>
             </div>
             <div style="margin-left:auto;display:flex;gap:8px;">
               <div class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="clearChat()">🗑 Clear</div>
@@ -1542,7 +1513,7 @@
               <div class="msg-avatar ai">🤖</div>
               <div>
                 <div class="msg-bubble">
-                  Hello! I'm RadioSport, your AI Research Assistant for <strong>Accra Academy High School Library</strong>. I can help you:<br><br>
+                  Hello! I'm RadioSport, your AI Research Assistant for <strong>RadioSport Library</strong>. I can help you:<br><br>
                   📚 Research and summarize books in your collection<br>
                   🔍 Find relevant books on any topic for students<br>
                   📝 Generate reading lists aligned to the GES curriculum<br>
@@ -1586,10 +1557,10 @@
       </div>
 
       <div class="stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card rose"><div class="stat-icon">⚠️</div><div class="stat-value">GHS 140</div><div class="stat-label">Outstanding Fines</div></div>
+        <div class="stat-card rose"><div class="stat-icon">⚠️</div><div class="stat-value" id="stat-outstanding-fines">GHS 0</div><div class="stat-label">Outstanding Fines</div></div>
         <div class="stat-card teal"><div class="stat-icon">✅</div><div class="stat-value">GHS 380</div><div class="stat-label">Collected (Month)</div></div>
-        <div class="stat-card gold"><div class="stat-icon">👥</div><div class="stat-value">28</div><div class="stat-label">Students with Fines</div></div>
-        <div class="stat-card sky"><div class="stat-icon">📋</div><div class="stat-value">GHS 0.50</div><div class="stat-label">Daily Fine Rate</div></div>
+        <div class="stat-card gold"><div class="stat-icon">👥</div><div class="stat-value" id="stat-students-fines">0</div><div class="stat-label">Students with Fines</div></div>
+        <div class="stat-card sky"><div class="stat-icon">📋</div><div class="stat-value" id="stat-fine-rate-disp">GHS 0.50</div><div class="stat-label">Daily Fine Rate</div></div>
       </div>
 
       <div class="table-wrap">
@@ -1723,11 +1694,11 @@
           <div class="form-grid">
             <div class="form-group full">
               <label class="form-label">School Name</label>
-              <input class="form-input" id="set-school-name" type="text" placeholder="e.g. Accra Academy High School">
+              <input class="form-input" id="set-school-name" type="text" placeholder="e.g. RadioSport School">
             </div>
             <div class="form-group full">
               <label class="form-label">Library Name</label>
-              <input class="form-input" id="set-library-name" type="text" placeholder="e.g. Accra Academy School Library">
+              <input class="form-input" id="set-library-name" type="text" placeholder="e.g. RadioSport Library">
             </div>
             <div class="form-group">
               <label class="form-label">Librarian Name</label>
@@ -1889,7 +1860,7 @@
 
           <div style="margin-top:4px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>System Version</span>
-            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.004</span>
+            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.005</span>
           </div>
           <div style="margin-top:8px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>Last Saved</span>
@@ -1938,6 +1909,35 @@
   </div>
 </div>
 
+<!-- NEW MEMBER MODAL -->
+<div class="modal-overlay" id="new-member-modal">
+  <div class="modal" style="width:520px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;">👤 New Student Member</div>
+      <span onclick="document.getElementById('new-member-modal').classList.remove('open')" style="cursor:pointer;color:var(--text3);font-size:20px;">✕</span>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="nm-name" type="text" placeholder="e.g. Ama Owusu"></div>
+      <div class="form-group"><label class="form-label">Student ID *</label><input class="form-input" id="nm-id" type="text" placeholder="e.g. STU099"></div>
+      <div class="form-group"><label class="form-label">Class / Form *</label><select class="form-input" id="nm-class">
+        <option value="">Select class…</option>
+        <option>Form 1A</option><option>Form 1B</option><option>Form 2A</option><option>Form 2B</option><option>Form 2C</option>
+        <option>Form 3A</option><option>Form 3B</option><option>Form 4A</option><option>Form 4B</option>
+        <option>Form 5A</option><option>Form 5B</option><option>Form 6A</option><option>Form 6B</option>
+      </select></div>
+      <div class="form-group"><label class="form-label">Gender</label><select class="form-input" id="nm-gender">
+        <option value="">Select…</option><option>Male</option><option>Female</option><option>Other</option>
+      </select></div>
+      <div class="form-group"><label class="form-label">Phone / Contact</label><input class="form-input" id="nm-phone" type="text" placeholder="e.g. +233 XX XXX XXXX"></div>
+      <div class="form-group"><label class="form-label">Email (optional)</label><input class="form-input" id="nm-email" type="email" placeholder="student@school.edu.gh"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <div class="btn btn-primary" style="flex:1;justify-content:center;" onclick="addMember()">✅ Register Member</div>
+      <div class="btn btn-secondary" onclick="document.getElementById('new-member-modal').classList.remove('open')">Cancel</div>
+    </div>
+  </div>
+</div>
+
 <!-- BOOK DETAIL MODAL -->
 <div class="modal-overlay" id="book-modal">
   <div class="modal">
@@ -1954,7 +1954,7 @@
 // ═══════════════════════════════════════════
 // BOOK DATA
 // ═══════════════════════════════════════════
-const BOOKS = [
+let BOOKS = [
   { id:1, title:"Things Fall Apart", author:"Chinua Achebe", isbn:"978-0-435-90578-6", genre:"Literature", year:1958, copies:6, available:4, status:"available", cover:["#1e3a5f","#2d6a4f"], shelf:"A1-R1", publisher:"Heinemann", synopsis:"A landmark novel of African literature depicting Igbo life during colonial rule." },
   { id:2, title:"The Alchemist", author:"Paulo Coelho", isbn:"978-0-7225-3293-8", genre:"Fiction", year:1988, copies:4, available:0, status:"borrowed", cover:["#5a1a1a","#c0392b"], shelf:"B2-R3", publisher:"HarperCollins", synopsis:"A philosophical novel about a young shepherd's journey to find treasure." },
   { id:3, title:"Homegoing", author:"Yaa Gyasi", isbn:"978-1-101-97172-9", genre:"Fiction", year:2016, copies:4, available:2, status:"available", cover:["#1a1a5a","#2980b9"], shelf:"B3-R1", publisher:"Knopf", synopsis:"Spanning three centuries, the story of a Ghanaian family separated by the slave trade." },
@@ -1969,7 +1969,7 @@ const BOOKS = [
   { id:12, title:"Ghana: A History", author:"Molefi Asante", isbn:"978-1-55885-602-4", genre:"History", year:2008, copies:5, available:5, status:"available", cover:["#3a2a1a","#d35400"], shelf:"F1-R1", publisher:"Africa World Press", synopsis:"Comprehensive history of Ghana from ancient times to modern independence." },
 ];
 
-const MEMBERS = [
+let MEMBERS = [
   {id:"STU001", name:"Ama Owusu", class:"Form 3B", borrowed:5, returned:48, avatar:"AO", color:"#2d6a4f", fines:0},
   {id:"STU002", name:"Kofi Mensah", class:"Form 5A", borrowed:2, returned:62, avatar:"KM", color:"#2980b9", fines:2.50},
   {id:"STU003", name:"Abena Asante", class:"Form 2C", borrowed:3, returned:31, avatar:"AA", color:"#8e44ad", fines:5.00},
@@ -1980,7 +1980,7 @@ const MEMBERS = [
   {id:"STU008", name:"Adwoa Amponsah", class:"Form 3A", borrowed:1, returned:40, avatar:"AA", color:"#27ae60", fines:0},
 ];
 
-const LOANS = [
+let LOANS = [
   {student:"Ama Owusu", class:"Form 3B", book:"Things Fall Apart", issued:"2026-03-01", due:"2026-03-15", status:"overdue"},
   {student:"Kofi Mensah", class:"Form 5A", book:"The Alchemist", issued:"2026-03-10", due:"2026-03-24", status:"active"},
   {student:"Abena Asante", class:"Form 2C", book:"1984", issued:"2026-03-12", due:"2026-03-26", status:"active"},
@@ -1990,7 +1990,7 @@ const LOANS = [
   {student:"Kwesi Acheampong", class:"Form 5B", book:"Rich Dad Poor Dad", issued:"2026-03-16", due:"2026-03-30", status:"active"},
 ];
 
-const OVERDUE = [
+let OVERDUE = [
   {student:"Ama Owusu", class:"Form 3B", book:"Things Fall Apart", days:7, fine:3.50},
   {student:"Yaw Darko", class:"Form 6A", book:"Brief History of Time", days:3, fine:1.50},
   {student:"Abena Asante", class:"Form 2C", book:"Rich Dad Poor Dad", days:12, fine:6.00},
@@ -1998,7 +1998,7 @@ const OVERDUE = [
   {student:"Akosua Boateng", class:"Form 1B", book:"Animal Farm", days:2, fine:1.00},
 ];
 
-const RESERVATIONS = [
+let RESERVATIONS = [
   {student:"Kwame Boateng", class:"Form 4B", book:"Animal Farm", reservedOn:"2026-03-18", readyDate:"2026-03-23", status:"ready"},
   {student:"Efua Mensah", class:"Form 1A", book:"1984", reservedOn:"2026-03-19", readyDate:"2026-03-26", status:"pending"},
   {student:"Yaw Acheampong", class:"Form 5A", book:"Homegoing", reservedOn:"2026-03-20", readyDate:"2026-03-27", status:"pending"},
@@ -2168,7 +2168,7 @@ function openBookModal(id) {
 
 async function fetchBookAI(book) {
   try {
-    const sys = `You are a school library AI assistant for Accra Academy High School in Ghana. Provide educational, curriculum-relevant book information for school librarians and students. Be concise, informative, and mention relevance to Ghanaian/African education where applicable.`;
+    const sys = `You are a school library AI assistant for RadioSport Library. Provide educational, curriculum-relevant book information for school librarians and students. Be concise, informative, and mention relevance to Ghanaian/African education where applicable.`;
     const prompt = `Provide a concise research summary for the book "${book.title}" by ${book.author} (${book.year}). Include: 1) Main themes and key ideas, 2) Educational value for secondary school students, 3) Curriculum relevance (WASSCE/GES), 4) Recommended age/class level, 5) One memorable quote or insight. Keep it under 200 words and engaging.`;
     const text = await callAI(sys, [{role:'user', content: prompt}]);
     const el = document.getElementById('modal-ai-content');
@@ -2216,7 +2216,7 @@ async function callAI(systemPrompt, messages, maxTokens = 1000) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${cfg.openrouterKey}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'RadioSport Library v1.004',
+        'X-Title': 'RadioSport Library v1.005',
       },
       body: JSON.stringify({
         model: cfg.openrouterModel,
@@ -2279,7 +2279,7 @@ async function testOpenRouterKey() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${key}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'RadioSport Library v1.004',
+        'X-Title': 'RadioSport Library v1.005',
       },
       body: JSON.stringify({
         model: document.getElementById('set-openrouter-model')?.value || 'meta-llama/llama-3.3-70b-instruct:free',
@@ -2331,7 +2331,7 @@ async function sendMessage() {
 
   try {
     const cfg = getAIConfig();
-    const sysPrompt = `You are RadioSport, an AI Research Assistant for the school library at Accra Academy High School in Ghana. You help librarians and students research books, find reading materials, understand literary works, and align books with the Ghana Education Service (GES) curriculum including WASSCE and BECE. You have knowledge of the library's catalog including books like Things Fall Apart, The Alchemist, Homegoing, 1984, Purple Hibiscus, Animal Farm and many more. Be helpful, educational, and engaging. Format your responses with clear structure using line breaks. Keep responses thorough but concise. Respond in ${cfg.lang}. Curriculum focus: ${cfg.curriculum}.`;
+    const sysPrompt = `You are RadioSport, an AI Research Assistant for the RadioSport Library. You help librarians and students research books, find reading materials, understand literary works, and align books with the Ghana Education Service (GES) curriculum including WASSCE and BECE. You have knowledge of the library's catalog including books like Things Fall Apart, The Alchemist, Homegoing, 1984, Purple Hibiscus, Animal Farm and many more. Be helpful, educational, and engaging. Format your responses with clear structure using line breaks. Keep responses thorough but concise. Respond in ${cfg.lang}. Curriculum focus: ${cfg.curriculum}.`;
     const reply = await callAI(sysPrompt, chatMessages);
     typingEl.remove();
     chatMessages.push({role:'assistant', content: reply});
@@ -2409,7 +2409,18 @@ function renderLoans() {
 
 function renderOverdue() {
   const list = document.getElementById('overdue-list');
-  list.innerHTML = OVERDUE.map(o => `
+  if (!list) return;
+  // Update overdue panel subtitle
+  const total = OVERDUE.reduce((s,o)=>s+o.fine,0);
+  const sub = document.querySelector('#panel-overdue .page-subtitle');
+  if (sub) sub.textContent = `${OVERDUE.length} overdue item${OVERDUE.length!==1?'s':''} · GHS ${total.toFixed(2)} in pending fines`;
+  const alert = document.querySelector('#panel-overdue .alert-rose .alert-text');
+  if (alert) alert.innerHTML = `<strong>${OVERDUE.length} overdue item${OVERDUE.length!==1?'s':''}</strong>. Fine rate: GHS ${parseFloat(localStorage.getItem('radiosport_set-fine-rate')||'0.50').toFixed(2)} per day. Total outstanding: <strong>GHS ${total.toFixed(2)}</strong>`;
+  if (OVERDUE.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">No overdue books</div><div class="empty-state-sub">All loans are within their due dates.</div></div>`;
+    return;
+  }
+  list.innerHTML = OVERDUE.map((o,i) => `
     <div class="overdue-item">
       <div class="overdue-days">
         <div class="overdue-days-val">${o.days}</div>
@@ -2422,10 +2433,35 @@ function renderOverdue() {
         <div class="overdue-fine">Fine: GHS ${o.fine.toFixed(2)}</div>
       </div>
       <div style="display:flex;gap:8px;">
-        <div class="btn btn-danger" style="font-size:12px;padding:7px 12px;" onclick="showToast('📨 Reminder sent to ${o.student}')">📨 Remind</div>
-        <div class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="showToast('📥 Return logged for ${o.student}')">📥 Return</div>
+        <div class="btn btn-danger" style="font-size:12px;padding:7px 12px;" onclick="sendReminder(${i})">📨 Remind</div>
+        <div class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="markOverdueReturned(${i})">📥 Return</div>
       </div>
     </div>`).join('');
+}
+
+function sendReminder(idx) {
+  const o = OVERDUE[idx];
+  if (!o) return;
+  logActivity('var(--rose)', `<strong>Reminder sent</strong> to ${o.student} for "${o.book}" (${o.days} days overdue)`);
+  showToast(`📨 Reminder sent to ${o.student}`);
+}
+
+function markOverdueReturned(idx) {
+  const o = OVERDUE[idx];
+  if (!o) return;
+  // Return the book
+  const book = BOOKS.find(b => b.title === o.book);
+  if (book) { book.available++; if (book.available>0) book.status='available'; }
+  const member = MEMBERS.find(m => m.name === o.student);
+  if (member) { member.borrowed = Math.max(0,member.borrowed-1); member.returned++; member.fines=(member.fines||0)+o.fine; }
+  // Remove from loans too
+  const lIdx = LOANS.findIndex(l => l.student===o.student && l.book===o.book);
+  if (lIdx > -1) LOANS.splice(lIdx,1);
+  // Keep in OVERDUE for fine collection (fine stays until paid)
+  OVERDUE[idx] = {...o, returned: true};
+  renderOverdue(); renderLoans(); renderBooks(BOOKS); renderMembers(); renderFines(); updateDashboard();
+  logActivity('var(--sky)', `<strong>${o.student}</strong> returned overdue "${o.book}" · GHS ${o.fine.toFixed(2)} fine pending`);
+  showToast(`📥 "${o.book}" returned · GHS ${o.fine.toFixed(2)} fine outstanding`);
 }
 
 function renderMembers() {
@@ -2451,19 +2487,24 @@ function renderMembers() {
     </div>`).join('');
 }
 
-function showMemberDetail(id) {
-  const m = MEMBERS.find(x => x.id === id);
-  if (!m) return;
-  showToast(`👤 Opening profile for ${m.name}`);
-}
+function showMemberDetail(id) { openMemberProfile(id); }
 
 function renderFines() {
   const tbody = document.getElementById('fines-tbody');
-  const fineData = OVERDUE.concat([
-    {student:"Kofi Mensah", class:"Form 5A", book:"The Alchemist", days:5, fine:2.50},
-    {student:"Efua Mensah", class:"Form 1A", book:"Purple Hibiscus", days:3, fine:1.50},
-  ]);
-  tbody.innerHTML = fineData.map(f => `<tr>
+  if (!tbody) return;
+  const fineData = OVERDUE.filter(o => o.fine > 0);
+  // Update stats
+  const total = fineData.reduce((s,f)=>s+f.fine,0);
+  const rate  = parseFloat(localStorage.getItem('radiosport_set-fine-rate')||'0.50');
+  const el = id => document.getElementById(id);
+  if(el('stat-outstanding-fines')) el('stat-outstanding-fines').textContent = `GHS ${total.toFixed(2)}`;
+  if(el('stat-students-fines'))    el('stat-students-fines').textContent    = fineData.length;
+  if(el('stat-fine-rate-disp'))    el('stat-fine-rate-disp').textContent    = `GHS ${rate.toFixed(2)}`;
+  if (fineData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3);">✅ No outstanding fines</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = fineData.map((f,i) => `<tr>
     <td class="td-name">${f.student}</td>
     <td>${f.class}</td>
     <td>${f.book}</td>
@@ -2471,15 +2512,32 @@ function renderFines() {
     <td style="color:var(--rose);font-weight:700;">GHS ${f.fine.toFixed(2)}</td>
     <td><span class="pill pill-red"><span class="pill-dot"></span>Unpaid</span></td>
     <td>
-      <span class="btn btn-teal" style="font-size:11px;padding:5px 10px;cursor:pointer;" onclick="showToast('✅ Fine marked as paid for ${f.student}')">Mark Paid</span>
-      <span class="btn btn-secondary" style="font-size:11px;padding:5px 10px;cursor:pointer;margin-left:4px;" onclick="showToast('📨 Reminder sent!')">Remind</span>
+      <span class="btn btn-teal" style="font-size:11px;padding:5px 10px;cursor:pointer;" onclick="markFinePaid(${i})">Mark Paid</span>
+      <span class="btn btn-secondary" style="font-size:11px;padding:5px 10px;cursor:pointer;margin-left:4px;" onclick="showToast('📨 Reminder sent to ${f.student}!')">Remind</span>
     </td>
   </tr>`).join('');
 }
 
+function markFinePaid(idx) {
+  const fine = OVERDUE[idx];
+  if (!fine) return;
+  // Clear fine from member record
+  const member = MEMBERS.find(m => m.name === fine.student);
+  if (member) member.fines = Math.max(0, (member.fines||0) - fine.fine);
+  OVERDUE.splice(idx, 1);
+  renderFines(); renderOverdue(); renderMembers(); updateDashboard();
+  logActivity('var(--teal)', `<strong>${fine.student}</strong> paid fine of GHS ${fine.fine.toFixed(2)} for "${fine.book}"`);
+  showToast(`✅ Fine of GHS ${fine.fine.toFixed(2)} marked as paid for ${fine.student}`);
+}
+
 function renderReservations() {
   const tbody = document.getElementById('reservations-tbody');
-  tbody.innerHTML = RESERVATIONS.map(r => {
+  if (!tbody) return;
+  if (RESERVATIONS.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3);">📖 No active reservations</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = RESERVATIONS.map((r,i) => {
     const status = r.status === 'ready'
       ? '<span class="pill pill-green"><span class="pill-dot"></span>Ready</span>'
       : '<span class="pill pill-gold"><span class="pill-dot"></span>Pending</span>';
@@ -2491,11 +2549,38 @@ function renderReservations() {
       <td class="td-mono">${r.readyDate}</td>
       <td>${status}</td>
       <td>
-        <span class="btn btn-primary" style="font-size:11px;padding:5px 10px;cursor:pointer;" onclick="showToast('📤 Issued to ${r.student}!')">Issue Now</span>
-        <span class="btn btn-danger" style="font-size:11px;padding:5px 10px;cursor:pointer;margin-left:4px;" onclick="showToast('❌ Reservation cancelled')">Cancel</span>
+        <span class="btn btn-primary" style="font-size:11px;padding:5px 10px;cursor:pointer;" onclick="issueFromReservation(${i})">Issue Now</span>
+        <span class="btn btn-danger" style="font-size:11px;padding:5px 10px;cursor:pointer;margin-left:4px;" onclick="cancelReservation(${i})">Cancel</span>
       </td>
     </tr>`;
   }).join('');
+}
+
+function issueFromReservation(idx) {
+  const r = RESERVATIONS[idx];
+  if (!r) return;
+  const member = MEMBERS.find(m => m.name === r.student);
+  const book   = BOOKS.find(b => b.title === r.book);
+  if (!book || book.available <= 0) { showToast(`⚠️ No copies of "${r.book}" available`); return; }
+  book.available--;
+  if (book.available === 0) book.status = 'borrowed';
+  if (member) member.borrowed++;
+  const today = new Date().toISOString().split('T')[0];
+  const due   = new Date(); due.setDate(due.getDate()+14);
+  LOANS.push({ student: r.student, class: r.class, book: r.book, issued: today, due: due.toISOString().split('T')[0], status: 'active' });
+  RESERVATIONS.splice(idx, 1);
+  renderReservations(); renderLoans(); renderBooks(BOOKS); renderMembers(); updateDashboard();
+  logActivity('var(--teal)', `<strong>${r.student}</strong> issued "${r.book}" from reservation`);
+  showToast(`✅ "${r.book}" issued to ${r.student} from reservation`);
+}
+
+function cancelReservation(idx) {
+  const r = RESERVATIONS[idx];
+  if (!r) return;
+  RESERVATIONS.splice(idx, 1);
+  renderReservations(); updateDashboard();
+  logActivity('var(--rose)', `<strong>Reservation cancelled</strong> — ${r.student} / "${r.book}"`);
+  showToast(`❌ Reservation for "${r.book}" by ${r.student} cancelled`);
 }
 
 function renderCategories() {
@@ -2611,7 +2696,7 @@ async function generateAIReport() {
   showToast('🤖 AI is generating your annual library report…');
   switchPanel('ai_chat', document.querySelector('[onclick*=ai_chat]'));
   setTimeout(() => {
-    document.getElementById('chat-input').value = `Generate a comprehensive annual library report for Accra Academy High School Library with: executive summary, circulation statistics (342 active loans, 2,847 books, 1,204 members), top trends, recommendations for book acquisitions, and a reading culture improvement plan for students.`;
+    document.getElementById('chat-input').value = `Generate a comprehensive annual library report for RadioSport Library with: executive summary, circulation statistics (342 active loans, 2,847 books, 1,204 members), top trends, recommendations for book acquisitions, and a reading culture improvement plan for students.`;
     sendMessage();
   }, 400);
 }
@@ -2619,37 +2704,317 @@ async function generateAIReport() {
 // ═══════════════════════════════════════════
 // CIRCULATION ACTIONS
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// LIVE ACTIVITY LOG
+// ═══════════════════════════════════════════
+let ACTIVITY = [
+  {color:'var(--teal)',   text:'<strong>Ama Owusu</strong> borrowed "Things Fall Apart" — Form 3B',      time:'2m ago'},
+  {color:'var(--sky)',    text:'<strong>Kofi Mensah</strong> returned "The Alchemist" — 2 days early',    time:'14m ago'},
+  {color:'var(--gold)',   text:'<strong>New book added</strong> — "Homegoing" by Yaa Gyasi (×4 copies)',  time:'1h ago'},
+  {color:'var(--rose)',   text:'<strong>Abena Asante</strong> — overdue notice sent for "Rich Dad Poor Dad"', time:'2h ago'},
+  {color:'var(--teal)',   text:'<strong>Kwame Boateng</strong> reserved "Animal Farm" — Form 5A',         time:'3h ago'},
+  {color:'var(--sky)',    text:'<strong>Yaw Darko</strong> returned "A Brief History of Time"',            time:'5h ago'},
+];
+
+function logActivity(color, text) {
+  ACTIVITY.unshift({color, text, time:'just now'});
+  if (ACTIVITY.length > 20) ACTIVITY.pop();
+  renderActivity();
+}
+
+function renderActivity() {
+  const el = document.getElementById('activity-feed');
+  if (!el) return;
+  el.innerHTML = ACTIVITY.slice(0,8).map(a => `
+    <div class="activity-item">
+      <div class="activity-dot" style="background:${a.color}"></div>
+      <div class="activity-text">${a.text}</div>
+      <div class="activity-time">${a.time}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// DYNAMIC DASHBOARD STATS
+// ═══════════════════════════════════════════
+function updateDashboard() {
+  const totalBooks = BOOKS.reduce((s,b)=>s+b.copies,0);
+  const activeLoans = LOANS.length;
+  const overdueCount = OVERDUE.length;
+  const memberCount = MEMBERS.length;
+
+  const el = id => document.getElementById(id);
+  if(el('stat-total-books'))  el('stat-total-books').textContent  = totalBooks.toLocaleString();
+  if(el('stat-active-loans')) el('stat-active-loans').textContent = activeLoans;
+  if(el('stat-overdue'))      el('stat-overdue').textContent      = overdueCount;
+  if(el('stat-members'))      el('stat-members').textContent      = memberCount.toLocaleString();
+
+  // Overdue badge on nav
+  document.querySelectorAll('.nav-badge').forEach(b => {
+    if (b.previousSibling && b.previousSibling.textContent && b.previousSibling.textContent.includes('Overdue')) {
+      b.textContent = overdueCount;
+    }
+  });
+
+  // Members subtitle
+  const ms = document.getElementById('members-subtitle');
+  if (ms) ms.textContent = `${memberCount} registered students`;
+}
+
+// ═══════════════════════════════════════════
+// CIRCULATION ACTIONS — FULLY FUNCTIONAL
+// ═══════════════════════════════════════════
 function issueBook() {
-  const student = document.getElementById('issue-student').value.trim();
-  const book = document.getElementById('issue-book').value.trim();
-  if (!student || !book) { showToast('⚠️ Please enter student and book'); return; }
-  showToast(`✅ "${book}" issued to ${student} successfully!`);
+  const studentInput = document.getElementById('issue-student').value.trim();
+  const bookInput    = document.getElementById('issue-book').value.trim();
+  const dueDate      = document.getElementById('issue-due').value;
+  if (!studentInput || !bookInput) { showToast('⚠️ Please enter both student and book'); return; }
+
+  // Match student (by name or ID)
+  const member = MEMBERS.find(m =>
+    m.name.toLowerCase().includes(studentInput.toLowerCase()) ||
+    m.id.toLowerCase() === studentInput.toLowerCase()
+  );
+  if (!member) { showToast(`⚠️ Student "${studentInput}" not found. Register them first.`); return; }
+
+  // Match book (by title or ISBN)
+  const book = BOOKS.find(b =>
+    b.title.toLowerCase().includes(bookInput.toLowerCase()) ||
+    b.isbn.includes(bookInput)
+  );
+  if (!book) { showToast(`⚠️ Book "${bookInput}" not found in catalog`); return; }
+  if (book.available <= 0) { showToast(`⚠️ No copies of "${book.title}" available right now`); return; }
+
+  // Check member loan limit
+  const cfg = getAIConfig ? { maxBooks: parseInt(localStorage.getItem('radiosport_set-max-books') || '3') } : { maxBooks: 3 };
+  const currentLoans = LOANS.filter(l => l.student === member.name && l.status !== 'returned').length;
+  if (currentLoans >= cfg.maxBooks) {
+    showToast(`⚠️ ${member.name} already has ${currentLoans} books on loan (limit: ${cfg.maxBooks})`); return;
+  }
+
+  // Execute issue
+  book.available--;
+  if (book.available === 0) book.status = 'borrowed';
+  member.borrowed++;
+
+  const today = new Date().toISOString().split('T')[0];
+  const due   = dueDate || (() => { const d=new Date(); d.setDate(d.getDate()+14); return d.toISOString().split('T')[0]; })();
+  LOANS.push({ student: member.name, class: member.class, book: book.title, issued: today, due, status: 'active' });
+
+  // Reset form & refresh
   document.getElementById('issue-student').value = '';
   document.getElementById('issue-book').value = '';
+  const newDue = new Date(); newDue.setDate(newDue.getDate()+14);
+  document.getElementById('issue-due').value = newDue.toISOString().split('T')[0];
+
+  renderLoans();
+  renderBooks(BOOKS);
+  updateDashboard();
+  logActivity('var(--teal)', `<strong>${member.name}</strong> borrowed "${book.title}" — ${member.class}`);
+  showToast(`✅ "${book.title}" issued to ${member.name} · Due ${due}`);
 }
 
 function returnBook() {
-  const student = document.getElementById('return-student').value.trim();
-  const book = document.getElementById('return-book').value.trim();
-  if (!student || !book) { showToast('⚠️ Please enter student and book'); return; }
-  showToast(`📥 "${book}" returned by ${student} — no fines!`);
+  const studentInput = document.getElementById('return-student').value.trim();
+  const bookInput    = document.getElementById('return-book').value.trim();
+  if (!studentInput || !bookInput) { showToast('⚠️ Please enter both student and book'); return; }
+
+  // Find loan
+  const loanIdx = LOANS.findIndex(l =>
+    l.student.toLowerCase().includes(studentInput.toLowerCase()) &&
+    l.book.toLowerCase().includes(bookInput.toLowerCase())
+  );
+  if (loanIdx === -1) { showToast(`⚠️ No active loan found for "${studentInput}" — "${bookInput}"`); return; }
+
+  const loan = LOANS[loanIdx];
+  const member = MEMBERS.find(m => m.name === loan.student);
+  const book   = BOOKS.find(b => b.title === loan.book);
+
+  // Calculate fine
+  const today    = new Date();
+  const dueDate  = new Date(loan.due);
+  const daysLate = Math.max(0, Math.floor((today - dueDate) / 86400000));
+  const fineRate = parseFloat(localStorage.getItem('radiosport_set-fine-rate') || '0.50');
+  const fine     = daysLate * fineRate;
+
+  // Update book
+  if (book) { book.available++; if (book.available > 0) book.status = 'available'; }
+
+  // Update member
+  if (member) { member.borrowed = Math.max(0, member.borrowed - 1); member.returned++; if (fine>0) member.fines = (member.fines||0) + fine; }
+
+  // Remove from loans, add to overdue if fined
+  LOANS.splice(loanIdx, 1);
+  if (fine > 0) {
+    OVERDUE.push({ student: loan.student, class: loan.class, book: loan.book, days: daysLate, fine });
+    showToast(`📥 "${loan.book}" returned · ⚠️ Fine: GHS ${fine.toFixed(2)} (${daysLate} days late)`);
+    logActivity('var(--rose)', `<strong>${loan.student}</strong> returned "${loan.book}" — GHS ${fine.toFixed(2)} fine`);
+  } else {
+    showToast(`📥 "${loan.book}" returned by ${loan.student} — No fines!`);
+    logActivity('var(--sky)', `<strong>${loan.student}</strong> returned "${loan.book}" — on time`);
+  }
+
+  // Reset form & refresh
   document.getElementById('return-student').value = '';
   document.getElementById('return-book').value = '';
+  renderLoans(); renderOverdue(); renderFines(); renderBooks(BOOKS); renderMembers(); updateDashboard();
 }
 
 function sendAllReminders() {
-  showToast('📨 Overdue reminders sent to 28 students!');
+  if (OVERDUE.length === 0) { showToast('✅ No overdue books — nothing to remind!'); return; }
+  showToast(`📨 Reminders sent to ${OVERDUE.length} students with overdue books`);
+  logActivity('var(--rose)', `<strong>System</strong> sent overdue reminders to ${OVERDUE.length} students`);
 }
 
 // ═══════════════════════════════════════════
-// ADD BOOK
+// ADD BOOK — FULLY FUNCTIONAL
 // ═══════════════════════════════════════════
 function addBook() {
-  const title = document.getElementById('add-title').value.trim();
-  const author = document.getElementById('add-author').value.trim();
+  const title   = document.getElementById('add-title').value.trim();
+  const author  = document.getElementById('add-author').value.trim();
+  const isbn    = document.getElementById('add-isbn').value.trim();
+  const pub     = document.getElementById('add-publisher').value.trim();
+  const year    = parseInt(document.getElementById('add-year').value) || new Date().getFullYear();
+  const genre   = document.getElementById('add-genre').value;
+  const copies  = parseInt(document.getElementById('add-copies').value) || 1;
+  const shelf   = document.getElementById('add-shelf').value.trim() || 'Unassigned';
+  const synopsis= document.getElementById('add-synopsis').value.trim();
+
   if (!title || !author) { showToast('⚠️ Title and Author are required'); return; }
-  showToast(`✅ "${title}" by ${author} added to catalog!`);
+  if (genre === 'Select genre…' || !genre) { showToast('⚠️ Please select a genre'); return; }
+
+  const newId = BOOKS.length > 0 ? Math.max(...BOOKS.map(b=>b.id)) + 1 : 1;
+  const COVER_POOL = [
+    ['#1e3a5f','#2d6a4f'],['#5a1a1a','#c0392b'],['#1a1a5a','#2980b9'],
+    ['#2d1a5a','#8e44ad'],['#1a3a1a','#27ae60'],['#3a2a1a','#e67e22'],
+    ['#1a2a3a','#16a085'],['#3a1a2a','#e74c3c'],['#1a3a3a','#2980b9'],
+  ];
+
+  BOOKS.push({
+    id: newId, title, author, isbn: isbn || `ISBN-${newId}`,
+    genre, year, copies, available: copies, status: 'available',
+    cover: COVER_POOL[newId % COVER_POOL.length],
+    shelf, publisher: pub || 'Unknown', synopsis: synopsis || `${title} by ${author}.`
+  });
+
+  renderBooks(BOOKS);
+  updateDashboard();
   clearAddForm();
+  logActivity('var(--gold)', `<strong>New book added</strong> — "${title}" by ${author} (×${copies} copies)`);
+  showToast(`✅ "${title}" added to catalog! (${copies} cop${copies>1?'ies':'y'})`);
+}
+
+// ═══════════════════════════════════════════
+// MEMBERS — FULLY FUNCTIONAL
+// ═══════════════════════════════════════════
+function openNewMemberModal() {
+  ['nm-name','nm-id','nm-phone','nm-email'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+  const cls = document.getElementById('nm-class'); if(cls) cls.value='';
+  document.getElementById('new-member-modal').classList.add('open');
+}
+
+function addMember() {
+  const name  = document.getElementById('nm-name').value.trim();
+  const id    = document.getElementById('nm-id').value.trim();
+  const cls   = document.getElementById('nm-class').value;
+  if (!name || !id || !cls) { showToast('⚠️ Name, ID and Class are required'); return; }
+  if (MEMBERS.find(m => m.id === id)) { showToast(`⚠️ Student ID "${id}" already exists`); return; }
+
+  const COLORS = ['#2d6a4f','#2980b9','#8e44ad','#c0392b','#d35400','#16a085','#2c3e50','#27ae60','#e67e22'];
+  const initials = name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  MEMBERS.push({
+    id, name, class: cls,
+    borrowed: 0, returned: 0,
+    avatar: initials,
+    color: COLORS[MEMBERS.length % COLORS.length],
+    fines: 0
+  });
+
+  document.getElementById('new-member-modal').classList.remove('open');
+  renderMembers();
+  updateDashboard();
+  logActivity('var(--sky)', `<strong>New member registered</strong> — ${name} (${id}) · ${cls}`);
+  showToast(`✅ ${name} registered as a library member!`);
+}
+
+function searchMembers(q) {
+  const filtered = q
+    ? MEMBERS.filter(m => m.name.toLowerCase().includes(q.toLowerCase()) || m.id.toLowerCase().includes(q.toLowerCase()) || m.class.toLowerCase().includes(q.toLowerCase()))
+    : MEMBERS;
+  renderMembersGrid(filtered);
+}
+
+function renderMembers() {
+  const ms = document.getElementById('members-subtitle');
+  if (ms) ms.textContent = `${MEMBERS.length} registered students`;
+  renderMembersGrid(MEMBERS);
+}
+
+function renderMembersGrid(list) {
+  const grid = document.getElementById('members-grid');
+  if (!grid) return;
+  if (list.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">👤</div><div class="empty-state-text">No members found</div></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(m => {
+    const activeLoans = LOANS.filter(l => l.student === m.name).length;
+    return `
+    <div class="member-card" onclick="openMemberProfile('${m.id}')">
+      <div class="member-avatar-lg" style="background:${m.color}20;color:${m.color};">${m.avatar}</div>
+      <div style="flex:1;">
+        <div class="member-name">${m.name}</div>
+        <div class="member-id">${m.id} · ${m.class}</div>
+        ${m.fines > 0
+          ? `<span class="pill pill-red" style="margin-top:6px;font-size:10px;">GHS ${m.fines.toFixed(2)} fine</span>`
+          : `<span class="pill pill-green" style="margin-top:6px;font-size:10px;">No fines</span>`}
+      </div>
+      <div class="member-stats">
+        <div style="margin-bottom:6px;text-align:right;">
+          <div class="member-stat-val">${activeLoans}</div>
+          <div class="member-stat-lbl">Active loans</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="member-stat-val" style="font-size:16px;color:var(--teal)">${m.returned}</div>
+          <div class="member-stat-lbl">Total returned</div>
+        </div>
+      </div>
+    </div>`}).join('');
+}
+
+function openMemberProfile(id) {
+  const m = MEMBERS.find(x => x.id === id);
+  if (!m) return;
+  const memberLoans = LOANS.filter(l => l.student === m.name);
+  const modal = document.getElementById('book-modal');
+  document.getElementById('modal-book-header').innerHTML = `
+    <div class="modal-cover" style="background:${m.color}20;color:${m.color};font-size:32px;font-weight:900;">${m.avatar}</div>
+    <div>
+      <div class="modal-title">${m.name}</div>
+      <div class="modal-author">${m.id} · ${m.class}</div>
+      <div class="modal-badges">
+        <span class="badge badge-sky">${m.returned} returned</span>
+        <span class="badge badge-teal">${memberLoans.length} active</span>
+        ${m.fines>0?`<span class="badge badge-rose">GHS ${m.fines.toFixed(2)} fines</span>`:'<span class="badge badge-gold">No fines</span>'}
+      </div>
+    </div>`;
+  document.getElementById('modal-book-content').innerHTML = `
+    <div class="modal-section">
+      <div class="modal-section-title">Current Loans</div>
+      ${memberLoans.length === 0
+        ? '<div style="color:var(--text3);font-size:13px;">No books currently on loan.</div>'
+        : memberLoans.map(l=>`
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:20px;">📖</span>
+            <div style="flex:1"><div style="font-size:13.5px;font-weight:600;color:var(--text)">${l.book}</div>
+            <div style="font-size:12px;color:var(--text3)">Due: ${l.due}</div></div>
+            <span class="pill ${l.status==='overdue'?'pill-red':l.status==='due_today'?'pill-gold':'pill-green'}">${l.status}</span>
+          </div>`).join('')
+      }
+    </div>`;
+  document.getElementById('modal-book-actions').innerHTML = `
+    <div class="btn btn-primary" onclick="document.getElementById('issue-student').value='${m.name}';switchPanel('borrow',document.querySelector('[onclick*=borrow]'));closeModal()">📤 Issue Book</div>
+    <div class="btn btn-secondary" onclick="closeModal()">Close</div>`;
+  modal.classList.add('open');
 }
 
 function clearAddForm() {
@@ -2703,7 +3068,7 @@ if (dueInput) {
 // ═══════════════════════════════════════════
 // VERSION — static, incremented only on code changes
 // ═══════════════════════════════════════════
-const APP_VERSION = 'v1.004';
+const APP_VERSION = 'v1.005';
 
 function applyVersionDisplay() {
   ['ver-sidebar','ver-chat','ver-settings'].forEach(id => {
@@ -2718,10 +3083,10 @@ function applyVersionDisplay() {
 // ═══════════════════════════════════════════
 
 const SETTINGS_DEFAULTS = {
-  'set-school-name':       'Accra Academy High School',
-  'set-library-name':      'Accra Academy School Library',
+  'set-school-name':       'RadioSport School',
+  'set-library-name':      'RadioSport Library',
   'set-librarian':         'Librarian Admin',
-  'set-email':             'library@accraacademy.edu.gh',
+  'set-email':             'library@radiosport.edu.gh',
   'set-phone':             '',
   'set-region':            'Greater Accra',
   'set-max-books':         '3',
@@ -2777,6 +3142,14 @@ function loadSettings() {
     const el = document.getElementById('last-saved-time');
     if (el) el.textContent = new Date(parseInt(ts)).toLocaleString();
   }
+  // Reflect librarian name in sidebar & topbar
+  const libName = localStorage.getItem('radiosport_set-librarian') || 'Librarian Admin';
+  const sidebarLib = document.getElementById('sidebar-librarian');
+  if (sidebarLib) sidebarLib.textContent = libName;
+  const breadcrumb = document.getElementById('topbar-breadcrumb');
+  if (breadcrumb && breadcrumb.textContent.includes('Welcome back')) {
+    breadcrumb.textContent = `Welcome back, ${libName}`;
+  }
 }
 
 function applyToggle(btn, on) {
@@ -2802,6 +3175,12 @@ function saveFieldGroup(ids) {
 
 function saveSchoolSettings() {
   saveFieldGroup(['set-school-name','set-library-name','set-librarian','set-email','set-phone','set-region']);
+  // Live-update sidebar and topbar
+  const libName = document.getElementById('set-librarian')?.value || 'Librarian Admin';
+  const sidebarLib = document.getElementById('sidebar-librarian');
+  if (sidebarLib) sidebarLib.textContent = libName;
+  const breadcrumb = document.getElementById('topbar-breadcrumb');
+  if (breadcrumb && breadcrumb.textContent.includes('Welcome back')) breadcrumb.textContent = `Welcome back, ${libName}`;
   flashSavedBadge();
   showToast('✅ School information saved!');
 }
@@ -2907,6 +3286,8 @@ function confirmResetAll() {
 (function init() {
   applyVersionDisplay();
   loadSettings();
+  updateDashboard();
+  renderActivity();
   renderBooks(BOOKS);
   renderLoans();
   renderOverdue();
@@ -2915,6 +3296,13 @@ function confirmResetAll() {
   renderReservations();
   renderCategories();
   renderAnalytics();
+  // Also update when switching to fines panel
+  const origSwitch = switchPanel;
+  window.switchPanel = function(id, el) {
+    origSwitch(id, el);
+    if (id === 'fines') renderFines();
+    if (id === 'dashboard') { updateDashboard(); renderActivity(); }
+  };
 })();
 </script>
 </body>
