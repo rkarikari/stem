@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Library: v1.010</title>
+<title>RadioSport Library: v1.011</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📻</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1152,7 +1153,7 @@
 <nav class="sidebar" id="sidebar">
   <div class="logo">
     <div class="logo-title">📻 RadioSport</div>
-    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.010</span></div>
+    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.011</span></div>
     <div style="font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:0.5px;">© RNK <span style="font-family:'DM Mono',monospace;color:var(--gold)">( 9G5AR )</span></div>
   </div>
 
@@ -1729,7 +1730,7 @@
             <div class="ai-avatar">🤖</div>
             <div>
               <div class="ai-name">RadioSport AI Research Assistant</div>
-              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.010</span></div>
+              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.011</span></div>
             </div>
             <div style="margin-left:auto;display:flex;gap:8px;">
               <div class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="clearChat()">🗑 Clear</div>
@@ -2049,6 +2050,7 @@
             <div class="form-group" style="margin-bottom:10px;">
               <label class="form-label">OpenRouter API Key</label>
               <form autocomplete="on" onsubmit="return false;" style="position:relative;display:block;">
+                <input type="text" name="username" autocomplete="username" value="openrouter-api-key" style="display:none;" aria-hidden="true" tabindex="-1">
                 <input class="form-input" id="set-openrouter-key" type="password"
                   name="openrouter-api-key"
                   autocomplete="current-password"
@@ -2091,7 +2093,7 @@
 
           <div style="margin-top:4px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>System Version</span>
-            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.010</span>
+            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.011</span>
           </div>
           <div style="margin-top:8px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>Last Saved</span>
@@ -2156,7 +2158,7 @@
         <div style="font-size:12px;color:var(--text3);margin-top:3px;">RadioSport Library · <span id="profile-role-display">Administrator</span></div>
         <div style="display:flex;gap:6px;margin-top:8px;">
           <span class="badge badge-gold">Admin</span>
-          <span class="badge badge-teal" id="profile-version-badge">v1.010</span>
+          <span class="badge badge-teal" id="profile-version-badge">v1.011</span>
         </div>
       </div>
     </div>
@@ -2181,6 +2183,8 @@
       </div>
       <div class="form-group full">
         <label class="form-label">Change Password</label>
+        <input type="text" name="username" autocomplete="username" id="profile-username-hidden"
+          style="display:none;" aria-hidden="true" tabindex="-1">
         <input class="form-input" id="profile-password" type="password" name="new-password" autocomplete="new-password" placeholder="Leave blank to keep current password">
       </div>
     </div>
@@ -2194,7 +2198,7 @@
       </div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;">
         <span style="color:var(--text3)">App Version</span>
-        <span style="color:var(--gold);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;">v1.010</span>
+        <span style="color:var(--gold);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;">v1.011</span>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;">
         <span style="color:var(--text3)">Data Storage</span>
@@ -2575,7 +2579,7 @@ async function callAI(systemPrompt, messages, maxTokens = 1000) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${cfg.openrouterKey}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'RadioSport Library v1.010',
+        'X-Title': 'RadioSport Library v1.011',
       },
       body: JSON.stringify({
         model: cfg.openrouterModel,
@@ -2638,7 +2642,7 @@ async function testOpenRouterKey() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${key}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'RadioSport Library v1.010',
+        'X-Title': 'RadioSport Library v1.011',
       },
       body: JSON.stringify({
         model: document.getElementById('set-openrouter-model')?.value || 'meta-llama/llama-3.3-70b-instruct:free',
@@ -3427,7 +3431,7 @@ if (dueInput) {
 // ═══════════════════════════════════════════
 // VERSION — static, incremented only on code changes
 // ═══════════════════════════════════════════
-const APP_VERSION = 'v1.010';
+const APP_VERSION = 'v1.011';
 
 function applyVersionDisplay() {
   ['ver-sidebar','ver-chat','ver-settings'].forEach(id => {
@@ -3654,6 +3658,9 @@ function openProfileModal() {
   document.getElementById('profile-email').value = email;
   document.getElementById('profile-phone').value = phone;
   document.getElementById('profile-password').value = '';
+  // Populate hidden username field for password manager pairing
+  const hiddenUser = document.getElementById('profile-username-hidden');
+  if (hiddenUser) hiddenUser.value = name;
 
   // Update display section
   const initials = name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
