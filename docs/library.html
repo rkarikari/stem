@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Library: v1.008</title>
+<title>RadioSport Library: v1.009</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -44,9 +44,9 @@
     font-family: 'DM Sans', sans-serif;
     background: var(--bg);
     color: var(--text);
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
-    overflow: hidden;
+    overflow: hidden;   /* body stays fixed; only .content scrolls */
   }
 
   /* SIDEBAR */
@@ -58,8 +58,10 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
+    overflow: hidden;
     position: relative;
     z-index: 10;
+    flex-shrink: 0;
   }
 
   .logo {
@@ -163,18 +165,21 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    overflow: hidden;       /* keeps topbar fixed; .content scrolls internally */
+    max-height: 100vh;
+    overflow: hidden;
   }
 
   .topbar {
     height: 60px;
+    min-height: 60px;
+    flex-shrink: 0;
+    flex-grow: 0;
     background: var(--bg2);
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     padding: 0 28px;
     gap: 16px;
-    flex-shrink: 0;
   }
   .topbar-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--text); }
   .topbar-breadcrumb { color: var(--text3); font-size: 13px; margin-top: 2px; }
@@ -220,11 +225,14 @@
   /* CONTENT */
   .content {
     flex: 1;
-    min-height: 0;          /* critical: lets flex child shrink below its content height */
+    height: 0;              /* forces flex child to respect parent bounds — essential for scroll */
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 28px;
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* PANELS */
@@ -1144,7 +1152,7 @@
 <nav class="sidebar" id="sidebar">
   <div class="logo">
     <div class="logo-title">📻 RadioSport</div>
-    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.008</span></div>
+    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.009</span></div>
     <div style="font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:0.5px;">© RNK <span style="font-family:'DM Mono',monospace;color:var(--gold)">( 9G5AR )</span></div>
   </div>
 
@@ -1721,7 +1729,7 @@
             <div class="ai-avatar">🤖</div>
             <div>
               <div class="ai-name">RadioSport AI Research Assistant</div>
-              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.008</span></div>
+              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.009</span></div>
             </div>
             <div style="margin-left:auto;display:flex;gap:8px;">
               <div class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="clearChat()">🗑 Clear</div>
@@ -2081,7 +2089,7 @@
 
           <div style="margin-top:4px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>System Version</span>
-            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.008</span>
+            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.009</span>
           </div>
           <div style="margin-top:8px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>Last Saved</span>
@@ -2146,7 +2154,7 @@
         <div style="font-size:12px;color:var(--text3);margin-top:3px;">RadioSport Library · <span id="profile-role-display">Administrator</span></div>
         <div style="display:flex;gap:6px;margin-top:8px;">
           <span class="badge badge-gold">Admin</span>
-          <span class="badge badge-teal" id="profile-version-badge">v1.008</span>
+          <span class="badge badge-teal" id="profile-version-badge">v1.009</span>
         </div>
       </div>
     </div>
@@ -2182,7 +2190,7 @@
       </div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;">
         <span style="color:var(--text3)">App Version</span>
-        <span style="color:var(--gold);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;">v1.008</span>
+        <span style="color:var(--gold);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;">v1.009</span>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;">
         <span style="color:var(--text3)">Data Storage</span>
@@ -2563,7 +2571,7 @@ async function callAI(systemPrompt, messages, maxTokens = 1000) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${cfg.openrouterKey}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'RadioSport Library v1.008',
+        'X-Title': 'RadioSport Library v1.009',
       },
       body: JSON.stringify({
         model: cfg.openrouterModel,
@@ -2626,7 +2634,7 @@ async function testOpenRouterKey() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${key}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'RadioSport Library v1.008',
+        'X-Title': 'RadioSport Library v1.009',
       },
       body: JSON.stringify({
         model: document.getElementById('set-openrouter-model')?.value || 'meta-llama/llama-3.3-70b-instruct:free',
@@ -3415,7 +3423,7 @@ if (dueInput) {
 // ═══════════════════════════════════════════
 // VERSION — static, incremented only on code changes
 // ═══════════════════════════════════════════
-const APP_VERSION = 'v1.008';
+const APP_VERSION = 'v1.009';
 
 function applyVersionDisplay() {
   ['ver-sidebar','ver-chat','ver-settings'].forEach(id => {
