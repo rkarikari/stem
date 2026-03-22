@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Library: v1.011</title>
+<title>RadioSport Library: v1.012</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📻</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -912,6 +912,27 @@
   }
   .tooltip:hover::after { opacity: 1; }
 
+  .settings-btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .settings-btn-row .btn { flex-shrink: 0; }
+
+  /* SETTINGS GRID */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .settings-grid .card { height: 100%; box-sizing: border-box; }
+
+  @media (max-width: 1100px) {
+    .settings-grid { grid-template-columns: 1fr; }
+  }
+
   /* NOTIFICATION TOAST */
   .toast-container {
     position: fixed; bottom: 24px; right: 24px;
@@ -1113,8 +1134,9 @@
     /* Add book: sidebar panel collapses */
     #panel-addbook > div[style*="grid"] { display: flex !important; flex-direction: column !important; }
 
-    /* Settings grid */
-    #panel-settings > div[style*="grid"] { display: flex !important; flex-direction: column !important; }
+    /* Settings buttons full width on mobile */
+    .settings-btn-row { flex-direction: column; }
+    .settings-btn-row .btn { width: 100%; justify-content: center; }
 
     /* Reports grid */
     #panel-reports > div[style*="grid"] { display: flex !important; flex-direction: column !important; }
@@ -1153,7 +1175,7 @@
 <nav class="sidebar" id="sidebar">
   <div class="logo">
     <div class="logo-title">📻 RadioSport</div>
-    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.011</span></div>
+    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.012</span></div>
     <div style="font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:0.5px;">© RNK <span style="font-family:'DM Mono',monospace;color:var(--gold)">( 9G5AR )</span></div>
   </div>
 
@@ -1730,7 +1752,7 @@
             <div class="ai-avatar">🤖</div>
             <div>
               <div class="ai-name">RadioSport AI Research Assistant</div>
-              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.011</span></div>
+              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.012</span></div>
             </div>
             <div style="margin-left:auto;display:flex;gap:8px;">
               <div class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="clearChat()">🗑 Clear</div>
@@ -1911,12 +1933,16 @@
     <!-- SETTINGS -->
     <div id="panel-settings" class="panel">
       <div class="page-header">
-        <div><div class="page-title">System Settings</div><div class="page-subtitle">Configure RadioSport for your school · changes persist across sessions</div></div>
+        <div>
+          <div class="page-title">System Settings</div>
+          <div class="page-subtitle">Configure RadioSport for your school · changes persist across sessions</div>
+        </div>
         <div id="settings-saved-badge" style="display:none;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;background:var(--teal-dim);border:1px solid rgba(45,212,191,0.3);color:var(--teal);font-size:12.5px;font-weight:700;">
           ✅ All settings saved
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+      <div class="settings-grid">
 
         <!-- SCHOOL INFO -->
         <div class="card">
@@ -1955,7 +1981,7 @@
               </select>
             </div>
           </div>
-          <div style="display:flex;gap:10px;margin-top:16px;">
+          <div class="settings-btn-row">
             <div class="btn btn-primary" onclick="saveSchoolSettings()">💾 Save School Info</div>
             <div class="btn btn-secondary" onclick="resetSchoolSettings()">↺ Reset</div>
           </div>
@@ -1998,7 +2024,7 @@
               <input class="form-input" id="set-academic-year" type="text" placeholder="e.g. 2025/2026">
             </div>
           </div>
-          <div style="display:flex;gap:10px;margin-top:16px;">
+          <div class="settings-btn-row">
             <div class="btn btn-primary" onclick="saveCirculationSettings()">💾 Save Rules</div>
             <div class="btn btn-secondary" onclick="resetCirculationSettings()">↺ Reset Defaults</div>
           </div>
@@ -2008,7 +2034,6 @@
         <div class="card">
           <div class="card-title" style="margin-bottom:18px;">🤖 AI Settings</div>
 
-          <!-- Provider selector -->
           <div class="form-group" style="margin-bottom:14px;">
             <label class="form-label">AI Provider</label>
             <select class="form-input" id="set-ai-provider" onchange="onProviderChange(this.value)">
@@ -2017,7 +2042,6 @@
             </select>
           </div>
 
-          <!-- Anthropic model (shown when provider = anthropic) -->
           <div id="anthropic-section">
             <div class="form-group" style="margin-bottom:14px;">
               <label class="form-label">Anthropic Model</label>
@@ -2032,10 +2056,9 @@
             </div>
           </div>
 
-          <!-- OpenRouter section (shown when provider = openrouter) -->
           <div id="openrouter-section" style="display:none;">
             <div class="form-group" style="margin-bottom:14px;">
-              <label class="form-label">OpenRouter Free Model</label>
+              <label class="form-label">OpenRouter Model</label>
               <select class="form-input" id="set-openrouter-model">
                 <option value="meta-llama/llama-3.3-70b-instruct:free">🦙 Llama 3.3 70B · Free</option>
                 <option value="google/gemini-2.0-flash-exp:free">♊ Gemini 2.0 Flash · Free</option>
@@ -2047,30 +2070,24 @@
                 <option value="google/gemma-3-27b-it:free">💎 Gemma 3 27B · Free</option>
               </select>
             </div>
-            <div class="form-group" style="margin-bottom:10px;">
+            <div class="form-group" style="margin-bottom:12px;">
               <label class="form-label">OpenRouter API Key</label>
               <form autocomplete="on" onsubmit="return false;" style="position:relative;display:block;">
                 <input type="text" name="username" autocomplete="username" value="openrouter-api-key" style="display:none;" aria-hidden="true" tabindex="-1">
                 <input class="form-input" id="set-openrouter-key" type="password"
-                  name="openrouter-api-key"
-                  autocomplete="current-password"
+                  name="openrouter-api-key" autocomplete="current-password"
                   placeholder="sk-or-v1-…"
-                  style="padding-right:48px;font-family:'DM Mono',monospace;letter-spacing:1px;width:100%;">
+                  style="padding-right:44px;font-family:'DM Mono',monospace;letter-spacing:1px;width:100%;">
                 <div onclick="toggleKeyVisibility()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text3);font-size:16px;" id="key-eye">👁</div>
               </form>
             </div>
-            <div style="display:flex;gap:8px;margin-bottom:14px;">
-              <div class="btn btn-secondary" style="font-size:12px;flex:1;justify-content:center;" onclick="testOpenRouterKey()">🔌 Test Connection</div>
-              <a href="https://openrouter.ai/keys" target="_blank" class="btn btn-secondary" style="font-size:12px;text-decoration:none;">🔑 Get Free Key</a>
+            <div class="settings-btn-row" style="margin-bottom:12px;">
+              <div class="btn btn-secondary" style="flex:1;justify-content:center;font-size:12px;" onclick="testOpenRouterKey()">🔌 Test Connection</div>
+              <a href="https://openrouter.ai/keys" target="_blank" class="btn btn-secondary" style="font-size:12px;text-decoration:none;">🔑 Get Key</a>
             </div>
-            <div id="or-test-result" style="margin-bottom:10px;"></div>
-            <div class="alert alert-gold" style="margin-bottom:14px;">
-              <span class="alert-icon">💡</span>
-              <div class="alert-text">Get a free API key at <strong>openrouter.ai</strong>. All models marked <em>:free</em> have no usage cost. Your key is stored only in your browser.</div>
-            </div>
+            <div id="or-test-result" style="margin-bottom:4px;"></div>
           </div>
 
-          <!-- Shared settings -->
           <div class="form-group" style="margin-bottom:12px;">
             <label class="form-label">AI Response Language</label>
             <select class="form-input" id="set-ai-lang">
@@ -2089,15 +2106,17 @@
             </select>
           </div>
 
-          <div class="btn btn-primary" style="margin-bottom:12px;width:100%;justify-content:center;" onclick="saveAISettings()">💾 Save AI Settings</div>
+          <div class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:12px;" onclick="saveAISettings()">💾 Save AI Settings</div>
 
-          <div style="margin-top:4px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
-            <span>System Version</span>
-            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.011</span>
-          </div>
-          <div style="margin-top:8px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
-            <span>Last Saved</span>
-            <span id="last-saved-time" style="font-family:'DM Mono',monospace;color:var(--text2);font-size:11px;">Never</span>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="padding:9px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
+              <span>System Version</span>
+              <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.012</span>
+            </div>
+            <div style="padding:9px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
+              <span>Last Saved</span>
+              <span id="last-saved-time" style="font-family:'DM Mono',monospace;color:var(--text2);font-size:11px;">Never</span>
+            </div>
           </div>
         </div>
 
@@ -2105,42 +2124,39 @@
         <div class="card">
           <div class="card-title" style="margin-bottom:18px;">📬 Notifications</div>
           <div style="display:flex;flex-direction:column;gap:14px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
               <div><div style="font-size:13.5px;font-weight:600;color:var(--text)">Overdue Reminders</div><div style="font-size:12px;color:var(--text3)">Auto-send after due date</div></div>
               <div class="toggle-btn" id="tog-overdue" data-key="notif-overdue" data-default="1" onclick="toggleSetting(this)"></div>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
               <div><div style="font-size:13.5px;font-weight:600;color:var(--text)">Reservation Alerts</div><div style="font-size:12px;color:var(--text3)">Notify when book available</div></div>
               <div class="toggle-btn" id="tog-reservations" data-key="notif-reservations" data-default="1" onclick="toggleSetting(this)"></div>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
               <div><div style="font-size:13.5px;font-weight:600;color:var(--text)">Weekly Reports</div><div style="font-size:12px;color:var(--text3)">Email summary every Monday</div></div>
               <div class="toggle-btn" id="tog-weekly" data-key="notif-weekly" data-default="0" onclick="toggleSetting(this)"></div>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
               <div><div style="font-size:13.5px;font-weight:600;color:var(--text)">New Member Alerts</div><div style="font-size:12px;color:var(--text3)">Notify on new registrations</div></div>
               <div class="toggle-btn" id="tog-newmember" data-key="notif-newmember" data-default="0" onclick="toggleSetting(this)"></div>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
               <div><div style="font-size:13.5px;font-weight:600;color:var(--text)">Low Stock Alerts</div><div style="font-size:12px;color:var(--text3)">When a book has ≤1 copy left</div></div>
               <div class="toggle-btn" id="tog-lowstock" data-key="notif-lowstock" data-default="1" onclick="toggleSetting(this)"></div>
             </div>
           </div>
           <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);">
             <div class="card-title" style="font-size:14px;margin-bottom:12px;">🗑️ Data Management</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <div class="btn btn-secondary" style="font-size:12px;" onclick="exportSettings()">📤 Export Settings</div>
-              <div class="btn btn-secondary" style="font-size:12px;" onclick="importSettingsPrompt()">📥 Import Settings</div>
-              <div class="btn btn-danger" style="font-size:12px;" onclick="confirmResetAll()">⚠️ Reset All Data</div>
+            <div class="settings-btn-row" style="flex-wrap:wrap;">
+              <div class="btn btn-secondary" style="font-size:12px;" onclick="exportSettings()">📤 Export</div>
+              <div class="btn btn-secondary" style="font-size:12px;" onclick="importSettingsPrompt()">📥 Import</div>
+              <div class="btn btn-danger" style="font-size:12px;" onclick="confirmResetAll()">⚠️ Reset All</div>
             </div>
           </div>
         </div>
 
       </div>
     </div>
-
-  </div>
-</div>
 
 <!-- PROFILE MODAL -->
 <div class="modal-overlay" id="profile-modal">
@@ -2158,7 +2174,7 @@
         <div style="font-size:12px;color:var(--text3);margin-top:3px;">RadioSport Library · <span id="profile-role-display">Administrator</span></div>
         <div style="display:flex;gap:6px;margin-top:8px;">
           <span class="badge badge-gold">Admin</span>
-          <span class="badge badge-teal" id="profile-version-badge">v1.011</span>
+          <span class="badge badge-teal" id="profile-version-badge">v1.012</span>
         </div>
       </div>
     </div>
@@ -2198,7 +2214,7 @@
       </div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;">
         <span style="color:var(--text3)">App Version</span>
-        <span style="color:var(--gold);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;">v1.011</span>
+        <span style="color:var(--gold);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;">v1.012</span>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;">
         <span style="color:var(--text3)">Data Storage</span>
@@ -2579,7 +2595,7 @@ async function callAI(systemPrompt, messages, maxTokens = 1000) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${cfg.openrouterKey}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'RadioSport Library v1.011',
+        'X-Title': 'RadioSport Library v1.012',
       },
       body: JSON.stringify({
         model: cfg.openrouterModel,
@@ -2642,7 +2658,7 @@ async function testOpenRouterKey() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${key}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'RadioSport Library v1.011',
+        'X-Title': 'RadioSport Library v1.012',
       },
       body: JSON.stringify({
         model: document.getElementById('set-openrouter-model')?.value || 'meta-llama/llama-3.3-70b-instruct:free',
@@ -3431,7 +3447,7 @@ if (dueInput) {
 // ═══════════════════════════════════════════
 // VERSION — static, incremented only on code changes
 // ═══════════════════════════════════════════
-const APP_VERSION = 'v1.011';
+const APP_VERSION = 'v1.012';
 
 function applyVersionDisplay() {
   ['ver-sidebar','ver-chat','ver-settings'].forEach(id => {
