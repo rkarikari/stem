@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lexicon — School Library Intelligence System</title>
+<title>RadioSport Library: v1.001</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -911,8 +911,9 @@
 <!-- SIDEBAR -->
 <nav class="sidebar">
   <div class="logo">
-    <div class="logo-title">📚 Lexicon</div>
-    <div class="logo-sub">Library Intelligence System</div>
+    <div class="logo-title">📻 RadioSport</div>
+    <div class="logo-sub">Library: <span style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.001</span></div>
+    <div style="font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:0.5px;">© RNK <span style="font-family:'DM Mono',monospace;color:var(--gold)">( 9G5AR )</span></div>
   </div>
 
   <div class="nav">
@@ -1512,8 +1513,8 @@
           <div class="chat-header">
             <div class="ai-avatar">🤖</div>
             <div>
-              <div class="ai-name">Lexicon AI Research Assistant</div>
-              <div class="ai-status"><div class="ai-status-dot"></div>Ready to help with library research</div>
+              <div class="ai-name">RadioSport AI Research Assistant</div>
+              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.001</span></div>
             </div>
             <div style="margin-left:auto;display:flex;gap:8px;">
               <div class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="clearChat()">🗑 Clear</div>
@@ -1526,7 +1527,7 @@
               <div class="msg-avatar ai">🤖</div>
               <div>
                 <div class="msg-bubble">
-                  Hello! I'm Lexicon, your AI Research Assistant for <strong>Accra Academy High School Library</strong>. I can help you:<br><br>
+                  Hello! I'm RadioSport, your AI Research Assistant for <strong>Accra Academy High School Library</strong>. I can help you:<br><br>
                   📚 Research and summarize books in your collection<br>
                   🔍 Find relevant books on any topic for students<br>
                   📝 Generate reading lists aligned to the GES curriculum<br>
@@ -1727,7 +1728,11 @@
           <div class="form-group" style="margin-bottom:16px;"><label class="form-label">AI Language</label>
             <select class="form-input"><option>English</option><option>French</option></select>
           </div>
-          <div class="alert alert-teal"><span class="alert-icon">🤖</span><div class="alert-text">AI is active and connected. Book research, auto-fill, and reports are all available.</div></div>
+          <div class="alert alert-teal"><span class="alert-icon">🤖</span><div class="alert-text">AI is active and connected. Book research, auto-fill, and reports are all available via RadioSport.</div></div>
+          <div style="margin-top:10px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
+            <span>System Version</span>
+            <span style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.001</span>
+          </div>
         </div>
         <div class="card">
           <div class="card-title" style="margin-bottom:18px;">📬 Notifications</div>
@@ -2046,7 +2051,7 @@ async function sendMessage() {
       body: JSON.stringify({
         model:"claude-sonnet-4-20250514",
         max_tokens:1000,
-        system:`You are Lexicon, an AI Research Assistant for the school library at Accra Academy High School in Ghana. You help librarians and students research books, find reading materials, understand literary works, and align books with the Ghana Education Service (GES) curriculum including WASSCE and BECE. You have knowledge of the library's catalog including books like Things Fall Apart, The Alchemist, Homegoing, 1984, Purple Hibiscus, Animal Farm and many more. Be helpful, educational, and engaging. Format your responses with clear structure using line breaks. Keep responses thorough but concise.`,
+        system:`You are RadioSport, an AI Research Assistant for the school library at Accra Academy High School in Ghana. You help librarians and students research books, find reading materials, understand literary works, and align books with the Ghana Education Service (GES) curriculum including WASSCE and BECE. You have knowledge of the library's catalog including books like Things Fall Apart, The Alchemist, Homegoing, 1984, Purple Hibiscus, Animal Farm and many more. Be helpful, educational, and engaging. Format your responses with clear structure using line breaks. Keep responses thorough but concise.`,
         messages: chatMessages
       })
     });
