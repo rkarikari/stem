@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Library: v1.001</title>
+<title>RadioSport Library: v1.002</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -827,6 +827,21 @@
   .alert-rose { background: var(--rose-dim); border-color: rgba(248,113,113,0.25); }
   .alert-teal { background: var(--teal-dim); border-color: rgba(45,212,191,0.25); }
 
+  /* TOGGLE */
+  .toggle-btn {
+    width: 44px; height: 24px; border-radius: 12px;
+    cursor: pointer; position: relative; transition: background 0.25s;
+    flex-shrink: 0;
+  }
+  .toggle-btn::after {
+    content: '';
+    width: 20px; height: 20px; background: white; border-radius: 50%;
+    position: absolute; top: 2px; left: 2px; transition: transform 0.25s;
+  }
+  .toggle-btn.on { background: var(--teal); }
+  .toggle-btn.on::after { transform: translateX(20px); }
+  .toggle-btn.off { background: var(--border2); }
+
   /* SCROLLBAR */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -912,7 +927,7 @@
 <nav class="sidebar">
   <div class="logo">
     <div class="logo-title">📻 RadioSport</div>
-    <div class="logo-sub">Library: <span style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.001</span></div>
+    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.002</span></div>
     <div style="font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:0.5px;">© RNK <span style="font-family:'DM Mono',monospace;color:var(--gold)">( 9G5AR )</span></div>
   </div>
 
@@ -1514,7 +1529,7 @@
             <div class="ai-avatar">🤖</div>
             <div>
               <div class="ai-name">RadioSport AI Research Assistant</div>
-              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.001</span></div>
+              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.002</span></div>
             </div>
             <div style="margin-left:auto;display:flex;gap:8px;">
               <div class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="clearChat()">🗑 Clear</div>
@@ -1695,62 +1710,176 @@
     <!-- SETTINGS -->
     <div id="panel-settings" class="panel">
       <div class="page-header">
-        <div><div class="page-title">System Settings</div><div class="page-subtitle">Configure Lexicon for your school</div></div>
+        <div><div class="page-title">System Settings</div><div class="page-subtitle">Configure RadioSport for your school · changes persist across sessions</div></div>
+        <div id="settings-saved-badge" style="display:none;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;background:var(--teal-dim);border:1px solid rgba(45,212,191,0.3);color:var(--teal);font-size:12.5px;font-weight:700;">
+          ✅ All settings saved
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+        <!-- SCHOOL INFO -->
         <div class="card">
           <div class="card-title" style="margin-bottom:18px;">🏫 School Information</div>
           <div class="form-grid">
-            <div class="form-group full"><label class="form-label">School Name</label><input class="form-input" value="Accra Academy High School" type="text"></div>
-            <div class="form-group full"><label class="form-label">Library Name</label><input class="form-input" value="Accra Academy School Library" type="text"></div>
-            <div class="form-group"><label class="form-label">Librarian</label><input class="form-input" value="Librarian Admin" type="text"></div>
-            <div class="form-group"><label class="form-label">Contact Email</label><input class="form-input" value="library@accraacademy.edu.gh" type="text"></div>
+            <div class="form-group full">
+              <label class="form-label">School Name</label>
+              <input class="form-input" id="set-school-name" type="text" placeholder="e.g. Accra Academy High School">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Library Name</label>
+              <input class="form-input" id="set-library-name" type="text" placeholder="e.g. Accra Academy School Library">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Librarian Name</label>
+              <input class="form-input" id="set-librarian" type="text" placeholder="e.g. Librarian Admin">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Contact Email</label>
+              <input class="form-input" id="set-email" type="email" placeholder="e.g. library@school.edu.gh">
+            </div>
+            <div class="form-group">
+              <label class="form-label">School Phone</label>
+              <input class="form-input" id="set-phone" type="text" placeholder="e.g. +233 XX XXX XXXX">
+            </div>
+            <div class="form-group">
+              <label class="form-label">School Region</label>
+              <select class="form-input" id="set-region">
+                <option value="">Select region…</option>
+                <option>Greater Accra</option><option>Ashanti</option><option>Western</option>
+                <option>Central</option><option>Eastern</option><option>Northern</option>
+                <option>Upper East</option><option>Upper West</option><option>Volta</option>
+                <option>Bono</option><option>Bono East</option><option>Ahafo</option>
+                <option>Savannah</option><option>North East</option><option>Oti</option>
+                <option>Western North</option>
+              </select>
+            </div>
           </div>
-          <div class="btn btn-primary" style="margin-top:16px;" onclick="showToast('✅ School info saved!')">Save Changes</div>
+          <div style="display:flex;gap:10px;margin-top:16px;">
+            <div class="btn btn-primary" onclick="saveSchoolSettings()">💾 Save School Info</div>
+            <div class="btn btn-secondary" onclick="resetSchoolSettings()">↺ Reset</div>
+          </div>
         </div>
+
+        <!-- CIRCULATION RULES -->
         <div class="card">
           <div class="card-title" style="margin-bottom:18px;">⚙️ Circulation Rules</div>
           <div class="form-grid">
-            <div class="form-group"><label class="form-label">Max Books per Student</label><input class="form-input" value="3" type="number"></div>
-            <div class="form-group"><label class="form-label">Loan Period (days)</label><input class="form-input" value="14" type="number"></div>
-            <div class="form-group"><label class="form-label">Daily Fine (GHS)</label><input class="form-input" value="0.50" type="number" step="0.10"></div>
-            <div class="form-group"><label class="form-label">Renewal Limit</label><input class="form-input" value="2" type="number"></div>
-            <div class="form-group"><label class="form-label">Reservation Hold (days)</label><input class="form-input" value="3" type="number"></div>
-            <div class="form-group"><label class="form-label">Fine Grace Period</label><input class="form-input" value="1" type="number"></div>
+            <div class="form-group">
+              <label class="form-label">Max Books per Student</label>
+              <input class="form-input" id="set-max-books" type="number" min="1" max="20">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Loan Period (days)</label>
+              <input class="form-input" id="set-loan-period" type="number" min="1" max="90">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Daily Fine (GHS)</label>
+              <input class="form-input" id="set-fine-rate" type="number" min="0" step="0.10">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Renewal Limit</label>
+              <input class="form-input" id="set-renewal-limit" type="number" min="0" max="10">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reservation Hold (days)</label>
+              <input class="form-input" id="set-reservation-hold" type="number" min="1" max="14">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fine Grace Period (days)</label>
+              <input class="form-input" id="set-grace-period" type="number" min="0" max="7">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Max Fine Cap (GHS)</label>
+              <input class="form-input" id="set-fine-cap" type="number" min="0" step="0.50" placeholder="e.g. 20.00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Academic Year</label>
+              <input class="form-input" id="set-academic-year" type="text" placeholder="e.g. 2025/2026">
+            </div>
           </div>
-          <div class="btn btn-primary" style="margin-top:16px;" onclick="showToast('✅ Rules saved!')">Save Rules</div>
+          <div style="display:flex;gap:10px;margin-top:16px;">
+            <div class="btn btn-primary" onclick="saveCirculationSettings()">💾 Save Rules</div>
+            <div class="btn btn-secondary" onclick="resetCirculationSettings()">↺ Reset Defaults</div>
+          </div>
         </div>
+
+        <!-- AI SETTINGS -->
         <div class="card">
           <div class="card-title" style="margin-bottom:18px;">🤖 AI Settings</div>
-          <div class="form-group" style="margin-bottom:12px;"><label class="form-label">AI Model</label>
-            <select class="form-input"><option>claude-sonnet-4-20250514 (Recommended)</option><option>claude-haiku-4-5 (Faster)</option></select>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">AI Model</label>
+            <select class="form-input" id="set-ai-model">
+              <option value="claude-sonnet-4-20250514">claude-sonnet-4-20250514 (Recommended)</option>
+              <option value="claude-haiku-4-5">claude-haiku-4-5 (Faster)</option>
+            </select>
           </div>
-          <div class="form-group" style="margin-bottom:16px;"><label class="form-label">AI Language</label>
-            <select class="form-input"><option>English</option><option>French</option></select>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">AI Response Language</label>
+            <select class="form-input" id="set-ai-lang">
+              <option value="English">English</option>
+              <option value="French">French</option>
+              <option value="Twi">Twi</option>
+            </select>
           </div>
-          <div class="alert alert-teal"><span class="alert-icon">🤖</span><div class="alert-text">AI is active and connected. Book research, auto-fill, and reports are all available via RadioSport.</div></div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">AI Curriculum Focus</label>
+            <select class="form-input" id="set-ai-curriculum">
+              <option value="GES Ghana">GES Ghana (WASSCE / BECE)</option>
+              <option value="Cambridge">Cambridge (IGCSE / A-Level)</option>
+              <option value="IB">International Baccalaureate</option>
+              <option value="General">General / No Preference</option>
+            </select>
+          </div>
+          <div class="btn btn-primary" style="margin-bottom:12px;" onclick="saveAISettings()">💾 Save AI Settings</div>
+          <div class="alert alert-teal" style="margin-bottom:0;">
+            <span class="alert-icon">🤖</span>
+            <div class="alert-text">AI is active and connected. Book research, auto-fill, and reports are all available via RadioSport.</div>
+          </div>
           <div style="margin-top:10px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>System Version</span>
-            <span style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.001</span>
+            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.002</span>
+          </div>
+          <div style="margin-top:8px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
+            <span>Last Saved</span>
+            <span id="last-saved-time" style="font-family:'DM Mono',monospace;color:var(--text2);font-size:11px;">Never</span>
           </div>
         </div>
+
+        <!-- NOTIFICATIONS -->
         <div class="card">
           <div class="card-title" style="margin-bottom:18px;">📬 Notifications</div>
-          <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;flex-direction:column;gap:14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div><div style="font-size:13.5px;font-weight:600;color:var(--text)">Overdue Reminders</div><div style="font-size:12px;color:var(--text3)">Auto-send after due date</div></div>
-              <div style="width:44px;height:24px;background:var(--teal);border-radius:12px;cursor:pointer;position:relative;"><div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;right:2px;top:2px;transition:var(--transition)"></div></div>
+              <div class="toggle-btn" id="tog-overdue" data-key="notif-overdue" data-default="1" onclick="toggleSetting(this)"></div>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div><div style="font-size:13.5px;font-weight:600;color:var(--text)">Reservation Alerts</div><div style="font-size:12px;color:var(--text3)">Notify when book available</div></div>
-              <div style="width:44px;height:24px;background:var(--teal);border-radius:12px;cursor:pointer;"></div>
+              <div class="toggle-btn" id="tog-reservations" data-key="notif-reservations" data-default="1" onclick="toggleSetting(this)"></div>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div><div style="font-size:13.5px;font-weight:600;color:var(--text)">Weekly Reports</div><div style="font-size:12px;color:var(--text3)">Email summary every Monday</div></div>
-              <div style="width:44px;height:24px;background:var(--border2);border-radius:12px;cursor:pointer;"></div>
+              <div class="toggle-btn" id="tog-weekly" data-key="notif-weekly" data-default="0" onclick="toggleSetting(this)"></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div><div style="font-size:13.5px;font-weight:600;color:var(--text)">New Member Alerts</div><div style="font-size:12px;color:var(--text3)">Notify on new registrations</div></div>
+              <div class="toggle-btn" id="tog-newmember" data-key="notif-newmember" data-default="0" onclick="toggleSetting(this)"></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div><div style="font-size:13.5px;font-weight:600;color:var(--text)">Low Stock Alerts</div><div style="font-size:12px;color:var(--text3)">When a book has ≤1 copy left</div></div>
+              <div class="toggle-btn" id="tog-lowstock" data-key="notif-lowstock" data-default="1" onclick="toggleSetting(this)"></div>
+            </div>
+          </div>
+          <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);">
+            <div class="card-title" style="font-size:14px;margin-bottom:12px;">🗑️ Data Management</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="btn btn-secondary" style="font-size:12px;" onclick="exportSettings()">📤 Export Settings</div>
+              <div class="btn btn-secondary" style="font-size:12px;" onclick="importSettingsPrompt()">📥 Import Settings</div>
+              <div class="btn btn-danger" style="font-size:12px;" onclick="confirmResetAll()">⚠️ Reset All Data</div>
             </div>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -2429,9 +2558,230 @@ if (dueInput) {
 }
 
 // ═══════════════════════════════════════════
+// VERSION ENGINE — auto-increments on every save
+// ═══════════════════════════════════════════
+const BASE_VERSION = { major: 1, minor: 0, patch: 2 }; // v1.002 baseline
+
+function loadVersion() {
+  const stored = localStorage.getItem('radiosport_version');
+  const v = stored ? JSON.parse(stored) : { ...BASE_VERSION };
+  // Always ensure stored version is at least the app baseline
+  const isBelow =
+    v.major < BASE_VERSION.major ||
+    (v.major === BASE_VERSION.major && v.minor < BASE_VERSION.minor) ||
+    (v.major === BASE_VERSION.major && v.minor === BASE_VERSION.minor && v.patch < BASE_VERSION.patch);
+  if (isBelow) {
+    localStorage.setItem('radiosport_version', JSON.stringify({ ...BASE_VERSION }));
+    return { ...BASE_VERSION };
+  }
+  return v;
+}
+
+function incrementVersion() {
+  const v = loadVersion();
+  v.patch += 1;
+  // Roll patch 999 → minor bump
+  if (v.patch > 999) { v.patch = 0; v.minor += 1; }
+  if (v.minor > 99)  { v.minor = 0; v.major += 1; }
+  localStorage.setItem('radiosport_version', JSON.stringify(v));
+  applyVersionDisplay(v);
+  return v;
+}
+
+function formatVersion(v) {
+  const patch = String(v.patch).padStart(3, '0');
+  return `v${v.major}.${patch}`;
+}
+
+function applyVersionDisplay(v) {
+  const label = formatVersion(v);
+  ['ver-sidebar','ver-chat','ver-settings'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = label;
+  });
+  document.title = `RadioSport Library: ${label}`;
+}
+
+// ═══════════════════════════════════════════
+// SETTINGS — localStorage PERSISTENCE
+// ═══════════════════════════════════════════
+
+const SETTINGS_DEFAULTS = {
+  'set-school-name':       'Accra Academy High School',
+  'set-library-name':      'Accra Academy School Library',
+  'set-librarian':         'Librarian Admin',
+  'set-email':             'library@accraacademy.edu.gh',
+  'set-phone':             '',
+  'set-region':            'Greater Accra',
+  'set-max-books':         '3',
+  'set-loan-period':       '14',
+  'set-fine-rate':         '0.50',
+  'set-renewal-limit':     '2',
+  'set-reservation-hold':  '3',
+  'set-grace-period':      '1',
+  'set-fine-cap':          '20.00',
+  'set-academic-year':     '2025/2026',
+  'set-ai-model':          'claude-sonnet-4-20250514',
+  'set-ai-lang':           'English',
+  'set-ai-curriculum':     'GES Ghana',
+  'notif-overdue':         '1',
+  'notif-reservations':    '1',
+  'notif-weekly':          '0',
+  'notif-newmember':       '0',
+  'notif-lowstock':        '1',
+};
+
+function loadSettings() {
+  // Load text/select inputs
+  Object.keys(SETTINGS_DEFAULTS).forEach(key => {
+    if (key.startsWith('notif-')) return; // toggles handled separately
+    const el = document.getElementById(key);
+    if (!el) return;
+    const saved = localStorage.getItem('radiosport_' + key);
+    el.value = saved !== null ? saved : SETTINGS_DEFAULTS[key];
+  });
+
+  // Load toggles
+  document.querySelectorAll('.toggle-btn[data-key]').forEach(btn => {
+    const key = btn.dataset.key;
+    const saved = localStorage.getItem('radiosport_' + key);
+    const val = saved !== null ? saved : (btn.dataset.default || '0');
+    applyToggle(btn, val === '1');
+  });
+
+  // Show last saved time
+  const ts = localStorage.getItem('radiosport_last_saved');
+  if (ts) {
+    const el = document.getElementById('last-saved-time');
+    if (el) el.textContent = new Date(parseInt(ts)).toLocaleString();
+  }
+}
+
+function applyToggle(btn, on) {
+  btn.classList.toggle('on', on);
+  btn.classList.toggle('off', !on);
+}
+
+function toggleSetting(btn) {
+  const isOn = btn.classList.contains('on');
+  applyToggle(btn, !isOn);
+  localStorage.setItem('radiosport_' + btn.dataset.key, isOn ? '0' : '1');
+  const v = incrementVersion();
+  stampSaveTime();
+  showToast((isOn ? '🔕' : '🔔') + ' ' + btn.closest('div').querySelector('div > div').textContent + ' ' + (isOn ? 'disabled' : 'enabled') + ` · ${formatVersion(v)}`);
+}
+
+function saveFieldGroup(ids) {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) localStorage.setItem('radiosport_' + id, el.value);
+  });
+  stampSaveTime();
+}
+
+function saveSchoolSettings() {
+  saveFieldGroup(['set-school-name','set-library-name','set-librarian','set-email','set-phone','set-region']);
+  const v = incrementVersion();
+  flashSavedBadge();
+  showToast(`✅ School information saved · ${formatVersion(v)}`);
+}
+
+function saveCirculationSettings() {
+  saveFieldGroup(['set-max-books','set-loan-period','set-fine-rate','set-renewal-limit','set-reservation-hold','set-grace-period','set-fine-cap','set-academic-year']);
+  const v = incrementVersion();
+  flashSavedBadge();
+  showToast(`✅ Circulation rules saved · ${formatVersion(v)}`);
+}
+
+function saveAISettings() {
+  saveFieldGroup(['set-ai-model','set-ai-lang','set-ai-curriculum']);
+  const v = incrementVersion();
+  flashSavedBadge();
+  showToast(`✅ AI settings saved · ${formatVersion(v)}`);
+}
+
+function stampSaveTime() {
+  const now = Date.now();
+  localStorage.setItem('radiosport_last_saved', String(now));
+  const el = document.getElementById('last-saved-time');
+  if (el) el.textContent = new Date(now).toLocaleString();
+}
+
+function flashSavedBadge() {
+  const badge = document.getElementById('settings-saved-badge');
+  if (!badge) return;
+  badge.style.display = 'flex';
+  clearTimeout(badge._timer);
+  badge._timer = setTimeout(() => { badge.style.display = 'none'; }, 3000);
+}
+
+function resetSchoolSettings() {
+  ['set-school-name','set-library-name','set-librarian','set-email','set-phone','set-region'].forEach(id => {
+    localStorage.removeItem('radiosport_' + id);
+    const el = document.getElementById(id);
+    if (el) el.value = SETTINGS_DEFAULTS[id] || '';
+  });
+  showToast('↺ School info reset to defaults');
+}
+
+function resetCirculationSettings() {
+  ['set-max-books','set-loan-period','set-fine-rate','set-renewal-limit','set-reservation-hold','set-grace-period','set-fine-cap','set-academic-year'].forEach(id => {
+    localStorage.removeItem('radiosport_' + id);
+    const el = document.getElementById(id);
+    if (el) el.value = SETTINGS_DEFAULTS[id] || '';
+  });
+  showToast('↺ Circulation rules reset to defaults');
+}
+
+function exportSettings() {
+  const data = {};
+  Object.keys(SETTINGS_DEFAULTS).forEach(k => {
+    data[k] = localStorage.getItem('radiosport_' + k) || SETTINGS_DEFAULTS[k];
+  });
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'radiosport-settings-v1001.json';
+  a.click();
+  showToast('📤 Settings exported as JSON!');
+}
+
+function importSettingsPrompt() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        Object.keys(data).forEach(k => {
+          localStorage.setItem('radiosport_' + k, data[k]);
+        });
+        loadSettings();
+        showToast('📥 Settings imported successfully!');
+      } catch { showToast('❌ Invalid settings file'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function confirmResetAll() {
+  if (confirm('⚠️ Reset ALL RadioSport data? This will clear all saved settings. This cannot be undone.')) {
+    Object.keys(localStorage).filter(k => k.startsWith('radiosport_')).forEach(k => localStorage.removeItem(k));
+    loadSettings();
+    showToast('🗑️ All settings reset to factory defaults');
+  }
+}
+
+// ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
 (function init() {
+  applyVersionDisplay(loadVersion());
+  loadSettings();
   renderBooks(BOOKS);
   renderLoans();
   renderOverdue();
