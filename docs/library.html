@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Library: v1.002</title>
+<title>RadioSport Library: v1.004</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -927,7 +927,7 @@
 <nav class="sidebar">
   <div class="logo">
     <div class="logo-title">📻 RadioSport</div>
-    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.002</span></div>
+    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.004</span></div>
     <div style="font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:0.5px;">© RNK <span style="font-family:'DM Mono',monospace;color:var(--gold)">( 9G5AR )</span></div>
   </div>
 
@@ -1529,7 +1529,7 @@
             <div class="ai-avatar">🤖</div>
             <div>
               <div class="ai-name">RadioSport AI Research Assistant</div>
-              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.002</span></div>
+              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.004</span></div>
             </div>
             <div style="margin-left:auto;display:flex;gap:8px;">
               <div class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="clearChat()">🗑 Clear</div>
@@ -1806,13 +1806,67 @@
         <!-- AI SETTINGS -->
         <div class="card">
           <div class="card-title" style="margin-bottom:18px;">🤖 AI Settings</div>
-          <div class="form-group" style="margin-bottom:12px;">
-            <label class="form-label">AI Model</label>
-            <select class="form-input" id="set-ai-model">
-              <option value="claude-sonnet-4-20250514">claude-sonnet-4-20250514 (Recommended)</option>
-              <option value="claude-haiku-4-5">claude-haiku-4-5 (Faster)</option>
+
+          <!-- Provider selector -->
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">AI Provider</label>
+            <select class="form-input" id="set-ai-provider" onchange="onProviderChange(this.value)">
+              <option value="anthropic">🟠 Anthropic (Built-in · No key needed)</option>
+              <option value="openrouter">🟣 OpenRouter (Free &amp; paid models)</option>
             </select>
           </div>
+
+          <!-- Anthropic model (shown when provider = anthropic) -->
+          <div id="anthropic-section">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label">Anthropic Model</label>
+              <select class="form-input" id="set-ai-model">
+                <option value="claude-sonnet-4-20250514">claude-sonnet-4-20250514 · Recommended</option>
+                <option value="claude-haiku-4-5">claude-haiku-4-5 · Faster</option>
+              </select>
+            </div>
+            <div class="alert alert-teal" style="margin-bottom:14px;">
+              <span class="alert-icon">✅</span>
+              <div class="alert-text">Anthropic is built-in — no API key required. Ready to use.</div>
+            </div>
+          </div>
+
+          <!-- OpenRouter section (shown when provider = openrouter) -->
+          <div id="openrouter-section" style="display:none;">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label">OpenRouter Free Model</label>
+              <select class="form-input" id="set-openrouter-model">
+                <option value="meta-llama/llama-3.3-70b-instruct:free">🦙 Llama 3.3 70B · Free</option>
+                <option value="google/gemini-2.0-flash-exp:free">♊ Gemini 2.0 Flash · Free</option>
+                <option value="deepseek/deepseek-r1:free">🔍 DeepSeek R1 · Free</option>
+                <option value="mistralai/mistral-7b-instruct:free">💨 Mistral 7B · Free</option>
+                <option value="qwen/qwen-2-72b-instruct:free">🌊 Qwen 2 72B · Free</option>
+                <option value="microsoft/phi-3-medium-128k-instruct:free">🔷 Phi-3 Medium · Free</option>
+                <option value="meta-llama/llama-3.1-8b-instruct:free">🦙 Llama 3.1 8B · Free</option>
+                <option value="google/gemma-3-27b-it:free">💎 Gemma 3 27B · Free</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label class="form-label">OpenRouter API Key</label>
+              <div style="position:relative;">
+                <input class="form-input" id="set-openrouter-key" type="password"
+                  placeholder="sk-or-v1-…"
+                  style="padding-right:48px;font-family:'DM Mono',monospace;letter-spacing:1px;">
+                <div onclick="toggleKeyVisibility()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text3);font-size:16px;" id="key-eye">👁</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:14px;">
+              <div class="btn btn-secondary" style="font-size:12px;flex:1;justify-content:center;" onclick="testOpenRouterKey()">🔌 Test Connection</div>
+              <a href="https://openrouter.ai/keys" target="_blank" class="btn btn-secondary" style="font-size:12px;text-decoration:none;">🔑 Get Free Key</a>
+            </div>
+            <div id="or-test-result" style="margin-bottom:10px;"></div>
+            <div class="alert alert-gold" style="margin-bottom:14px;">
+              <span class="alert-icon">💡</span>
+              <div class="alert-text">Get a free API key at <strong>openrouter.ai</strong>. All models marked <em>:free</em> have no usage cost. Your key is stored only in your browser.</div>
+            </div>
+          </div>
+
+          <!-- Shared settings -->
           <div class="form-group" style="margin-bottom:12px;">
             <label class="form-label">AI Response Language</label>
             <select class="form-input" id="set-ai-lang">
@@ -1822,7 +1876,7 @@
             </select>
           </div>
           <div class="form-group" style="margin-bottom:16px;">
-            <label class="form-label">AI Curriculum Focus</label>
+            <label class="form-label">Curriculum Focus</label>
             <select class="form-input" id="set-ai-curriculum">
               <option value="GES Ghana">GES Ghana (WASSCE / BECE)</option>
               <option value="Cambridge">Cambridge (IGCSE / A-Level)</option>
@@ -1830,14 +1884,12 @@
               <option value="General">General / No Preference</option>
             </select>
           </div>
-          <div class="btn btn-primary" style="margin-bottom:12px;" onclick="saveAISettings()">💾 Save AI Settings</div>
-          <div class="alert alert-teal" style="margin-bottom:0;">
-            <span class="alert-icon">🤖</span>
-            <div class="alert-text">AI is active and connected. Book research, auto-fill, and reports are all available via RadioSport.</div>
-          </div>
-          <div style="margin-top:10px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
+
+          <div class="btn btn-primary" style="margin-bottom:12px;width:100%;justify-content:center;" onclick="saveAISettings()">💾 Save AI Settings</div>
+
+          <div style="margin-top:4px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>System Version</span>
-            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.002</span>
+            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.004</span>
           </div>
           <div style="margin-top:8px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>Last Saved</span>
@@ -2116,23 +2168,17 @@ function openBookModal(id) {
 
 async function fetchBookAI(book) {
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        model:"claude-sonnet-4-20250514",
-        max_tokens:1000,
-        system:`You are a school library AI assistant for Accra Academy High School in Ghana. Provide educational, curriculum-relevant book information for school librarians and students. Be concise, informative, and mention relevance to Ghanaian/African education where applicable.`,
-        messages:[{role:"user", content:`Provide a concise research summary for the book "${book.title}" by ${book.author} (${book.year}). Include: 1) Main themes and key ideas, 2) Educational value for secondary school students, 3) Curriculum relevance (WASSCE/GES), 4) Recommended age/class level, 5) One memorable quote or insight. Keep it under 200 words and engaging.`}]
-      })
-    });
-    const data = await res.json();
-    const text = data.content?.[0]?.text || "AI summary unavailable.";
+    const sys = `You are a school library AI assistant for Accra Academy High School in Ghana. Provide educational, curriculum-relevant book information for school librarians and students. Be concise, informative, and mention relevance to Ghanaian/African education where applicable.`;
+    const prompt = `Provide a concise research summary for the book "${book.title}" by ${book.author} (${book.year}). Include: 1) Main themes and key ideas, 2) Educational value for secondary school students, 3) Curriculum relevance (WASSCE/GES), 4) Recommended age/class level, 5) One memorable quote or insight. Keep it under 200 words and engaging.`;
+    const text = await callAI(sys, [{role:'user', content: prompt}]);
     const el = document.getElementById('modal-ai-content');
     if (el) el.innerHTML = `<div style="animation:fadeIn 0.4s ease">${text.replace(/\n/g,'<br>')}</div>`;
   } catch(e) {
     const el = document.getElementById('modal-ai-content');
-    if (el) el.innerHTML = `<div style="color:var(--text3);font-size:13px;">📡 AI research requires an active API connection. Connect to enable real-time book analysis.</div>`;
+    const msg = e.message === 'NO_KEY'
+      ? '🔑 Add your OpenRouter API key in Settings → AI Settings, or switch to Anthropic provider.'
+      : '📡 AI research requires an active connection. Check Settings → AI Settings.';
+    if (el) el.innerHTML = `<div style="color:var(--text3);font-size:13px;">${msg}</div>`;
   }
 }
 
@@ -2142,6 +2188,116 @@ function closeModal() {
 document.getElementById('book-modal').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
+
+// ═══════════════════════════════════════════
+// AI PROVIDER ROUTER
+// ═══════════════════════════════════════════
+
+function getAIConfig() {
+  return {
+    provider:        localStorage.getItem('radiosport_set-ai-provider')       || 'anthropic',
+    anthropicModel:  localStorage.getItem('radiosport_set-ai-model')           || 'claude-sonnet-4-20250514',
+    openrouterModel: localStorage.getItem('radiosport_set-openrouter-model')   || 'meta-llama/llama-3.3-70b-instruct:free',
+    openrouterKey:   localStorage.getItem('radiosport_openrouter_key')         || '',
+    lang:            localStorage.getItem('radiosport_set-ai-lang')            || 'English',
+    curriculum:      localStorage.getItem('radiosport_set-ai-curriculum')      || 'GES Ghana',
+  };
+}
+
+// Central AI call — routes to Anthropic or OpenRouter transparently
+async function callAI(systemPrompt, messages, maxTokens = 1000) {
+  const cfg = getAIConfig();
+
+  if (cfg.provider === 'openrouter') {
+    if (!cfg.openrouterKey) throw new Error('NO_KEY');
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${cfg.openrouterKey}`,
+        'HTTP-Referer': window.location.href,
+        'X-Title': 'RadioSport Library v1.004',
+      },
+      body: JSON.stringify({
+        model: cfg.openrouterModel,
+        max_tokens: maxTokens,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages
+        ],
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'OpenRouter error');
+    return data.choices?.[0]?.message?.content || '';
+  } else {
+    // Anthropic built-in (no key needed in this environment)
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: cfg.anthropicModel,
+        max_tokens: maxTokens,
+        system: systemPrompt,
+        messages,
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'Anthropic error');
+    return data.content?.[0]?.text || '';
+  }
+}
+
+function onProviderChange(val) {
+  const ant = document.getElementById('anthropic-section');
+  const ort = document.getElementById('openrouter-section');
+  if (ant) ant.style.display = val === 'anthropic' ? '' : 'none';
+  if (ort) ort.style.display = val === 'openrouter' ? '' : 'none';
+}
+
+function toggleKeyVisibility() {
+  const inp = document.getElementById('set-openrouter-key');
+  const eye = document.getElementById('key-eye');
+  if (!inp) return;
+  const shown = inp.type === 'text';
+  inp.type = shown ? 'password' : 'text';
+  if (eye) eye.textContent = shown ? '👁' : '🙈';
+}
+
+async function testOpenRouterKey() {
+  const key = document.getElementById('set-openrouter-key')?.value.trim();
+  const resultEl = document.getElementById('or-test-result');
+  if (!key) {
+    resultEl.innerHTML = `<div class="alert alert-rose"><span class="alert-icon">⚠️</span><div class="alert-text">Enter your OpenRouter API key first.</div></div>`;
+    return;
+  }
+  resultEl.innerHTML = `<div class="ai-loading"><div class="ai-spinner"></div> Testing connection…</div>`;
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`,
+        'HTTP-Referer': window.location.href,
+        'X-Title': 'RadioSport Library v1.004',
+      },
+      body: JSON.stringify({
+        model: document.getElementById('set-openrouter-model')?.value || 'meta-llama/llama-3.3-70b-instruct:free',
+        max_tokens: 20,
+        messages: [{ role: 'user', content: 'Reply with: OK' }],
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const reply = data.choices?.[0]?.message?.content || '';
+    resultEl.innerHTML = `<div class="alert alert-teal"><span class="alert-icon">✅</span><div class="alert-text"><strong>Connected!</strong> Model responded: "${reply.substring(0,60)}"</div></div>`;
+    showToast('✅ OpenRouter connection successful!');
+  } catch(e) {
+    const msg = e.message.includes('NO_KEY') ? 'No API key entered.' : e.message;
+    resultEl.innerHTML = `<div class="alert alert-rose"><span class="alert-icon">❌</span><div class="alert-text"><strong>Failed:</strong> ${msg}</div></div>`;
+    showToast('❌ OpenRouter connection failed');
+  }
+}
 
 // ═══════════════════════════════════════════
 // AI CHAT
@@ -2174,24 +2330,18 @@ async function sendMessage() {
   isAITyping = true;
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        model:"claude-sonnet-4-20250514",
-        max_tokens:1000,
-        system:`You are RadioSport, an AI Research Assistant for the school library at Accra Academy High School in Ghana. You help librarians and students research books, find reading materials, understand literary works, and align books with the Ghana Education Service (GES) curriculum including WASSCE and BECE. You have knowledge of the library's catalog including books like Things Fall Apart, The Alchemist, Homegoing, 1984, Purple Hibiscus, Animal Farm and many more. Be helpful, educational, and engaging. Format your responses with clear structure using line breaks. Keep responses thorough but concise.`,
-        messages: chatMessages
-      })
-    });
-    const data = await res.json();
-    const reply = data.content?.[0]?.text || "I'm having trouble connecting right now. Please try again.";
+    const cfg = getAIConfig();
+    const sysPrompt = `You are RadioSport, an AI Research Assistant for the school library at Accra Academy High School in Ghana. You help librarians and students research books, find reading materials, understand literary works, and align books with the Ghana Education Service (GES) curriculum including WASSCE and BECE. You have knowledge of the library's catalog including books like Things Fall Apart, The Alchemist, Homegoing, 1984, Purple Hibiscus, Animal Farm and many more. Be helpful, educational, and engaging. Format your responses with clear structure using line breaks. Keep responses thorough but concise. Respond in ${cfg.lang}. Curriculum focus: ${cfg.curriculum}.`;
+    const reply = await callAI(sysPrompt, chatMessages);
     typingEl.remove();
     chatMessages.push({role:'assistant', content: reply});
     addMessage('ai', reply);
   } catch(e) {
     typingEl.remove();
-    addMessage('ai', "📡 I'm having trouble connecting to the AI service. Please check your connection and try again. In the meantime, I can share that our library has over 2,800 titles across 18 genres — feel free to browse the Book Catalog!");
+    const msg = e.message === 'NO_KEY'
+      ? '🔑 No OpenRouter API key saved. Go to Settings → AI Settings to add your key, or switch back to Anthropic.'
+      : '📡 AI connection error. Please check Settings → AI Settings and try again.';
+    addMessage('ai', msg);
   }
   isAITyping = false;
 }
@@ -2418,18 +2568,8 @@ async function aiLookupBook() {
   el.innerHTML = '<div class="ai-loading"><div class="ai-spinner"></div> Looking up book details…</div>';
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        model:"claude-sonnet-4-20250514",
-        max_tokens:1000,
-        system:`You are a library assistant. When given a book title or ISBN, return ONLY a JSON object with these fields: title, author, isbn, publisher, year, genre, synopsis (2 sentences), readingLevel. No markdown, no explanation, just JSON.`,
-        messages:[{role:"user", content:`Book: "${q}"`}]
-      })
-    });
-    const data = await res.json();
-    const text = data.content?.[0]?.text || '{}';
+    const sys = `You are a library assistant. When given a book title or ISBN, return ONLY a JSON object with these fields: title, author, isbn, publisher, year, genre, synopsis (2 sentences), readingLevel. No markdown, no explanation, just JSON.`;
+    const text = await callAI(sys, [{role:'user', content:`Book: "${q}"`}]);
     let book;
     try { book = JSON.parse(text.replace(/```json|```/g,'')); } catch { book = null; }
     if (book && book.title) {
@@ -2445,7 +2585,10 @@ async function aiLookupBook() {
       el.innerHTML = `<div class="alert alert-gold"><span class="alert-icon">⚠️</span><div class="alert-text">Could not auto-fill. Try a different title or ISBN.</div></div>`;
     }
   } catch(e) {
-    el.innerHTML = `<div class="alert alert-rose"><span class="alert-icon">❌</span><div class="alert-text">AI connection error. Please fill details manually.</div></div>`;
+    const msg = e.message === 'NO_KEY'
+      ? 'Add your OpenRouter API key in Settings → AI Settings first.'
+      : 'AI connection error. Please fill details manually.';
+    el.innerHTML = `<div class="alert alert-rose"><span class="alert-icon">❌</span><div class="alert-text">${msg}</div></div>`;
   }
 }
 
@@ -2558,48 +2701,16 @@ if (dueInput) {
 }
 
 // ═══════════════════════════════════════════
-// VERSION ENGINE — auto-increments on every save
+// VERSION — static, incremented only on code changes
 // ═══════════════════════════════════════════
-const BASE_VERSION = { major: 1, minor: 0, patch: 2 }; // v1.002 baseline
+const APP_VERSION = 'v1.004';
 
-function loadVersion() {
-  const stored = localStorage.getItem('radiosport_version');
-  const v = stored ? JSON.parse(stored) : { ...BASE_VERSION };
-  // Always ensure stored version is at least the app baseline
-  const isBelow =
-    v.major < BASE_VERSION.major ||
-    (v.major === BASE_VERSION.major && v.minor < BASE_VERSION.minor) ||
-    (v.major === BASE_VERSION.major && v.minor === BASE_VERSION.minor && v.patch < BASE_VERSION.patch);
-  if (isBelow) {
-    localStorage.setItem('radiosport_version', JSON.stringify({ ...BASE_VERSION }));
-    return { ...BASE_VERSION };
-  }
-  return v;
-}
-
-function incrementVersion() {
-  const v = loadVersion();
-  v.patch += 1;
-  // Roll patch 999 → minor bump
-  if (v.patch > 999) { v.patch = 0; v.minor += 1; }
-  if (v.minor > 99)  { v.minor = 0; v.major += 1; }
-  localStorage.setItem('radiosport_version', JSON.stringify(v));
-  applyVersionDisplay(v);
-  return v;
-}
-
-function formatVersion(v) {
-  const patch = String(v.patch).padStart(3, '0');
-  return `v${v.major}.${patch}`;
-}
-
-function applyVersionDisplay(v) {
-  const label = formatVersion(v);
+function applyVersionDisplay() {
   ['ver-sidebar','ver-chat','ver-settings'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.textContent = label;
+    if (el) el.textContent = APP_VERSION;
   });
-  document.title = `RadioSport Library: ${label}`;
+  document.title = `RadioSport Library: ${APP_VERSION}`;
 }
 
 // ═══════════════════════════════════════════
@@ -2621,7 +2732,9 @@ const SETTINGS_DEFAULTS = {
   'set-grace-period':      '1',
   'set-fine-cap':          '20.00',
   'set-academic-year':     '2025/2026',
+  'set-ai-provider':       'anthropic',
   'set-ai-model':          'claude-sonnet-4-20250514',
+  'set-openrouter-model':  'meta-llama/llama-3.3-70b-instruct:free',
   'set-ai-lang':           'English',
   'set-ai-curriculum':     'GES Ghana',
   'notif-overdue':         '1',
@@ -2634,12 +2747,21 @@ const SETTINGS_DEFAULTS = {
 function loadSettings() {
   // Load text/select inputs
   Object.keys(SETTINGS_DEFAULTS).forEach(key => {
-    if (key.startsWith('notif-')) return; // toggles handled separately
+    if (key.startsWith('notif-')) return;
     const el = document.getElementById(key);
     if (!el) return;
     const saved = localStorage.getItem('radiosport_' + key);
     el.value = saved !== null ? saved : SETTINGS_DEFAULTS[key];
   });
+
+  // Restore OpenRouter API key (masked)
+  const savedKey = localStorage.getItem('radiosport_openrouter_key');
+  const keyEl = document.getElementById('set-openrouter-key');
+  if (keyEl && savedKey) keyEl.value = savedKey;
+
+  // Apply provider UI
+  const providerEl = document.getElementById('set-ai-provider');
+  if (providerEl) onProviderChange(providerEl.value);
 
   // Load toggles
   document.querySelectorAll('.toggle-btn[data-key]').forEach(btn => {
@@ -2666,9 +2788,8 @@ function toggleSetting(btn) {
   const isOn = btn.classList.contains('on');
   applyToggle(btn, !isOn);
   localStorage.setItem('radiosport_' + btn.dataset.key, isOn ? '0' : '1');
-  const v = incrementVersion();
   stampSaveTime();
-  showToast((isOn ? '🔕' : '🔔') + ' ' + btn.closest('div').querySelector('div > div').textContent + ' ' + (isOn ? 'disabled' : 'enabled') + ` · ${formatVersion(v)}`);
+  showToast((isOn ? '🔕' : '🔔') + ' ' + btn.closest('div').querySelector('div > div').textContent + ' ' + (isOn ? 'disabled' : 'enabled'));
 }
 
 function saveFieldGroup(ids) {
@@ -2681,23 +2802,27 @@ function saveFieldGroup(ids) {
 
 function saveSchoolSettings() {
   saveFieldGroup(['set-school-name','set-library-name','set-librarian','set-email','set-phone','set-region']);
-  const v = incrementVersion();
   flashSavedBadge();
-  showToast(`✅ School information saved · ${formatVersion(v)}`);
+  showToast('✅ School information saved!');
 }
 
 function saveCirculationSettings() {
   saveFieldGroup(['set-max-books','set-loan-period','set-fine-rate','set-renewal-limit','set-reservation-hold','set-grace-period','set-fine-cap','set-academic-year']);
-  const v = incrementVersion();
   flashSavedBadge();
-  showToast(`✅ Circulation rules saved · ${formatVersion(v)}`);
+  showToast('✅ Circulation rules saved!');
 }
 
 function saveAISettings() {
-  saveFieldGroup(['set-ai-model','set-ai-lang','set-ai-curriculum']);
-  const v = incrementVersion();
+  saveFieldGroup(['set-ai-provider','set-ai-model','set-openrouter-model','set-ai-lang','set-ai-curriculum']);
+  // Save API key separately (sensitive — still localStorage, user's own browser)
+  const keyEl = document.getElementById('set-openrouter-key');
+  if (keyEl && keyEl.value.trim()) {
+    localStorage.setItem('radiosport_openrouter_key', keyEl.value.trim());
+  } else if (keyEl && keyEl.value === '') {
+    localStorage.removeItem('radiosport_openrouter_key');
+  }
   flashSavedBadge();
-  showToast(`✅ AI settings saved · ${formatVersion(v)}`);
+  showToast('✅ AI settings saved!');
 }
 
 function stampSaveTime() {
@@ -2780,7 +2905,7 @@ function confirmResetAll() {
 // INIT
 // ═══════════════════════════════════════════
 (function init() {
-  applyVersionDisplay(loadVersion());
+  applyVersionDisplay();
   loadSettings();
   renderBooks(BOOKS);
   renderLoans();
