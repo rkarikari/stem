@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Library: v1.005</title>
+<title>RadioSport Library: v1.006</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -927,7 +927,7 @@
 <nav class="sidebar">
   <div class="logo">
     <div class="logo-title">📻 RadioSport</div>
-    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.005</span></div>
+    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.006</span></div>
     <div style="font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:0.5px;">© RNK <span style="font-family:'DM Mono',monospace;color:var(--gold)">( 9G5AR )</span></div>
   </div>
 
@@ -999,12 +999,13 @@
   </div>
 
   <div class="sidebar-footer">
-    <div class="user-card">
-      <div class="user-avatar">LA</div>
-      <div>
+    <div class="user-card" onclick="openProfileModal()" title="View / Edit Profile">
+      <div class="user-avatar" id="sidebar-avatar">LA</div>
+      <div style="flex:1;">
         <div class="user-name" id="sidebar-librarian">Librarian Admin</div>
         <div class="user-role">RadioSport</div>
       </div>
+      <div style="color:var(--text3);font-size:13px;">✏️</div>
     </div>
   </div>
 </nav>
@@ -1500,7 +1501,7 @@
             <div class="ai-avatar">🤖</div>
             <div>
               <div class="ai-name">RadioSport AI Research Assistant</div>
-              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.005</span></div>
+              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.006</span></div>
             </div>
             <div style="margin-left:auto;display:flex;gap:8px;">
               <div class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="clearChat()">🗑 Clear</div>
@@ -1860,7 +1861,7 @@
 
           <div style="margin-top:4px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>System Version</span>
-            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.005</span>
+            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.006</span>
           </div>
           <div style="margin-top:8px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>Last Saved</span>
@@ -1906,6 +1907,74 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal" style="width:480px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;">👤 My Profile</div>
+      <span onclick="document.getElementById('profile-modal').classList.remove('open')" style="cursor:pointer;color:var(--text3);font-size:20px;">✕</span>
+    </div>
+
+    <!-- Avatar display -->
+    <div style="display:flex;align-items:center;gap:18px;margin-bottom:24px;padding:16px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);">
+      <div id="profile-avatar-display" style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,var(--gold),#e8820a);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:var(--bg);flex-shrink:0;">LA</div>
+      <div>
+        <div id="profile-name-display" style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text);">Librarian Admin</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px;">RadioSport Library · <span id="profile-role-display">Administrator</span></div>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <span class="badge badge-gold">Admin</span>
+          <span class="badge badge-teal" id="profile-version-badge">v1.006</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" id="profile-name" type="text" placeholder="Your full name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role / Title</label>
+        <input class="form-input" id="profile-role" type="text" placeholder="e.g. Head Librarian">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="profile-email" type="email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input class="form-input" id="profile-phone" type="text" placeholder="+233 XX XXX XXXX">
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Change Password</label>
+        <input class="form-input" id="profile-password" type="password" placeholder="Leave blank to keep current password">
+      </div>
+    </div>
+
+    <div style="padding:14px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);margin-bottom:18px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:10px;">Session Info</div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;">
+        <span style="color:var(--text3)">Last Login</span>
+        <span id="profile-last-login" style="color:var(--text2);font-family:'DM Mono',monospace;font-size:11px;">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;">
+        <span style="color:var(--text3)">App Version</span>
+        <span style="color:var(--gold);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;">v1.006</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;">
+        <span style="color:var(--text3)">Data Storage</span>
+        <span id="profile-storage" style="color:var(--teal);font-family:'DM Mono',monospace;font-size:11px;">Calculating…</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <div class="btn btn-primary" style="flex:1;justify-content:center;" onclick="saveProfile()">💾 Save Profile</div>
+      <div class="btn btn-secondary" onclick="switchPanel('settings',document.querySelector('[onclick*=settings]'));document.getElementById('profile-modal').classList.remove('open')">⚙️ Settings</div>
+      <div class="btn btn-danger" onclick="confirmLogout()">🚪 Logout</div>
+    </div>
   </div>
 </div>
 
@@ -2216,7 +2285,7 @@ async function callAI(systemPrompt, messages, maxTokens = 1000) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${cfg.openrouterKey}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'RadioSport Library v1.005',
+        'X-Title': 'RadioSport Library v1.006',
       },
       body: JSON.stringify({
         model: cfg.openrouterModel,
@@ -2279,7 +2348,7 @@ async function testOpenRouterKey() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${key}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'RadioSport Library v1.005',
+        'X-Title': 'RadioSport Library v1.006',
       },
       body: JSON.stringify({
         model: document.getElementById('set-openrouter-model')?.value || 'meta-llama/llama-3.3-70b-instruct:free',
@@ -3068,7 +3137,7 @@ if (dueInput) {
 // ═══════════════════════════════════════════
 // VERSION — static, incremented only on code changes
 // ═══════════════════════════════════════════
-const APP_VERSION = 'v1.005';
+const APP_VERSION = 'v1.006';
 
 function applyVersionDisplay() {
   ['ver-sidebar','ver-chat','ver-settings'].forEach(id => {
@@ -3281,11 +3350,117 @@ function confirmResetAll() {
 }
 
 // ═══════════════════════════════════════════
+// PROFILE MODAL
+// ═══════════════════════════════════════════
+function openProfileModal() {
+  // Populate fields from localStorage
+  const name  = localStorage.getItem('radiosport_profile_name')  || localStorage.getItem('radiosport_set-librarian') || 'Librarian Admin';
+  const role  = localStorage.getItem('radiosport_profile_role')  || 'Administrator';
+  const email = localStorage.getItem('radiosport_profile_email') || localStorage.getItem('radiosport_set-email') || '';
+  const phone = localStorage.getItem('radiosport_profile_phone') || localStorage.getItem('radiosport_set-phone') || '';
+
+  document.getElementById('profile-name').value  = name;
+  document.getElementById('profile-role').value  = role;
+  document.getElementById('profile-email').value = email;
+  document.getElementById('profile-phone').value = phone;
+  document.getElementById('profile-password').value = '';
+
+  // Update display section
+  const initials = name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('profile-avatar-display').textContent = initials;
+  document.getElementById('profile-name-display').textContent   = name;
+  document.getElementById('profile-role-display').textContent   = role;
+  document.getElementById('sidebar-avatar').textContent         = initials;
+
+  // Last login
+  const ll = localStorage.getItem('radiosport_last_login');
+  document.getElementById('profile-last-login').textContent = ll
+    ? new Date(parseInt(ll)).toLocaleString()
+    : new Date().toLocaleString();
+
+  // Storage estimate
+  try {
+    const bytes = Object.keys(localStorage)
+      .filter(k => k.startsWith('radiosport_'))
+      .reduce((s,k) => s + (localStorage.getItem(k)||'').length * 2, 0);
+    document.getElementById('profile-storage').textContent =
+      bytes < 1024 ? `${bytes} B` : `${(bytes/1024).toFixed(1)} KB`;
+  } catch(e) {
+    document.getElementById('profile-storage').textContent = 'N/A';
+  }
+
+  document.getElementById('profile-modal').classList.add('open');
+}
+
+function saveProfile() {
+  const name  = document.getElementById('profile-name').value.trim();
+  const role  = document.getElementById('profile-role').value.trim();
+  const email = document.getElementById('profile-email').value.trim();
+  const phone = document.getElementById('profile-phone').value.trim();
+
+  if (!name) { showToast('⚠️ Name cannot be empty'); return; }
+
+  localStorage.setItem('radiosport_profile_name',  name);
+  localStorage.setItem('radiosport_profile_role',  role);
+  localStorage.setItem('radiosport_profile_email', email);
+  localStorage.setItem('radiosport_profile_phone', phone);
+  // Keep school settings in sync
+  localStorage.setItem('radiosport_set-librarian', name);
+  localStorage.setItem('radiosport_set-email',     email);
+
+  // Update all name displays
+  const initials = name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  const sidebarLib = document.getElementById('sidebar-librarian');
+  const sidebarAv  = document.getElementById('sidebar-avatar');
+  const profAvDisp = document.getElementById('profile-avatar-display');
+  const profNmDisp = document.getElementById('profile-name-display');
+  const profRlDisp = document.getElementById('profile-role-display');
+  const breadcrumb = document.getElementById('topbar-breadcrumb');
+
+  if (sidebarLib) sidebarLib.textContent = name;
+  if (sidebarAv)  sidebarAv.textContent  = initials;
+  if (profAvDisp) profAvDisp.textContent = initials;
+  if (profNmDisp) profNmDisp.textContent = name;
+  if (profRlDisp) profRlDisp.textContent = role || 'Administrator';
+  if (breadcrumb && breadcrumb.textContent.includes('Welcome back')) {
+    breadcrumb.textContent = `Welcome back, ${name}`;
+  }
+
+  // Record last save time
+  localStorage.setItem('radiosport_last_saved', String(Date.now()));
+
+  document.getElementById('profile-modal').classList.remove('open');
+  showToast(`✅ Profile updated — Welcome, ${name}!`);
+  logActivity('var(--gold)', `<strong>Profile updated</strong> — ${name} · ${role||'Administrator'}`);
+}
+
+function confirmLogout() {
+  if (confirm('Log out of RadioSport Library?')) {
+    localStorage.setItem('radiosport_last_login', String(Date.now()));
+    document.getElementById('profile-modal').classList.remove('open');
+    showToast('👋 Logged out. Refresh the page to log back in.');
+  }
+}
+
+// Stamp login time on load
+if (!localStorage.getItem('radiosport_last_login')) {
+  localStorage.setItem('radiosport_last_login', String(Date.now()));
+}
+
+// ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
 (function init() {
   applyVersionDisplay();
   loadSettings();
+  // Restore profile avatar initials from saved name
+  const savedName = localStorage.getItem('radiosport_profile_name') || localStorage.getItem('radiosport_set-librarian') || 'Librarian Admin';
+  const initials = savedName.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  const av = document.getElementById('sidebar-avatar');
+  if (av) av.textContent = initials;
+  const slib = document.getElementById('sidebar-librarian');
+  if (slib) slib.textContent = savedName;
+  localStorage.setItem('radiosport_last_login', String(Date.now()));
   updateDashboard();
   renderActivity();
   renderBooks(BOOKS);
