@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Library: v1.009</title>
+<title>RadioSport Library: v1.010</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1152,7 +1152,7 @@
 <nav class="sidebar" id="sidebar">
   <div class="logo">
     <div class="logo-title">📻 RadioSport</div>
-    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.009</span></div>
+    <div class="logo-sub">Library: <span id="ver-sidebar" style="font-family:'DM Mono',monospace;color:var(--gold2)">v1.010</span></div>
     <div style="font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:0.5px;">© RNK <span style="font-family:'DM Mono',monospace;color:var(--gold)">( 9G5AR )</span></div>
   </div>
 
@@ -1729,7 +1729,7 @@
             <div class="ai-avatar">🤖</div>
             <div>
               <div class="ai-name">RadioSport AI Research Assistant</div>
-              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.009</span></div>
+              <div class="ai-status"><div class="ai-status-dot"></div>Ready · <span id="ver-chat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">v1.010</span></div>
             </div>
             <div style="margin-left:auto;display:flex;gap:8px;">
               <div class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="clearChat()">🗑 Clear</div>
@@ -2048,12 +2048,14 @@
             </div>
             <div class="form-group" style="margin-bottom:10px;">
               <label class="form-label">OpenRouter API Key</label>
-              <div style="position:relative;">
+              <form autocomplete="on" onsubmit="return false;" style="position:relative;display:block;">
                 <input class="form-input" id="set-openrouter-key" type="password"
+                  name="openrouter-api-key"
+                  autocomplete="current-password"
                   placeholder="sk-or-v1-…"
-                  style="padding-right:48px;font-family:'DM Mono',monospace;letter-spacing:1px;">
+                  style="padding-right:48px;font-family:'DM Mono',monospace;letter-spacing:1px;width:100%;">
                 <div onclick="toggleKeyVisibility()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text3);font-size:16px;" id="key-eye">👁</div>
-              </div>
+              </form>
             </div>
             <div style="display:flex;gap:8px;margin-bottom:14px;">
               <div class="btn btn-secondary" style="font-size:12px;flex:1;justify-content:center;" onclick="testOpenRouterKey()">🔌 Test Connection</div>
@@ -2089,7 +2091,7 @@
 
           <div style="margin-top:4px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>System Version</span>
-            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.009</span>
+            <span id="ver-settings" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">v1.010</span>
           </div>
           <div style="margin-top:8px;padding:10px 12px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);font-size:11.5px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;">
             <span>Last Saved</span>
@@ -2154,33 +2156,35 @@
         <div style="font-size:12px;color:var(--text3);margin-top:3px;">RadioSport Library · <span id="profile-role-display">Administrator</span></div>
         <div style="display:flex;gap:6px;margin-top:8px;">
           <span class="badge badge-gold">Admin</span>
-          <span class="badge badge-teal" id="profile-version-badge">v1.009</span>
+          <span class="badge badge-teal" id="profile-version-badge">v1.010</span>
         </div>
       </div>
     </div>
 
+    <form id="profile-form" autocomplete="on" onsubmit="return false;">
     <div class="form-grid" style="margin-bottom:16px;">
       <div class="form-group">
         <label class="form-label">Full Name</label>
-        <input class="form-input" id="profile-name" type="text" placeholder="Your full name">
+        <input class="form-input" id="profile-name" type="text" name="name" autocomplete="name" placeholder="Your full name">
       </div>
       <div class="form-group">
         <label class="form-label">Role / Title</label>
-        <input class="form-input" id="profile-role" type="text" placeholder="e.g. Head Librarian">
+        <input class="form-input" id="profile-role" type="text" name="role" autocomplete="organization-title" placeholder="e.g. Head Librarian">
       </div>
       <div class="form-group">
         <label class="form-label">Email</label>
-        <input class="form-input" id="profile-email" type="email" placeholder="your@email.com">
+        <input class="form-input" id="profile-email" type="email" name="email" autocomplete="email" placeholder="your@email.com">
       </div>
       <div class="form-group">
         <label class="form-label">Phone</label>
-        <input class="form-input" id="profile-phone" type="text" placeholder="+233 XX XXX XXXX">
+        <input class="form-input" id="profile-phone" type="tel" name="tel" autocomplete="tel" placeholder="+233 XX XXX XXXX">
       </div>
       <div class="form-group full">
         <label class="form-label">Change Password</label>
-        <input class="form-input" id="profile-password" type="password" placeholder="Leave blank to keep current password">
+        <input class="form-input" id="profile-password" type="password" name="new-password" autocomplete="new-password" placeholder="Leave blank to keep current password">
       </div>
     </div>
+    </form>
 
     <div style="padding:14px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);margin-bottom:18px;">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:10px;">Session Info</div>
@@ -2190,7 +2194,7 @@
       </div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;">
         <span style="color:var(--text3)">App Version</span>
-        <span style="color:var(--gold);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;">v1.009</span>
+        <span style="color:var(--gold);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;">v1.010</span>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;">
         <span style="color:var(--text3)">Data Storage</span>
@@ -2571,7 +2575,7 @@ async function callAI(systemPrompt, messages, maxTokens = 1000) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${cfg.openrouterKey}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'RadioSport Library v1.009',
+        'X-Title': 'RadioSport Library v1.010',
       },
       body: JSON.stringify({
         model: cfg.openrouterModel,
@@ -2634,7 +2638,7 @@ async function testOpenRouterKey() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${key}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'RadioSport Library v1.009',
+        'X-Title': 'RadioSport Library v1.010',
       },
       body: JSON.stringify({
         model: document.getElementById('set-openrouter-model')?.value || 'meta-llama/llama-3.3-70b-instruct:free',
@@ -3423,7 +3427,7 @@ if (dueInput) {
 // ═══════════════════════════════════════════
 // VERSION — static, incremented only on code changes
 // ═══════════════════════════════════════════
-const APP_VERSION = 'v1.009';
+const APP_VERSION = 'v1.010';
 
 function applyVersionDisplay() {
   ['ver-sidebar','ver-chat','ver-settings'].forEach(id => {
