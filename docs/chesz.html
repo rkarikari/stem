@@ -53,7 +53,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♛</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.059</title>
+<title>RadioSport Chess v1.060</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -988,7 +988,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.059</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.060</div>
       </div>
     </div>
 
@@ -1871,7 +1871,7 @@ class Engine {
 
     // Version the cache key so each release forces a fresh HEAD check,
     // preventing stale 'false' entries from blocking the full engine.
-    const CACHE_KEY = 'rs-engine-files-v1.059';
+    const CACHE_KEY = 'rs-engine-files-v1.060';
     let knownFiles = null;
     try { knownFiles = JSON.parse(sessionStorage.getItem(CACHE_KEY)); } catch(e) {}
 
@@ -1989,20 +1989,20 @@ if(typeof Atomics==='undefined'){
     isLockFree:()=>true,
   };
 }
-// ── Redirect blob: Worker spawns to the real JS URL ──────────────────────────
-// When Emscripten pthread spawns sub-workers it calls new Worker(mainScriptUrlOrBlob).
-// If that resolves to a blob: URL the COI service worker intercepts it and
-// concatenates the origin onto the already-absolute blob URL, producing a broken
-// double-origin URL like "https://host.comhttps://host.com/uuid".
-// Intercept Worker() here and redirect any blob: URL to the real same-origin JS URL.
+// ── Redirect ALL Worker spawns to the real same-origin JS URL ────────────────
+// Emscripten pthread sub-workers call new Worker(url) where url may be a URL
+// object (not a string), so startsWith('blob:') never matched.  Every Worker()
+// call from inside this blob is a pthread sub-worker that must point back to the
+// real same-origin script — unconditional redirect is safe and prevents the COI
+// service worker from mangling blob: URLs into double-origin strings like
+// "https://host.comhttps://host.com/uuid".
 (function(){
   var _W=self.Worker;
+  var _real=${jsUrlJson};
   self.Worker=function(url,opts){
-    if(typeof url==='string'&&url.startsWith('blob:')){
-      var hash=url.indexOf('#')>=0?url.slice(url.indexOf('#')):'#,worker';
-      url=${jsUrlJson}+hash;
-    }
-    return new _W(url,opts);
+    var s=url==null?'':((url&&typeof url.href==='string')?url.href:String(url));
+    var hash=s.indexOf('#')>=0?s.slice(s.indexOf('#')):'';
+    return new _W(_real+(hash||''),opts);
   };
   try{self.Worker.prototype=_W.prototype;}catch(e){}
 })();
