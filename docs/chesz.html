@@ -12,76 +12,48 @@
     return;
   }
 
+  // Not isolated yet. Clear any stale reload flag — if we're here it means
+  // a previous reload attempt failed to produce isolation, so we must try again.
   sessionStorage.removeItem('_coi_reloading');
 
-  // Inline COI service worker — no external file needed.
-  // Critical: blob: and data: URLs are skipped to prevent the double-origin
-  // URL corruption bug ("https://hosthttps://host/uuid") that breaks
-  // multithreaded Stockfish sub-worker spawning.
-  var SW_SRC = [
-    "self.addEventListener('install',()=>self.skipWaiting());",
-    "self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));",
-    "self.addEventListener('message',e=>{if(e.data&&e.data.type==='SKIP_WAITING')self.skipWaiting();});",
-    "self.addEventListener('fetch',function(e){",
-    "  if(e.request.method!=='GET')return;",
-    "  var u=e.request.url;",
-    "  if(u.startsWith('blob:')||u.startsWith('data:'))return;",
-    "  if(e.request.cache==='only-if-cached'&&e.request.mode!=='same-origin')return;",
-    "  e.respondWith(fetch(e.request,{credentials:'same-origin'}).then(function(r){",
-    "    if(!r||r.status===0)return r;",
-    "    var h=new Headers(r.headers);",
-    "    h.set('Cross-Origin-Embedder-Policy','require-corp');",
-    "    h.set('Cross-Origin-Opener-Policy','same-origin');",
-    "    return new Response(r.body,{status:r.status,statusText:r.statusText,headers:h});",
-    "  }).catch(function(){return fetch(e.request);}));",
-    "});"
-  ].join('\n');
+  const base  = location.pathname.replace(/[^/]*$/, '');
+  const swUrl = base + 'coi-serviceworker.js';
 
-  var swUrl;
-  try {
-    swUrl = URL.createObjectURL(new Blob([SW_SRC], {type:'text/javascript'}));
-  } catch(e) { return; }
-
-  // Unregister any legacy external SW (old broken coi-serviceworker.js)
-  navigator.serviceWorker.getRegistrations().then(function(regs) {
-    regs.forEach(function(r) {
-      var sw = r.active || r.waiting || r.installing;
-      if (sw && sw.scriptURL && !sw.scriptURL.startsWith('blob:')) {
-        r.unregister().catch(function(){});
-      }
-    });
-  }).catch(function(){});
-
-  var base = location.pathname.replace(/[^/]*$/, '');
-  var reloadScheduled = false;
-  var reload = function() {
+  let reloadScheduled = false;
+  const reload = () => {
     if (reloadScheduled) return;
     reloadScheduled = true;
-    setTimeout(function(){ location.reload(); }, 100);
+    console.info('[COI-SW] reloading for cross-origin isolation…');
+    // Small delay so the SW has time to fully claim clients
+    setTimeout(() => location.reload(), 100);
   };
 
   navigator.serviceWorker.addEventListener('controllerchange', reload);
 
   navigator.serviceWorker.register(swUrl, {scope: base || '/'})
-    .then(function(reg) {
+    .then(reg => {
+      console.info('[COI-SW] registered scope:', reg.scope);
+      // skipWaiting on any waiting SW immediately
       if (reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
-      var trackState = function(sw) {
+
+      const trackState = (sw) => {
         if (!sw) return;
         if (sw.state === 'activated') { reload(); return; }
         sw.addEventListener('statechange', function() {
           if (this.state === 'activated') reload();
         });
       };
+
       trackState(reg.installing || reg.waiting || reg.active);
     })
-    .catch(function() {});
+    .catch(e => console.warn('[COI-SW] failed:', e.message));
 })();
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♛</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.067</title>
+<title>RadioSport Chess v1.057</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1016,7 +988,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.066</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.057</div>
       </div>
     </div>
 
@@ -1878,48 +1850,16 @@ class Engine {
       return;
     }
 
-    // Same-origin candidates — fetch() to same-origin is always allowed.
-    // Try whatever files the user has deployed, strongest first.
-    // Multi-thread builds need real SharedArrayBuffer (canSAB) to work fully,
-    // but we still attempt them — if SAB is stubbed they'll error and we skip.
-    // All engine candidates — only files committed to the repo will load.
-    // Results cached in sessionStorage so HEAD checks only run once per session.
-    const allCandidates = [
-      { url: './stockfish-18-lite.js', wasm: './stockfish-18-lite.wasm', label: 'Stockfish 18 Lite' },
+    // Try candidates in priority order — strongest first.
+    // _tryNextCandidate handles 404/worker-errors and falls through naturally.
+    // No HEAD-check prefiltering: that was silently dropping candidates before
+    // any load was attempted, defeating the intended priority ordering.
+    this._candidates = [
+      { url: './stockfish-18.js',      wasm: './stockfish-18.wasm' },
+      { url: './stockfish-18-lite.js', wasm: './stockfish-18-lite.wasm' },
     ];
-
-    const CACHE_KEY = 'rs-engine-files-v1.067';
-    let knownFiles = null;
-    try { knownFiles = JSON.parse(sessionStorage.getItem(CACHE_KEY)); } catch(e) {}
-
-    const checkAndBuild = (files) => {
-      this._candidates = allCandidates.filter(c =>
-        files[c.url] && files[c.wasm]
-      );
-      if (!this._candidates.length) {
-        this._setEngineLabel('JS Engine (built-in)');
-        this.mode = 'js'; this._initJSWorker(); return;
-      }
-      this._candidateIdx = 0;
-      this._tryNextCandidate(0);
-    };
-
-    if (knownFiles) {
-      // Use cached results — no network requests, no console noise
-      checkAndBuild(knownFiles);
-    } else {
-      // First visit: check all files once, cache results
-      const uniqueUrls = [...new Set(allCandidates.flatMap(c => [c.url, c.wasm]))];
-      Promise.all(uniqueUrls.map(url =>
-        fetch(url, {method:'HEAD', cache:'no-cache'})
-          .then(r => [url, r.ok && !(r.headers.get('content-type')||'').includes('text/')])
-          .catch(() => [url, false])
-      )).then(results => {
-        const files = Object.fromEntries(results);
-        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(files)); } catch(e) {}
-        checkAndBuild(files);
-      });
-    }
+    this._candidateIdx = 0;
+    this._tryNextCandidate(0);
   }
 
   _tryNextCandidate(idx) {
@@ -1937,7 +1877,7 @@ class Engine {
     const canSAB = this._canSAB;
     const next   = () => { if (!this._engineDone) this._tryNextCandidate(idx + 1); };
 
-    this._setEngineLabel('Loading ' + cand.label + '…');
+    this._setEngineLabel('Loading engine…');
 
     const base       = location.origin + location.pathname.replace(/[^/]*$/, '');
     const wasmAbsUrl = JSON.stringify(base + cand.wasm.replace('./', ''));
@@ -1954,10 +1894,9 @@ class Engine {
       const wasmCheckUrl = base + cand.wasm.replace('./', '');
 
       const launchWorker = () => {
-        this._setEngineLabel('Loading ' + cand.label + '…');
         try {
           const w = new Worker(cand.url);
-          this._probeWorker(w, cand.url, false, cand.label, 90000);
+          this._probeWorker(w, cand.url, false, null, 90000);
         } catch(e) {
           next();
         }
@@ -2021,7 +1960,7 @@ if(!Module.locateFile) Module.locateFile=function(p){
       const blobUrl = URL.createObjectURL(
         new Blob([shim+'\n'+xhr.responseText],{type:'application/javascript'})
       );
-      this._probeWorker(blobUrl, cand.url, true, cand.label);
+      this._probeWorker(blobUrl, cand.url, true, null);
     };
     xhr.send();
   }
@@ -2458,6 +2397,8 @@ self.abort = function(reason) {
     if (this.sf) { const s = this._sfSend || ((m)=>this.sf.postMessage(m)); s('setoption name Skill Level value '+v); }
   }
 }
+
+// ─────────────────────────────────────────────────────────
 //  GAME UI
 // ─────────────────────────────────────────────────────────
 let game, engine, flipped=false, selectedSq=-1;
