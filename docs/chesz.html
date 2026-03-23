@@ -14,11 +14,10 @@
 
   sessionStorage.removeItem('_coi_reloading');
 
-  // ── COI service worker — embedded inline, no external file required ──────
-  // Critical fix: blob: and data: URLs are explicitly skipped.
-  // The old external coi-serviceworker.js had a bug where it would intercept
-  // blob: Worker fetches and corrupt the URL into "https://hosthttps://host/uuid",
-  // breaking multithreaded Stockfish sub-worker spawning entirely.
+  // Inline COI service worker — no external file needed.
+  // Critical: blob: and data: URLs are skipped to prevent the double-origin
+  // URL corruption bug ("https://hosthttps://host/uuid") that breaks
+  // multithreaded Stockfish sub-worker spawning.
   var SW_SRC = [
     "self.addEventListener('install',()=>self.skipWaiting());",
     "self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));",
@@ -26,7 +25,6 @@
     "self.addEventListener('fetch',function(e){",
     "  if(e.request.method!=='GET')return;",
     "  var u=e.request.url;",
-    // Never intercept blob:/data: — doing so corrupts sub-worker URLs (double-origin bug)
     "  if(u.startsWith('blob:')||u.startsWith('data:'))return;",
     "  if(e.request.cache==='only-if-cached'&&e.request.mode!=='same-origin')return;",
     "  e.respondWith(fetch(e.request,{credentials:'same-origin'}).then(function(r){",
@@ -41,16 +39,14 @@
 
   var swUrl;
   try {
-    var blob = new Blob([SW_SRC], {type:'text/javascript'});
-    swUrl = URL.createObjectURL(blob);
+    swUrl = URL.createObjectURL(new Blob([SW_SRC], {type:'text/javascript'}));
   } catch(e) { return; }
 
-  // Silently unregister any legacy non-blob SW (the old broken external version)
-  // so the new inline SW can take its place cleanly.
+  // Unregister any legacy external SW (old broken coi-serviceworker.js)
   navigator.serviceWorker.getRegistrations().then(function(regs) {
     regs.forEach(function(r) {
-      var active = r.active || r.waiting || r.installing;
-      if (active && active.scriptURL && !active.scriptURL.startsWith('blob:')) {
+      var sw = r.active || r.waiting || r.installing;
+      if (sw && sw.scriptURL && !sw.scriptURL.startsWith('blob:')) {
         r.unregister().catch(function(){});
       }
     });
@@ -78,14 +74,14 @@
       };
       trackState(reg.installing || reg.waiting || reg.active);
     })
-    .catch(function() {}); // silent — lite engine works fine without COI
+    .catch(function() {});
 })();
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♛</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.065</title>
+<title>RadioSport Chess v1.066</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1020,7 +1016,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.065</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.066</div>
       </div>
     </div>
 
@@ -1903,7 +1899,7 @@ class Engine {
 
     // Version the cache key so each release forces a fresh HEAD check,
     // preventing stale 'false' entries from blocking the full engine.
-    const CACHE_KEY = 'rs-engine-files-v1.065';
+    const CACHE_KEY = 'rs-engine-files-v1.066';
     let knownFiles = null;
     try { knownFiles = JSON.parse(sessionStorage.getItem(CACHE_KEY)); } catch(e) {}
 
@@ -2275,7 +2271,7 @@ self.abort = function(reason) {
           if (!gotMessage) {
             w.terminate();
             if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
-            console.debug('[Engine] Probe timeout after', ms/1000 + 's for', srcUrl);
+            console.warn('[Engine] Probe timeout after', ms/1000 + 's for', srcUrl);
             this._tryNextCandidate(myIdx + 1);
           }
         }, ms);
@@ -2310,7 +2306,7 @@ self.abort = function(reason) {
       w.onerror = (err) => {
         clearTimeout(timer);
         if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
-        console.debug('[Engine] Worker error for', srcUrl, err.message || '');
+        console.info('[Engine] Worker error for', srcUrl, err.message || '');
         this._tryNextCandidate(myIdx + 1);
       };
       w.postMessage('uci');
