@@ -1798,11 +1798,13 @@ class Chess {
 //  ENGINE — Stockfish 18 loader with JS fallback
 //
 //  Priority order (http/https):
-//  1. Remote SF18 full from GitHub releases (~45MB WASM, cross-origin XHR+blob)
-//  2. Same-origin SF18 lite  (~7MB WASM, faster to load, slightly weaker)
+//  1. SF18 full  — JS same-origin (~1MB) + WASM from catbox.moe (~110MB, CORS *)
+//  2. SF18 lite  — JS + WASM same-origin (~7MB total)
 //  3. Built-in JS minimax (always works, no network)
 //
-//  Remote candidates are always attempted regardless of HEAD-check cache.
+//  catbox.moe serves Access-Control-Allow-Origin: * so cross-origin wasm fetch works.
+//  The locateFile shim in the XHR+blob worker path rewires the wasm URL to the
+//  catbox URL, so the engine module fetches the binary correctly.
 //  On file:// — browser blocks all network; user picks the file manually.
 // ─────────────────────────────────────────────────────────
 class Engine {
@@ -1850,19 +1852,18 @@ class Engine {
       return;
     }
 
-    // Candidates tried in order — strongest/preferred first.
-    // remote:true  → always attempted; fetched cross-origin via XHR+blob (no HEAD check needed).
-    // (local)      → only attempted when the file is confirmed present via HEAD check cache.
-    // Results of HEAD checks are cached in sessionStorage so checks only run once per session.
+    // All engine candidates — tried in order, strongest first.
+    // externalWasm: true → wasm URL is absolute/cross-origin; skip HEAD check for it,
+    //                       use URL as-is in locateFile (no base-origin prefix).
+    //                       The .js file must still be present same-origin (~1 MB).
+    // Results of local HEAD checks cached in sessionStorage (once per session).
     const allCandidates = [
-      // ── Remote: full Stockfish 18 from GitHub releases (~45 MB WASM) ──────────
-      // Fetched cross-origin via XHR → blob Worker; GitHub CDN has CORS headers.
-      // Falls through to next candidate automatically if the network request fails.
-      { url:    'https://github.com/nmrugg/stockfish.js/releases/download/v18.0.0/stockfish-18.js',
-        wasm:   'https://github.com/nmrugg/stockfish.js/releases/download/v18.0.0/stockfish-18.wasm',
-        label:  'Stockfish 18',
-        remote: true },
-      // ── Same-origin lite: must be committed to the same repo/folder ──────────
+      // Full SF18 — JS self-hosted (~1 MB), WASM from catbox.moe CDN (~110 MB).
+      // catbox.moe serves Access-Control-Allow-Origin: * so cross-origin fetch works.
+      { url: './stockfish-18.js',
+        wasm: 'https://files.catbox.moe/3b15x2.wasm',
+        label: 'Stockfish 18',
+        externalWasm: true },
       { url: './stockfish-18-lite.js', wasm: './stockfish-18-lite.wasm', label: 'Stockfish 18 Lite' },
     ];
 
@@ -1872,9 +1873,9 @@ class Engine {
 
     const checkAndBuild = (files) => {
       this._candidates = allCandidates.filter(c =>
-        // Remote candidates are always included — no local HEAD check needed.
-        // Local candidates require confirmed presence in the HEAD-check cache.
-        c.remote || (files[c.url] && files[c.wasm])
+        // externalWasm: wasm lives cross-origin — only check the local .js is present.
+        // Normal candidates: both .js and .wasm must be confirmed present.
+        c.externalWasm ? files[c.url] : (files[c.url] && files[c.wasm])
       );
       if (!this._candidates.length) {
         this._setEngineLabel('JS Engine (built-in)');
@@ -1888,9 +1889,10 @@ class Engine {
       // Use cached results — no network requests, no console noise
       checkAndBuild(knownFiles);
     } else {
-      // First visit: check all local files once, cache results.
-      // Remote candidates skip this check — they are always attempted directly.
-      const uniqueUrls = [...new Set(allCandidates.filter(c => !c.remote).flatMap(c => [c.url, c.wasm]))];
+      // First visit: HEAD-check local files only; external wasm URLs are skipped.
+      const uniqueUrls = [...new Set(allCandidates.flatMap(c =>
+        c.externalWasm ? [c.url] : [c.url, c.wasm]
+      ))];
       Promise.all(uniqueUrls.map(url =>
         fetch(url, {method:'HEAD', cache:'no-cache'})
           .then(r => [url, r.ok && !(r.headers.get('content-type')||'').includes('text/')])
@@ -1921,11 +1923,12 @@ class Engine {
     this._setEngineLabel('Loading ' + cand.label + '…');
 
     const base       = location.origin + location.pathname.replace(/[^/]*$/, '');
+    // externalWasm: use the URL verbatim; otherwise resolve relative to base.
     const wasmAbsUrl = JSON.stringify(
-      cand.wasm.startsWith('http') ? cand.wasm : base + cand.wasm.replace('./', '')
+      cand.externalWasm ? cand.wasm : base + cand.wasm.replace('./', '')
     );
 
-    if (canSAB && !cand.remote) {
+    if (canSAB && !cand.externalWasm) {
       // crossOriginIsolated=true: COI SW is active and already injects COOP/COEP.
       // Use new Worker(url) DIRECTLY — the engine fetches stockfish.wasm itself
       // using same-origin fetch which the SW handles correctly.
@@ -1965,7 +1968,7 @@ class Engine {
       if (xhr.status !== 200 && !(xhr.status === 0 && xhr.responseText)) {
         next(); return;
       }
-      const jsAbsUrl   = cand.url.startsWith('http') ? cand.url : base + cand.url.replace('./', '');
+      const jsAbsUrl   = base + cand.url.replace('./', '');
       const jsUrlJson  = JSON.stringify(jsAbsUrl);
       const shim = `
 // ── SharedArrayBuffer + Atomics stubs (when real SAB unavailable) ────────────
