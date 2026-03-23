@@ -53,7 +53,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♛</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.056</title>
+<title>RadioSport Chess v1.057</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -988,7 +988,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.056</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.057</div>
       </div>
     </div>
 
@@ -2009,7 +2009,10 @@ if(!Module.locateFile) Module.locateFile=function(p){
       const blobUrl = URL.createObjectURL(
         new Blob([shim+'\n'+xhr.responseText],{type:'application/javascript'})
       );
-      this._probeWorker(blobUrl, cand.url, true, cand.label);
+      // externalWasm fetches ~110 MB from CDN — allow up to 5 minutes.
+      // Non-externalWasm blobs are local so 30 s is fine.
+      const probeMs = cand.externalWasm ? 300000 : 30000;
+      this._probeWorker(blobUrl, cand.url, true, cand.label, probeMs);
     };
     xhr.send();
   }
@@ -2209,22 +2212,34 @@ self.abort = function(reason) {
       // Capture idx NOW — not at timeout fire time (candidateIdx may have changed)
       const myIdx = this._candidateIdx;
       const ms = timeoutMs || (revoke ? 30000 : 90000);
-      const timeout = setTimeout(() => {
-        if (!gotMessage) {
-          w.terminate();
-          if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
-          console.warn('[Engine] Probe timeout after', ms/1000 + 's for', srcUrl);
-          this._tryNextCandidate(myIdx + 1);
-        }
-      }, ms);
+
+      // Keep a resettable timeout — reset on every message so a slow-but-active
+      // download (e.g. 110 MB wasm over CDN) is never killed prematurely.
+      let timer = null;
+      const arm = () => {
+        clearTimeout(timer);
+        if (gotMessage) return;
+        timer = setTimeout(() => {
+          if (!gotMessage) {
+            w.terminate();
+            if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
+            console.warn('[Engine] Probe timeout after', ms/1000 + 's for', srcUrl);
+            this._tryNextCandidate(myIdx + 1);
+          }
+        }, ms);
+      };
+      arm();
+
       let engineName = labelHint || 'Stockfish';
       w.onmessage = (e) => {
         if (typeof e.data !== 'string') return;
+        // Reset the watchdog on every message — engine is alive and working.
+        arm();
         // Only fail on explicit load-failure sentinel — never on unknown messages.
         // Engines send various init/ready messages before 'id name'/'uciok';
         // killing on those causes premature fallback.
         if (e.data.startsWith('__LOAD_FAILED__')) {
-          clearTimeout(timeout); w.terminate();
+          clearTimeout(timer); w.terminate();
           if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
           this._tryNextCandidate(myIdx + 1);
           return;
@@ -2232,7 +2247,7 @@ self.abort = function(reason) {
         const nm = e.data.match(/^id name (.+)/);
         if (nm) { engineName = nm[1].trim(); return; }
         if (e.data.includes('uciok')) {
-          clearTimeout(timeout);
+          clearTimeout(timer);
           gotMessage = true;
           if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
           this._bindSFInstance(w, srcUrl, engineName);
@@ -2241,7 +2256,7 @@ self.abort = function(reason) {
         // Timeout handles genuine non-responding files.
       };
       w.onerror = (err) => {
-        clearTimeout(timeout);
+        clearTimeout(timer);
         if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
         console.info('[Engine] Worker error for', srcUrl, err.message || '');
         this._tryNextCandidate(myIdx + 1);
