@@ -1826,13 +1826,11 @@ class Chess {
 //  ENGINE — Stockfish 18 loader with JS fallback
 //
 //  Priority order (http/https):
-//  1. SF18 full  — JS same-origin (~1MB) + WASM from catbox.moe (~110MB, CORS *)
-//  2. SF18 lite  — JS + WASM same-origin (~7MB total)
-//  3. Built-in JS minimax (always works, no network)
+//  1. Multi-threaded SF18 (fastest) — only if SharedArrayBuffer available (COOP/COEP headers)
+//  2. Single-threaded SF18 full  (~45MB WASM, no SAB needed)
+//  3. Single-threaded SF18 lite  (~7MB WASM, faster to load, slightly weaker)
+//  4. Built-in JS minimax (always works, no network)
 //
-//  catbox.moe serves Access-Control-Allow-Origin: * so cross-origin wasm fetch works.
-//  The locateFile shim in the XHR+blob worker path rewires the wasm URL to the
-//  catbox URL, so the engine module fetches the binary correctly.
 //  On file:// — browser blocks all network; user picks the file manually.
 // ─────────────────────────────────────────────────────────
 class Engine {
@@ -1880,34 +1878,23 @@ class Engine {
       return;
     }
 
-    // All engine candidates — tried in order, strongest first.
-    // externalWasm: true → wasm URL is absolute/cross-origin; skip HEAD check for it,
-    //                       use URL as-is in locateFile (no base-origin prefix).
-    //                       The .js file must still be present same-origin (~1 MB).
-    // Results of local HEAD checks cached in sessionStorage (once per session).
+    // Same-origin candidates — fetch() to same-origin is always allowed.
+    // Try whatever files the user has deployed, strongest first.
+    // Multi-thread builds need real SharedArrayBuffer (canSAB) to work fully,
+    // but we still attempt them — if SAB is stubbed they'll error and we skip.
+    // All engine candidates — only files committed to the repo will load.
+    // Results cached in sessionStorage so HEAD checks only run once per session.
     const allCandidates = [
-      // Full SF18 — JS self-hosted (~1 MB), WASM from catbox.moe CDN (~110 MB).
-      // catbox.moe serves Access-Control-Allow-Origin: * so cross-origin fetch works.
-      // externalWasm: true → only the local .js is HEAD-checked; wasm URL is used as-is.
-      { url: './stockfish-18.js',
-        wasm: 'https://files.catbox.moe/3b15x2.wasm',
-        label: 'Stockfish 18',
-        externalWasm: true },
-      // Lite fallback — only used if stockfish-18.js is absent or the worker fails to start.
-      { url: './stockfish-18-lite.js', wasm: './stockfish-18-lite.wasm', label: 'Stockfish 18' },
+      { url: './stockfish-18-lite.js', wasm: './stockfish-18-lite.wasm', label: 'Stockfish 18 Lite' },
     ];
 
-    // Version the cache key so each release forces a fresh HEAD check,
-    // preventing stale 'false' entries from blocking the full engine.
     const CACHE_KEY = 'rs-engine-files-v1.067';
     let knownFiles = null;
     try { knownFiles = JSON.parse(sessionStorage.getItem(CACHE_KEY)); } catch(e) {}
 
     const checkAndBuild = (files) => {
       this._candidates = allCandidates.filter(c =>
-        // externalWasm: wasm lives cross-origin — only check the local .js is present.
-        // Normal candidates: both .js and .wasm must be confirmed present.
-        c.externalWasm ? files[c.url] : (files[c.url] && files[c.wasm])
+        files[c.url] && files[c.wasm]
       );
       if (!this._candidates.length) {
         this._setEngineLabel('JS Engine (built-in)');
@@ -1921,10 +1908,8 @@ class Engine {
       // Use cached results — no network requests, no console noise
       checkAndBuild(knownFiles);
     } else {
-      // First visit: HEAD-check local files only; external wasm URLs are skipped.
-      const uniqueUrls = [...new Set(allCandidates.flatMap(c =>
-        c.externalWasm ? [c.url] : [c.url, c.wasm]
-      ))];
+      // First visit: check all files once, cache results
+      const uniqueUrls = [...new Set(allCandidates.flatMap(c => [c.url, c.wasm]))];
       Promise.all(uniqueUrls.map(url =>
         fetch(url, {method:'HEAD', cache:'no-cache'})
           .then(r => [url, r.ok && !(r.headers.get('content-type')||'').includes('text/')])
@@ -1955,12 +1940,9 @@ class Engine {
     this._setEngineLabel('Loading ' + cand.label + '…');
 
     const base       = location.origin + location.pathname.replace(/[^/]*$/, '');
-    // externalWasm: use the URL verbatim; otherwise resolve relative to base.
-    const wasmAbsUrl = JSON.stringify(
-      cand.externalWasm ? cand.wasm : base + cand.wasm.replace('./', '')
-    );
+    const wasmAbsUrl = JSON.stringify(base + cand.wasm.replace('./', ''));
 
-    if (canSAB && !cand.externalWasm) {
+    if (canSAB) {
       // crossOriginIsolated=true: COI SW is active and already injects COOP/COEP.
       // Use new Worker(url) DIRECTLY — the engine fetches stockfish.wasm itself
       // using same-origin fetch which the SW handles correctly.
@@ -2017,23 +1999,6 @@ if(typeof Atomics==='undefined'){
     isLockFree:()=>true,
   };
 }
-// ── Redirect ALL Worker spawns to the real same-origin JS URL ────────────────
-// Emscripten pthread sub-workers call new Worker(url) where url may be a URL
-// object (not a string), so startsWith('blob:') never matched.  Every Worker()
-// call from inside this blob is a pthread sub-worker that must point back to the
-// real same-origin script — unconditional redirect is safe and prevents the COI
-// service worker from mangling blob: URLs into double-origin strings like
-// "https://host.comhttps://host.com/uuid".
-(function(){
-  var _W=self.Worker;
-  var _real=${jsUrlJson};
-  self.Worker=function(url,opts){
-    var s=url==null?'':((url&&typeof url.href==='string')?url.href:String(url));
-    var hash=s.indexOf('#')>=0?s.slice(s.indexOf('#')):'';
-    return new _W(_real+(hash||''),opts);
-  };
-  try{self.Worker.prototype=_W.prototype;}catch(e){}
-})();
 // ── Module config — injected BEFORE engine source so it takes effect ─────────
 var Module=self.Module||{};self.Module=Module;
 // print: routes Emscripten stdout (UCI output) to postMessage.
@@ -2056,12 +2021,8 @@ if(!Module.locateFile) Module.locateFile=function(p){
       const blobUrl = URL.createObjectURL(
         new Blob([shim+'\n'+xhr.responseText],{type:'application/javascript'})
       );
-      // externalWasm fetches ~110 MB from CDN — allow up to 5 minutes.
-      // Non-externalWasm blobs are local so 30 s is fine.
-      const probeMs = cand.externalWasm ? 300000 : 30000;
-      this._probeWorker(blobUrl, cand.url, true, cand.label, probeMs);
+      this._probeWorker(blobUrl, cand.url, true, cand.label);
     };
-    xhr.onerror = () => { if (!this._engineDone) next(); };
     xhr.send();
   }
   // Called by the file input picker
@@ -2260,34 +2221,22 @@ self.abort = function(reason) {
       // Capture idx NOW — not at timeout fire time (candidateIdx may have changed)
       const myIdx = this._candidateIdx;
       const ms = timeoutMs || (revoke ? 30000 : 90000);
-
-      // Keep a resettable timeout — reset on every message so a slow-but-active
-      // download (e.g. 110 MB wasm over CDN) is never killed prematurely.
-      let timer = null;
-      const arm = () => {
-        clearTimeout(timer);
-        if (gotMessage) return;
-        timer = setTimeout(() => {
-          if (!gotMessage) {
-            w.terminate();
-            if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
-            console.warn('[Engine] Probe timeout after', ms/1000 + 's for', srcUrl);
-            this._tryNextCandidate(myIdx + 1);
-          }
-        }, ms);
-      };
-      arm();
-
+      const timeout = setTimeout(() => {
+        if (!gotMessage) {
+          w.terminate();
+          if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
+          console.warn('[Engine] Probe timeout after', ms/1000 + 's for', srcUrl);
+          this._tryNextCandidate(myIdx + 1);
+        }
+      }, ms);
       let engineName = labelHint || 'Stockfish';
       w.onmessage = (e) => {
         if (typeof e.data !== 'string') return;
-        // Reset the watchdog on every message — engine is alive and working.
-        arm();
         // Only fail on explicit load-failure sentinel — never on unknown messages.
         // Engines send various init/ready messages before 'id name'/'uciok';
         // killing on those causes premature fallback.
         if (e.data.startsWith('__LOAD_FAILED__')) {
-          clearTimeout(timer); w.terminate();
+          clearTimeout(timeout); w.terminate();
           if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
           this._tryNextCandidate(myIdx + 1);
           return;
@@ -2295,7 +2244,7 @@ self.abort = function(reason) {
         const nm = e.data.match(/^id name (.+)/);
         if (nm) { engineName = nm[1].trim(); return; }
         if (e.data.includes('uciok')) {
-          clearTimeout(timer);
+          clearTimeout(timeout);
           gotMessage = true;
           if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
           this._bindSFInstance(w, srcUrl, engineName);
@@ -2304,7 +2253,7 @@ self.abort = function(reason) {
         // Timeout handles genuine non-responding files.
       };
       w.onerror = (err) => {
-        clearTimeout(timer);
+        clearTimeout(timeout);
         if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
         console.info('[Engine] Worker error for', srcUrl, err.message || '');
         this._tryNextCandidate(myIdx + 1);
@@ -2509,8 +2458,6 @@ self.abort = function(reason) {
     if (this.sf) { const s = this._sfSend || ((m)=>this.sf.postMessage(m)); s('setoption name Skill Level value '+v); }
   }
 }
-
-// ─────────────────────────────────────────────────────────
 //  GAME UI
 // ─────────────────────────────────────────────────────────
 let game, engine, flipped=false, selectedSq=-1;
