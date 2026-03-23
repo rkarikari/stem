@@ -12,48 +12,80 @@
     return;
   }
 
-  // Not isolated yet. Clear any stale reload flag — if we're here it means
-  // a previous reload attempt failed to produce isolation, so we must try again.
   sessionStorage.removeItem('_coi_reloading');
 
-  const base  = location.pathname.replace(/[^/]*$/, '');
-  const swUrl = base + 'coi-serviceworker.js';
+  // ── COI service worker — embedded inline, no external file required ──────
+  // Critical fix: blob: and data: URLs are explicitly skipped.
+  // The old external coi-serviceworker.js had a bug where it would intercept
+  // blob: Worker fetches and corrupt the URL into "https://hosthttps://host/uuid",
+  // breaking multithreaded Stockfish sub-worker spawning entirely.
+  var SW_SRC = [
+    "self.addEventListener('install',()=>self.skipWaiting());",
+    "self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));",
+    "self.addEventListener('message',e=>{if(e.data&&e.data.type==='SKIP_WAITING')self.skipWaiting();});",
+    "self.addEventListener('fetch',function(e){",
+    "  if(e.request.method!=='GET')return;",
+    "  var u=e.request.url;",
+    // Never intercept blob:/data: — doing so corrupts sub-worker URLs (double-origin bug)
+    "  if(u.startsWith('blob:')||u.startsWith('data:'))return;",
+    "  if(e.request.cache==='only-if-cached'&&e.request.mode!=='same-origin')return;",
+    "  e.respondWith(fetch(e.request,{credentials:'same-origin'}).then(function(r){",
+    "    if(!r||r.status===0)return r;",
+    "    var h=new Headers(r.headers);",
+    "    h.set('Cross-Origin-Embedder-Policy','require-corp');",
+    "    h.set('Cross-Origin-Opener-Policy','same-origin');",
+    "    return new Response(r.body,{status:r.status,statusText:r.statusText,headers:h});",
+    "  }).catch(function(){return fetch(e.request);}));",
+    "});"
+  ].join('\n');
 
-  let reloadScheduled = false;
-  const reload = () => {
+  var swUrl;
+  try {
+    var blob = new Blob([SW_SRC], {type:'text/javascript'});
+    swUrl = URL.createObjectURL(blob);
+  } catch(e) { return; }
+
+  // Silently unregister any legacy non-blob SW (the old broken external version)
+  // so the new inline SW can take its place cleanly.
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    regs.forEach(function(r) {
+      var active = r.active || r.waiting || r.installing;
+      if (active && active.scriptURL && !active.scriptURL.startsWith('blob:')) {
+        r.unregister().catch(function(){});
+      }
+    });
+  }).catch(function(){});
+
+  var base = location.pathname.replace(/[^/]*$/, '');
+  var reloadScheduled = false;
+  var reload = function() {
     if (reloadScheduled) return;
     reloadScheduled = true;
-    console.info('[COI-SW] reloading for cross-origin isolation…');
-    // Small delay so the SW has time to fully claim clients
-    setTimeout(() => location.reload(), 100);
+    setTimeout(function(){ location.reload(); }, 100);
   };
 
   navigator.serviceWorker.addEventListener('controllerchange', reload);
 
   navigator.serviceWorker.register(swUrl, {scope: base || '/'})
-    .then(reg => {
-      console.info('[COI-SW] registered scope:', reg.scope);
-      // skipWaiting on any waiting SW immediately
+    .then(function(reg) {
       if (reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
-
-      const trackState = (sw) => {
+      var trackState = function(sw) {
         if (!sw) return;
         if (sw.state === 'activated') { reload(); return; }
         sw.addEventListener('statechange', function() {
           if (this.state === 'activated') reload();
         });
       };
-
       trackState(reg.installing || reg.waiting || reg.active);
     })
-    .catch(e => console.warn('[COI-SW] failed:', e.message));
+    .catch(function() {}); // silent — lite engine works fine without COI
 })();
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♛</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.060</title>
+<title>RadioSport Chess v1.061</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -988,7 +1020,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.060</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.061</div>
       </div>
     </div>
 
@@ -1871,7 +1903,7 @@ class Engine {
 
     // Version the cache key so each release forces a fresh HEAD check,
     // preventing stale 'false' entries from blocking the full engine.
-    const CACHE_KEY = 'rs-engine-files-v1.060';
+    const CACHE_KEY = 'rs-engine-files-v1.061';
     let knownFiles = null;
     try { knownFiles = JSON.parse(sessionStorage.getItem(CACHE_KEY)); } catch(e) {}
 
@@ -1957,12 +1989,12 @@ class Engine {
       fetch(wasmCheckUrl, {method:'HEAD', cache:'no-cache'})
         .then(r => {
           const ct = r.headers.get('content-type') || '';
-          if (!r.ok) { console.warn('[Engine] WASM 404:', wasmCheckUrl); next(); return; }
+          if (!r.ok) { console.debug('[Engine] WASM 404:', wasmCheckUrl); next(); return; }
           const isBad = ct.includes('text/') || ct.includes('html');
-          if (isBad) { console.warn('[Engine] WASM is LFS pointer:', wasmCheckUrl); next(); return; }
+          if (isBad) { console.debug('[Engine] WASM is LFS pointer:', wasmCheckUrl); next(); return; }
           launchWorker();
         })
-        .catch(() => { console.warn('[Engine] WASM HEAD failed:', wasmCheckUrl); next(); });
+        .catch(() => { console.debug('[Engine] WASM HEAD failed:', wasmCheckUrl); next(); });
       return;
     }
     const xhr = new XMLHttpRequest();
@@ -2243,7 +2275,7 @@ self.abort = function(reason) {
           if (!gotMessage) {
             w.terminate();
             if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
-            console.warn('[Engine] Probe timeout after', ms/1000 + 's for', srcUrl);
+            console.debug('[Engine] Probe timeout after', ms/1000 + 's for', srcUrl);
             this._tryNextCandidate(myIdx + 1);
           }
         }, ms);
@@ -2278,7 +2310,7 @@ self.abort = function(reason) {
       w.onerror = (err) => {
         clearTimeout(timer);
         if (revoke && blobUrl) URL.revokeObjectURL(blobUrl);
-        console.info('[Engine] Worker error for', srcUrl, err.message || '');
+        console.debug('[Engine] Worker error for', srcUrl, err.message || '');
         this._tryNextCandidate(myIdx + 1);
       };
       w.postMessage('uci');
