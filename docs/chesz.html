@@ -85,7 +85,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♛</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.063</title>
+<title>RadioSport Chess v1.064</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1020,7 +1020,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.063</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.064</div>
       </div>
     </div>
 
@@ -1903,7 +1903,7 @@ class Engine {
 
     // Version the cache key so each release forces a fresh HEAD check,
     // preventing stale 'false' entries from blocking the full engine.
-    const CACHE_KEY = 'rs-engine-files-v1.063';
+    const CACHE_KEY = 'rs-engine-files-v1.064';
     let knownFiles = null;
     try { knownFiles = JSON.parse(sessionStorage.getItem(CACHE_KEY)); } catch(e) {}
 
@@ -2005,20 +2005,26 @@ class Engine {
       const jsAbsUrl   = base + cand.url.replace('./', '');
       const jsUrlJson  = JSON.stringify(jsAbsUrl);
       const shim = `
-// ── SharedArrayBuffer + Atomics stubs (when real SAB unavailable) ────────────
-if(typeof SharedArrayBuffer==='undefined'){
-  self.SharedArrayBuffer=ArrayBuffer;
-}
-if(typeof Atomics==='undefined'){
-  self.Atomics={
-    wait:()=>'ok',notify:()=>0,load:(a,i)=>a[i],store:(a,i,v)=>{a[i]=v;return v;},
-    add:(a,i,v)=>{const o=a[i];a[i]+=v;return o;},and:(a,i,v)=>{const o=a[i];a[i]&=v;return o;},
-    or:(a,i,v)=>{const o=a[i];a[i]|=v;return o;},xor:(a,i,v)=>{const o=a[i];a[i]^=v;return o;},
-    exchange:(a,i,v)=>{const o=a[i];a[i]=v;return o;},
-    compareExchange:(a,i,e,r)=>{const o=a[i];if(o===e)a[i]=r;return o;},
-    isLockFree:()=>true,
+// ── Trap bad-memory / OOM inside the worker so the browser doesn't log an
+//    uncaught error.  Only match the specific memory-failure strings — do NOT
+//    match 'abort' because Emscripten calls abort() during normal startup too.
+//    Returning true from self.onerror suppresses the default console entry.
+(function(){
+  var _oe=self.onerror;
+  self.onerror=function(msg,src,line,col,err){
+    var m=String(msg||'')+String((err&&err.message)||'');
+    if(m.includes('bad memory')||m.includes('out of memory')||
+       (m.toLowerCase().includes('oom')&&m.includes('memory'))){
+      try{postMessage('__LOAD_FAILED__');}catch(e){}
+      return true;
+    }
+    return _oe?_oe(msg,src,line,col,err):false;
   };
-}
+})();
+// NOTE: We do NOT stub SharedArrayBuffer with ArrayBuffer.
+// WebAssembly.Memory({shared:true}) requires REAL SAB; substituting ArrayBuffer
+// causes Emscripten to throw "bad memory" immediately.  If SAB is absent the
+// engine detects it and uses its single-threaded code path correctly.
 // ── Redirect ALL Worker spawns to the real same-origin JS URL ────────────────
 // Emscripten pthread sub-workers call new Worker(url) where url may be a URL
 // object (not a string), so startsWith('blob:') never matched.  Every Worker()
