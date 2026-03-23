@@ -53,7 +53,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♛</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.057</title>
+<title>RadioSport Chess v1.058</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -988,7 +988,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.057</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.058</div>
       </div>
     </div>
 
@@ -1866,10 +1866,12 @@ class Engine {
         label: 'Stockfish 18',
         externalWasm: true },
       // Lite fallback — only used if stockfish-18.js is absent or the worker fails to start.
-      { url: './stockfish-18-lite.js', wasm: './stockfish-18-lite.wasm', label: 'Stockfish 18 Lite' },
+      { url: './stockfish-18-lite.js', wasm: './stockfish-18-lite.wasm', label: 'Stockfish 18' },
     ];
 
-    const CACHE_KEY = 'rs-engine-files';
+    // Version the cache key so each release forces a fresh HEAD check,
+    // preventing stale 'false' entries from blocking the full engine.
+    const CACHE_KEY = 'rs-engine-files-v1.058';
     let knownFiles = null;
     try { knownFiles = JSON.parse(sessionStorage.getItem(CACHE_KEY)); } catch(e) {}
 
@@ -2014,6 +2016,7 @@ if(!Module.locateFile) Module.locateFile=function(p){
       const probeMs = cand.externalWasm ? 300000 : 30000;
       this._probeWorker(blobUrl, cand.url, true, cand.label, probeMs);
     };
+    xhr.onerror = () => { if (!this._engineDone) next(); };
     xhr.send();
   }
   // Called by the file input picker
