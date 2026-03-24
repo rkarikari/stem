@@ -53,7 +53,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♛</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.058</title>
+<title>RadioSport Chess v1.065</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -722,6 +722,77 @@
     .piece { font-size: 28px; }
     .piece-3d { width: 40px; height: 40px; }
   }
+
+  /* ─── Commentary panel ─── */
+  #commentary-panel {
+    display: none;
+    width: 100%;
+    max-width: 620px;
+    margin-top: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  #commentary-panel.visible { display: block; }
+  .commentary-header {
+    padding: 10px 16px;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .commentary-match-info {
+    padding: 10px 16px 6px;
+    font-size: 11px;
+    color: var(--ivory-dim);
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    line-height: 1.6;
+  }
+  .commentary-match-info strong { color: var(--gold-light); }
+  .commentary-body {
+    padding: 12px 16px;
+    min-height: 64px;
+    max-height: 160px;
+    overflow-y: auto;
+    font-family: 'Crimson Pro', serif;
+    font-size: 15px;
+    color: var(--ivory);
+    line-height: 1.7;
+    letter-spacing: 0.2px;
+  }
+  .commentary-body::-webkit-scrollbar { width: 4px; }
+  .commentary-body::-webkit-scrollbar-track { background: var(--panel); }
+  .commentary-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .commentary-move-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold-dim);
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .commentary-thinking {
+    color: var(--ivory-dim);
+    font-style: italic;
+    font-size: 13px;
+  }
+  .commentary-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--gold);
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: cur-blink 0.7s step-end infinite;
+  }
+  @keyframes cur-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .ctrl-btn.active { color: var(--gold); border-color: var(--gold-dim); background: rgba(201,168,76,0.12); }
 </style>
 </head>
 <body>
@@ -811,7 +882,9 @@
         <button class="ctrl-btn" onclick="offerDraw()">= Draw</button>
         <button class="ctrl-btn danger" onclick="resignGame()">⚐ Resign</button>
         <button class="ctrl-btn" onclick="copyFEN()" title="Copy FEN">◫ FEN</button>
+        <button class="ctrl-btn" id="hints-btn" onclick="toggleHints()" title="Toggle AI commentary">💬 Commentary</button>
         <button class="ctrl-btn primary" id="eve-pause-btn" onclick="pauseResumeEve()" style="display:none">⏸ Pause Match</button>
+        <button class="ctrl-btn primary" id="eve-lvf-btn" onclick="setupLiteVsFull()" style="display:none" title="Reload: Full engine plays White, Lite engine plays Black">⚔ L vs F</button>
       </div>
     </div>
 
@@ -896,6 +969,18 @@
       </div>
       <!-- bottom file letters -->
       <div id="file-bottom"><div class="corner"></div><span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span><div class="corner"></div></div>
+    </div>
+
+    <!-- Commentary panel -->
+    <div id="commentary-panel">
+      <div class="commentary-header">
+        <span>♟ Commentary</span>
+        <span id="commentary-status-badge" style="font-size:9px;color:var(--ivory-dim);letter-spacing:2px;"></span>
+      </div>
+      <div class="commentary-match-info" id="commentary-match-info">—</div>
+      <div class="commentary-body" id="commentary-body">
+        <div class="commentary-thinking">Commentary will appear here after each move.</div>
+      </div>
     </div>
   </div>
 
@@ -994,7 +1079,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.058</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.065</div>
       </div>
     </div>
 
@@ -1468,6 +1553,8 @@ class Chess {
     this.history = [];
     this.gameOver = false;
     this.result = null;
+    this._posHistory = {};
+    this._posKey = null;
   }
 
   loadFen(fen) {
@@ -1718,6 +1805,10 @@ class Chess {
       castling:{...this.castling}, ep:this.ep
     });
     this._applyMove(m,promo);
+    // Track position for repetition detection (board+turn+castling+ep, no move clocks)
+    this._posKey = this.toFen().split(' ').slice(0,4).join(' ');
+    if (!this._posHistory) this._posHistory = {};
+    this._posHistory[this._posKey] = (this._posHistory[this._posKey] || 0) + 1;
     // Check game over
     this._checkGameOver();
     return san;
@@ -1782,6 +1873,8 @@ class Chess {
       } else {
         this.result={type:'stalemate'};
       }
+    } else if(this._posKey && this._posHistory && (this._posHistory[this._posKey]||0) >= 3) {
+      this.gameOver=true; this.result={type:'repetition'};
     } else if(this.halfmove>=100) {
       this.gameOver=true; this.result={type:'50-move'};
     } else if(this._isInsufficientMaterial()) {
@@ -2407,6 +2500,29 @@ self.abort = function(reason) {
     this.sfSkill = v;
     if (this.sf) { const s = this._sfSend || ((m)=>this.sf.postMessage(m)); s('setoption name Skill Level value '+v); }
   }
+
+  // Tear down any running worker so this instance can be reused
+  destroy() {
+    this._engineDone = true;
+    this.sfReady = false;
+    this.sfCallback = null;
+    this._pendingCall = null;
+    if (this.sf) { try { this.sf.terminate(); } catch(e){} this.sf = null; }
+    if (this.jsWorker) { try { this.jsWorker.terminate(); } catch(e){} this.jsWorker = null; }
+    this.mode = 'loading';
+    this.engineName = undefined;
+  }
+
+  // Reload with a single pinned candidate (url + wasm).
+  // Falls back to built-in JS engine if that file is unavailable.
+  reloadWith(url, wasm) {
+    this.destroy();
+    this._engineDone = false;
+    this._canSAB = window.crossOriginIsolated === true && typeof SharedArrayBuffer !== 'undefined';
+    this._candidates = [{ url, wasm }];
+    this._candidateIdx = 0;
+    this._tryNextCandidate(0);
+  }
 }
 
 // ─────────────────────────────────────────────────────────
@@ -2417,6 +2533,8 @@ let legalMovesCache=[], lastMove=null;
 let mode='solo'; // 'solo' | 'local' | 'eve' | 'multi'
 let playerColor='w'; // human plays white by default
 let eveDelay=1000, evePaused=false, eveMoveTimer=null;
+let lvfFlipped=false; // false = Full(W) vs Lite(B), true = Lite(W) vs Full(B)
+let hintsEnabled=false, commentaryAbort=null;
 let timeControl=600;
 let timers={w:300, b:300};
 let timerInterval=null;
@@ -2611,12 +2729,25 @@ function handleSquareClick(sq) {
   updateBoardHighlights();
 }
 
+let _lastCommentaryCtx = null;
 function executeMove(mv, promo='Q') {
   if(game.gameOver) return;
+  const _fenBefore = game.toFen();
+  const _moverColor = game.turn;
+  const _moveNum = game.fullmove * 2 - (game.turn === 'w' ? 1 : 0);
   const san = game.move(mv, promo);
   lastMove=mv;
   selectedSq=-1; legalMovesCache=[];
   moveHistory.push(san);
+
+  // Store commentary context (executed after updateAll so game.turn is already flipped)
+  if(hintsEnabled) {
+    let moverName;
+    if(mode==='eve') moverName = _moverColor==='w' ? (engine?.engineName||'Engine 1') : (engine2?.engineName||'Engine 2');
+    else if(mode==='solo') moverName = _moverColor===playerColor ? 'You' : (engine?.engineName||'Engine');
+    else moverName = _moverColor==='w' ? 'White' : 'Black';
+    _lastCommentaryCtx = { san, moveNum: _moveNum, fenBefore: _fenBefore, fenAfter: game.toFen(), moverName, moverColor: _moverColor };
+  }
 
   if(mode==='multi') {
     _mpSend({type:'move', move:mv, promo, san, fen:game.toFen()});
@@ -2627,6 +2758,13 @@ function executeMove(mv, promo='Q') {
   updateAll();
 
   if(game.gameOver) { showGameOver(); return; }
+
+  // Commentary hook — fire before engine thinks so UI feels responsive
+  if(hintsEnabled && _lastCommentaryCtx) {
+    const ctx = _lastCommentaryCtx; _lastCommentaryCtx = null;
+    requestCommentary(ctx.san, ctx.moveNum, ctx.fenBefore, ctx.fenAfter, ctx.moverName, ctx.moverColor);
+  }
+
   if(mode==='solo' && game.turn!==playerColor) {
     setTimeout(()=>triggerEngine(), 300);
   } else if(mode==='eve') {
@@ -2685,12 +2823,390 @@ function pauseResumeEve() {
   if(!evePaused) triggerEngineVsEngine();
 }
 
+function setupLiteVsFull() {
+  if(mode!=='eve') return;
+  // Toggle assignment on each press
+  lvfFlipped = !lvfFlipped;
+  const btn = document.getElementById('eve-lvf-btn');
+  if(btn) btn.textContent = lvfFlipped ? '⚔ F vs L' : '⚔ L vs F';
+
+  clearTimeout(eveMoveTimer);
+  evePaused=true;
+  const pb=document.getElementById('eve-pause-btn');
+  if(pb) pb.textContent='▶ Resume Match';
+  setStatus('Loading engines…','gold');
+
+  const FULL = { url:'./stockfish-18.js',      wasm:'./stockfish-18.wasm' };
+  const LITE = { url:'./stockfish-18-lite.js',  wasm:'./stockfish-18-lite.wasm' };
+
+  const white = lvfFlipped ? LITE : FULL;
+  const black = lvfFlipped ? FULL : LITE;
+
+  let ready = 0;
+  const onBothReady = () => {
+    ready++;
+    if(ready < 2) return;
+    _updateEvePlayerNames();
+    setStatus('Engines ready — starting match…','gold');
+    newGame();
+  };
+
+  engine._onLoad  = (name) => { console.info('[LvF] White engine:', name); onBothReady(); };
+  engine2._onLoad = (name) => { console.info('[LvF] Black engine:', name); onBothReady(); };
+
+  engine.reloadWith(white.url, white.wasm);
+  engine2.reloadWith(black.url, black.wasm);
+}
+
 function updateEveDelay(v) {
   const delays=[100,300,500,1000,2000];
   const labels=['0.1s','0.3s','0.5s','1.0s','2.0s'];
   eveDelay=delays[parseInt(v)]||1000;
   const el=document.getElementById('delay-display');
   if(el) el.textContent=labels[parseInt(v)]||'1.0s';
+}
+
+// ─── Commentary ───
+function toggleHints() {
+  hintsEnabled = !hintsEnabled;
+  const btn = document.getElementById('hints-btn');
+  const panel = document.getElementById('commentary-panel');
+  if (btn) btn.classList.toggle('active', hintsEnabled);
+  if (panel) panel.classList.toggle('visible', hintsEnabled);
+  if (hintsEnabled) {
+    _updateCommentaryMatchInfo();
+    if (moveHistory.length === 0) {
+      _setCommentaryBody('<div class="commentary-thinking">Make a move to receive commentary.</div>');
+    }
+  }
+}
+
+function _updateCommentaryMatchInfo() {
+  const el = document.getElementById('commentary-match-info');
+  if (!el) return;
+  let white, black, matchType;
+  if (mode === 'eve') {
+    white = engine?.engineName  || 'Engine 1';
+    black = engine2?.engineName || 'Engine 2';
+    matchType = 'Engine vs Engine';
+  } else if (mode === 'solo') {
+    const en = engine?.engineName || 'Engine';
+    white = playerColor === 'w' ? 'You (Human)' : en;
+    black = playerColor === 'b' ? 'You (Human)' : en;
+    matchType = 'Human vs Engine';
+  } else if (mode === 'local') {
+    white = 'Player 1'; black = 'Player 2'; matchType = 'Local 2-Player';
+  } else if (mode === 'multi') {
+    white = 'White'; black = 'Black'; matchType = 'Online Multiplayer';
+  }
+  el.innerHTML = `<strong>${matchType}</strong> &nbsp;·&nbsp; `
+    + `<strong style="color:#f0d9b5">&#9812; ${white}</strong>`
+    + ` <span style="color:var(--ivory-dim)">vs</span> `
+    + `<strong style="color:#1a1008;text-shadow:0 0 6px rgba(201,168,76,0.5)">&#9818; ${black}</strong>`;
+}
+
+function _setCommentaryBody(html) {
+  const el = document.getElementById('commentary-body');
+  if (el) { el.innerHTML = html; el.scrollTop = el.scrollHeight; }
+}
+
+function requestCommentary(san, moveNum, fenBefore, fenAfter, moverName, moverColor) {
+  if (!hintsEnabled) return;
+  if (commentaryAbort) { commentaryAbort = null; }
+
+  _updateCommentaryMatchInfo();
+  const badge = document.getElementById('commentary-status-badge');
+
+  const colorWord = moverColor === 'w' ? 'White' : 'Black';
+  const moveLabel = `Move ${Math.ceil(moveNum/2)} · ${colorWord} (${moverName}) plays ${san}`;
+
+  _setCommentaryBody(
+    `<div class="commentary-move-label">${moveLabel}</div>`
+    + `<span class="commentary-thinking">Analysing…</span>`
+  );
+
+  // Small async delay so the board renders first
+  setTimeout(() => {
+    const text = _analyseMove(san, fenBefore, fenAfter, moverColor, moveNum);
+    _setCommentaryBody(
+      `<div class="commentary-move-label">${moveLabel}</div>${text}`
+    );
+    if (badge) badge.textContent = '';
+  }, 60);
+}
+
+// ── Rule-based chess move analyser ───────────────────────────────────────────
+function _analyseMove(san, fenBefore, fenAfter, moverColor, moveNum) {
+  const before = new Chess(fenBefore);
+  const after  = new Chess(fenAfter);
+  const opp    = moverColor === 'w' ? 'b' : 'w';
+
+  const facts   = [];   // ordered observations, strongest first
+  const phrases = [];   // final sentences picked from facts
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  const sqName  = sq => 'abcdefgh'[sq%8] + (8-Math.floor(sq/8));
+  const rankOf  = sq => Math.floor(sq/8);
+  const fileOf  = sq => sq % 8;
+  const isCenter= sq => [27,28,35,36].includes(sq);
+  const isExtCenter = sq => [18,19,20,21,26,27,28,29,34,35,36,37,42,43,44,45].includes(sq);
+  const pieceName = t => ({P:'pawn',N:'knight',B:'bishop',R:'rook',Q:'queen',K:'king'}[t]||t);
+
+  // Count material on a board
+  const material = (b, col) => {
+    const vals = {P:1,N:3,B:3,R:5,Q:9,K:0};
+    return b.board.reduce((s,p) => p && p[0]===col ? s+vals[p[1]] : s, 0);
+  };
+
+  // Squares attacked by a side
+  const attackedBy = (b, col) => {
+    const set = new Set();
+    for (let sq=0;sq<64;sq++) {
+      const p=b.board[sq];
+      if (!p||p[0]!==col) continue;
+      b.pseudoLegal(sq).forEach(m=>set.add(m.to));
+    }
+    return set;
+  };
+
+  // Count pieces by type for a color
+  const countPiece = (b, col, type) =>
+    b.board.filter(p=>p&&p[0]===col&&p[1]===type).length;
+
+  // Is a square defended by color?
+  const isDefended = (b, sq, col) => attackedBy(b, col).has(sq);
+
+  // ── Parse the SAN for quick flags ────────────────────────────────────────
+  const isCapture    = san.includes('x');
+  const isCheck      = san.endsWith('+');
+  const isMate       = san.endsWith('#');
+  const isCastleK    = san === 'O-O';
+  const isCastleQ    = san === 'O-O-O';
+  const isCastle     = isCastleK || isCastleQ;
+  const isPromotion  = san.includes('=');
+  const isEP         = san.includes('e.p.');
+  const pieceChar    = /^[NBRQK]/.test(san) ? san[0] : 'P';
+  const movingPiece  = pieceName(pieceChar);
+
+  // Destination square from SAN — extract the last [a-h][1-8] token (always the dest)
+  let destAlg;
+  if (isCastle) {
+    destAlg = isCastleK ? (moverColor==='w'?'g1':'g8') : (moverColor==='w'?'c1':'c8');
+  } else {
+    const sqTokens = san.match(/[a-h][1-8]/g);
+    destAlg = sqTokens ? sqTokens[sqTokens.length - 1] : null;
+  }
+  const destSq = destAlg ? before.algToSq(destAlg) : -1;
+
+  // Guard: if we couldn't parse the destination, return a generic comment
+  if (destSq < 0 || destSq > 63) {
+    return `${moverColor==='w'?'White':'Black'} makes a move, continuing the ${phase}.`;
+  }
+
+  // Find origin square: look for a piece of the right type that disappeared from before→after
+  let fromSq = -1;
+  for (let sq=0;sq<64;sq++) {
+    if (sq === destSq) continue;
+    const bp = before.board[sq], ap = after.board[sq];
+    if (bp && bp[0]===moverColor && bp[1]===pieceChar) {
+      if (!ap || ap[0]!==moverColor || ap[1]!==pieceChar) {
+        fromSq = sq; break;
+      }
+    }
+  }
+  // Fallback: any other square that had this piece type before the move
+  if (fromSq < 0) {
+    for (let sq=0;sq<64;sq++) {
+      if (sq === destSq) continue;
+      const bp = before.board[sq];
+      if (bp && bp[0]===moverColor && bp[1]===pieceChar) { fromSq=sq; break; }
+    }
+  }
+
+  const destName = sqName(destSq);
+  const fromName = fromSq>=0 ? sqName(fromSq) : '?';
+
+  // ── Phase detection ───────────────────────────────────────────────────────
+  const totalPieces = before.board.filter(p=>p&&p[1]!=='P'&&p[1]!=='K').length;
+  const phase = totalPieces >= 10 ? 'opening' : totalPieces >= 5 ? 'middlegame' : 'endgame';
+  const moveNumActual = Math.ceil(moveNum/2);
+
+  // ── What was captured? ────────────────────────────────────────────────────
+  let capturedPiece = null;
+  if (isCapture) {
+    const cp = before.board[destSq];
+    capturedPiece = cp ? cp[1] : null;
+    if (!capturedPiece && isEP) capturedPiece = 'P';
+  }
+
+  // ── Material balance change ───────────────────────────────────────────────
+  const matBefore = { w: material(before,'w'), b: material(before,'b') };
+  const matAfter  = { w: material(after,'w'),  b: material(after,'b') };
+  const gain = (matAfter[moverColor] - matBefore[moverColor])
+             - (matBefore[opp]       - matAfter[opp]);
+
+  // ── Tactical patterns ─────────────────────────────────────────────────────
+
+  // FORK: piece on destSq attacks 2+ valuable enemy pieces in the new position
+  const afterAttacks = attackedBy(after, moverColor);
+  let forkedPieces = [];
+  if (pieceChar !== 'P') {
+    for (let sq=0;sq<64;sq++) {
+      const p=after.board[sq];
+      if (p && p[0]===opp && (p[1]==='K'||p[1]==='Q'||p[1]==='R'||p[1]==='N'||p[1]==='B') && afterAttacks.has(sq)) {
+        forkedPieces.push(p[1]);
+      }
+    }
+  }
+  const hasFork = forkedPieces.length >= 2;
+
+  // PIN: after the move, is an enemy piece pinned against their king?
+  const enemyKingSq = after.findKing(opp);
+  let pinExists = false;
+  if (pieceChar === 'B' || pieceChar === 'R' || pieceChar === 'Q') {
+    // Simplified: check if a sliding piece on destSq is aligned with enemy king with an enemy piece between
+    const dirs = pieceChar==='B' ? [[1,1],[1,-1],[-1,1],[-1,-1]]
+               : pieceChar==='R' ? [[1,0],[-1,0],[0,1],[0,-1]]
+               : [[1,1],[1,-1],[-1,1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+    for (const [dr,df] of dirs) {
+      let nr=rankOf(destSq)+dr, nf=fileOf(destSq)+df;
+      let pinned=null, cleared=true;
+      while(nr>=0&&nr<8&&nf>=0&&nf<8) {
+        const sq2=nr*8+nf, p2=after.board[sq2];
+        if (p2) {
+          if (!pinned && p2[0]===opp && p2[1]!=='K') { pinned=sq2; }
+          else if (pinned && p2[0]===opp && p2[1]==='K') { pinExists=true; break; }
+          else { break; }
+        }
+        nr+=dr; nf+=df;
+      }
+      if (pinExists) break;
+    }
+  }
+
+  // DISCOVERED CHECK: did moving this piece unblock a check from another piece?
+  const wasCheckBefore = before.isInCheck(opp);
+  const isCheckAfter   = isCheck || isMate;
+  const discoveredCheck = isCheckAfter && pieceChar!=='Q' && pieceChar!=='R' && pieceChar!=='B';
+
+  // PASSED PAWN: pawn on destSq with no enemy pawns in front on same/adj files
+  let isPassedPawn = false;
+  if (pieceChar==='P') {
+    const pFile = fileOf(destSq);
+    const pRank = rankOf(destSq);
+    const dir   = moverColor==='w' ? -1 : 1;
+    let passed  = true;
+    for (let r=pRank+dir; r>=0&&r<8; r+=dir) {
+      for (let df=-1;df<=1;df++) {
+        const f2=pFile+df;
+        if (f2<0||f2>7) continue;
+        const ep=after.board[r*8+f2];
+        if (ep && ep[0]===opp && ep[1]==='P') { passed=false; break; }
+      }
+      if (!passed) break;
+    }
+    isPassedPawn = passed && ((moverColor==='w'&&pRank<=3)||(moverColor==='b'&&pRank>=4));
+  }
+
+  // OPEN FILE: after move, is the destination file open (useful for rooks)?
+  const isOpenFile = pieceChar==='R' && !after.board.some((p,i)=>p&&p[1]==='P'&&fileOf(i)===fileOf(destSq));
+
+  // KING SAFETY: did the opponent's king castling rights get eliminated?
+  const lostCastling = (!after.castling[opp+'K'] && before.castling[opp+'K'])
+                    || (!after.castling[opp+'Q'] && before.castling[opp+'Q']);
+
+  // DEVELOPING: moving a minor piece from its starting rank
+  const developingRank = moverColor==='w' ? 7 : 0;
+  const isDeveloping = (pieceChar==='N'||pieceChar==='B')
+    && fromSq>=0 && rankOf(fromSq)===developingRank && moveNumActual<=12;
+
+  // CENTER CONTROL
+  const controlsCenter = isExtCenter(destSq);
+
+  // ── Build commentary ──────────────────────────────────────────────────────
+  const sentences = [];
+
+  // Sentence 1 — primary event
+  if (isMate) {
+    sentences.push(`Checkmate! ${moverColor==='w'?'White':'Black'} delivers the final blow — the game is over.`);
+  } else if (isPromotion) {
+    const promoType = san.match(/=([QRBN])/)?.[1] || 'Q';
+    sentences.push(`The pawn promotes to a ${pieceName(promoType)}${isCheck?' with check':''} — a decisive transformation.`);
+  } else if (isCastle) {
+    const side = isCastleK ? 'kingside' : 'queenside';
+    sentences.push(`${isCastleK?'Short':'Long'} castling — the king tucks to safety on the ${side} while connecting the rooks.`);
+  } else if (isCheck && discoveredCheck) {
+    sentences.push(`A discovered check! Moving the ${movingPiece} unveils an attack on the enemy king from another piece.`);
+  } else if (isCheck) {
+    sentences.push(`${movingPiece.charAt(0).toUpperCase()+movingPiece.slice(1)} to ${destName} lands with check, forcing the opponent to respond immediately.`);
+  } else if (isCapture && capturedPiece) {
+    const capName = pieceName(capturedPiece);
+    if (gain > 0) {
+      sentences.push(`A winning exchange — the ${movingPiece} captures the ${capName} on ${destName}, netting ${gain} point${gain!==1?'s':''} of material.`);
+    } else if (gain === 0) {
+      sentences.push(`An even trade: the ${movingPiece} captures the ${capName} on ${destName}, swapping pieces of equal value.`);
+    } else {
+      sentences.push(`A sacrifice — the ${movingPiece} captures the ${capName} on ${destName} at a material cost, seeking compensation elsewhere.`);
+    }
+  } else if (isEP) {
+    sentences.push(`En passant! The pawn captures in passing — an alert tactical response to the opponent's pawn advance.`);
+  } else {
+    // Quiet move
+    if (isDeveloping && isExtCenter) {
+      sentences.push(`The ${movingPiece} develops to ${destName}, claiming central space in the ${phase}.`);
+    } else if (isDeveloping) {
+      sentences.push(`The ${movingPiece} comes off the back rank to ${destName}, continuing development.`);
+    } else if (pieceChar==='P' && isCenter) {
+      sentences.push(`A central pawn advance to ${destName}, staking a claim in the heart of the board.`);
+    } else if (pieceChar==='P' && isExtCenter) {
+      sentences.push(`Pawn to ${destName} — supporting the center and opening lines for the pieces.`);
+    } else {
+      const activeWords = ['repositions','manoeuvres','slides','shifts','retreats','advances'];
+      const wIdx = (destSq + (fromSq>=0?fromSq:0)) % activeWords.length;
+      const w = activeWords[wIdx];
+      sentences.push(`The ${movingPiece} ${w} to ${destName}.`);
+    }
+  }
+
+  // Sentence 2 — tactical note
+  if (hasFork && !isMate) {
+    const targets = [...new Set(forkedPieces)].map(pieceName).join(' and ');
+    sentences.push(`This creates a fork, simultaneously threatening the ${targets}.`);
+  } else if (pinExists && !isMate) {
+    sentences.push(`The move introduces a pin, tying down an enemy piece along the line to its king.`);
+  } else if (isPassedPawn && !isMate) {
+    sentences.push(`The pawn is now passed — with no enemy pawns to block its path, it becomes a long-term asset.`);
+  } else if (isOpenFile && !isMate) {
+    sentences.push(`Positioned on the open file, the rook now exerts strong pressure down the column.`);
+  } else if (lostCastling && !isMate) {
+    sentences.push(`The opponent has lost castling rights on that side, leaving their king less secure.`);
+  } else if (isCapture && gain < 0 && !isMate) {
+    // Speculate on compensation
+    const comps = ['initiative','attacking chances','piece activity','a dangerous attack'];
+    sentences.push(`The compensation may come in the form of ${comps[Math.abs(destSq)%comps.length]}.`);
+  } else if (controlsCenter && pieceChar!=='P' && !isMate && !isCapture) {
+    sentences.push(`From ${destName} the piece eyes the centre and is well placed for both attack and defence.`);
+  }
+
+  // Sentence 3 — phase/game context
+  if (!isMate && sentences.length < 3) {
+    if (phase === 'opening' && moveNumActual <= 5) {
+      const tips = [
+        'In the opening, piece development and central control are the priorities.',
+        'Early moves should focus on rapid development and king safety.',
+        'Controlling the center early gives more options as the game unfolds.',
+      ];
+      sentences.push(tips[moveNumActual % tips.length]);
+    } else if (phase === 'endgame') {
+      sentences.push('In the endgame, king activity and pawn advancement become critical.');
+    } else if (after.isInCheck(opp)) {
+      sentences.push('The opponent must deal with the check before doing anything else.');
+    } else if (after.allLegalMoves().length <= 5 && !after.gameOver) {
+      sentences.push('The opponent\'s options are limited — the position is growing increasingly constrained.');
+    }
+  }
+
+  return sentences.join(' ');
 }
 
 // ─── Promotion ───
@@ -2720,15 +3236,18 @@ function showPromotion(from, to, mv) {
 function showGameOver() {
   const r=game.result;
   const modal=document.getElementById('gameover-modal');
-  const icons={checkmate:'♛',stalemate:'½',draw:'½','50-move':'½',insufficient:'½'};
+  const icons={checkmate:'♛',stalemate:'½',draw:'½','50-move':'½',insufficient:'½',repetition:'½',timeout:'⏱'};
   const titles={
-    checkmate: (r.winner==='w'?'White':'Black')+' Wins!',
-    stalemate: 'Stalemate!', draw:'Draw!','50-move':'50-Move Rule','insufficient':'Insufficient Material'
+    checkmate:    (r.winner==='w'?'White':'Black')+' Wins!',
+    timeout:      (r.winner==='w'?'White':'Black')+' Wins on Time!',
+    stalemate: 'Stalemate!', draw:'Draw!','50-move':'50-Move Rule','insufficient':'Insufficient Material','repetition':'Draw by Repetition'
   };
   const reasons={
     checkmate: `by checkmate`,
+    timeout:   (r.winner==='w'?'Black':'White')+"'s clock ran out",
     stalemate: 'No legal moves, it\'s a draw',
     '50-move': '50 moves without pawn or capture',
+    repetition: 'Same position repeated three times',
     insufficient: 'Not enough material to checkmate'
   };
   document.getElementById('gameover-icon').textContent=icons[r.type]||'♟';
@@ -2762,6 +3281,7 @@ function updateStatus() {
   if(game.gameOver) {
     const r=game.result;
     if(r.type==='checkmate') setStatus((r.winner==='w'?'White':'Black')+' wins by checkmate!','red');
+    else if(r.type==='timeout') setStatus((r.winner==='w'?'White':'Black')+' wins on time!','red');
     else setStatus('Draw — '+r.type,'normal');
     return;
   }
@@ -2904,6 +3424,10 @@ function newGame() {
     if(pb) pb.textContent='⏸ Pause Match';
     _updateEvePlayerNames();
   }
+  if(hintsEnabled) {
+    _updateCommentaryMatchInfo();
+    _setCommentaryBody('<div class="commentary-thinking">Make a move to receive commentary.</div>');
+  }
 
   renderBoard();
   updateAll();
@@ -3017,6 +3541,8 @@ function switchMode(m) {
     rightPanel.style.display='';
     if(enginePanel) enginePanel.style.display=(m==='solo'||m==='eve')?'':'none';
     if(pauseBtn) pauseBtn.style.display=m==='eve'?'':'none';
+    const lvfBtn=document.getElementById('eve-lvf-btn');
+    if(lvfBtn) lvfBtn.style.display=m==='eve'?'':'none';
     if(delayRow) delayRow.style.display=m==='eve'?'':'none';
     const bn=document.getElementById('black-name');
     const br=document.getElementById('black-rating');
