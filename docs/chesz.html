@@ -53,7 +53,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♛</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.057</title>
+<title>RadioSport Chess v1.058</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -735,6 +735,7 @@
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('solo')">vs Engine</button>
     <button class="nav-tab" onclick="switchMode('local')">Local 2P</button>
+    <button class="nav-tab" onclick="switchMode('eve')">Engine vs Engine</button>
     <button class="nav-tab" onclick="switchMode('multi')">Online</button>
   </div>
 </header>
@@ -762,7 +763,7 @@
         <div class="player-avatar white-avatar">♙</div>
         <div class="player-info">
           <div class="player-name" id="white-name">You</div>
-          <div class="player-rating">Human Player</div>
+          <div class="player-rating" id="white-rating">Human Player</div>
         </div>
         <div class="player-time" id="white-time">10:00</div>
       </div>
@@ -810,6 +811,7 @@
         <button class="ctrl-btn" onclick="offerDraw()">= Draw</button>
         <button class="ctrl-btn danger" onclick="resignGame()">⚐ Resign</button>
         <button class="ctrl-btn" onclick="copyFEN()" title="Copy FEN">◫ FEN</button>
+        <button class="ctrl-btn primary" id="eve-pause-btn" onclick="pauseResumeEve()" style="display:none">⏸ Pause Match</button>
       </div>
     </div>
 
@@ -835,6 +837,10 @@
             <option value="900">15 min Rapid</option>
             <option value="1800">30 min Classical</option>
           </select>
+        </div>
+        <div class="setting-row" id="eve-delay-row" style="display:none">
+          <div class="setting-label">Move Delay <span class="setting-value" id="delay-display">1.0s</span></div>
+          <input type="range" min="0" max="4" value="2" id="delay-slider" oninput="updateEveDelay(this.value)">
         </div>
         <div class="setting-row">
           <div class="setting-label">Play As</div>
@@ -988,7 +994,7 @@
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.057</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.058</div>
       </div>
     </div>
 
@@ -1806,7 +1812,9 @@ class Chess {
 //  On file:// — browser blocks all network; user picks the file manually.
 // ─────────────────────────────────────────────────────────
 class Engine {
-  constructor() {
+  constructor(opts={}) {
+    this._silent = opts.silent || false;
+    this._onLoad = null;
     this.sf = null;           // Stockfish worker
     this.sfReady = false;
     this.sfCallback = null;
@@ -2214,6 +2222,7 @@ self.abort = function(reason) {
     this._setEngineLabel(engineName + ' ✓');
     this._setBlackName(engineName);
     console.info('[Engine] Loaded:', engineName, 'from', srcUrl);
+    if (this._onLoad) this._onLoad(engineName);
     if (sf.onmessage !== undefined) {
       sf.onmessage = (ev) => this._onSFMessage(typeof ev === 'string' ? ev : ev.data);
     } else if (typeof sf.addMessageListener === 'function') {
@@ -2384,10 +2393,12 @@ self.abort = function(reason) {
   }
 
   _setEngineLabel(text) {
+    if (this._silent) return;
     const el = document.getElementById('black-rating');
     if (el) el.textContent = text;
   }
   _setBlackName(name) {
+    if (this._silent) return;
     const el = document.getElementById('black-name');
     if (el) el.textContent = name;
   }
@@ -2401,10 +2412,11 @@ self.abort = function(reason) {
 // ─────────────────────────────────────────────────────────
 //  GAME UI
 // ─────────────────────────────────────────────────────────
-let game, engine, flipped=false, selectedSq=-1;
+let game, engine, engine2, flipped=false, selectedSq=-1;
 let legalMovesCache=[], lastMove=null;
-let mode='solo'; // 'solo' | 'local' | 'multi'
+let mode='solo'; // 'solo' | 'local' | 'eve' | 'multi'
 let playerColor='w'; // human plays white by default
+let eveDelay=1000, evePaused=false, eveMoveTimer=null;
 let timeControl=600;
 let timers={w:300, b:300};
 let timerInterval=null;
@@ -2440,6 +2452,10 @@ function loadEngineFile(input) {
 function init() {
   game = new Chess();
   engine = new Engine();
+  engine2 = new Engine({silent: true});
+  const _refreshEveNames = () => { if (mode==='eve') _updateEvePlayerNames(); };
+  engine._onLoad = _refreshEveNames;
+  engine2._onLoad = _refreshEveNames;
   // Apply default piece style
   document.getElementById('board-rows-container')?.classList.toggle('mode-3d', false);
   renderBoard();
@@ -2553,6 +2569,7 @@ function updatePieces() {
 // ─── Square click handling ───
 function handleSquareClick(sq) {
   if(game.gameOver) return;
+  if(mode==='eve') return;
   if(mode==='multi' && !multiConn) return;
 
   const isHumanTurn = () => {
@@ -2612,6 +2629,8 @@ function executeMove(mv, promo='Q') {
   if(game.gameOver) { showGameOver(); return; }
   if(mode==='solo' && game.turn!==playerColor) {
     setTimeout(()=>triggerEngine(), 300);
+  } else if(mode==='eve') {
+    eveMoveTimer=setTimeout(()=>triggerEngineVsEngine(), eveDelay);
   }
 }
 
@@ -2630,6 +2649,49 @@ function triggerEngine() {
 }
 
 function updateEval(score, depth) { /* eval panel removed */ }
+
+// ─── Engine vs Engine ───
+function _updateEvePlayerNames() {
+  const wn=document.getElementById('white-name');
+  const bn=document.getElementById('black-name');
+  const wr=document.getElementById('white-rating');
+  const br=document.getElementById('black-rating');
+  if(wn) wn.textContent=engine?.engineName||'Engine 1';
+  if(bn) bn.textContent=engine2?.engineName||'Engine 2';
+  if(wr) wr.textContent='Playing White';
+  if(br) br.textContent='Playing Black';
+}
+
+function triggerEngineVsEngine() {
+  if(mode!=='eve'||game.gameOver||evePaused) return;
+  const e=game.turn==='w'?engine:engine2;
+  const label=game.turn==='w'
+    ?(engine?.engineName||'Engine 1')
+    :(engine2?.engineName||'Engine 2');
+  setThinking(true);
+  setStatus(label+' is thinking…','gold');
+  e.getBestMove(game, engineDepth, engineSkill, (result)=>{
+    setThinking(false);
+    if(!result||!result.move) return;
+    executeMove(result.move, result.move._sfPromo||'Q');
+  });
+}
+
+function pauseResumeEve() {
+  if(mode!=='eve') return;
+  evePaused=!evePaused;
+  const btn=document.getElementById('eve-pause-btn');
+  if(btn) btn.textContent=evePaused?'▶ Resume Match':'⏸ Pause Match';
+  if(!evePaused) triggerEngineVsEngine();
+}
+
+function updateEveDelay(v) {
+  const delays=[100,300,500,1000,2000];
+  const labels=['0.1s','0.3s','0.5s','1.0s','2.0s'];
+  eveDelay=delays[parseInt(v)]||1000;
+  const el=document.getElementById('delay-display');
+  if(el) el.textContent=labels[parseInt(v)]||'1.0s';
+}
 
 // ─── Promotion ───
 function showPromotion(from, to, mv) {
@@ -2709,6 +2771,9 @@ function updateStatus() {
   else if(mode==='solo') {
     if(game.turn===playerColor) setStatus(`Your turn. ${turn} to move.`,'normal');
     else setStatus('Engine is thinking...','gold');
+  } else if(mode==='eve') {
+    const elabel=game.turn==='w'?(engine?.engineName||'Engine 1'):(engine2?.engineName||'Engine 2');
+    setStatus(evePaused?`Paused — ${turn} to move.`:`${elabel} to move.`,'normal');
   } else {
     setStatus(`${turn} to move.`,'normal');
   }
@@ -2832,6 +2897,12 @@ function newGame() {
     const en=(engine&&engine.engineName)?engine.engineName:'Engine';
     if(playerColor==='w') { if(wn) wn.textContent='You'; if(bn) bn.textContent=en; }
     else { if(bn) bn.textContent='You'; if(wn) wn.textContent=en; }
+  } else if(mode==='eve') {
+    clearTimeout(eveMoveTimer);
+    evePaused=false;
+    const pb=document.getElementById('eve-pause-btn');
+    if(pb) pb.textContent='⏸ Pause Match';
+    _updateEvePlayerNames();
   }
 
   renderBoard();
@@ -2840,6 +2911,7 @@ function newGame() {
   setThinking(false);
 
   if(mode==='solo' && game.turn!==playerColor) setTimeout(()=>triggerEngine(),500);
+  else if(mode==='eve') setTimeout(()=>triggerEngineVsEngine(),500);
 }
 
 function flipBoard() { flipped=!flipped; renderBoard(); updateBoardHighlights(); }
@@ -2898,6 +2970,7 @@ function updateSkill(v) {
   engineSkill=parseInt(v);
   document.getElementById('skill-display').textContent=v+' / 20';
   if(engine) engine.updateSkill(engineSkill);
+  if(engine2) engine2.updateSkill(engineSkill);
 }
 function updateDepth(v) {
   engineDepth=parseInt(v);
@@ -2915,37 +2988,52 @@ function updatePlayAs(v) { /* applied on new game */ }
 // ─── Mode switching ───
 function switchMode(m) {
   mode=m;
-  document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',['solo','local','multi'][i]===m));
+  document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',['solo','local','eve','multi'][i]===m));
   const mpSection=document.getElementById('mp-section');
   const boardArea=document.getElementById('board-area');
   const leftPanel=document.getElementById('side-panel-left');
   const rightPanel=document.getElementById('right-panel');
   const enginePanel=document.getElementById('engine-panel');
+  const pauseBtn=document.getElementById('eve-pause-btn');
+  const delayRow=document.getElementById('eve-delay-row');
 
   if(m==='multi') {
+    clearTimeout(eveMoveTimer);
     mpSection.classList.add('visible');
     boardArea.style.display='none';
     leftPanel.style.display='none';
     rightPanel.style.display='none';
     document.getElementById('online-info-panel').style.display='none';
+    if(pauseBtn) pauseBtn.style.display='none';
+    if(delayRow) delayRow.style.display='none';
     _startLobbyPoll();
     _lobbyRefreshList();
   } else {
     _stopLobbyPoll();
+    clearTimeout(eveMoveTimer);
     mpSection.classList.remove('visible');
     boardArea.style.display='';
     leftPanel.style.display='';
     rightPanel.style.display='';
-    if(enginePanel) enginePanel.style.display=m==='solo'?'':'none';
+    if(enginePanel) enginePanel.style.display=(m==='solo'||m==='eve')?'':'none';
+    if(pauseBtn) pauseBtn.style.display=m==='eve'?'':'none';
+    if(delayRow) delayRow.style.display=m==='eve'?'':'none';
     const bn=document.getElementById('black-name');
     const br=document.getElementById('black-rating');
+    const wn=document.getElementById('white-name');
+    const wr=document.getElementById('white-rating');
     if(m==='local') {
+      if(wn) wn.textContent='Player 1';
+      if(wr) wr.textContent='Human Player';
       if(bn) bn.textContent='Player 2';
       if(br) br.textContent='Human Player';
-    } else {
+    } else if(m==='solo') {
+      if(wn) wn.textContent='You';
+      if(wr) wr.textContent='Human Player';
       if(bn) bn.textContent=(engine && engine.engineName) ? engine.engineName : 'Engine';
       if(br) br.textContent='Elo ~3500';
     }
+    // 'eve' mode: newGame() will call _updateEvePlayerNames()
     newGame();
   }
 }
