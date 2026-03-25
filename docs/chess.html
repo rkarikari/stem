@@ -53,7 +53,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♛</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadioSport Chess v1.065</title>
+<title>RadioSport Chess v1.068</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -793,6 +793,124 @@
   }
   @keyframes cur-blink { 0%,100%{opacity:1} 50%{opacity:0} }
   .ctrl-btn.active { color: var(--gold); border-color: var(--gold-dim); background: rgba(201,168,76,0.12); }
+
+  /* ─── Edit Mode ─── */
+  .edit-btn {
+    padding: 7px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--ivory-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .edit-btn:hover { color: var(--gold); border-color: var(--gold-dim); background: rgba(201,168,76,0.08); }
+  .edit-btn.active { color: var(--gold); border-color: var(--gold-dim); background: rgba(201,168,76,0.15); }
+
+  /* Board edit mode: crosshair when a piece is selected */
+  body.edit-mode .sq { cursor: cell !important; }
+  body.edit-mode .sq:hover { filter: brightness(1.2) !important; }
+
+  /* ── Piece Tray ── */
+  #edit-tray-wrap {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    width: 100%;
+    max-width: 620px;
+  }
+  #edit-tray-wrap.visible { display: flex; }
+
+  .edit-tray {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .tray-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--border);
+    flex-shrink: 0;
+    margin: 0 4px;
+  }
+
+  .tray-piece {
+    width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    border: 2px solid var(--border);
+    border-radius: 3px;
+    background: var(--panel);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .tray-piece:hover { border-color: var(--gold-dim); background: rgba(201,168,76,0.1); transform: translateY(-2px); }
+  .tray-piece.selected {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.18);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(201,168,76,0.25);
+  }
+  .tray-piece.eraser {
+    font-size: 16px;
+    color: var(--ivory-dim);
+    letter-spacing: 0;
+  }
+  .tray-piece.eraser:hover { color: var(--red); border-color: #c0392b66; background: rgba(192,57,43,0.08); }
+  .tray-piece.eraser.selected { border-color: var(--red); background: rgba(192,57,43,0.15); color: var(--red); box-shadow: 0 4px 12px rgba(192,57,43,0.2); }
+
+  .tray-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ivory-dim);
+    text-align: center;
+    margin-bottom: 2px;
+  }
+  .tray-group { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .tray-group-row { display: flex; gap: 4px; }
+
+  .edit-action-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .edit-ctrl {
+    flex: 1;
+    padding: 9px 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--ivory-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .edit-ctrl:hover { color: var(--gold); border-color: var(--gold-dim); background: rgba(201,168,76,0.08); }
+  .edit-ctrl.primary { background: rgba(201,168,76,0.12); border-color: var(--gold-dim); color: var(--gold); }
+  .edit-ctrl.primary:hover { background: rgba(201,168,76,0.22); }
+  .edit-ctrl.danger:hover { color: var(--red); border-color: #c0392b44; }
 </style>
 </head>
 <body>
@@ -984,6 +1102,19 @@
     </div>
   </div>
 
+    <!-- Edit piece tray (shown in edit mode) -->
+    <div id="edit-tray-wrap">
+      <div class="edit-tray" id="edit-tray">
+        <!-- populated by JS -->
+      </div>
+      <div class="edit-action-row">
+        <button class="edit-ctrl" onclick="resetBoardEdit()">⟳ Reset</button>
+        <button class="edit-ctrl danger" onclick="clearBoardEdit()">⬜ Clear</button>
+        <button class="edit-ctrl primary" onclick="startGameFromEdit()">▶ Start Game</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MULTIPLAYER AREA (hidden by default) -->
   <div class="mp-section" id="mp-section">
     <div class="mp-card">
@@ -1074,12 +1205,29 @@
         <div id="sf-load-status" style="font-size:10px;color:var(--ivory-dim);text-align:center;min-height:12px;margin-top:6px;"></div>
       </div>
     </div>
+    <div class="panel-card" id="edit-board-panel">
+      <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between;padding-right:10px;">
+        <span>Board Editor</span>
+      </div>
+      <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+        <button class="edit-btn" id="edit-toggle-btn" onclick="toggleEditMode()">✏ Edit Board</button>
+        <div id="edit-panel-controls" style="display:none;flex-direction:column;gap:6px;">
+          <div style="font-size:9px;color:var(--ivory-dim);letter-spacing:1px;line-height:1.6;text-align:center;padding:4px 0;">Select a piece below the board,<br>then click a square to place it</div>
+          <button class="edit-ctrl primary" onclick="startGameFromEdit()" style="width:100%;padding:9px;">▶ Start Game</button>
+          <div style="display:flex;gap:6px;">
+            <button class="edit-ctrl" onclick="resetBoardEdit()" style="flex:1;">⟳ Reset</button>
+            <button class="edit-ctrl danger" onclick="clearBoardEdit()" style="flex:1;">⬜ Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="panel-card">
       <div class="panel-title">Developer</div>
       <div style="padding:12px 16px">
         <div style="font-family:'Crimson Pro',serif;font-size:15px;color:var(--ivory);font-style:italic">R.N.K</div>
         <div style="font-size:10px;color:var(--ivory-dim);margin-top:4px;letter-spacing:1px">© 9G5AR</div>
-        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.065</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px;">v1.068</div>
       </div>
     </div>
 
@@ -1873,7 +2021,7 @@ class Chess {
       } else {
         this.result={type:'stalemate'};
       }
-    } else if(this._posKey && this._posHistory && (this._posHistory[this._posKey]||0) >= 3) {
+    } else if(this._posKey && this._posHistory && (this._posHistory[this._posKey]||0) >= 5) {
       this.gameOver=true; this.result={type:'repetition'};
     } else if(this.halfmove>=100) {
       this.gameOver=true; this.result={type:'50-move'};
@@ -2686,6 +2834,13 @@ function updatePieces() {
 
 // ─── Square click handling ───
 function handleSquareClick(sq) {
+  if(editMode) {
+    // Place selected piece or erase
+    game.board[sq] = editSelectedPiece; // null = erase
+    updatePieces();
+    updateBoardHighlights();
+    return;
+  }
   if(game.gameOver) return;
   if(mode==='eve') return;
   if(mode==='multi' && !multiConn) return;
@@ -3240,14 +3395,14 @@ function showGameOver() {
   const titles={
     checkmate:    (r.winner==='w'?'White':'Black')+' Wins!',
     timeout:      (r.winner==='w'?'White':'Black')+' Wins on Time!',
-    stalemate: 'Stalemate!', draw:'Draw!','50-move':'50-Move Rule','insufficient':'Insufficient Material','repetition':'Draw by Repetition'
+    stalemate: 'Stalemate!', draw:'Draw!','50-move':'50-Move Rule','insufficient':'Insufficient Material','repetition':'Draw — Fivefold Repetition'
   };
   const reasons={
     checkmate: `by checkmate`,
     timeout:   (r.winner==='w'?'Black':'White')+"'s clock ran out",
     stalemate: 'No legal moves, it\'s a draw',
     '50-move': '50 moves without pawn or capture',
-    repetition: 'Same position repeated three times',
+    repetition: 'Same position repeated five times (FIDE Article 9.6)',
     insufficient: 'Not enough material to checkmate'
   };
   document.getElementById('gameover-icon').textContent=icons[r.type]||'♟';
@@ -3985,6 +4140,217 @@ function joinRoom() {
 
 function handleMultiMessage(e) {
   // Legacy BroadcastChannel shim — not used with PeerJS but kept for safety
+}
+
+// ─── Board Editor ────────────────────────────────────────────────────────────
+let editMode = false;
+let editSelectedPiece = null; // piece code e.g. 'wQ', 'bN', or null = eraser
+
+function toggleEditMode() {
+  editMode = !editMode;
+  const btn      = document.getElementById('edit-toggle-btn');
+  const trayWrap = document.getElementById('edit-tray-wrap');
+  const panelCtrl = document.getElementById('edit-panel-controls');
+
+  if (editMode) {
+    clearTimeout(eveMoveTimer);
+    btn.textContent = '✕ Exit Edit';
+    btn.classList.add('active');
+    if (trayWrap)   trayWrap.classList.add('visible');
+    if (panelCtrl)  panelCtrl.style.display = 'flex';
+    document.body.classList.add('edit-mode');
+    _buildEditTray();
+    // Default to eraser selected
+    selectEditPiece(null);
+  } else {
+    btn.textContent = '✏ Edit Board';
+    btn.classList.remove('active');
+    if (trayWrap)   trayWrap.classList.remove('visible');
+    if (panelCtrl)  panelCtrl.style.display = 'none';
+    document.body.classList.remove('edit-mode');
+    editSelectedPiece = null;
+    updatePieces();
+    updateBoardHighlights();
+  }
+}
+
+function _buildEditTray() {
+  const tray = document.getElementById('edit-tray');
+  if (!tray) return;
+  tray.innerHTML = '';
+
+  const pieceOrder = ['K','Q','R','B','N','P'];
+
+  // White group
+  const wGroup = document.createElement('div');
+  wGroup.className = 'tray-group';
+  const wLabel = document.createElement('div');
+  wLabel.className = 'tray-label';
+  wLabel.textContent = 'White';
+  const wRow = document.createElement('div');
+  wRow.className = 'tray-group-row';
+  pieceOrder.forEach(type => {
+    wRow.appendChild(_makeTrayPiece('w' + type));
+  });
+  wGroup.appendChild(wLabel);
+  wGroup.appendChild(wRow);
+  tray.appendChild(wGroup);
+
+  // Divider
+  const div1 = document.createElement('div');
+  div1.className = 'tray-divider';
+  tray.appendChild(div1);
+
+  // Black group
+  const bGroup = document.createElement('div');
+  bGroup.className = 'tray-group';
+  const bLabel = document.createElement('div');
+  bLabel.className = 'tray-label';
+  bLabel.textContent = 'Black';
+  const bRow = document.createElement('div');
+  bRow.className = 'tray-group-row';
+  pieceOrder.forEach(type => {
+    bRow.appendChild(_makeTrayPiece('b' + type));
+  });
+  bGroup.appendChild(bLabel);
+  bGroup.appendChild(bRow);
+  tray.appendChild(bGroup);
+
+  // Divider
+  const div2 = document.createElement('div');
+  div2.className = 'tray-divider';
+  tray.appendChild(div2);
+
+  // Eraser group
+  const eGroup = document.createElement('div');
+  eGroup.className = 'tray-group';
+  const eLabel = document.createElement('div');
+  eLabel.className = 'tray-label';
+  eLabel.textContent = 'Erase';
+  const eRow = document.createElement('div');
+  eRow.className = 'tray-group-row';
+  const eraser = document.createElement('div');
+  eraser.className = 'tray-piece eraser';
+  eraser.dataset.piece = '__erase__';
+  eraser.textContent = '✕';
+  eraser.title = 'Erase square';
+  eraser.onclick = () => selectEditPiece(null);
+  eRow.appendChild(eraser);
+  eGroup.appendChild(eLabel);
+  eGroup.appendChild(eRow);
+  tray.appendChild(eGroup);
+}
+
+function _makeTrayPiece(code) {
+  const el = document.createElement('div');
+  el.className = 'tray-piece';
+  el.dataset.piece = code;
+  const color = code[0];
+  const type  = code[1];
+  el.title = (color === 'w' ? 'White ' : 'Black ') + _pieceName(type);
+
+  if (pieceStyle === '3d' || pieceStyle === '3dt') {
+    const svg = pieceStyle === '3dt' ? makeTraditionalSVG(type, color) : makePieceSVG(type, color);
+    const wrap = document.createElement('div');
+    wrap.innerHTML = svg;
+    wrap.style.cssText = 'width:66px;height:66px;transform:scale(0.56);transform-origin:center center;pointer-events:none;';
+    el.appendChild(wrap);
+  } else {
+    el.textContent = PIECES[code];
+    el.style.color = PIECE_COLOR[code];
+    el.style.textShadow = color === 'w' ? '0 1px 4px rgba(0,0,0,0.5)' : '0 1px 3px rgba(0,0,0,0.3)';
+  }
+
+  el.onclick = () => selectEditPiece(code);
+  return el;
+}
+
+function selectEditPiece(code) {
+  editSelectedPiece = code;
+  // Update tray highlights
+  document.querySelectorAll('.tray-piece').forEach(el => {
+    const isPiece = code !== null && el.dataset.piece === code;
+    const isEraser = code === null && el.classList.contains('eraser');
+    el.classList.toggle('selected', isPiece || isEraser);
+  });
+}
+
+function _pieceName(t) {
+  return { K:'King', Q:'Queen', R:'Rook', B:'Bishop', N:'Knight', P:'Pawn' }[t] || t;
+}
+
+function clearBoardEdit() {
+  for (let i = 0; i < 64; i++) game.board[i] = null;
+  updatePieces();
+  updateBoardHighlights();
+}
+
+function resetBoardEdit() {
+  game.loadFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+  updatePieces();
+  updateBoardHighlights();
+}
+
+// Build a clean FEN from a raw board array — always white to move, fresh castling/clock state
+function _editBoardToFen(board) {
+  // Piece placement
+  let placement = '';
+  for (let r = 0; r < 8; r++) {
+    let empty = 0;
+    for (let f = 0; f < 8; f++) {
+      const p = board[r * 8 + f];
+      if (!p) { empty++; continue; }
+      if (empty) { placement += empty; empty = 0; }
+      placement += p[0] === 'w' ? p[1] : p[1].toLowerCase();
+    }
+    if (empty) placement += empty;
+    if (r < 7) placement += '/';
+  }
+
+  // Castling rights: only grant if king and rook are on their original squares
+  let cast = '';
+  if (board[60] === 'wK' && board[63] === 'wR') cast += 'K';
+  if (board[60] === 'wK' && board[56] === 'wR') cast += 'Q';
+  if (board[4]  === 'bK' && board[7]  === 'bR') cast += 'k';
+  if (board[4]  === 'bK' && board[0]  === 'bR') cast += 'q';
+  if (!cast) cast = '-';
+
+  return `${placement} w ${cast} - 0 1`;
+}
+
+function startGameFromEdit() {
+  const wKing = game.board.some(p => p === 'wK');
+  const bKing = game.board.some(p => p === 'bK');
+  if (!wKing || !bKing) {
+    alert('Both kings must be on the board to start a game.');
+    return;
+  }
+
+  // Build a clean FEN from the raw board only — never inherit old turn/castling/gameOver state
+  const fen = _editBoardToFen(game.board);
+  toggleEditMode();
+
+  document.getElementById('gameover-modal')?.classList.remove('show');
+  clearInterval(timerInterval);
+  moveHistory = []; lastMove = null; selectedSq = -1; legalMovesCache = [];
+
+  game = new Chess(fen);
+
+  const playAs = document.getElementById('play-as')?.value || 'white';
+  playerColor = playAs === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : (playAs === 'black' ? 'b' : 'w');
+
+  if (hintsEnabled) {
+    _updateCommentaryMatchInfo();
+    _setCommentaryBody('<div class="commentary-thinking">Custom position loaded. Make a move to receive commentary.</div>');
+  }
+
+  renderBoard();
+  updateAll();
+  startTimers();
+  setThinking(false);
+
+  if (mode === 'solo' && game.turn !== playerColor) setTimeout(() => triggerEngine(), 500);
+  else if (mode === 'eve') setTimeout(() => triggerEngineVsEngine(), 500);
 }
 
 // ─── Init ───
