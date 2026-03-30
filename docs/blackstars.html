@@ -6,6 +6,7 @@
 <title>Ghana Black Stars — Tactical Command Centre</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <style>
 /* ═══════════════════════════════════════════
@@ -655,20 +656,6 @@ select.fsel option{background:#0c1912;color:var(--txt);font-size:14px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ═══════════════════════════════════════════
-   PRINT
-═══════════════════════════════════════════ */
-@media print{
-  #topbar,#lpanel,#rpanel,#bench-wrap,#pmodal,#wcmodal,#toast{display:none!important}
-  #app{display:block}#main{display:block}
-  #centre{background:#fff!important;padding:0}
-  #pitch-wrap{max-width:100%;padding-bottom:140%}
-  #pitch-grass{background:#e8f5e9!important}
-  .tok-name,.tok-club{color:#000!important;text-shadow:none!important}
-  .tok-rating{color:#000!important}
-  @page{margin:1cm}
-}
-
-/* ═══════════════════════════════════════════
    AMBIENT GLOW DECORATION
 ═══════════════════════════════════════════ */
 #centre::before{
@@ -688,7 +675,7 @@ select.fsel option{background:#0c1912;color:var(--txt);font-size:14px}
     <div class="tb-flag">🇬🇭</div>
     <div class="tb-wordmark">
       <h1>BLACK STARS</h1>
-      <p>Tactical Command Centre · 2026 · <span style="color:var(--gold);opacity:.7">v1.001</span></p>
+      <p>Tactical Command Centre · 2026 · <span style="color:var(--gold);opacity:.7">v1.003</span></p>
     </div>
   </div>
   <div class="tb-divider"></div>
@@ -731,6 +718,19 @@ select.fsel option{background:#0c1912;color:var(--txt);font-size:14px}
           <button class="mode-btn" id="mb-wc" onclick="openWC()">WC 2026</button>
         </div>
         <div id="wc-info" style="display:none;margin-top:7px;font-size:11px;color:var(--txt2);text-align:center"></div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--edge);display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--txt);letter-spacing:.3px">Flex Positions</div>
+            <div style="font-size:9.5px;color:var(--txt2);margin-top:1px">Allow MID ↔ ATT cross-selection</div>
+          </div>
+          <button id="flex-toggle" onclick="toggleFlexPos()"
+            style="flex-shrink:0;width:38px;height:20px;border-radius:10px;border:1.5px solid var(--edge2);
+                   background:rgba(0,0,0,.4);position:relative;cursor:pointer;transition:all .2s;padding:0">
+            <span id="flex-knob"
+              style="position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+                     background:var(--txt2);transition:all .2s;display:block"></span>
+          </button>
+        </div>
       </div>
 
       <!-- Team Stats -->
@@ -760,10 +760,11 @@ select.fsel option{background:#0c1912;color:var(--txt);font-size:14px}
       <!-- Export -->
       <div class="card">
         <div class="card-label"><i>📤</i> Export</div>
-        <div class="bstack">
-          <button class="btn btn-ghost btn-sm" onclick="exportJSON()">💾 JSON Export</button>
-          <button class="btn btn-ghost btn-sm" onclick="exportText()">📋 Text Export</button>
-          <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Print Lineup</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="exportJSON()">💾 JSON</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportText()">📋 TEXT</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportPNG()" id="btn-exp-png">📸 PNG</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportJPEG()" id="btn-exp-jpg">🖼 JPEG</button>
         </div>
       </div>
 
@@ -1182,6 +1183,7 @@ const S={
   memSlots:[null,null,null,null,null], // 5 memory slots
   cmpSelected:new Set(),  // slot indices selected for comparison
   cmpProvider:'anthropic',
+  flexPos:false,   // allow MID↔ATT cross-selection
 };
 
 /* ═══════════════════════════════════════════
@@ -1189,7 +1191,14 @@ const S={
 ═══════════════════════════════════════════ */
 const allP=()=>Object.values(DB).flat();
 function eligFor(slot){
-  const cats=ELIG[slot]||['MID'];
+  let cats=ELIG[slot]||['MID'];
+  // flex position mode: open MID slots to ATT and ATT slots to MID
+  if(S.flexPos){
+    const isMidSlot=cats.includes('MID')&&!cats.includes('ATT')&&!cats.includes('GK')&&!cats.includes('DEF');
+    const isAttSlot=cats.includes('ATT')&&!cats.includes('MID')&&!cats.includes('GK')&&!cats.includes('DEF');
+    if(isMidSlot) cats=[...cats,'ATT'];
+    if(isAttSlot) cats=['MID',...cats];
+  }
   const seen=new Set();
   let arr=[];
   cats.forEach(c=>{(DB[c]||[]).forEach(p=>{if(!seen.has(p.fn)){seen.add(p.fn);arr.push(p);}})});
@@ -1390,6 +1399,24 @@ function clearLineup(){S.lineup={};renderAll();save();toast('Lineup cleared')}
 
 function removePl(slot){delete S.lineup[slot];renderAll();save()}
 
+function toggleFlexPos(){
+  S.flexPos=!S.flexPos;
+  const tog=document.getElementById('flex-toggle');
+  const knob=document.getElementById('flex-knob');
+  if(S.flexPos){
+    tog.style.background='var(--green-l)';
+    tog.style.borderColor='var(--green-l)';
+    knob.style.left='20px';
+    knob.style.background='#fff';
+  }else{
+    tog.style.background='rgba(0,0,0,.4)';
+    tog.style.borderColor='var(--edge2)';
+    knob.style.left='2px';
+    knob.style.background='var(--txt2)';
+  }
+  save();
+  toast(S.flexPos?'Flex Positions ON — MID ↔ ATT unlocked':'Flex Positions OFF');
+}
 function setMode(m){
   S.mode=m;
   document.getElementById('mb-full').className='mode-btn'+(m==='full'?' on':'');
@@ -1406,14 +1433,26 @@ function setMode(m){
    MODAL
 ═══════════════════════════════════════════ */
 function openModal(slot){
-  S.slot=slot;S.mSearch='';S.mFilter='All';S.mSort='rating';
+  S.slot=slot;S.mSearch='';S.mSort='rating';
   document.getElementById('modal-search').value='';
   document.getElementById('modal-title').textContent=`Select ${slot} Player`;
-  const cats=ELIG[slot]||['MID'];
-  document.getElementById('modal-sub').textContent=`Eligible: ${cats.join(', ')} · ${eligFor(slot).length} available`;
-  // filters
+  document.getElementById('modal-sub').textContent=`${eligFor(slot).length} available`;
+
+  const primaryCat=(ELIG[slot]||['MID'])[0];
+  const isGK=primaryCat==='GK';
+  S.mFilter=primaryCat; // default to slot's own group
+
   const filts=document.getElementById('modal-filters');
-  const filterHtml=['All',...cats].map(c=>`<button class="m-filter${c==='All'?' on':''}" onclick="setMFilter('${c}',this)">${c}</button>`).join('');
+  let filterHtml;
+  if(isGK){
+    filterHtml=`<button class="m-filter on" onclick="setMFilter('GK',this)">GK</button>`;
+  } else {
+    const tabs=[{val:'MID',lbl:'Mid'},{val:'ATT',lbl:'ATT'},{val:'DEF',lbl:'DEF'},{val:'All',lbl:'All'}];
+    filterHtml=tabs.map(({val,lbl})=>
+      `<button class="m-filter${val===S.mFilter?' on':''}" onclick="setMFilter('${val}',this)">${lbl}</button>`
+    ).join('');
+  }
+
   const sortHtml=`<div class="modal-sort">
     <button class="m-sort on" id="ms-rat" onclick="setMSort('rating',this)">Rating</button>
     <button class="m-sort" id="ms-cap" onclick="setMSort('caps',this)">Caps</button>
@@ -1440,14 +1479,41 @@ function setMSort(s,el){
 function modalSearch(q){S.mSearch=q;renderModalGrid()}
 function renderModalGrid(){
   const slot=S.slot;if(!slot)return;
-  let pl=eligFor(slot);
-  if(S.mFilter!=='All') pl=pl.filter(p=>p.cat===S.mFilter);
+  const used=usedNames();
+  const primaryCat=(ELIG[slot]||['MID'])[0];
+  let pl;
+
+  if(S.mFilter==='All'){
+    // All unselected players not yet in lineup, ordered by position group then rating
+    // ATT slot → ATT first, MID before DEF
+    // MID slot → MID first, ATT before DEF
+    // DEF slot → DEF first, MID before ATT
+    let catOrder;
+    if(primaryCat==='ATT')      catOrder=['ATT','MID','DEF'];
+    else if(primaryCat==='MID') catOrder=['MID','ATT','DEF'];
+    else                         catOrder=['DEF','MID','ATT'];
+    let avail=allP().filter(p=>!used.has(p.fn)||S.lineup[slot]?.fn===p.fn);
+    if(S.mode==='wc'&&S.wc.length) avail=avail.filter(p=>S.wc.includes(p.fn));
+    pl=[];
+    catOrder.forEach(c=>{
+      let grp=avail.filter(p=>p.cat===c);
+      if(S.mSort==='caps')     grp=[...grp].sort((a,b)=>b.caps-a.caps);
+      else if(S.mSort==='age') grp=[...grp].sort((a,b)=>a.age-b.age);
+      else                      grp=[...grp].sort((a,b)=>b.r-a.r);
+      pl.push(...grp);
+    });
+  } else {
+    // Position tab (GK / MID / ATT / DEF): show ALL players of that category from DB
+    let pool=(DB[S.mFilter]||[]);
+    if(S.mode==='wc'&&S.wc.length) pool=pool.filter(p=>S.wc.includes(p.fn));
+    if(S.mSort==='caps')     pl=[...pool].sort((a,b)=>b.caps-a.caps);
+    else if(S.mSort==='age') pl=[...pool].sort((a,b)=>a.age-b.age);
+    else                      pl=[...pool].sort((a,b)=>b.r-a.r);
+  }
+
   const q=S.mSearch.toLowerCase();
   if(q) pl=pl.filter(p=>p.fn.toLowerCase().includes(q)||p.club.toLowerCase().includes(q));
-  if(S.mSort==='caps') pl=[...pl].sort((a,b)=>b.caps-a.caps);
-  else if(S.mSort==='age') pl=[...pl].sort((a,b)=>a.age-b.age);
-  // else default rating (already sorted)
-  const used=usedNames();
+  
   const g=document.getElementById('modal-grid');
   if(!pl.length){g.innerHTML='<div class="modal-empty">No players match your search</div>';return;}
   g.innerHTML=pl.map(p=>{
@@ -1945,7 +2011,7 @@ function exportText(){
     const p=S.lineup[sd.s];
     t+=p?`${sd.s.padEnd(6)} │ ${p.fn.padEnd(30)} │ ${p.club.padEnd(22)} │ ${p.r}\n`:`${sd.s.padEnd(6)} │ (empty)\n`;
   });
-  t+=`\n© Ghana Black Stars Tactical Command Centre v1.001\n`;
+  t+=`\n© Ghana Black Stars Tactical Command Centre v1.003\n`;
   dl(t,'blackstars_lineup.txt','text/plain');
   toast('✓ Text exported','ok');
 }
@@ -1953,6 +2019,221 @@ function dl(content,name,type){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([content],{type}));
   a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+/* ═══════════════════════════════════════════
+   SNAPSHOT HELPERS — pure Canvas 2D draw
+═══════════════════════════════════════════ */
+async function captureSnapshot(){
+  // ── Canvas dimensions (pitch aspect ratio 420:630 = 2:3) ──
+  const W = 1200, H = 1800;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // ── 1. Striped grass background ──
+  const stripeH = Math.round(H / 20);
+  const colA = '#1b6430', colB = '#185b2a';
+  for(let i = 0; i < 20; i++){
+    ctx.fillStyle = i % 2 === 0 ? colA : colB;
+    ctx.fillRect(0, i * stripeH, W, stripeH + 1);
+  }
+
+  // ── 2. Vignette ──
+  const vig = ctx.createRadialGradient(W/2, H/2, H*0.2, W/2, H/2, H*0.75);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.38)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── 3. Pitch markings (mirror SVG viewBox 420×630 → W×H) ──
+  function sx(v){ return v / 420 * W; }
+  function sy(v){ return v / 630 * H; }
+  ctx.strokeStyle = 'rgba(255,255,255,0.68)';
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+
+  // outer boundary
+  ctx.strokeRect(sx(2), sy(2), sx(416), sy(626));
+  // halfway line
+  ctx.beginPath(); ctx.moveTo(sx(2), sy(315)); ctx.lineTo(sx(418), sy(315)); ctx.stroke();
+  // centre circle + spot
+  ctx.beginPath(); ctx.arc(sx(210), sy(315), sx(58), 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.68)';
+  ctx.beginPath(); ctx.arc(sx(210), sy(315), sx(3.5), 0, Math.PI*2); ctx.fill();
+  // top penalty area + goal area
+  ctx.strokeRect(sx(86), sy(2), sx(248), sy(100));
+  ctx.strokeRect(sx(152), sy(2), sx(116), sy(34));
+  // top goal net
+  ctx.fillStyle='rgba(255,255,255,0.45)';
+  ctx.fillRect(sx(168), sy(-4), sx(84), sy(8));
+  ctx.strokeRect(sx(168), sy(-4), sx(84), sy(8));
+  // top penalty spot + arc
+  ctx.fillStyle='rgba(255,255,255,0.68)';
+  ctx.beginPath(); ctx.arc(sx(210), sy(68), sx(3), 0, Math.PI*2); ctx.fill();
+  ctx.save();
+  ctx.beginPath(); ctx.rect(sx(0), sy(108), sx(420), sy(120)); ctx.clip();
+  ctx.beginPath(); ctx.arc(sx(210), sy(68), sx(58), 0, Math.PI*2); ctx.stroke();
+  ctx.restore();
+  // bottom penalty area + goal area
+  ctx.strokeRect(sx(86), sy(528), sx(248), sy(100));
+  ctx.strokeRect(sx(152), sy(594), sx(116), sy(34));
+  // bottom goal net
+  ctx.fillStyle='rgba(255,255,255,0.45)';
+  ctx.fillRect(sx(168), sy(626), sx(84), sy(8));
+  ctx.strokeStyle='rgba(255,255,255,0.68)';
+  ctx.strokeRect(sx(168), sy(626), sx(84), sy(8));
+  // bottom penalty spot + arc
+  ctx.fillStyle='rgba(255,255,255,0.68)';
+  ctx.beginPath(); ctx.arc(sx(210), sy(562), sx(3), 0, Math.PI*2); ctx.fill();
+  ctx.save();
+  ctx.beginPath(); ctx.rect(sx(0), sy(400), sx(420), sy(120)); ctx.clip();
+  ctx.beginPath(); ctx.arc(sx(210), sy(562), sx(58), 0, Math.PI*2); ctx.stroke();
+  ctx.restore();
+  // corner arcs
+  ctx.strokeStyle='rgba(255,255,255,0.68)';
+  [
+    [sx(22),sy(2),   sx(2), sy(20),  Math.PI,   Math.PI*1.5],
+    [sx(398),sy(2),  sx(418),sy(20), Math.PI*1.5,Math.PI*2],
+    [sx(2),sy(610),  sx(22), sy(628), Math.PI*0.5,Math.PI],
+    [sx(398),sy(610),sx(418),sy(628),0,          Math.PI*0.5],
+  ].forEach(([x1,y1,cx2,cy2,sa,ea])=>{
+    const r=sx(18);
+    ctx.beginPath();ctx.arc(cx2,cy2,r,sa,ea);ctx.stroke();
+  });
+
+  // ── 4. Player tokens ──
+  const slots = FORMS[S.form];
+  const discR = W * 0.034; // token disc radius
+  const catStyle = {
+    GK:  { bg:['#2d1a04','#1c1002'], border:'#f59e0b' },
+    DEF: { bg:['#071529','#040d1a'], border:'#3b82f6' },
+    MID: { bg:['#07291a','#04180e'], border:'#10b981' },
+    ATT: { bg:['#290507','#180203'], border:'#e53e3e' },
+  };
+  const emptyBorder = 'rgba(255,255,255,0.22)';
+
+  slots.forEach(sd => {
+    const px = sd.x / 100 * W;
+    const py = sd.y / 100 * H;
+    const p  = S.lineup[sd.s];
+
+    if(p){
+      const cs = catStyle[p.cat] || catStyle.MID;
+      // disc gradient fill
+      const grd = ctx.createRadialGradient(px - discR*0.3, py - discR*0.3, discR*0.1, px, py, discR);
+      grd.addColorStop(0, cs.bg[0]);
+      grd.addColorStop(1, cs.bg[1]);
+      ctx.beginPath(); ctx.arc(px, py, discR, 0, Math.PI*2);
+      ctx.fillStyle = grd; ctx.fill();
+      ctx.lineWidth = 4; ctx.strokeStyle = cs.border;
+      ctx.stroke();
+      // shadow
+      ctx.shadowColor='rgba(0,0,0,0.7)'; ctx.shadowBlur=16;
+      ctx.beginPath(); ctx.arc(px, py, discR, 0, Math.PI*2); ctx.stroke();
+      ctx.shadowBlur=0;
+      // rating
+      ctx.fillStyle='#FCD116';
+      ctx.font=`bold ${Math.round(discR*0.9)}px 'DM Mono',monospace`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(p.r, px, py - discR*0.13);
+      // slot label
+      ctx.fillStyle='rgba(255,255,255,0.5)';
+      ctx.font=`700 ${Math.round(discR*0.42)}px 'Barlow Condensed',sans-serif`;
+      ctx.fillText(sd.s, px, py + discR*0.52);
+      // name below disc
+      ctx.fillStyle='#ffffff';
+      ctx.font=`800 ${Math.round(discR*0.62)}px 'Barlow Condensed',sans-serif`;
+      ctx.textBaseline='top';
+      ctx.shadowColor='rgba(0,0,0,1)'; ctx.shadowBlur=8;
+      ctx.fillText(p.n, px, py + discR + 4);
+      ctx.shadowBlur=0;
+      // club
+      ctx.fillStyle='rgba(255,255,255,0.45)';
+      ctx.font=`500 ${Math.round(discR*0.5)}px 'Barlow Condensed',sans-serif`;
+      ctx.fillText(shortClub(p.club), px, py + discR + 4 + Math.round(discR*0.68));
+    } else {
+      // empty slot
+      ctx.beginPath(); ctx.arc(px, py, discR, 0, Math.PI*2);
+      ctx.setLineDash([8, 6]);
+      ctx.lineWidth = 3; ctx.strokeStyle = emptyBorder;
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(255,255,255,0.04)'; ctx.fill();
+      // + icon
+      ctx.fillStyle = 'rgba(255,255,255,0.22)';
+      ctx.font = `${Math.round(discR*1.0)}px sans-serif`;
+      ctx.textBaseline='middle';
+      ctx.fillText('+', px, py);
+      // slot label
+      ctx.fillStyle='rgba(255,255,255,0.22)';
+      ctx.font=`700 ${Math.round(discR*0.6)}px 'Barlow Condensed',sans-serif`;
+      ctx.textBaseline='top';
+      ctx.fillText(sd.s, px, py + discR + 4);
+    }
+    ctx.textAlign='center';
+  });
+
+  // ── 5. Formation label at bottom ──
+  ctx.fillStyle='rgba(255,255,255,0.35)';
+  ctx.font=`700 ${Math.round(W*0.022)}px 'Barlow Condensed',sans-serif`;
+  ctx.textBaseline='bottom'; ctx.textAlign='center';
+  ctx.letterSpacing='4px';
+  ctx.fillText(`${S.form.toUpperCase()} — GHANA BLACK STARS`, W/2, H - 18);
+
+  /* ── Tiled diagonal ghost watermark ── */
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.rotate(-Math.PI / 7);
+  ctx.font = `bold ${Math.round(W * 0.05)}px 'Bebas Neue',sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.globalAlpha = 0.07;
+  ctx.fillStyle = '#FCD116';
+  const stepX = Math.round(W * 0.52), stepY = Math.round(H * 0.2);
+  for (let gy = -H * 1.5; gy < H * 1.5; gy += stepY)
+    for (let gx = -W * 1.5; gx < W * 1.5; gx += stepX)
+      ctx.fillText('RADIOSPORT', gx, gy);
+  ctx.restore();
+
+  return canvas;
+}
+
+async function exportPNG(){
+  const btn=document.getElementById('btn-exp-png');
+  if(btn){btn.disabled=true;btn.textContent='📸 Capturing…';}
+  toast('📸 Rendering snapshot…');
+  try{
+    const canvas=await captureSnapshot();
+    const slug=S.form.replace(/[\s()]/g,'_').replace(/_+/g,'_').toLowerCase();
+    const a=document.createElement('a');
+    a.download=`blackstars_${slug}_radiosport.png`;
+    a.href=canvas.toDataURL('image/png');
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    toast('✓ PNG snapshot saved','ok');
+  }catch(e){
+    toast('PNG export failed — '+e.message,'err');
+    console.error(e);
+  }
+  if(btn){btn.disabled=false;btn.textContent='📸 PNG';}
+}
+
+async function exportJPEG(){
+  const btn=document.getElementById('btn-exp-jpg');
+  if(btn){btn.disabled=true;btn.textContent='🖼 Capturing…';}
+  toast('🖼 Rendering snapshot…');
+  try{
+    const canvas=await captureSnapshot();
+    const slug=S.form.replace(/[\s()]/g,'_').replace(/_+/g,'_').toLowerCase();
+    const a=document.createElement('a');
+    a.download=`blackstars_${slug}_radiosport.jpg`;
+    a.href=canvas.toDataURL('image/jpeg',0.93);
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    toast('✓ JPEG snapshot saved','ok');
+  }catch(e){
+    toast('JPEG export failed — '+e.message,'err');
+    console.error(e);
+  }
+  if(btn){btn.disabled=false;btn.textContent='🖼 JPEG';}
 }
 
 /* ═══════════════════════════════════════════
@@ -1973,6 +2254,7 @@ function save(){
     form:S.form,mode:S.mode,wc:S.wc,
     lineup:Object.fromEntries(Object.entries(S.lineup).map(([k,p])=>[k,p.fn])),
     memSlots:S.memSlots,
+    flexPos:S.flexPos,
   }));}catch(e){}
 }
 function load(){
@@ -1983,6 +2265,7 @@ function load(){
     if(snap.wc)S.wc=snap.wc;
     if(snap.mode)S.mode=snap.mode;
     if(snap.memSlots)S.memSlots=snap.memSlots;
+    if(snap.flexPos)S.flexPos=snap.flexPos;
     if(snap.lineup){
       const all=allP();
       Object.entries(snap.lineup).forEach(([slot,fn])=>{
@@ -2018,6 +2301,13 @@ function init(){
   }
   renderAll();
   renderMemSlots();
+  // sync flex position toggle visual
+  if(S.flexPos){
+    const tog=document.getElementById('flex-toggle');
+    const knob=document.getElementById('flex-knob');
+    if(tog){tog.style.background='var(--green-l)';tog.style.borderColor='var(--green-l)';}
+    if(knob){knob.style.left='20px';knob.style.background='#fff';}
+  }
   // event delegation
   document.getElementById('pmodal').addEventListener('click',e=>{if(e.target.id==='pmodal')closeModal()});
   document.getElementById('wcmodal').addEventListener('click',e=>{if(e.target.id==='wcmodal')closeWC()});
