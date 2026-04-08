@@ -601,6 +601,9 @@ body::after{
             <button class="ctrl-btn btn-ai" onclick="aiResultsAnalysis()">🤖 AI ANALYSIS</button>
             <button class="ctrl-btn btn-secondary" onclick="showHome()">HOME</button>
           </div>
+          <div id="certBtnWrap" style="display:none;margin-top:1.2rem;">
+            <button class="ctrl-btn" onclick="openCertModal()" style="background:rgba(255,215,0,0.1);border-color:gold;color:gold;font-size:.65rem;padding:.6rem 1.4rem;letter-spacing:.15em;">&#127885; PRINT CERTIFICATE</button>
+          </div>
           <div id="weakAreasSection" style="margin-top:2rem;text-align:left;"></div>
         </div>
       </div><!-- /resultsScreen -->
@@ -612,9 +615,12 @@ body::after{
       <div class="ai-header">
         <div>
           <div class="ai-title">🤖 AI ELMER</div>
-          <div class="ai-status"><div class="ai-dot"></div><span>Claude · Ready to help</span></div>
+          <div class="ai-status"><div class="ai-dot"></div><span>AI Elmer · Ready to help</span></div>
         </div>
-        <button class="back-btn" onclick="toggleAI()" style="font-size:.5rem;">✕</button>
+        <div style="display:flex;gap:.4rem;">
+          <button class="back-btn" onclick="clearAIMessages()" title="Clear chat" style="font-size:.5rem;">🗑 CLR</button>
+          <button class="back-btn" onclick="toggleAI()" style="font-size:.5rem;">✕</button>
+        </div>
       </div>
       <div class="ai-messages" id="aiMessages">
         <div class="ai-msg ai">
@@ -1206,6 +1212,7 @@ function showResults() {
   });
 
   showScreen('resultsScreen');
+  document.getElementById('certBtnWrap').style.display = pass ? 'block' : 'none';
   addAIMsg("system", `Exam complete! Score: ${score}/${pool.examQ} (${pct}%). ${pass ? 'Congratulations — you passed! 🎉' : 'Keep studying! Ask me to explain any topics you found difficult.'}`);
 }
 
@@ -1261,6 +1268,12 @@ function addAIMsg(type, text) {
 
 function toggleAI() {
   document.getElementById('aiPanel').classList.toggle('open');
+}
+
+function clearAIMessages() {
+  const box = document.getElementById('aiMessages');
+  box.innerHTML = '';
+  addAIMsg('system', 'Chat cleared. Ask me anything about your ham radio exam!');
 }
 
 async function sendAIMessage(text) {
@@ -1336,6 +1349,151 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+
+// ══════════════════════════════════════════════════════
+// CERTIFICATE
+// ══════════════════════════════════════════════════════
+let certData = {};
+
+function openCertModal() {
+  document.getElementById('certNameModal').style.display = 'flex';
+  document.getElementById('certNameInput').focus();
+}
+
+function closeCertModal() {
+  document.getElementById('certNameModal').style.display = 'none';
+}
+
+function generateCertificate() {
+  const name = document.getElementById('certNameInput').value.trim() || 'Candidate Name';
+  const org  = document.getElementById('certOrgInput').value.trim();
+  const pool = POOLS[state.license];
+  const score = state.correct;
+  const total = pool.examQ;
+  const pct   = Math.round(score / total * 100);
+  const now   = new Date();
+  const dateStr = now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const certNo  = 'RS-' + now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(Math.floor(Math.random()*90000)+10000);
+  const licColors = { technician:'#1a6e3c', general:'#7a4a00', extra:'#004a6e' };
+  const licAccent = licColors[state.license] || '#1a6e3c';
+  const licBadge  = { technician:'TECHNICIAN CLASS', general:'GENERAL CLASS', extra:'AMATEUR EXTRA CLASS' }[state.license] || pool.name.toUpperCase();
+
+  const html = `
+  <div style="font-family:Georgia,serif;color:#1a1a1a;position:relative;padding:0;margin:0;">
+    <!-- OUTER BORDER FRAME -->
+    <div style="margin:28px;border:3px solid ${licAccent};padding:0;position:relative;">
+      <div style="position:absolute;inset:6px;border:1px solid ${licAccent};opacity:.35;pointer-events:none;"></div>
+
+      <!-- CORNER ORNAMENTS -->
+      <div style="position:absolute;top:-2px;left:-2px;width:28px;height:28px;border-top:6px solid ${licAccent};border-left:6px solid ${licAccent};"></div>
+      <div style="position:absolute;top:-2px;right:-2px;width:28px;height:28px;border-top:6px solid ${licAccent};border-right:6px solid ${licAccent};"></div>
+      <div style="position:absolute;bottom:-2px;left:-2px;width:28px;height:28px;border-bottom:6px solid ${licAccent};border-left:6px solid ${licAccent};"></div>
+      <div style="position:absolute;bottom:-2px;right:-2px;width:28px;height:28px;border-bottom:6px solid ${licAccent};border-right:6px solid ${licAccent};"></div>
+
+      <!-- HEADER BAND -->
+      <div style="background:${licAccent};padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-family:Arial,sans-serif;font-size:1.45rem;font-weight:900;color:#fff;letter-spacing:.18em;">RADIOSPORT</div>
+          <div style="font-family:Arial,sans-serif;font-size:.55rem;color:rgba(255,255,255,.75);letter-spacing:.22em;text-transform:uppercase;margin-top:.1rem;">Amateur Radio License Exam System</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:Arial,sans-serif;font-size:.5rem;color:rgba(255,255,255,.6);letter-spacing:.15em;">CERTIFICATE NO.</div>
+          <div style="font-family:'Courier New',monospace;font-size:.7rem;color:#fff;letter-spacing:.1em;">${certNo}</div>
+        </div>
+      </div>
+
+      <!-- BODY -->
+      <div style="padding:2.4rem 3rem 2rem;text-align:center;">
+
+        <!-- TITLE -->
+        <div style="font-family:Arial,sans-serif;font-size:.62rem;letter-spacing:.35em;color:#888;text-transform:uppercase;margin-bottom:.6rem;">This is to certify that</div>
+
+        <!-- NAME -->
+        <div style="font-family:'Palatino Linotype',Palatino,serif;font-size:2.4rem;font-weight:bold;color:${licAccent};border-bottom:2px solid ${licAccent};padding-bottom:.4rem;margin:0 auto .6rem;display:inline-block;min-width:320px;">${name}</div>
+
+        ${org ? `<div style="font-family:Arial,sans-serif;font-size:.7rem;color:#555;letter-spacing:.1em;margin-bottom:.6rem;">${org}</div>` : ''}
+
+        <div style="font-family:Arial,sans-serif;font-size:.72rem;color:#444;letter-spacing:.08em;margin:.8rem 0;">has successfully demonstrated knowledge and competency in</div>
+
+        <!-- LICENSE CLASS BADGE -->
+        <div style="display:inline-block;border:2px solid ${licAccent};padding:.55rem 2.2rem;margin:.4rem auto 1rem;border-radius:3px;background:rgba(0,0,0,0.03);">
+          <div style="font-family:Arial,sans-serif;font-size:1.15rem;font-weight:900;color:${licAccent};letter-spacing:.2em;">${licBadge}</div>
+          <div style="font-family:Arial,sans-serif;font-size:.55rem;color:#888;letter-spacing:.25em;margin-top:.2rem;">FCC AMATEUR RADIO EXAM PREPARATION</div>
+        </div>
+
+        <div style="font-family:Arial,sans-serif;font-size:.7rem;color:#444;margin:.5rem 0 1.4rem;line-height:1.7;">
+          by completing the full <strong>${pool.name}</strong> practice examination<br>
+          with a score of <strong>${score} out of ${total} questions correct (${pct}%)</strong>,<br>
+          exceeding the minimum passing threshold of ${pool.passQ} correct answers (74%).
+        </div>
+
+        <!-- SCORE ROW -->
+        <div style="display:flex;justify-content:center;gap:2.5rem;margin-bottom:1.8rem;">
+          <div style="text-align:center;">
+            <div style="font-family:Arial,sans-serif;font-size:1.5rem;font-weight:900;color:${licAccent};">${score}/${total}</div>
+            <div style="font-family:Arial,sans-serif;font-size:.52rem;color:#888;letter-spacing:.15em;">SCORE</div>
+          </div>
+          <div style="width:1px;background:#ddd;"></div>
+          <div style="text-align:center;">
+            <div style="font-family:Arial,sans-serif;font-size:1.5rem;font-weight:900;color:${licAccent};">${pct}%</div>
+            <div style="font-family:Arial,sans-serif;font-size:.52rem;color:#888;letter-spacing:.15em;">ACCURACY</div>
+          </div>
+          <div style="width:1px;background:#ddd;"></div>
+          <div style="text-align:center;">
+            <div style="font-family:Arial,sans-serif;font-size:1.5rem;font-weight:900;color:${licAccent};">PASS</div>
+            <div style="font-family:Arial,sans-serif;font-size:.52rem;color:#888;letter-spacing:.15em;">STATUS</div>
+          </div>
+        </div>
+
+        <!-- DIVIDER -->
+        <div style="display:flex;align-items:center;gap:1rem;margin:0 1rem 1.6rem;">
+          <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,${licAccent}60);"></div>
+          <div style="font-size:1.1rem;color:${licAccent};opacity:.5;">✦</div>
+          <div style="flex:1;height:1px;background:linear-gradient(90deg,${licAccent}60,transparent);"></div>
+        </div>
+
+        <!-- SIGNATURE LINE -->
+        <div style="display:flex;justify-content:space-around;align-items:flex-end;margin-bottom:1.2rem;">
+          <div style="text-align:center;">
+            <div style="font-family:'Palatino Linotype',Palatino,serif;font-size:1.35rem;color:${licAccent};border-bottom:1px solid #ccc;padding:.2rem 1.5rem .1rem;margin-bottom:.3rem;">RadioSport AI</div>
+            <div style="font-family:Arial,sans-serif;font-size:.52rem;color:#888;letter-spacing:.12em;">AUTHORIZED EXAMINER</div>
+            <div style="font-family:Arial,sans-serif;font-size:.5rem;color:#aaa;">RadioSport Exam System</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Courier New',monospace;font-size:.85rem;color:#555;border-bottom:1px solid #ccc;padding:.2rem 1.5rem .1rem;margin-bottom:.3rem;">${dateStr}</div>
+            <div style="font-family:Arial,sans-serif;font-size:.52rem;color:#888;letter-spacing:.12em;">DATE ISSUED</div>
+          </div>
+        </div>
+
+        <!-- DISCLAIMER FOOTER -->
+        <div style="background:#f8f8f8;border-top:1px solid #e0e0e0;margin:0 -3rem;padding:.7rem 3rem;font-family:Arial,sans-serif;font-size:.5rem;color:#999;line-height:1.6;text-align:center;">
+          This certificate confirms successful completion of a practice exam administered by RadioSport Exam System and is intended for educational demonstration purposes.
+          It is suitable for inclusion with FCC Amateur Radio license applications (Form 605), club membership requests, employment portfolios, and educational records.
+          It does not replace an official FCC license grant. · radioSport.ai · Cert No. ${certNo}
+        </div>
+      </div><!-- /body -->
+    </div><!-- /border frame -->
+  </div>`;
+
+  document.getElementById('certificateDoc').innerHTML = html;
+  document.getElementById('certNameModal').style.display = 'none';
+  document.getElementById('certModal').style.display = 'block';
+}
+
+function printCertificate() {
+  const certHTML = document.getElementById('certificateDoc').innerHTML;
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>RadioSport Certificate</title>
+  <style>
+    @page { size: A4 landscape; margin: 0; }
+    body { margin: 0; padding: 0; background: #fff; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  </style></head><body>${certHTML}
+  <script>window.onload=function(){window.print();window.onafterprint=function(){window.close();}}<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
 // ══════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════
@@ -1347,5 +1505,32 @@ if ((globalStats.bestStreak || 0) >= 3) {
   document.getElementById('streakCount').textContent = globalStats.bestStreak;
 }
 </script>
+
+<!-- NAME INPUT MODAL -->
+<div id="certNameModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;display:none;align-items:center;justify-content:center;">
+  <div style="background:#0a110b;border:1px solid #1a3320;border-radius:8px;padding:2rem;max-width:420px;width:90%;text-align:center;">
+    <div style="font-family:'Orbitron',monospace;font-size:.9rem;font-weight:700;color:gold;letter-spacing:.15em;margin-bottom:.5rem;">🏅 CERTIFICATE DETAILS</div>
+    <div style="font-size:.65rem;color:#4a8860;margin-bottom:1.5rem;">Enter your name as it should appear on the certificate.</div>
+    <input id="certNameInput" type="text" placeholder="Full Name" style="width:100%;background:#060e07;border:1px solid #1a3320;border-radius:4px;padding:.6rem .9rem;font-family:'Share Tech Mono',monospace;font-size:.85rem;color:#a0ffcc;outline:none;margin-bottom:.8rem;" />
+    <input id="certOrgInput" type="text" placeholder="Organization / Club (optional)" style="width:100%;background:#060e07;border:1px solid #1a3320;border-radius:4px;padding:.6rem .9rem;font-family:'Share Tech Mono',monospace;font-size:.85rem;color:#a0ffcc;outline:none;margin-bottom:1.2rem;" />
+    <div style="display:flex;gap:.8rem;justify-content:center;">
+      <button onclick="closeCertModal()" style="font-family:'Orbitron',monospace;font-size:.58rem;font-weight:700;letter-spacing:.12em;padding:.5rem 1rem;border-radius:4px;cursor:pointer;background:transparent;border:1px solid #1a3320;color:#4a8860;">CANCEL</button>
+      <button onclick="generateCertificate()" style="font-family:'Orbitron',monospace;font-size:.58rem;font-weight:700;letter-spacing:.12em;padding:.5rem 1.2rem;border-radius:4px;cursor:pointer;background:rgba(255,215,0,0.1);border:1px solid gold;color:gold;">GENERATE ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- CERTIFICATE MODAL -->
+<div id="certModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1001;overflow-y:auto;padding:2rem 1rem;">
+  <div style="max-width:820px;margin:0 auto;">
+    <div style="display:flex;gap:.8rem;justify-content:center;margin-bottom:1.2rem;flex-wrap:wrap;">
+      <button onclick="printCertificate()" style="font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;letter-spacing:.12em;padding:.5rem 1.2rem;border-radius:4px;cursor:pointer;background:rgba(255,215,0,0.12);border:1px solid gold;color:gold;">🖨 PRINT / SAVE PDF</button>
+      <button onclick="document.getElementById('certModal').style.display='none'" style="font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;letter-spacing:.12em;padding:.5rem 1rem;border-radius:4px;cursor:pointer;background:transparent;border:1px solid #1a3320;color:#4a8860;">✕ CLOSE</button>
+    </div>
+    <!-- THE PRINTABLE CERTIFICATE -->
+    <div id="certificateDoc" style="background:#fff;border-radius:4px;overflow:hidden;">
+    </div>
+  </div>
+</div>
 </body>
 </html>
