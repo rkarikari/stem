@@ -601,6 +601,10 @@ body::after{
             <button class="ctrl-btn btn-ai" onclick="aiResultsAnalysis()">🤖 AI ANALYSIS</button>
             <button class="ctrl-btn btn-secondary" onclick="showHome()">HOME</button>
           </div>
+          <div id="certAINotice" style="display:none;margin-top:1.2rem;padding:.8rem 1.2rem;border-radius:5px;border:1px solid rgba(255,68,102,0.4);background:rgba(255,68,102,0.06);font-size:.65rem;color:#ff8899;line-height:1.6;text-align:center;">
+            <strong style="font-family:'Orbitron',monospace;letter-spacing:.1em;display:block;margin-bottom:.3rem;">⚠ CERTIFICATE UNAVAILABLE</strong>
+            AI assistance was used during this exam session. To maintain integrity, certificates are only issued for unassisted attempts. Retry the exam without using the AI panel to earn your certificate.
+          </div>
           <div id="certBtnWrap" style="display:none;margin-top:1.2rem;">
             <button class="ctrl-btn" onclick="openCertModal()" style="background:rgba(255,215,0,0.1);border-color:gold;color:gold;font-size:.65rem;padding:.6rem 1.4rem;letter-spacing:.15em;">&#127885; PRINT CERTIFICATE</button>
           </div>
@@ -998,6 +1002,7 @@ function startStudy(isExam=false) {
   state.flagged = [];
   state.startTime = Date.now();
   state.topicStats = {};
+  state.aiUsedDuringExam = false;
 
   const pool = POOLS[state.license];
   document.getElementById('studyModeLabel').textContent = 
@@ -1212,7 +1217,18 @@ function showResults() {
   });
 
   showScreen('resultsScreen');
-  document.getElementById('certBtnWrap').style.display = pass ? 'block' : 'none';
+  const certWrap = document.getElementById('certBtnWrap');
+  const certNotice = document.getElementById('certAINotice');
+  if (pass && !state.aiUsedDuringExam) {
+    certWrap.style.display = 'block';
+    if (certNotice) certNotice.style.display = 'none';
+  } else if (pass && state.aiUsedDuringExam) {
+    certWrap.style.display = 'none';
+    if (certNotice) certNotice.style.display = 'block';
+  } else {
+    certWrap.style.display = 'none';
+    if (certNotice) certNotice.style.display = 'none';
+  }
   addAIMsg("system", `Exam complete! Score: ${score}/${pool.examQ} (${pct}%). ${pass ? 'Congratulations — you passed! 🎉' : 'Keep studying! Ask me to explain any topics you found difficult.'}`);
 }
 
@@ -1278,6 +1294,10 @@ function clearAIMessages() {
 
 async function sendAIMessage(text) {
   if (!text.trim() || isAILoading) return;
+  // Flag if AI is consulted during a live exam
+  if (state.mode === 'exam') {
+    state.aiUsedDuringExam = true;
+  }
   addAIMsg('user', text);
 
   const typing = document.getElementById('aiTyping');
