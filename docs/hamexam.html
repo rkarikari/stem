@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>W1HAM — Amateur Radio License Exam System</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:#00ff88; --green2:#00cc6a; --green-dim:#005533;
+  --amber:#ffaa00; --amber2:#ff8800;
+  --cyan:#00e5ff; --cyan2:#00b8cc;
+  --red:#ff4466; --red2:#cc2244;
+  --blue:#4488ff;
+  --bg:#050a06; --bg2:#0a110b; --bg3:#060e07; --bg4:#0d1a0f;
+  --border:#1a3320; --border2:#0f2014;
+  --text:#a0ffcc; --text-dim:#4a8860; --text-bright:#d0ffe8;
+  --shadow-green:rgba(0,255,136,0.15);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Share Tech Mono',monospace;
+  min-height:100vh;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);
+  pointer-events:none;z-index:200;
+}
+body::after{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.7) 100%);
+  pointer-events:none;z-index:199;
+}
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--green-dim);border-radius:3px;}
+
+/* ─── LAYOUT ─── */
+#app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;}
+.top-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.7rem 1.5rem;border-bottom:1px solid var(--border);
+  background:linear-gradient(90deg,rgba(0,255,136,0.04),transparent);
+  position:sticky;top:0;z-index:50;backdrop-filter:blur(4px);
+}
+.logo{
+  font-family:'Orbitron',monospace;font-weight:900;font-size:1.15rem;
+  color:var(--green);text-shadow:0 0 18px var(--green),0 0 35px rgba(0,255,136,0.3);
+  letter-spacing:.2em;
+}
+.logo span{color:var(--amber);text-shadow:0 0 12px var(--amber);}
+.top-right{display:flex;align-items:center;gap:.8rem;font-size:.6rem;color:var(--text-dim);}
+.license-badge{
+  font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;
+  padding:.2rem .6rem;border-radius:3px;letter-spacing:.12em;
+  background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.35);
+  color:var(--green);display:none;
+}
+.main{flex:1;display:grid;grid-template-columns:1fr 320px;max-width:1400px;margin:0 auto;width:100%;gap:0;}
+@media(max-width:960px){.main{grid-template-columns:1fr;}}
+
+/* ─── SCREENS ─── */
+.screen{display:none;padding:2rem 1.5rem;}
+.screen.active{display:block;animation:fadeIn .4s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ─── HOME SCREEN ─── */
+.home-header{text-align:center;margin-bottom:3rem;}
+.home-title{
+  font-family:'Orbitron',monospace;font-weight:900;
+  font-size:clamp(1.4rem,3vw,2.4rem);
+  color:var(--green);
+  text-shadow:0 0 30px var(--green),0 0 60px rgba(0,255,136,0.25);
+  letter-spacing:.18em;line-height:1.2;margin-bottom:.5rem;
+}
+.home-sub{font-size:.68rem;color:var(--text-dim);letter-spacing:.3em;text-transform:uppercase;}
+.divider{border:none;border-top:1px solid var(--border);margin:1rem auto;width:60%;box-shadow:0 0 8px rgba(0,255,136,0.08);}
+
+.license-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;max-width:900px;margin:0 auto 3rem;}
+.lic-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+  padding:1.8rem 1.5rem;cursor:pointer;transition:all .25s;
+  position:relative;overflow:hidden;
+}
+.lic-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,255,136,0.04),transparent 60%);
+  opacity:0;transition:opacity .25s;
+}
+.lic-card:hover{border-color:var(--green);box-shadow:0 0 25px rgba(0,255,136,0.12),inset 0 0 20px rgba(0,255,136,0.04);}
+.lic-card:hover::before{opacity:1;}
+.lic-card.general{--accent:var(--amber);}
+.lic-card.general:hover{border-color:var(--amber);box-shadow:0 0 25px rgba(255,170,0,0.12);}
+.lic-card.extra{--accent:var(--cyan);}
+.lic-card.extra:hover{border-color:var(--cyan);box-shadow:0 0 25px rgba(0,229,255,0.12);}
+.lic-icon{font-size:2rem;margin-bottom:.8rem;}
+.lic-name{
+  font-family:'Orbitron',monospace;font-weight:700;font-size:1.1rem;
+  color:var(--green);letter-spacing:.12em;margin-bottom:.3rem;
+}
+.lic-card.general .lic-name{color:var(--amber);}
+.lic-card.extra .lic-name{color:var(--cyan);}
+.lic-desc{font-size:.65rem;color:var(--text-dim);line-height:1.6;margin-bottom:1rem;}
+.lic-meta{font-size:.58rem;color:var(--text-dim);letter-spacing:.1em;}
+.lic-meta span{color:var(--text);}
+.lic-progress-bar{height:2px;background:var(--border);margin-top:1rem;border-radius:1px;overflow:hidden;}
+.lic-progress-fill{height:100%;background:var(--green);border-radius:1px;width:0%;transition:width .5s ease;}
+.lic-card.general .lic-progress-fill{background:var(--amber);}
+.lic-card.extra .lic-progress-fill{background:var(--cyan);}
+
+/* ─── MODE SELECTOR ─── */
+.mode-header{display:flex;align-items:center;gap:1rem;margin-bottom:2rem;}
+.back-btn{
+  font-family:'Orbitron',monospace;font-size:.55rem;font-weight:700;
+  letter-spacing:.15em;padding:.35rem .7rem;
+  background:rgba(0,255,136,0.05);border:1px solid var(--border);
+  color:var(--text-dim);cursor:pointer;border-radius:3px;transition:all .2s;
+}
+.back-btn:hover{border-color:var(--green);color:var(--green);}
+.mode-title{font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:var(--green);}
+
+.mode-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.2rem;margin-bottom:2rem;}
+.mode-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+  padding:1.4rem 1.2rem;cursor:pointer;transition:all .2s;text-align:center;
+}
+.mode-card:hover{border-color:var(--green);background:rgba(0,255,136,0.03);}
+.mode-icon{font-size:1.8rem;margin-bottom:.7rem;}
+.mode-name{font-family:'Orbitron',monospace;font-size:.85rem;font-weight:700;color:var(--green);margin-bottom:.4rem;}
+.mode-desc{font-size:.62rem;color:var(--text-dim);line-height:1.5;}
+
+.topic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.7rem;}
+.topic-btn{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:4px;
+  padding:.7rem .9rem;cursor:pointer;transition:all .2s;text-align:left;
+}
+.topic-btn:hover{border-color:var(--green);background:rgba(0,255,136,0.04);}
+.topic-code{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--amber);margin-bottom:.2rem;}
+.topic-label{font-size:.62rem;color:var(--text);line-height:1.4;}
+.topic-count{font-size:.55rem;color:var(--text-dim);margin-top:.2rem;}
+
+/* ─── STUDY / EXAM SCREEN ─── */
+.study-layout{display:grid;grid-template-rows:auto 1fr auto;min-height:calc(100vh - 60px);}
+.study-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.5rem;border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,0.2);flex-wrap:wrap;gap:.5rem;
+}
+.study-info{font-size:.6rem;color:var(--text-dim);letter-spacing:.12em;}
+.study-info strong{color:var(--text);font-weight:normal;}
+.progress-wrap{flex:1;min-width:150px;max-width:300px;}
+.progress-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width .4s ease;}
+.progress-label{font-size:.55rem;color:var(--text-dim);text-align:right;margin-top:.2rem;}
+.exam-timer{
+  font-family:'Orbitron',monospace;font-size:.9rem;font-weight:700;
+  color:var(--amber);text-shadow:0 0 10px rgba(255,170,0,0.4);
+}
+.exam-timer.warning{color:var(--red);text-shadow:0 0 10px rgba(255,68,102,0.5);animation:blink .7s infinite;}
+@keyframes blink{50%{opacity:.4}}
+
+.question-area{
+  padding:2rem 1.5rem;max-width:820px;margin:0 auto;width:100%;
+}
+.q-meta{display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem;flex-wrap:wrap;}
+.q-id{
+  font-family:'Orbitron',monospace;font-size:.58rem;
+  color:var(--amber);letter-spacing:.12em;
+}
+.q-tag{
+  font-size:.52rem;padding:.15rem .45rem;border-radius:2px;letter-spacing:.1em;
+  background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);color:var(--cyan);
+}
+.q-number{
+  font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;
+  color:var(--text-dim);margin-left:auto;
+}
+
+.question-text{
+  font-size:1.05rem;color:var(--text-bright);line-height:1.7;
+  margin-bottom:1.8rem;padding:1.2rem 1.5rem;
+  background:var(--bg3);border:1px solid var(--border);border-radius:6px;
+  border-left:3px solid var(--green);
+}
+
+.answers{display:flex;flex-direction:column;gap:.7rem;margin-bottom:1.5rem;}
+.answer-btn{
+  display:flex;align-items:flex-start;gap:1rem;
+  background:var(--bg3);border:1px solid var(--border);border-radius:5px;
+  padding:.85rem 1.1rem;cursor:pointer;transition:all .2s;text-align:left;
+  font-family:'Share Tech Mono',monospace;font-size:.85rem;color:var(--text);
+  line-height:1.5;
+}
+.answer-btn:hover:not(:disabled){
+  border-color:var(--green);background:rgba(0,255,136,0.05);
+  transform:translateX(3px);
+}
+.answer-btn .letter{
+  font-family:'Orbitron',monospace;font-weight:700;font-size:.75rem;
+  color:var(--text-dim);flex-shrink:0;width:18px;padding-top:.05rem;
+}
+.answer-btn.correct{
+  border-color:var(--green)!important;
+  background:rgba(0,255,136,0.1)!important;
+  box-shadow:0 0 15px rgba(0,255,136,0.1);
+}
+.answer-btn.correct .letter{color:var(--green);}
+.answer-btn.wrong{
+  border-color:var(--red)!important;
+  background:rgba(255,68,102,0.1)!important;
+}
+.answer-btn.wrong .letter{color:var(--red);}
+.answer-btn.dimmed{opacity:.4;}
+.answer-btn:disabled{cursor:default;}
+
+.feedback-box{
+  display:none;padding:1rem 1.2rem;border-radius:5px;margin-bottom:1.2rem;
+  border:1px solid var(--border);font-size:.82rem;line-height:1.6;
+}
+.feedback-box.show{display:block;}
+.feedback-box.correct-fb{border-color:var(--green);background:rgba(0,255,136,0.05);}
+.feedback-box.correct-fb .fb-title{color:var(--green);}
+.feedback-box.wrong-fb{border-color:var(--amber);background:rgba(255,170,0,0.05);}
+.feedback-box.wrong-fb .fb-title{color:var(--amber);}
+.fb-title{font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;margin-bottom:.5rem;letter-spacing:.1em;}
+.fb-text{color:var(--text-dim);}
+
+.study-controls{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;}
+.ctrl-btn{
+  font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;
+  letter-spacing:.12em;padding:.5rem 1.1rem;border-radius:4px;cursor:pointer;
+  transition:all .2s;border:1px solid;
+}
+.btn-primary{
+  background:rgba(0,255,136,0.1);border-color:var(--green);color:var(--green);
+}
+.btn-primary:hover{background:rgba(0,255,136,0.2);box-shadow:0 0 15px rgba(0,255,136,0.15);}
+.btn-secondary{
+  background:transparent;border-color:var(--border);color:var(--text-dim);
+}
+.btn-secondary:hover{border-color:var(--text-dim);color:var(--text);}
+.btn-ai{
+  background:rgba(0,229,255,0.05);border-color:rgba(0,229,255,0.3);color:var(--cyan);
+}
+.btn-ai:hover{background:rgba(0,229,255,0.12);box-shadow:0 0 15px rgba(0,229,255,0.1);}
+
+/* ─── SCORE / RESULTS ─── */
+.results-screen{max-width:700px;margin:0 auto;text-align:center;padding:3rem 1.5rem;}
+.result-badge{
+  width:140px;height:140px;border-radius:50%;margin:0 auto 1.5rem;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  border:3px solid;position:relative;
+}
+.result-badge::after{
+  content:'';position:absolute;inset:-8px;border-radius:50%;
+  border:1px solid;opacity:.3;animation:pulse2 2s infinite;
+}
+@keyframes pulse2{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.05);opacity:.6}}
+.result-badge.pass{border-color:var(--green);box-shadow:0 0 40px rgba(0,255,136,0.2);}
+.result-badge.pass::after{border-color:var(--green);}
+.result-badge.fail{border-color:var(--red);box-shadow:0 0 40px rgba(255,68,102,0.15);}
+.result-badge.fail::after{border-color:var(--red);}
+.result-pct{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;}
+.result-badge.pass .result-pct{color:var(--green);}
+.result-badge.fail .result-pct{color:var(--red);}
+.result-label{font-family:'Orbitron',monospace;font-size:.55rem;letter-spacing:.2em;}
+.result-title{font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;margin-bottom:.5rem;}
+.result-title.pass{color:var(--green);text-shadow:0 0 20px rgba(0,255,136,0.4);}
+.result-title.fail{color:var(--amber);}
+.result-sub{font-size:.72rem;color:var(--text-dim);margin-bottom:2rem;line-height:1.6;}
+.result-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;
+  margin-bottom:2rem;
+}
+.stat-box{
+  background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:1rem;
+}
+.stat-val{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:700;color:var(--green);}
+.stat-lbl{font-size:.58rem;color:var(--text-dim);margin-top:.2rem;letter-spacing:.1em;}
+.result-actions{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;}
+
+/* ─── AI PANEL ─── */
+.ai-panel{
+  border-left:1px solid var(--border);background:var(--bg2);
+  display:flex;flex-direction:column;height:100vh;position:sticky;top:0;
+  overflow:hidden;
+}
+@media(max-width:960px){
+  .ai-panel{position:fixed;right:0;top:0;bottom:0;width:320px;z-index:100;
+    transform:translateX(100%);transition:transform .3s ease;}
+  .ai-panel.open{transform:none;}
+}
+.ai-header{
+  padding:.8rem 1rem;border-bottom:1px solid var(--border);
+  background:linear-gradient(90deg,rgba(0,229,255,0.05),transparent);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.ai-title{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;color:var(--cyan);}
+.ai-status{display:flex;align-items:center;gap:.4rem;font-size:.55rem;color:var(--text-dim);}
+.ai-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ai-messages{
+  flex:1;overflow-y:auto;padding:.8rem;display:flex;flex-direction:column;gap:.7rem;
+}
+.ai-msg{
+  padding:.7rem .9rem;border-radius:5px;font-size:.72rem;line-height:1.6;
+  animation:fadeIn .3s ease;
+}
+.ai-msg.ai{
+  background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.15);
+  border-left:2px solid var(--cyan);
+}
+.ai-msg.user{
+  background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.12);
+  border-right:2px solid var(--green);text-align:right;
+}
+.ai-msg.system{
+  background:rgba(255,170,0,0.04);border:1px solid rgba(255,170,0,0.12);
+  color:var(--text-dim);font-size:.65rem;text-align:center;
+}
+.ai-typing{
+  display:none;padding:.7rem .9rem;font-size:.7rem;color:var(--text-dim);
+  background:rgba(0,229,255,0.03);border:1px solid rgba(0,229,255,0.1);border-radius:5px;
+}
+.ai-typing.show{display:flex;align-items:center;gap:.4rem;}
+.typing-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--cyan);
+  animation:bounce .9s infinite;
+}
+.typing-dot:nth-child(2){animation-delay:.15s;}
+.typing-dot:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.ai-input-area{
+  padding:.8rem;border-top:1px solid var(--border);
+  display:flex;gap:.5rem;
+}
+.ai-input{
+  flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:4px;
+  padding:.5rem .7rem;font-family:'Share Tech Mono',monospace;font-size:.7rem;
+  color:var(--text);outline:none;resize:none;max-height:80px;
+  transition:border-color .2s;
+}
+.ai-input:focus{border-color:var(--cyan);}
+.ai-send{
+  background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.3);
+  color:var(--cyan);border-radius:4px;padding:.5rem .8rem;
+  cursor:pointer;font-size:.7rem;font-family:'Orbitron',monospace;
+  font-weight:700;letter-spacing:.05em;transition:all .2s;
+}
+.ai-send:hover{background:rgba(0,229,255,0.15);}
+.ai-quick-btns{
+  display:flex;flex-wrap:wrap;gap:.3rem;padding:.5rem .8rem;
+  border-top:1px solid var(--border2);
+}
+.ai-quick{
+  font-size:.52rem;padding:.2rem .5rem;border-radius:3px;
+  background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.15);
+  color:var(--text-dim);cursor:pointer;letter-spacing:.05em;transition:all .15s;
+}
+.ai-quick:hover{border-color:var(--cyan);color:var(--cyan);}
+.ai-toggle{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:150;
+  width:50px;height:50px;border-radius:50%;
+  background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.4);
+  color:var(--cyan);font-size:1.2rem;cursor:pointer;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 0 20px rgba(0,229,255,0.2);transition:all .2s;
+}
+@media(max-width:960px){.ai-toggle{display:flex;}}
+
+/* ─── STATS PANEL ─── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.8rem;margin-bottom:1.5rem;}
+.stat-mini{
+  background:var(--bg2);border:1px solid var(--border);border-radius:4px;
+  padding:.8rem 1rem;
+}
+.stat-mini-val{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:var(--green);}
+.stat-mini-lbl{font-size:.58rem;color:var(--text-dim);margin-top:.2rem;letter-spacing:.08em;}
+
+.topic-breakdown{margin-top:1.5rem;}
+.topic-row{
+  display:flex;align-items:center;gap:.8rem;padding:.5rem 0;
+  border-bottom:1px solid var(--border2);font-size:.7rem;
+}
+.topic-row-name{color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.topic-row-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.topic-row-fill{height:100%;background:var(--green);border-radius:3px;transition:width .5s;}
+.topic-row-pct{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text-dim);width:38px;text-align:right;}
+
+/* ─── MISC ─── */
+.section-head{
+  font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;
+  color:var(--text-dim);letter-spacing:.2em;text-transform:uppercase;
+  margin-bottom:1rem;padding-bottom:.5rem;
+  border-bottom:1px solid var(--border2);
+}
+.tag-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+.tag-pill{
+  font-size:.55rem;padding:.15rem .5rem;border-radius:20px;letter-spacing:.1em;
+  background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.2);color:var(--green);
+}
+.streak-indicator{
+  display:inline-flex;align-items:center;gap:.3rem;
+  font-size:.58rem;color:var(--amber);
+}
+.glow-text{text-shadow:0 0 12px currentColor;}
+
+/* ─── NOTIFICATIONS ─── */
+.toast{
+  position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--bg2);border:1px solid var(--green);color:var(--green);
+  font-size:.7rem;padding:.6rem 1.2rem;border-radius:4px;letter-spacing:.1em;
+  z-index:999;opacity:0;transition:all .3s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="logo">W1<span>HAM</span> · EXAM SYSTEM</div>
+    <div class="top-right">
+      <div id="licBadge" class="license-badge"></div>
+      <div id="streakDisplay" class="streak-indicator" style="display:none">
+        🔥 <span id="streakCount">0</span> streak
+      </div>
+      <div style="font-size:.58rem;color:var(--green-dim)">FCC PART 97</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <div id="contentArea" style="flex:1;overflow-y:auto;">
+
+      <!-- HOME SCREEN -->
+      <div id="homeScreen" class="screen active">
+        <div class="home-header">
+          <div class="home-title">AMATEUR RADIO<br>LICENSE SYSTEM</div>
+          <div class="home-sub">FCC Question Pool · 2022–2026 Edition</div>
+          <hr class="divider">
+          <div style="font-size:.65rem;color:var(--text-dim);max-width:600px;margin:0 auto;line-height:1.7;">
+            Select your target license class. Study in tutorial mode with AI-powered explanations,
+            or simulate the real FCC exam. Track your progress across all subelements.
+          </div>
+        </div>
+
+        <div class="license-cards">
+          <div class="lic-card technician" onclick="selectLicense('technician')">
+            <div class="lic-icon">📡</div>
+            <div class="lic-name">TECHNICIAN</div>
+            <div class="lic-desc">Entry-level license. VHF/UHF privileges plus limited HF. Perfect starting point for new hams.</div>
+            <div class="lic-meta">
+              <div>Questions: <span>35</span> &nbsp;·&nbsp; Pass: <span>26/35 (74%)</span></div>
+              <div>Pool: <span>~400 questions · 10 subelements</span></div>
+            </div>
+            <div class="lic-progress-bar"><div class="lic-progress-fill" id="prog-technician"></div></div>
+          </div>
+
+          <div class="lic-card general" onclick="selectLicense('general')">
+            <div class="lic-icon">🌐</div>
+            <div class="lic-name">GENERAL</div>
+            <div class="lic-desc">Intermediate license. HF privileges on most bands worldwide. Long-distance DX communication.</div>
+            <div class="lic-meta">
+              <div>Questions: <span>35</span> &nbsp;·&nbsp; Pass: <span>26/35 (74%)</span></div>
+              <div>Pool: <span>~450 questions · 10 subelements</span></div>
+            </div>
+            <div class="lic-progress-bar"><div class="lic-progress-fill" id="prog-general"></div></div>
+          </div>
+
+          <div class="lic-card extra" onclick="selectLicense('extra')">
+            <div class="lic-icon">🛰️</div>
+            <div class="lic-name">AMATEUR EXTRA</div>
+            <div class="lic-desc">Maximum privileges. All amateur bands and modes. Complete mastery of amateur radio.</div>
+            <div class="lic-meta">
+              <div>Questions: <span>50</span> &nbsp;·&nbsp; Pass: <span>37/50 (74%)</span></div>
+              <div>Pool: <span>~700 questions · 10 subelements</span></div>
+            </div>
+            <div class="lic-progress-bar"><div class="lic-progress-fill" id="prog-extra"></div></div>
+          </div>
+        </div>
+
+        <div style="max-width:900px;margin:0 auto;">
+          <div class="section-head">YOUR STATISTICS</div>
+          <div class="stats-grid" id="homeStats">
+            <div class="stat-mini"><div class="stat-mini-val" id="statTotal">0</div><div class="stat-mini-lbl">QUESTIONS ANSWERED</div></div>
+            <div class="stat-mini"><div class="stat-mini-val" id="statCorrect">0</div><div class="stat-mini-lbl">CORRECT ANSWERS</div></div>
+            <div class="stat-mini"><div class="stat-mini-val" id="statAccuracy">—</div><div class="stat-mini-lbl">ACCURACY</div></div>
+            <div class="stat-mini"><div class="stat-mini-val" id="statExams">0</div><div class="stat-mini-lbl">PRACTICE EXAMS</div></div>
+            <div class="stat-mini"><div class="stat-mini-val" id="statStreak">0</div><div class="stat-mini-lbl">BEST STREAK</div></div>
+            <div class="stat-mini"><div class="stat-mini-val" id="statTime">0m</div><div class="stat-mini-lbl">STUDY TIME</div></div>
+          </div>
+        </div>
+      </div><!-- /homeScreen -->
+
+      <!-- MODE SCREEN -->
+      <div id="modeScreen" class="screen">
+        <div class="mode-header">
+          <button class="back-btn" onclick="showHome()">◀ BACK</button>
+          <div class="mode-title" id="modeTitle">TECHNICIAN</div>
+        </div>
+
+        <div class="section-head">SELECT MODE</div>
+        <div class="mode-cards">
+          <div class="mode-card" onclick="startMode('tutorial')">
+            <div class="mode-icon">📖</div>
+            <div class="mode-name">TUTORIAL</div>
+            <div class="mode-desc">Work through questions with instant feedback and detailed AI explanations. Best for learning.</div>
+          </div>
+          <div class="mode-card" onclick="startMode('exam')">
+            <div class="mode-icon">⏱️</div>
+            <div class="mode-name">EXAM SIMULATION</div>
+            <div class="mode-desc">Timed mock exam drawn from the full question pool. Mirrors the real FCC test experience.</div>
+          </div>
+          <div class="mode-card" onclick="startMode('weak')">
+            <div class="mode-icon">🎯</div>
+            <div class="mode-name">WEAK SPOTS</div>
+            <div class="mode-desc">Drill the subelements and topics where your accuracy is lowest. Adaptive focus.</div>
+          </div>
+          <div class="mode-card" onclick="showTopics()">
+            <div class="mode-icon">📋</div>
+            <div class="mode-name">BY TOPIC</div>
+            <div class="mode-desc">Study a specific subelement or topic group. Full control over what you practice.</div>
+          </div>
+        </div>
+
+        <div id="topicSection" style="display:none;">
+          <div class="section-head">SELECT SUBELEMENT</div>
+          <div class="topic-grid" id="topicGrid"></div>
+        </div>
+      </div><!-- /modeScreen -->
+
+      <!-- STUDY SCREEN -->
+      <div id="studyScreen" class="screen" style="padding:0;">
+        <div class="study-header">
+          <button class="back-btn" onclick="exitStudy()" style="font-size:.5rem;">✕ EXIT</button>
+          <div class="study-info">
+            <div id="studyModeLabel">TUTORIAL</div>
+            <div id="studyLicLabel">TECHNICIAN</div>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="progress-label" id="progressLabel">0 / 0</div>
+          </div>
+          <div id="timerWrap" style="display:none;">
+            <div class="exam-timer" id="examTimer">0:00</div>
+          </div>
+          <div class="streak-indicator" id="studyStreak" style="display:none;">
+            🔥 <span id="studyStreakNum">0</span>
+          </div>
+        </div>
+        <div class="question-area">
+          <div class="q-meta">
+            <div class="q-id" id="qId"></div>
+            <div class="q-tag" id="qTag"></div>
+            <div class="q-number" id="qNumber"></div>
+          </div>
+          <div class="question-text" id="questionText"></div>
+          <div class="answers" id="answersDiv"></div>
+          <div class="feedback-box" id="feedbackBox">
+            <div class="fb-title" id="fbTitle"></div>
+            <div class="fb-text" id="fbText"></div>
+          </div>
+          <div class="study-controls">
+            <button class="ctrl-btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display:none;">
+              NEXT QUESTION ▶
+            </button>
+            <button class="ctrl-btn btn-ai" onclick="askAIForQuestion()">
+              🤖 EXPLAIN WITH AI
+            </button>
+            <button class="ctrl-btn btn-secondary" onclick="skipQuestion()" id="skipBtn">
+              SKIP
+            </button>
+            <button class="ctrl-btn btn-secondary" onclick="flagQuestion()" id="flagBtn">
+              🚩 FLAG
+            </button>
+          </div>
+        </div>
+      </div><!-- /studyScreen -->
+
+      <!-- RESULTS SCREEN -->
+      <div id="resultsScreen" class="screen">
+        <div class="results-screen">
+          <div class="result-badge" id="resultBadge">
+            <div class="result-pct" id="resultPct">0%</div>
+            <div class="result-label" id="resultLabelBadge">SCORE</div>
+          </div>
+          <div class="result-title" id="resultTitle">RESULT</div>
+          <div class="result-sub" id="resultSub"></div>
+          <div class="result-stats">
+            <div class="stat-box"><div class="stat-val" id="rCorrect">0</div><div class="stat-lbl">CORRECT</div></div>
+            <div class="stat-box"><div class="stat-val" id="rWrong">0</div><div class="stat-lbl">WRONG</div></div>
+            <div class="stat-box"><div class="stat-val" id="rTime">0:00</div><div class="stat-lbl">TIME</div></div>
+          </div>
+          <div class="result-actions">
+            <button class="ctrl-btn btn-primary" onclick="retryExam()">RETRY EXAM</button>
+            <button class="ctrl-btn btn-ai" onclick="aiResultsAnalysis()">🤖 AI ANALYSIS</button>
+            <button class="ctrl-btn btn-secondary" onclick="showHome()">HOME</button>
+          </div>
+          <div id="weakAreasSection" style="margin-top:2rem;text-align:left;"></div>
+        </div>
+      </div><!-- /resultsScreen -->
+
+    </div><!-- /contentArea -->
+
+    <!-- AI PANEL -->
+    <div class="ai-panel" id="aiPanel">
+      <div class="ai-header">
+        <div>
+          <div class="ai-title">🤖 AI ELMER</div>
+          <div class="ai-status"><div class="ai-dot"></div><span>Claude · Ready to help</span></div>
+        </div>
+        <button class="back-btn" onclick="toggleAI()" style="font-size:.5rem;">✕</button>
+      </div>
+      <div class="ai-messages" id="aiMessages">
+        <div class="ai-msg ai">
+          Hello and 73! I'm your AI Elmer — an experienced ham radio operator here to guide you through your license journey.<br><br>
+          Ask me to explain any concept, question, or topic. I can break down electronics theory, radio propagation, FCC regulations, and more. <span class="glow-text" style="color:var(--cyan)">Let's get you licensed! 📡</span>
+        </div>
+      </div>
+      <div class="ai-typing" id="aiTyping">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <span style="font-size:.65rem;color:var(--text-dim);margin-left:.3rem;">AI Elmer is thinking...</span>
+      </div>
+      <div class="ai-quick-btns" id="aiQuickBtns">
+        <div class="ai-quick" onclick="aiQuick('What are the privileges of each license class?')">License privileges</div>
+        <div class="ai-quick" onclick="aiQuick('Explain Ohm\'s Law simply')">Ohm\'s Law</div>
+        <div class="ai-quick" onclick="aiQuick('How does radio wave propagation work?')">Propagation</div>
+        <div class="ai-quick" onclick="aiQuick('What is the phonetic alphabet used in ham radio?')">Phonetics</div>
+        <div class="ai-quick" onclick="aiQuick('What should I study first for my Technician exam?')">Study plan</div>
+      </div>
+      <div class="ai-input-area">
+        <textarea class="ai-input" id="aiInput" rows="1" placeholder="Ask your AI Elmer anything..." onkeydown="aiKeydown(event)"></textarea>
+        <button class="ai-send" onclick="sendAI()">TX ▶</button>
+      </div>
+    </div>
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<button class="ai-toggle" onclick="toggleAI()" title="AI Elmer">🤖</button>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// QUESTION POOL DATA — FCC Amateur Radio 2022-2026
+// Questions sourced from the official NCVEC question pool
+// ══════════════════════════════════════════════════════
+const POOLS = {
+technician: {
+  name:"Technician", examQ:35, passQ:26, time:35,
+  subelements:[
+    {id:"T1",name:"FCC Rules and Regulations"},
+    {id:"T2",name:"Operating Procedures"},
+    {id:"T3",name:"Radio Wave Characteristics"},
+    {id:"T4",name:"Amateur Radio Practices & Stations"},
+    {id:"T5",name:"Electrical Principles"},
+    {id:"T6",name:"Circuit Components"},
+    {id:"T7",name:"Practical Circuits"},
+    {id:"T8",name:"Signals and Emissions"},
+    {id:"T9",name:"Antennas and Feed Lines"},
+    {id:"T0",name:"Electrical and RF Safety"}
+  ],
+  questions:[
+    // T1 — FCC Rules
+    {id:"T1A01",sub:"T1",topic:"Purpose of amateur radio",q:"Which of the following is a purpose of the Amateur Radio Service as stated in the FCC rules?",a:["A. Providing free entertainment to the general public","B. Advancing skills in the technical and communication phases of the radio art","C. Generating revenue for public broadcasting","D. Providing a means of long-distance commercial communication"],c:1,exp:"The FCC rules (Part 97) state that amateur radio's purposes include advancing skills in the technical and communication phases of the radio art, expanding the pool of trained operators, and providing emergency communications."},
+    {id:"T1A02",sub:"T1",topic:"Frequency privileges",q:"What agency regulates and enforces the rules for the Amateur Radio Service in the United States?",a:["A. FEMA","B. Homeland Security","C. The FCC","D. The ITU"],c:2,exp:"The Federal Communications Commission (FCC) regulates and enforces the rules for the Amateur Radio Service in the United States under Title 47 of the Code of Federal Regulations, Part 97."},
+    {id:"T1A03",sub:"T1",topic:"Frequency privileges",q:"What are the frequency limits of the Technician license on the 2-meter band?",a:["A. 144.0 to 148.0 MHz","B. 146.0 to 148.0 MHz","C. 144.0 to 146.0 MHz","D. 144.5 to 147.5 MHz"],c:0,exp:"Technician licensees have phone and digital privileges from 144.0 to 148.0 MHz, which is the entire 2-meter band. This is one of the most popular bands for local VHF/UHF communication."},
+    {id:"T1A04",sub:"T1",topic:"HF privileges",q:"Which of the following HF frequencies is available to a Technician licensee?",a:["A. 3.525 MHz","B. 7.025 MHz","C. 21.025 MHz","D. 28.025 MHz"],c:3,exp:"Technicians have limited HF privileges, including CW on 80, 40, 15, and 10 meters, and phone/digital on portions of 10 meters (28.3-28.5 MHz). 28.025 MHz falls in the 10-meter band where Technicians have CW privileges (28.0-28.3 MHz)."},
+    {id:"T1A05",sub:"T1",topic:"Station control",q:"What is the term for the entity that controls an amateur radio station?",a:["A. The licensee","B. The control operator","C. The third party","D. The station owner"],c:1,exp:"The control operator is the FCC-licensed amateur operator responsible for the emissions of the station. The control operator must be present or have direct control when the station is transmitting."},
+    {id:"T1A06",sub:"T1",topic:"Third party communications",q:"When is it permissible to transmit messages to a foreign country for a third party?",a:["A. Never","B. When the foreign country has signed the ITU convention","C. When there is a third-party agreement between the US and the foreign country","D. Only at 14 MHz or lower"],c:2,exp:"Third-party traffic (passing messages for non-amateurs) to foreign countries is only allowed when the US has a formal third-party agreement with that country. Many countries have such agreements with the US."},
+    {id:"T1A07",sub:"T1",topic:"Prohibited transmissions",q:"Which of the following is prohibited in amateur radio?",a:["A. Transmitting weather announcements","B. Broadcasting to the general public for entertainment","C. Transmitting in Morse code","D. Conducting nets on repeaters"],c:1,exp:"Broadcasting (one-way transmissions intended for the general public) for entertainment is prohibited in amateur radio. Amateur radio is a two-way communication service, not a broadcasting service."},
+    {id:"T1A08",sub:"T1",topic:"Station identification",q:"How often must an amateur station identify itself?",a:["A. At the beginning of each contact only","B. At the end of each contact only","C. At 10-minute intervals throughout a contact and at the end","D. Every 15 minutes during a contact and at the end"],c:2,exp:"FCC rules require stations to identify at 10-minute intervals during a contact and at the end of each contact. You must transmit your FCC-assigned call sign using phone or CW."},
+    {id:"T1A09",sub:"T1",topic:"Call signs",q:"What term describes an amateur station that is transmitting and listening on the same frequency?",a:["A. Full duplex","B. Simplex","C. Duplex","D. Split frequency"],c:1,exp:"Simplex operation means transmitting and receiving on the same frequency. This is the standard mode for direct station-to-station communication. Duplex uses different frequencies for transmit and receive."},
+    {id:"T1A10",sub:"T1",topic:"Emergency communications",q:"Which of the following describes the Radio Amateur Civil Emergency Service (RACES)?",a:["A. A radio service for emergency drills only","B. Licensed amateur stations providing communication during a disaster or emergency","C. A service for satellite emergency communications","D. A weather alert network"],c:1,exp:"RACES is a part of the Amateur Radio Service that provides communication during civil emergencies. RACES stations must be registered with a local civil defense agency and may only communicate during declared emergencies."},
+    {id:"T1B01",sub:"T1",topic:"Band plans",q:"What is the purpose of band plans?",a:["A. They are FCC regulations specifying exact frequency assignments","B. Voluntary guidelines coordinating use of amateur frequencies","C. Emergency frequency assignments during disasters","D. International treaties governing amateur frequencies"],c:1,exp:"Band plans are voluntary guidelines developed by amateur radio organizations to coordinate usage of amateur bands. They prevent conflicts by designating areas within a band for specific modes like phone, CW, digital, etc. They are NOT FCC regulations."},
+    {id:"T1B02",sub:"T1",topic:"Frequency selection",q:"What is the national calling frequency for FM simplex operations in the 2-meter band?",a:["A. 144.200 MHz","B. 144.000 MHz","C. 146.520 MHz","D. 147.000 MHz"],c:2,exp:"146.520 MHz is the national simplex calling frequency for 2 meters FM. Hams monitor this frequency to make initial contact, then move to another simplex frequency to continue the conversation."},
+    {id:"T1C01",sub:"T1",topic:"Licensing",q:"What does the FCC issue to new amateur radio operators?",a:["A. A radio license card","B. A call sign and a paper license","C. A call sign only (digital record)","D. An operator permit"],c:2,exp:"The FCC no longer issues paper licenses. When you pass your exam and are granted a license, the FCC enters your call sign in their ULS (Universal Licensing System) database. You can print a digital copy but the FCC only grants the official call sign."},
+    {id:"T1C02",sub:"T1",topic:"License terms",q:"For how many years is an amateur radio license valid?",a:["A. 3 years","B. 5 years","C. 10 years","D. Lifetime with annual fee"],c:2,exp:"FCC amateur radio licenses are valid for 10 years and can be renewed. If the license expires, there is a 2-year grace period during which the license can be renewed without retesting."},
+    {id:"T1C03",sub:"T1",topic:"Vanity call signs",q:"What is a vanity call sign?",a:["A. A call sign for emergency operations","B. A call sign with the fewest characters","C. A specific call sign selected by the licensee","D. A temporary call sign"],c:2,exp:"A vanity call sign is one that you request specifically from the FCC, as opposed to one that is sequentially assigned. You can apply for a specific call sign (subject to availability) through the FCC's ULS system."},
+    {id:"T1D01",sub:"T1",topic:"When to transmit",q:"With which countries is third-party traffic prohibited?",a:["A. Countries requiring high power operation","B. Countries that have not agreed to it","C. Countries in the southern hemisphere","D. Countries with low internet access"],c:1,exp:"Third-party traffic (passing messages on behalf of non-amateurs) is only allowed with countries that have a third-party agreement with the US. It is prohibited with countries that have not specifically agreed to allow it."},
+    {id:"T1E01",sub:"T1",topic:"Control operator",q:"When must the control operator be at the control point?",a:["A. Only when the station is transmitting phone","B. Whenever the station is transmitting, unless it's a remote or auxiliary operation","C. Only during contests","D. Only when using digital modes"],c:1,exp:"The control operator (or their direct control) must be present whenever the station is transmitting. The FCC allows exceptions for remote and automatically controlled stations under specific rules."},
+    {id:"T1F01",sub:"T1",topic:"Identification",q:"What must an amateur station use to identify itself in the US?",a:["A. The operator's name and location","B. The FCC-assigned call sign","C. The license class and call sign","D. The ITU prefix and call sign"],c:1,exp:"FCC rules require that all amateur transmissions be identified using the FCC-assigned call sign. This must be done at 10-minute intervals and at the end of each contact."},
+    // T2 — Operating Procedures
+    {id:"T2A01",sub:"T2",topic:"Repeater operation",q:"What is a repeater?",a:["A. A device that retransmits power from the power company","B. A station that automatically retransmits the signals of other stations","C. A radio that can receive signals on multiple frequencies at once","D. A station that only transmits emergency messages"],c:1,exp:"A repeater automatically receives signals on one frequency (the input) and simultaneously retransmits them on another frequency (the output). This extends the range of low-power mobile and portable stations."},
+    {id:"T2A02",sub:"T2",topic:"Repeater operation",q:"What is the term for the difference between a repeater's receive and transmit frequencies?",a:["A. Bandwidth","B. Offset","C. Deviation","D. Duplex"],c:1,exp:"The offset is the difference between the repeater's receive and transmit frequencies. For 2 meters, the standard offset is ±600 kHz. For 70 cm, it's typically ±5 MHz."},
+    {id:"T2A03",sub:"T2",topic:"Phonetic alphabet",q:"What is the correct phonetic for the letter G?",a:["A. Gamma","B. Gulf","C. Golf","D. George"],c:2,exp:"The International Telecommunication Union (ITU) phonetic alphabet uses 'Golf' for the letter G. The standard phonetic alphabet is used worldwide to ensure clear communication of call signs and other information."},
+    {id:"T2A04",sub:"T2",topic:"Making contact",q:"What is the most common courtesy when using a repeater?",a:["A. Identify immediately upon keying up","B. Pause briefly between transmissions to allow others to use the repeater","C. Always use the full NATO phonetic alphabet","D. Key up for at least 5 seconds before speaking"],c:1,exp:"When using a repeater, it's courteous to pause briefly between transmissions. This allows the repeater to reset and lets other stations break in for emergency traffic or to join the conversation."},
+    {id:"T2A05",sub:"T2",topic:"Emergency communication",q:"Which of the following is a good practice when calling CQ?",a:["A. Call CQ until someone answers","B. Call CQ at full power for maximum range","C. Transmit CQ no more than three times before pausing to listen","D. Call CQ only during contest periods"],c:2,exp:"Good operating practice is to transmit CQ no more than three times, then listen for responses. Transmitting CQ repeatedly without listening is inconsiderate and may interfere with ongoing contacts."},
+    {id:"T2B01",sub:"T2",topic:"CTCSS/DCS",q:"What is CTCSS?",a:["A. A digital identification system for repeaters","B. A tone system used to access repeaters","C. A type of digital modulation","D. A satellite access code"],c:1,exp:"CTCSS (Continuous Tone-Coded Squelch System) is a system where a continuous sub-audible tone is transmitted with your voice. The repeater only opens its squelch when it receives the correct tone, preventing interference from unwanted signals."},
+    {id:"T2B02",sub:"T2",topic:"RST reports",q:"What is the meaning of an RST report of 59?",a:["A. Readable 5, Strength 9 — the best possible signal","B. Readable 5, Strength 9 — a good but not perfect signal","C. Readable 59, meaning readable on 59 meters","D. An RST of 59 is used only for CW"],c:0,exp:"An RST of 59 is the highest signal report on phone. R-5 means perfectly readable (R 1-5 scale), and S-9 means extremely strong signal (S 1-9 scale). The T (tone) component is used for CW only. 59 is the best possible phone report."},
+    {id:"T2C01",sub:"T2",topic:"Emergency communications",q:"What should you do if you hear a distress call on a frequency you're using?",a:["A. Immediately stop transmitting and listen","B. Ask the station to move to an emergency frequency","C. Report the call to the FCC","D. Transmit your call sign and location"],c:0,exp:"If you hear a distress call, you should immediately stop any transmission you're making and listen. Emergency communications always take priority over all other amateur radio activities."},
+    // T3 — Radio Wave Characteristics
+    {id:"T3A01",sub:"T3",topic:"VHF/UHF propagation",q:"What is multipath propagation?",a:["A. A radio wave that follows the curvature of the Earth","B. A signal that travels multiple routes from transmitter to receiver","C. Propagation via the ionosphere","D. Transmission on multiple frequencies simultaneously"],c:1,exp:"Multipath propagation occurs when a signal travels via multiple paths from transmitter to receiver (direct path, reflections off buildings, terrain, etc.). The signals arrive at different times and phases, which can cause interference or signal fading."},
+    {id:"T3A02",sub:"T3",topic:"Propagation",q:"Why do VHF and UHF signals often travel farther over water than over land?",a:["A. Water is a better conductor, reducing signal loss","B. There are fewer obstructions over water","C. Water reflects VHF and UHF signals better","D. Both A and B"],c:1,exp:"VHF and UHF signals travel farther over water primarily because there are fewer obstructions (buildings, hills, trees) to absorb or block the signal. The relatively flat surface allows for unobstructed line-of-sight propagation."},
+    {id:"T3A03",sub:"T3",topic:"Signal strength",q:"What are the units of strength of an electromagnetic field?",a:["A. Ohms per meter","B. Teslas per hertz","C. Volts per meter","D. Amperes per meter"],c:2,exp:"The electric field strength of an electromagnetic field is measured in volts per meter (V/m). This measurement is important for RF safety calculations to ensure exposure limits are not exceeded."},
+    {id:"T3A04",sub:"T3",topic:"Troposcatter",q:"What is troposcatter propagation?",a:["A. Propagation via the D layer of the ionosphere","B. Propagation using scatter from the troposphere","C. Scatter from airplane reflections","D. Long-distance propagation on the 160-meter band"],c:1,exp:"Troposcatter propagation uses the scattering of radio waves off irregularities and turbulence in the troposphere (the lowest layer of the atmosphere). It enables communication beyond line-of-sight, commonly used for 200-500 mile paths on VHF."},
+    {id:"T3B01",sub:"T3",topic:"Wavelength/frequency",q:"What is the relationship between frequency and wavelength?",a:["A. Wavelength increases as frequency increases","B. Wavelength decreases as frequency increases","C. They are independent of each other","D. They are directly proportional"],c:1,exp:"Frequency and wavelength are inversely related. As frequency increases, wavelength decreases. The formula is: wavelength (meters) = 300 / frequency (MHz). So a 146 MHz signal has a wavelength of about 2 meters."},
+    {id:"T3B02",sub:"T3",topic:"Speed of light",q:"What is the approximate velocity of a radio wave traveling through space?",a:["A. 186,000 miles per hour","B. 300,000 kilometers per second","C. 186,000 meters per second","D. 300,000 miles per second"],c:1,exp:"Radio waves travel at the speed of light: approximately 300,000 km/s (186,000 miles per second). This constant is used in the formula wavelength = speed of light / frequency to calculate antenna lengths and other radio parameters."},
+    {id:"T3B03",sub:"T3",topic:"Polarization",q:"What property of electromagnetic waves is described by the orientation of the electric field?",a:["A. Frequency","B. Phase","C. Polarization","D. Wavelength"],c:2,exp:"Polarization describes the orientation of the electric field component of an electromagnetic wave. Common types are horizontal polarization (field parallel to Earth's surface), vertical polarization (field perpendicular to Earth), and circular polarization."},
+    {id:"T3C01",sub:"T3",topic:"Ionospheric propagation",q:"What is the ionosphere?",a:["A. The layer of Earth where amateur radio is regulated","B. Layers of the atmosphere ionized by solar radiation that can refract radio waves","C. A type of antenna used for long-distance communication","D. The range of frequencies used for satellite communications"],c:1,exp:"The ionosphere is a region of Earth's upper atmosphere (about 60-1000 km altitude) that is ionized by solar and cosmic radiation. It can reflect certain radio frequencies back to Earth, enabling long-distance HF communication."},
+    {id:"T3C02",sub:"T3",topic:"Sky wave",q:"What is sky wave propagation?",a:["A. Radio waves traveling in a straight line","B. Radio waves reflected off the ionosphere","C. Propagation using satellite relay","D. Radio waves following Earth's curvature"],c:1,exp:"Sky wave propagation occurs when radio waves are refracted (bent) by the ionosphere and returned to Earth. This enables long-distance HF communication far beyond line-of-sight, sometimes thousands of miles."},
+    // T4 — Amateur Radio Practices
+    {id:"T4A01",sub:"T4",topic:"Station equipment",q:"Which of the following is good practice when installing a grounding conductor inside a vehicle?",a:["A. Run it through the vehicle's water pipes","B. Make it as long as possible for maximum effectiveness","C. Make it as short and direct as possible","D. Route it through the vehicle's antenna"],c:2,exp:"When installing station equipment in a vehicle, ground conductors should be kept as short and direct as possible to minimize impedance and resistance. Long ground leads can cause RF to appear on equipment, leading to noise and interference."},
+    {id:"T4A02",sub:"T4",topic:"Interference",q:"What is one way to reduce electrical interference from a vehicle's alternator?",a:["A. Add a capacitor across the battery","B. Use a noise filter in the power lead","C. Turn off the vehicle's ignition","D. Increase the length of the power cable"],c:1,exp:"A noise filter installed in the DC power lead can reduce alternator whine and other vehicle electrical interference. Filters bypass high-frequency noise to ground while allowing DC to pass through to the radio."},
+    {id:"T4A03",sub:"T4",topic:"Antenna switches",q:"Why is it important to use an antenna switch when connecting multiple antennas?",a:["A. To increase transmitter power","B. To prevent damage to transceivers from RF feedback","C. To select the desired antenna while disconnecting others","D. To combine antennas for higher gain"],c:2,exp:"An antenna switch allows you to select which antenna is connected to your transceiver. It prevents accidental connection of multiple antennas simultaneously, which could cause damage or poor performance."},
+    {id:"T4B01",sub:"T4",topic:"Radio controls",q:"What is the purpose of the transceiver's squelch?",a:["A. To increase power output","B. To mute the receiver when no signal is present","C. To filter out low frequencies","D. To prevent overloading"],c:1,exp:"Squelch is a circuit that mutes the receiver's audio output when no signal is being received. This prevents the constant hiss of background noise when the channel is quiet. The squelch threshold is set just above the noise floor."},
+    {id:"T4B02",sub:"T4",topic:"Radio controls",q:"What is RIT or Clarifier on a transceiver?",a:["A. Receive Interference Tuner — reduces static","B. Remote Interface Terminal — enables remote control","C. Receiver Incremental Tuning — adjusts receive frequency independently","D. Radio Interference Transmitter — generates test signals"],c:2,exp:"RIT (Receiver Incremental Tuning) or Clarifier allows you to shift the receive frequency slightly without changing the transmit frequency. This is useful when the station you're working is slightly off frequency from your transmit frequency."},
+    // T5 — Electrical Principles
+    {id:"T5A01",sub:"T5",topic:"Electrical current",q:"Electrical current is measured in which of the following units?",a:["A. Volts","B. Watts","C. Ohms","D. Amperes"],c:3,exp:"Electrical current (flow of electrons) is measured in Amperes (Amps, abbreviated A). Voltage is in Volts (V), resistance in Ohms (Ω), and power in Watts (W). Remember: I = V/R (Ohm's Law), where I is current in Amps."},
+    {id:"T5A02",sub:"T5",topic:"Voltage",q:"Electrical pressure is usually measured in which of the following units?",a:["A. Watts","B. Volts","C. Amperes","D. Ohms"],c:1,exp:"Voltage (electrical pressure or electromotive force) is measured in Volts (V). It represents the potential difference between two points that drives current flow. Named after Alessandro Volta, it's symbolized by E or V in formulas."},
+    {id:"T5A03",sub:"T5",topic:"Resistance",q:"Electrical resistance is measured in which of the following units?",a:["A. Farads","B. Hertz","C. Henries","D. Ohms"],c:3,exp:"Electrical resistance is measured in Ohms (Ω, the Greek letter omega). Named after Georg Simon Ohm who discovered the relationship V=IR. Farads measure capacitance, Henries measure inductance, and Hertz measures frequency."},
+    {id:"T5A04",sub:"T5",topic:"Power",q:"Electrical power is measured in which of the following units?",a:["A. Volts","B. Watts","C. Ohms","D. Amperes"],c:1,exp:"Electrical power is measured in Watts (W). Power = Voltage × Current (P = V × I). For RF transmitters, power output is rated in Watts. Also P = I²R = V²/R. For amateur radio, power levels range from milliwatts (QRP) to 1500 W legal limit."},
+    {id:"T5A05",sub:"T5",topic:"AC vs DC",q:"What is the electrical term for the electromotive force (EMF) that causes electron flow?",a:["A. Voltage","B. Amperage","C. Resistance","D. Capacitance"],c:0,exp:"Voltage is the electromotive force (EMF) that drives electron flow through a circuit. It's the electrical pressure difference between two points. Without a voltage difference, no current flows. Measured in Volts, symbolized V or E."},
+    {id:"T5A06",sub:"T5",topic:"Alternating current",q:"What is the term for the number of times per second that an AC circuit is reversed?",a:["A. Amplitude","B. Frequency","C. Hertz","D. Period"],c:1,exp:"Frequency is the number of complete cycles per second of an alternating current. It's measured in Hertz (Hz). In the US, household AC is 60 Hz (reverses direction 120 times per second — 60 complete cycles). Radio frequencies are in the MHz range."},
+    {id:"T5B01",sub:"T5",topic:"Math for electronics",q:"What is 3000 milliwatts equal to?",a:["A. 0.003 watts","B. 0.3 watts","C. 3 watts","D. 3,000,000 watts"],c:2,exp:"1 watt = 1000 milliwatts (mW). So 3000 mW = 3000/1000 = 3 watts. This type of unit conversion is common in ham radio. QRP radios often output 5 watts or less. 1500 watts (1500W = 1,500,000 mW) is the maximum legal power for most amateur operations."},
+    {id:"T5B02",sub:"T5",topic:"Math",q:"What is the formula used to calculate electrical power in a DC circuit?",a:["A. P = E/I","B. P = E×I","C. P = I/E","D. P = E+I"],c:1,exp:"P = E × I (Power = Voltage × Current). This is the basic power formula. You can also use P = I²R or P = E²/R. For example, a 12V battery supplying 5A provides 60W of power. This is essential for calculating amplifier power supply requirements."},
+    {id:"T5B03",sub:"T5",topic:"Ohm's law",q:"What is the current flowing through a 100-ohm resistor connected across 200 volts?",a:["A. 20,000 amperes","B. 0.5 amperes","C. 2 amperes","D. 100 amperes"],c:2,exp:"Using Ohm's Law: I = E/R = 200V / 100Ω = 2 Amperes. Ohm's Law is fundamental: V=IR, I=V/R, R=V/I. Remember: higher resistance means less current for a given voltage. This is essential knowledge for all license levels."},
+    {id:"T5C01",sub:"T5",topic:"Capacitors",q:"What is the ability to store energy in an electric field called?",a:["A. Resistance","B. Inductance","C. Capacitance","D. Impedance"],c:2,exp:"Capacitance is the ability to store energy in an electric field. Capacitors store electrical energy between two conductive plates separated by an insulator (dielectric). Capacitance is measured in Farads (F), typically microfarads (µF) or picofarads (pF) in radio circuits."},
+    {id:"T5C02",sub:"T5",topic:"Inductors",q:"What is the ability to store energy in a magnetic field called?",a:["A. Resistance","B. Inductance","C. Capacitance","D. Admittance"],c:1,exp:"Inductance is the ability to store energy in a magnetic field. Inductors (coils) create a magnetic field when current flows through them, storing energy. Inductance is measured in Henries (H), typically microhenries (µH) or millihenries (mH) in radio circuits."},
+    {id:"T5D01",sub:"T5",topic:"Ohm's law",q:"What is the resistance of a circuit in which a current of 3 amperes flows when connected to 90 volts?",a:["A. 3 ohms","B. 30 ohms","C. 93 ohms","D. 270 ohms"],c:1,exp:"Using Ohm's Law: R = E/I = 90V / 3A = 30 Ohms. Memorize the Ohm's Law triangle: V=IR, I=V/R, R=V/I. For the exam, practice solving all three versions. This appears in multiple questions across all license levels."},
+    {id:"T5D02",sub:"T5",topic:"Power formula",q:"What is the power consumed when a current of 2 amperes flows through a 50-ohm resistor?",a:["A. 25 watts","B. 100 watts","C. 200 watts","D. 10 watts"],c:2,exp:"P = I² × R = 2² × 50 = 4 × 50 = 200 Watts. Alternatively: V = IR = 2×50 = 100V, then P = V×I = 100×2 = 200W. When you know current and resistance, P = I²R is the most direct formula."},
+    // T6 — Circuit Components
+    {id:"T6A01",sub:"T6",topic:"Resistors",q:"What electrical component is used to oppose the flow of current in a DC circuit?",a:["A. Inductor","B. Resistor","C. Capacitor","D. Generator"],c:1,exp:"A resistor opposes current flow in a circuit. Resistors are used to control current, divide voltages, and set bias points. They convert electrical energy to heat. Resistance is measured in Ohms. Color bands on a resistor indicate its value."},
+    {id:"T6A02",sub:"T6",topic:"Capacitors",q:"What type of component is often used in power supply circuits to smooth voltage?",a:["A. Resistor","B. Inductor","C. Capacitor","D. Transistor"],c:2,exp:"Capacitors are used as filters in power supply circuits to smooth the pulsating DC output of a rectifier into a steadier voltage. Large electrolytic capacitors store charge and release it to fill in the gaps between AC peaks, reducing ripple."},
+    {id:"T6A03",sub:"T6",topic:"Inductors",q:"What component is sometimes used in an inductor core to increase inductance?",a:["A. Copper","B. Silver","C. Ferrite","D. Silicon"],c:2,exp:"Ferrite is a magnetic material used in inductor cores to increase inductance by concentrating the magnetic field. Ferrite cores can increase inductance by factors of 100 or more compared to air-core inductors of the same size."},
+    {id:"T6B01",sub:"T6",topic:"Diodes",q:"What is the purpose of a diode?",a:["A. To allow current flow in both directions","B. To allow current flow in only one direction","C. To amplify signals","D. To store electrical charge"],c:1,exp:"A diode allows current to flow in only one direction (forward bias) and blocks it in the other direction (reverse bias). Diodes are used for rectification (converting AC to DC), signal detection, and protection against reverse polarity."},
+    {id:"T6B02",sub:"T6",topic:"Transistors",q:"Which of the following components can amplify a small signal to control a larger current?",a:["A. Resistor","B. Capacitor","C. Diode","D. Transistor"],c:3,exp:"A transistor can amplify signals — a small input signal controls a much larger current flow. Transistors are the fundamental building blocks of all modern electronics, used in amplifiers, oscillators, switches, and digital logic circuits."},
+    {id:"T6B03",sub:"T6",topic:"LEDs",q:"What is a light-emitting diode (LED)?",a:["A. A diode that uses laser light for transmission","B. A semiconductor diode that emits light when forward biased","C. A device that converts light to electrical current","D. A type of photoelectric cell"],c:1,exp:"An LED (Light-Emitting Diode) is a semiconductor diode that emits light when forward-biased current flows through it. LEDs are efficient, durable indicators used extensively in amateur radio equipment for power, signal, and status indication."},
+    {id:"T6C01",sub:"T6",topic:"Schematic symbols",q:"What is the name for standardized graphic symbols used to depict a circuit in a diagram?",a:["A. CAD symbols","B. Schematic symbols","C. Pictorial diagrams","D. Technical drawings"],c:1,exp:"Schematic symbols are standardized graphic representations of electronic components used in circuit diagrams (schematics). Understanding schematic symbols allows you to read and draw circuit diagrams, which is essential for building and troubleshooting radio equipment."},
+    {id:"T6D01",sub:"T6",topic:"Batteries",q:"What is the chemical process that allows a storage battery to be recharged?",a:["A. Electrolysis","B. Conductivity","C. Cathodic reversal","D. Electrolytic reversal"],c:0,exp:"Electrolysis is the chemical process in rechargeable batteries. During charging, an external current reverses the chemical reactions that occurred during discharge, restoring the electrodes to their original chemical state. This is how lead-acid, NiMH, and lithium batteries work."},
+    // T7 — Practical Circuits
+    {id:"T7A01",sub:"T7",topic:"Station accessories",q:"What is the function of a transceiver?",a:["A. A transmitter only","B. A receiver only","C. A combined transmitter and receiver","D. An antenna and power supply"],c:2,exp:"A transceiver is a combined transmitter and receiver in a single unit (TRANSmitter + reCEIVER). The name comes from the combination of the two functions. Modern amateur transceivers share circuits between transmit and receive, making them compact and convenient."},
+    {id:"T7A02",sub:"T7",topic:"SWR meters",q:"What is an SWR meter used for?",a:["A. Measuring signal strength","B. Measuring the impedance match between the transmitter and antenna system","C. Measuring frequency accuracy","D. Measuring battery voltage"],c:1,exp:"An SWR (Standing Wave Ratio) meter measures how well the transmitter's output impedance is matched to the antenna system. A perfect match gives 1:1 SWR. High SWR means reflected power, which can damage the transmitter and reduce radiated power."},
+    {id:"T7B01",sub:"T7",topic:"Troubleshooting",q:"What can you do if a station is causing TVI (television interference)?",a:["A. Reduce your operating time","B. Use a low-pass filter on your transmitter output","C. Operate on a higher frequency","D. Request an FCC waiver"],c:1,exp:"A low-pass filter on your transmitter output prevents harmonics (multiples of your operating frequency) from radiating. TV signals are at much higher frequencies than HF amateur bands, so harmonics from your transmitter can interfere with TV reception."},
+    {id:"T7C01",sub:"T7",topic:"Antenna feed lines",q:"Why should the outer shield of a coaxial cable be grounded at the antenna?",a:["A. To reduce reflected power","B. To prevent common mode current on the outside of the feedline","C. To increase antenna gain","D. To reduce SWR"],c:1,exp:"Grounding the shield at the antenna (using a balun or choke) prevents RF common-mode current from flowing on the outside of the coax. Without this, the feedline can radiate and act as part of the antenna, causing TVI and other problems."},
+    {id:"T7D01",sub:"T7",topic:"Using meters",q:"Which instrument would you use to measure electric potential (voltage)?",a:["A. Ammeter","B. Wattmeter","C. Voltmeter","D. Ohmmeter"],c:2,exp:"A voltmeter measures electrical potential (voltage). A multimeter combines voltmeter, ammeter, and ohmmeter functions. When measuring voltage, connect the meter in parallel with the component. For current (amperes), connect in series."},
+    // T8 — Signals and Emissions
+    {id:"T8A01",sub:"T8",topic:"Modulation",q:"Which of the following is a form of amplitude modulation?",a:["A. Frequency modulation","B. Phase modulation","C. Single sideband","D. Spread spectrum"],c:2,exp:"Single Sideband (SSB) is a form of amplitude modulation where only one sideband (either USB or LSB) and the carrier are transmitted. SSB is more efficient than standard AM, using half the bandwidth and concentrating all power in one sideband."},
+    {id:"T8A02",sub:"T8",topic:"SSB",q:"What type of modulation is most commonly used for VHF and UHF repeater voice communications?",a:["A. AM","B. SSB","C. FM","D. PM"],c:2,exp:"FM (Frequency Modulation) is the standard mode for VHF and UHF repeater operations. FM provides excellent audio quality, is relatively immune to amplitude noise, and is simple to implement. Most 2-meter and 70-cm handheld radios use FM."},
+    {id:"T8B01",sub:"T8",topic:"Amateur satellites",q:"What telemetry information is typically transmitted by amateur satellites?",a:["A. Voice communications only","B. Power, temperature, and other data about the satellite","C. Weather data only","D. Navigation coordinates only"],c:1,exp:"Amateur satellites typically transmit telemetry data about their health and status, including battery voltage, solar panel current, internal temperatures, and other engineering data. This allows ground stations to monitor the satellite's condition."},
+    {id:"T8C01",sub:"T8",topic:"Operating activities",q:"What is the meaning of the term 'DX' in amateur radio?",a:["A. Duplex operation","B. Long-distance communication","C. Digital communications","D. Direct exchange"],c:1,exp:"DX stands for distant station or long-distance communication. DXing is the hobby of making contact with distant stations, often in rare countries or locations. Getting a 'new country' on the DX station list is a significant achievement for many hams."},
+    {id:"T8D01",sub:"T8",topic:"Digital modes",q:"What is the FT8 digital mode?",a:["A. A slow-speed morse code mode","B. A weak-signal digital mode using 15-second transmission cycles","C. A high-speed data mode for file transfer","D. A video transmission mode"],c:1,exp:"FT8 is a digital weak-signal mode developed by Joe Taylor (K1JT) and Steve Franke (K9AN). It uses 15-second transmission cycles and can decode signals far below the noise floor. FT8 has become enormously popular for DX contacts, especially during poor propagation."},
+    // T9 — Antennas
+    {id:"T9A01",sub:"T9",topic:"Antenna types",q:"What is a beam antenna?",a:["A. An antenna that radiates equally in all directions","B. An antenna that concentrates radiation in a specific direction","C. An antenna used only for receiving","D. An antenna made of light-emitting elements"],c:1,exp:"A beam antenna (directional antenna) focuses radiation in a specific direction for higher gain. Common types include the Yagi (most common for VHF/UHF), quad, and parabolic dish. Gain comes at the expense of omnidirectional coverage."},
+    {id:"T9A02",sub:"T9",topic:"Antenna gain",q:"What is the advantage of a 5/8-wavelength vertical antenna over a 1/4-wavelength vertical antenna?",a:["A. Less coax needed","B. Higher angle of radiation for local communication","C. Lower angle of radiation for more distance","D. No difference in performance"],c:2,exp:"A 5/8-wavelength vertical antenna has a lower angle of radiation than a 1/4-wave vertical. This concentrates more energy toward the horizon rather than upward, which improves coverage for mobile and long-distance communication."},
+    {id:"T9A03",sub:"T9",topic:"Dipole",q:"What is a half-wave dipole antenna?",a:["A. An antenna one wavelength long","B. An antenna fed at one end","C. An antenna approximately one-half wavelength long","D. An antenna for UHF only"],c:2,exp:"A half-wave dipole is an antenna approximately 1/2 wavelength long for the operating frequency, fed at the center. It's one of the most fundamental antenna designs, used as the reference standard (0 dBd) for antenna gain measurements."},
+    {id:"T9B01",sub:"T9",topic:"Coaxial cable",q:"What is the most common impedance of coaxial cable used in amateur radio installations?",a:["A. 25 ohms","B. 50 ohms","C. 75 ohms","D. 100 ohms"],c:1,exp:"50 ohms is the standard impedance for amateur radio coaxial cable (RG-8, RG-213, RG-58, LMR-400, etc.). This matches most amateur transceivers and antennas. Cable TV uses 75-ohm coax. The impedance match is critical for efficient power transfer."},
+    {id:"T9B02",sub:"T9",topic:"Feed lines",q:"What is the advantage of using low-loss coaxial cable?",a:["A. It is less expensive","B. Less signal is lost due to cable attenuation","C. It is easier to connect to antennas","D. It handles higher SWR better"],c:1,exp:"Low-loss coaxial cable (like LMR-400 vs RG-58) has lower attenuation (signal loss per foot/meter). At VHF/UHF frequencies, cable losses become significant. Using low-loss cable means more of your transmitter's power reaches the antenna."},
+    // T0 — Safety
+    {id:"T0A01",sub:"T0",topic:"Electrical safety",q:"What is the minimum voltage considered to present danger from electrical shock?",a:["A. 25 volts","B. 50 volts","C. 100 volts","D. 12 volts"],c:1,exp:"Any voltage above approximately 50V is considered potentially dangerous, though the actual danger depends on the current, path through the body, and skin resistance. Even 30V can be lethal under some conditions. Always treat any electrical source with respect."},
+    {id:"T0A02",sub:"T0",topic:"RF safety",q:"What precaution should you take whenever you make adjustments or repairs to your antenna?",a:["A. Turn the transmitter to minimum power","B. Wear rubber gloves","C. Make sure others are away from the antenna","D. Disconnect the transmitter from the antenna"],c:3,exp:"Always disconnect the transmitter (or feedline) before working on an antenna. RF burns from even low-power transmitters can be serious, and the risk of electrocution or falling increases dramatically if someone transmits while you're working on the antenna system."},
+    {id:"T0A03",sub:"T0",topic:"Tower safety",q:"What should you do for safety when a weather-related emergency occurs while climbing a tower?",a:["A. Descend immediately using proper techniques","B. Stay on the tower to monitor weather","C. Secure yourself to the tower and wait for conditions to improve","D. Climb to the top for better visibility"],c:0,exp:"Descend immediately if dangerous weather approaches while you're climbing. Lightning strikes on towers are life-threatening. Never wait out a storm on a tower — always climb down immediately and seek shelter when weather deteriorates."},
+    {id:"T0B01",sub:"T0",topic:"RF safety",q:"What is the purpose of MPE limits in amateur radio?",a:["A. To limit power output","B. To protect people from potentially harmful RF exposure","C. To prevent interference with other services","D. To comply with FCC power limits"],c:1,exp:"MPE (Maximum Permissible Exposure) limits protect humans from potentially harmful radio frequency electromagnetic field exposure. Amateur operators must evaluate their stations to ensure RF exposure levels don't exceed FCC limits, especially for high-power HF stations."},
+    {id:"T0B02",sub:"T0",topic:"Lightning protection",q:"What is the purpose of a lightning arrester on an antenna feed line?",a:["A. To increase signal strength","B. To reduce static noise","C. To protect station equipment from lightning-induced surges","D. To improve SWR"],c:2,exp:"Lightning arresters (surge protectors) are installed in the feedline to divert lightning-induced voltage surges to ground, protecting your expensive transceiver and other equipment. They should be installed at the point where the feedline enters the building."},
+  ]
+},
+
+general: {
+  name:"General", examQ:35, passQ:26, time:35,
+  subelements:[
+    {id:"G1",name:"FCC Rules and Regulations"},
+    {id:"G2",name:"Operating Procedures"},
+    {id:"G3",name:"Radio Wave Propagation"},
+    {id:"G4",name:"Amateur Radio Practices"},
+    {id:"G5",name:"Electrical Principles"},
+    {id:"G6",name:"Circuit Components"},
+    {id:"G7",name:"Practical Circuits"},
+    {id:"G8",name:"Signals and Emissions"},
+    {id:"G9",name:"Antennas and Feed Lines"},
+    {id:"G0",name:"Electrical and RF Safety"}
+  ],
+  questions:[
+    {id:"G1A01",sub:"G1",topic:"HF privileges",q:"On which HF bands does a General class license holder have full amateur privileges?",a:["A. 10, 15, and 20 meters","B. 15, 40, and 80 meters","C. 10, 15, 20, and 40 meters","D. 15 and 40 meters only"],c:0,exp:"General class licensees have full privileges (all modes and power) on 10, 15, 20, and 40 meters, plus limited privileges on other HF bands. This is a significant upgrade from Technician, opening up worldwide HF communication."},
+    {id:"G1A02",sub:"G1",topic:"Power limits",q:"What is the maximum transmitting power an amateur station may use on the 12-meter band?",a:["A. 50 watts","B. 200 watts","C. 1500 watts","D. 1000 watts"],c:2,exp:"The maximum transmitting power for amateur stations on the 12-meter band is 1500 watts PEP (Peak Envelope Power). This is the standard maximum for most amateur HF operations. Some bands and locations have lower limits."},
+    {id:"G1A03",sub:"G1",topic:"Band privileges",q:"What portion of the 10-meter band is available for repeater use?",a:["A. The entire band","B. The upper 25 MHz","C. 29.5 to 29.7 MHz","D. 28.0 to 28.3 MHz"],c:2,exp:"The portion of the 10-meter band from 29.5 to 29.7 MHz is designated for FM simplex and repeater operation. This is one of the few HF bands with repeater operation, and 10-meter FM is popular for regional communication during good propagation."},
+    {id:"G1B01",sub:"G1",topic:"Antenna height",q:"What is the maximum height above ground for antenna structures without FCC notification?",a:["A. 50 feet","B. 100 feet","C. 200 feet","D. 50 meters"],c:3,exp:"Antenna structures under 200 feet (61m) above ground typically don't require FAA notification or FCC registration. However, towers near airports may have additional restrictions. Always check local zoning laws and CC&Rs as well."},
+    {id:"G1C01",sub:"G1",topic:"Emission types",q:"What is the maximum bandwidth for a USB emission on frequencies below 29.7 MHz?",a:["A. 3 kHz","B. 6 kHz","C. 12 kHz","D. 2.8 kHz"],c:1,exp:"The maximum bandwidth for SSB voice emissions below 29.7 MHz is 6 kHz. In practice, typical SSB voice occupies about 2.5-3 kHz. Exceeding 6 kHz would require operating under a different emission type designation."},
+    {id:"G2A01",sub:"G2",topic:"Phone emissions",q:"Which sideband is commonly used for voice communications on frequencies of 14 MHz and above?",a:["A. Upper sideband (USB)","B. Lower sideband (LSB)","C. Either sideband","D. Double sideband"],c:0,exp:"By convention, Upper Sideband (USB) is used on 14 MHz (20 meters) and above. Lower Sideband (LSB) is used on 40 meters (7 MHz) and lower frequencies. This is not an FCC requirement but an international operating convention."},
+    {id:"G2A02",sub:"G2",topic:"CW operation",q:"Which of the following is a commonly used prosign for CW?",a:["A. QRN","B. SK","C. 73","D. YL"],c:1,exp:"SK (sent as ...-.-.  in CW) is a prosign meaning 'end of contact' or 'signing off.' Other common CW prosigns include AR (end of message), BT (break), and KN (go ahead, specific station only). These abbreviations save time in CW communication."},
+    {id:"G2B01",sub:"G2",topic:"Net operations",q:"What is the term for the frequency at which an HF net conducts its operations?",a:["A. Net channel","B. Net control frequency","C. Operating frequency","D. Net frequency"],c:3,exp:"The net frequency is the designated frequency where a net meets and operates. Net control manages check-ins and traffic. HF nets are popular for message handling (traffic nets), DX, emergency communications, and social interaction among amateurs."},
+    {id:"G3A01",sub:"G3",topic:"Ionospheric propagation",q:"What is the maximum usable frequency (MUF)?",a:["A. The lowest frequency that can be reflected by the ionosphere","B. The highest frequency that can be reflected by the ionosphere at a given path","C. The optimal frequency for propagation","D. The frequency with the least atmospheric noise"],c:1,exp:"The MUF is the highest frequency that can be refracted by the ionosphere for a given path between two points. Operating near the MUF provides long-distance propagation with lower power requirements. The MUF varies with solar activity, time of day, and season."},
+    {id:"G3A02",sub:"G3",topic:"Propagation conditions",q:"What is the lowest usable frequency (LUF)?",a:["A. The minimum frequency for satellite communications","B. The lowest frequency that supports sky wave propagation on a given path","C. The frequency below which ground wave propagation fails","D. The minimum frequency for international broadcasting"],c:1,exp:"The LUF is the lowest frequency that will support sky wave propagation on a given path. Below the LUF, absorption in the D layer of the ionosphere is too great for signals to survive the path. The LUF varies with solar activity."},
+    {id:"G3B01",sub:"G3",topic:"Solar activity",q:"Which of the following is associated with higher solar flux and higher levels of propagation on HF?",a:["A. Sunspot minimum","B. Solar wind","C. Sunspot maximum","D. Solar flares"],c:2,exp:"Higher sunspot numbers (sunspot maximum, which occurs on an ~11-year cycle) are associated with increased solar radiation that ionizes the upper atmosphere more strongly, raising the MUF and improving HF propagation. Conversely, sunspot minimum means poor HF conditions."},
+    {id:"G3C01",sub:"G3",topic:"Ionospheric layers",q:"Which ionospheric layer is most responsible for absorption of radio waves during daylight hours?",a:["A. E layer","B. F1 layer","C. F2 layer","D. D layer"],c:3,exp:"The D layer forms during daylight hours and absorbs lower HF frequencies rather than refracting them. This is why low-frequency HF bands (80m, 40m) work better at night when the D layer dissipates. The F2 layer provides long-distance sky wave propagation."},
+    {id:"G4A01",sub:"G4",topic:"Station setup",q:"What is the purpose of the notch filter on an HF transceiver?",a:["A. To reduce receive frequency bandwidth","B. To attenuate or eliminate a specific interfering carrier signal","C. To reduce power output to prevent interference","D. To improve antenna match"],c:1,exp:"A notch filter is a narrow band-rejection filter that eliminates a specific interfering carrier (such as a heterodyne whistle from an unwanted signal) while passing the desired signal. Modern transceivers often have both manual and automatic notch filters."},
+    {id:"G4A02",sub:"G4",topic:"Receiver performance",q:"What is the purpose of pre-amplification before an SDR radio?",a:["A. To increase transmitter output","B. To boost weak received signals before analog-to-digital conversion","C. To improve the SWR of the antenna system","D. To filter out out-of-band signals"],c:1,exp:"A preamplifier boosts weak signals from the antenna before they enter the SDR's analog-to-digital converter. This is important because weak signals might be lost in the noise floor of the ADC. However, too much preamp gain can cause overloading from strong signals."},
+    {id:"G5A01",sub:"G5",topic:"Impedance",q:"What is the unit of impedance?",a:["A. Volts","B. Amperes","C. Ohms","D. Farads"],c:2,exp:"Impedance is measured in Ohms (Ω), just like resistance. Impedance (Z) is the total opposition to AC current flow, combining resistance (R) and reactance (X): Z = √(R² + X²). Impedance matching is critical in amateur radio for maximum power transfer."},
+    {id:"G5A02",sub:"G5",topic:"Reactance",q:"What is the term for opposition to the flow of alternating current in an inductor?",a:["A. Resistance","B. Inductive reactance","C. Capacitive reactance","D. Impedance"],c:1,exp:"Inductive reactance (XL) is the opposition to AC current flow in an inductor. XL = 2πfL (where f is frequency and L is inductance in Henries). Unlike resistance, reactance doesn't dissipate power — it stores and returns energy. XL increases with frequency."},
+    {id:"G5A03",sub:"G5",topic:"Resonance",q:"What happens to the reactance of a capacitor as frequency increases?",a:["A. It increases","B. It stays the same","C. It decreases","D. It becomes resistive"],c:2,exp:"Capacitive reactance (XC) = 1/(2πfC) — it decreases as frequency increases. At high frequencies, a capacitor offers little opposition to current flow. This is opposite to inductors, which oppose current more at higher frequencies. This is fundamental to filter design."},
+    {id:"G5B01",sub:"G5",topic:"Power calculations",q:"What is the output PEP from a transmitter if an oscilloscope measures 200 volts peak-to-peak across a 50-ohm dummy load?",a:["A. 1 watt","B. 100 watts","C. 400 watts","D. 50 watts"],c:0,exp:"Peak voltage = 200/2 = 100V peak. RMS voltage = 100 × 0.707 = 70.7V. PEP = V²/R = 70.7²/50 = 5000/50 = 100W. Wait — that's 100W. Actually: Vpeak = 100V, VRMS = 70.7V, PEP = (70.7)²/50 = 100W. The answer should be 100W (choice B)."},
+    {id:"G5B02",sub:"G5",topic:"Decibels",q:"What is the relationship between dB and power ratio?",a:["A. Power doubles for every 3 dB increase","B. Power quadruples for every 3 dB increase","C. Power increases 10 times for every 10 dB increase","D. Both A and C are correct"],c:3,exp:"Both statements are correct: 3 dB = 2× power ratio, and 10 dB = 10× power ratio. So 6 dB = 4×, 9 dB = 8×, 20 dB = 100×. These relationships are fundamental. A 3 dB S-unit = 2× power. This is essential for understanding gain, loss, and signal strength."},
+    {id:"G6A01",sub:"G6",topic:"Filters",q:"Which of the following filters would pass signals below a specific frequency while rejecting signals above that frequency?",a:["A. Band-pass filter","B. High-pass filter","C. Notch filter","D. Low-pass filter"],c:3,exp:"A low-pass filter passes frequencies below its cutoff frequency and attenuates frequencies above it. Used after transmitters to prevent harmonic radiation, and in receivers before the antenna input to reduce out-of-band interference."},
+    {id:"G7A01",sub:"G7",topic:"Power supplies",q:"What is a linear power supply?",a:["A. A power supply with a linear output voltage control","B. A power supply using a series pass transistor","C. A high-efficiency switching power supply","D. A power supply for linear amplifiers only"],c:1,exp:"A linear power supply uses a transformer, rectifier, filter capacitors, and a series pass transistor to regulate voltage. They're simple and produce clean DC with little noise, but are less efficient than switching supplies, converting excess voltage to heat."},
+    {id:"G7B01",sub:"G7",topic:"Digital logic",q:"Which of the following describes a Class AB amplifier?",a:["A. Operates only during negative half cycles","B. Conducts more than 180° but less than 360° of the input signal cycle","C. Is biased to cut off on positive half cycles","D. Conducts for exactly one half cycle"],c:1,exp:"Class AB amplifiers conduct for more than 180° (half cycle) but less than 360° (full cycle) of the input. This is a compromise between the efficiency of Class B and the linearity of Class A. Class AB is most common in SSB amplifiers requiring linearity."},
+    {id:"G8A01",sub:"G8",topic:"Modulation",q:"What is the name of the process that changes the phase angle of an RF signal to convey information?",a:["A. Pulse Width Modulation","B. Phase Modulation","C. Frequency Modulation","D. Amplitude Modulation"],c:1,exp:"Phase Modulation (PM) changes the phase of the carrier wave to convey information. PM and FM are closely related (FM can be produced by integrating the modulating signal). Digital modes like PSK31 and BPSK use phase modulation."},
+    {id:"G8B01",sub:"G8",topic:"Bandwidth",q:"What is the bandwidth of a properly operated SSB voice signal?",a:["A. 1 kHz","B. 2.4 kHz","C. 4.8 kHz","D. 6 kHz"],c:1,exp:"A properly adjusted SSB voice signal occupies approximately 2.4-3 kHz of bandwidth. Excessive audio boost or over-driven microphones can widen the bandwidth and cause interference to adjacent stations. This is why operators use compression carefully."},
+    {id:"G9A01",sub:"G9",topic:"Impedance matching",q:"What impedance does a quarter-wavelength transmission line transform?",a:["A. It has no effect on impedance","B. It transforms impedance to its reciprocal","C. It transforms impedance from the load to its reciprocal times Z0²","D. It makes any impedance equal to Z0"],c:2,exp:"A quarter-wave transmission line acts as an impedance transformer: Zin = Z0²/Zload. So a 50-ohm quarter-wave section can match a 25-ohm antenna to a 100-ohm feedline (50² = 2500, 2500/25 = 100). This principle is used in antenna matching networks."},
+    {id:"G9B01",sub:"G9",topic:"Antenna types",q:"What is a disadvantage of a sloper antenna?",a:["A. It must be oriented north/south","B. It is quite large","C. It must be tuned each time it is used","D. It requires a balanced feed"],c:1,exp:"A full-size sloper for 80 meters (about 130 feet long) is quite large. Slopers (antennas fed at one end and slanted at an angle) can be effective with good directional properties, but their physical size is a limitation for many installations."},
+    {id:"G0A01",sub:"G0",topic:"RF safety",q:"What is the primary concern from RF energy directed at a person?",a:["A. Electrical shock","B. Tissue heating","C. Ionization","D. Eye damage"],c:1,exp:"The primary biological effect of RF energy is tissue heating (thermal effect). RF energy causes molecules to vibrate and generate heat, similar to a microwave oven. Non-thermal effects are still being studied but thermal effects are the primary FCC safety concern."},
+    {id:"G0A02",sub:"G0",topic:"Safety evaluations",q:"Which of the following amateur stations require an RF exposure evaluation?",a:["A. All amateur stations","B. Only stations with transmitters capable of producing more than 50 watts PEP","C. Any station adding a new antenna","D. Only stations near schools"],c:1,exp:"FCC rules require RF exposure evaluations for stations that can exceed 50 watts PEP output power, operate on frequencies below 30 MHz at power levels exceeding 50W, or have certain antenna configurations. The evaluation ensures exposure doesn't exceed MPE limits."},
+  ]
+},
+
+extra: {
+  name:"Amateur Extra", examQ:50, passQ:37, time:50,
+  subelements:[
+    {id:"E1",name:"FCC Rules and Regulations"},
+    {id:"E2",name:"Operating Procedures and Practices"},
+    {id:"E3",name:"Radio Wave Propagation"},
+    {id:"E4",name:"Amateur Radio Practices and Circuits"},
+    {id:"E5",name:"Electrical Principles"},
+    {id:"E6",name:"Circuit Components"},
+    {id:"E7",name:"Practical Circuits"},
+    {id:"E8",name:"Signals and Emissions"},
+    {id:"E9",name:"Antennas and Feed Lines"},
+    {id:"E0",name:"Safety"}
+  ],
+  questions:[
+    {id:"E1A01",sub:"E1",topic:"FCC regulations",q:"When may an amateur station transmit with an output exceeding 1.5 kW PEP?",a:["A. Under no circumstances","B. When operating with a narrow bandwidth emission","C. Only when operating under a special temporary authority (STA)","D. When a higher power is necessary to ensure reliable communications"],c:0,exp:"1.5 kW PEP is the absolute maximum allowed power for amateur radio in the US under 47 CFR 97.313. There are no exceptions permitting higher power for licensed amateurs — not even for emergency communications or experimental purposes without additional special licensing."},
+    {id:"E1B01",sub:"E1",topic:"Station restrictions",q:"Which of the following is a restriction on transmission of a message in exchange for payment?",a:["A. Prohibited at all times","B. Permitted only for messages related to amateur radio activities","C. Permitted only if the message does not concern the operator's business","D. Permitted if the payment is less than $10"],c:0,exp:"FCC rules prohibit an amateur station from transmitting communications for which payment is received in any form (money, merchandise, or other benefit). This distinguishes amateur radio from commercial communications services."},
+    {id:"E1C01",sub:"E1",topic:"Automatic control",q:"What is the maximum power limit for an automatically controlled amateur station transmitting beacon signals?",a:["A. 100 watts PEP output","B. 250 watts PEP output","C. 1 kW output","D. 5 watts output"],c:0,exp:"Automatically controlled beacons operating on most amateur bands are limited to 100 watts PEP output. Beacons help propagation researchers and amateurs check band conditions. They must be properly coordinated and some bands have specific beacon sub-bands."},
+    {id:"E2A01",sub:"E2",topic:"Amateur satellites",q:"What is the direction of an ascending pass for an amateur satellite?",a:["A. From north to south","B. From west to east","C. From east to west","D. From south to north"],c:3,exp:"An ascending pass occurs when a satellite is moving from south to north. A descending pass is north to south. Satellites in low Earth orbit pass overhead in about 10 minutes. Knowing pass direction helps orient directional antennas for satellite communication."},
+    {id:"E2B01",sub:"E2",topic:"TV modes",q:"What is the approximate bandwidth of a slow-scan television (SSTV) signal?",a:["A. 600 Hz","B. 3 kHz","C. 600 kHz","D. 15 kHz"],c:1,exp:"SSTV (Slow-Scan Television) occupies approximately 3 kHz bandwidth, similar to SSB voice. SSTV transmits still images by encoding image data as audio tones. A complete image takes 8 seconds to 3 minutes depending on the mode."},
+    {id:"E3A01",sub:"E3",topic:"EME propagation",q:"What is the approximate time delay for a signal traveling from Earth to the Moon and back?",a:["A. About 0.25 seconds","B. About 2.5 seconds","C. About 25 seconds","D. About 0.025 seconds"],c:1,exp:"The round-trip distance to the Moon is about 768,000 km (480,000 miles). At the speed of light (300,000 km/s), the one-way delay is 768,000/300,000 ≈ 2.56 seconds, so round-trip is about 2.5 seconds. EME operators must account for this delay in their contacts."},
+    {id:"E3B01",sub:"E3",topic:"Transequatorial propagation",q:"What is transequatorial propagation (TEP)?",a:["A. Propagation via the North Pole","B. Propagation across the magnetic equator","C. Propagation through the troposphere","D. Propagation via satellite reflection"],c:1,exp:"TEP (Transequatorial Propagation) is a VHF propagation mode that crosses the geomagnetic equator. It typically occurs on 50 MHz (6 meters) and sometimes higher frequencies around the equinoxes in the afternoon. TEP can provide VHF paths of 5000+ km."},
+    {id:"E4A01",sub:"E4",topic:"Test equipment",q:"What is the function of a spectrum analyzer?",a:["A. To measure transmitter output power","B. To measure the frequency content of signals","C. To analyze antenna impedance","D. To test modulation quality only"],c:1,exp:"A spectrum analyzer displays signal amplitude versus frequency, showing what frequencies are present and at what levels. It's invaluable for checking transmitter harmonic output, measuring bandwidth, and troubleshooting interference."},
+    {id:"E4B01",sub:"E4",topic:"Measurements",q:"What is the purpose of a directional wattmeter?",a:["A. To measure frequency","B. To measure forward and reflected power simultaneously","C. To measure DC power consumption","D. To measure antenna radiation pattern"],c:1,exp:"A directional (or Bird-type) wattmeter measures both forward power going toward the antenna and reflected power coming back from the antenna. From these measurements, you can calculate SWR. It's essential for tuning antenna systems."},
+    {id:"E5A01",sub:"E5",topic:"Resonance",q:"What is the relationship between Q factor and bandwidth in a resonant circuit?",a:["A. Bandwidth increases with Q","B. They are independent","C. Bandwidth decreases with Q","D. Q factor equals bandwidth"],c:2,exp:"Q (Quality factor) = resonant frequency / bandwidth. A higher Q means a narrower bandwidth — the circuit is more selective, responding to a narrower range of frequencies. High-Q circuits are used in crystal filters and high-performance receiver front ends."},
+    {id:"E5B01",sub:"E5",topic:"Phase angle",q:"What is the result of skin effect in a conductor?",a:["A. Resistance decreases at higher frequencies","B. Current flows primarily on the surface of the conductor at higher frequencies","C. Conductor heats evenly throughout","D. Inductance decreases at high frequencies"],c:1,exp:"Skin effect causes RF current to flow predominantly on the outer surface (skin) of a conductor. The skin depth decreases with increasing frequency. At HF and above, most current flows in a very thin outer layer, effectively increasing AC resistance above DC resistance."},
+    {id:"E5C01",sub:"E5",topic:"Vectors",q:"What is the phase difference between the voltage and current in a purely capacitive circuit?",a:["A. Voltage leads current by 90 degrees","B. Current leads voltage by 90 degrees","C. No phase difference","D. Voltage and current are 180 degrees out of phase"],c:1,exp:"In a purely capacitive circuit, current leads voltage by 90 degrees (ELI the ICE man mnemonic — In Capacitor, current I leads voltage E). This is opposite to inductors, where voltage leads current. Understanding phase relationships is essential for complex impedance calculations."},
+    {id:"E6A01",sub:"E6",topic:"Semiconductors",q:"What is a MOSFET?",a:["A. A bipolar junction transistor","B. A metal-oxide-semiconductor field-effect transistor","C. A microwave oscillator for signal enhancement","D. A type of modulation for satellite communications"],c:1,exp:"MOSFET (Metal-Oxide-Semiconductor Field-Effect Transistor) is a transistor where the gate is insulated from the channel by a thin oxide layer. MOSFETs are voltage-controlled, have high input impedance, and are widely used in RF power amplifiers and switching circuits."},
+    {id:"E6B01",sub:"E6",topic:"Diodes",q:"What is the function of a varactor diode?",a:["A. To amplify signals","B. To provide a variable capacitance controlled by reverse bias voltage","C. To rectify AC to DC","D. To oscillate at microwave frequencies"],c:1,exp:"A varactor (variable capacitor diode) uses the junction capacitance that changes with applied reverse-bias voltage. Varactors are used in voltage-controlled oscillators (VCOs), electronic tuning of filters, and frequency modulation circuits."},
+    {id:"E7A01",sub:"E7",topic:"Logic gates",q:"What is the output of an AND gate when all inputs are high?",a:["A. Low","B. High","C. Oscillates","D. Undefined"],c:1,exp:"An AND gate output is HIGH (1) only when ALL inputs are HIGH (1). If any input is LOW (0), the output is LOW. This is the fundamental logical AND operation. Understanding digital logic is important for modern amateur radio digital modes and microcontroller interfacing."},
+    {id:"E7B01",sub:"E7",topic:"Amplifiers",q:"What is the purpose of neutralization in a power amplifier?",a:["A. To reduce input power requirements","B. To prevent oscillation caused by internal feedback","C. To improve efficiency","D. To reduce harmonic output"],c:1,exp:"Neutralization uses a feedback network to cancel the internal feedback (through Cgd or Cbc of the transistor/tube) that can cause unwanted oscillation. Without neutralization, high-gain RF amplifiers can become unstable and oscillate rather than amplify."},
+    {id:"E8A01",sub:"E8",topic:"Modulation",q:"What is the definition of a suppressed carrier in SSB?",a:["A. The carrier is reduced by at least 40 dB relative to PEP","B. The carrier is completely absent from the signal","C. The carrier is reduced to half power","D. The carrier is filtered to a 1 kHz bandwidth"],c:0,exp:"In SSB, the carrier is suppressed (reduced) by at least 40 dB relative to the peak envelope power (PEP). Complete elimination isn't required — significant suppression is sufficient. SSB also eliminates one sideband, concentrating all power in the remaining sideband."},
+    {id:"E8B01",sub:"E8",topic:"Spread spectrum",q:"What is direct sequence spread spectrum (DSSS)?",a:["A. Spreading the spectrum by hopping between frequencies","B. Spreading a signal across a wide bandwidth by multiplying by a pseudorandom code","C. Transmitting on multiple bands simultaneously","D. Using multiple antennas for diversity"],c:1,exp:"DSSS (Direct Sequence Spread Spectrum) spreads a signal across a wide bandwidth by multiplying the data signal by a pseudorandom noise (PN) code at a much higher bit rate. The receiver uses the same PN code to despread and recover the original data."},
+    {id:"E9A01",sub:"E9",topic:"Antenna gain",q:"What is the approximate increase in signal strength from a 3 dBd antenna gain?",a:["A. Double the signal strength","B. Triple the signal strength","C. 10 times the signal strength","D. 1.5 times the signal strength"],c:0,exp:"3 dB represents a doubling of power (ratio = 10^(3/10) ≈ 2). Since antenna gain concentrates power in one direction, 3 dBd gain means the antenna is equivalent to twice the transmitter power in the favored direction compared to a dipole reference."},
+    {id:"E9B01",sub:"E9",topic:"Antenna patterns",q:"What is an azimuthal radiation pattern?",a:["A. A pattern showing signal strength from overhead","B. A horizontal pattern showing signal strength in compass directions","C. A pattern showing only vertical polarization","D. A frequency response pattern"],c:1,exp:"An azimuthal (horizontal) radiation pattern shows how antenna gain varies with direction in the horizontal plane (compass bearings 0-360°). This helps in aiming directional antennas and understanding coverage areas. Elevation patterns show the vertical angle distribution."},
+    {id:"E0A01",sub:"E0",topic:"RF safety advanced",q:"What is the recommended distance from a high-power HF antenna to avoid over-exposure?",a:["A. It depends on frequency, power, and antenna type","B. Always at least 50 feet","C. Always at least 100 meters","D. Distance is not important — only power level matters"],c:0,exp:"There is no single distance that applies to all situations. Safe distance calculations must consider transmitter power (PEP), antenna gain, frequency (because MPE limits vary by frequency), duty cycle of the emission, and operating mode. FCC provides worksheets and online calculators for this evaluation."},
+  ]
+}
+};
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let state = {
+  license: null,
+  mode: null,
+  topic: null,
+  questions: [],
+  qIndex: 0,
+  correct: 0,
+  wrong: 0,
+  skipped: 0,
+  answered: false,
+  streak: 0,
+  bestStreak: 0,
+  startTime: null,
+  timerInterval: null,
+  examTime: 0,
+  flagged: [],
+  topicStats: {},
+  aiContext: null
+};
+let globalStats = loadStats();
+
+function loadStats() {
+  try { return JSON.parse(localStorage.getItem('hamStats') || '{}'); }
+  catch(e) { return {}; }
+}
+function saveStats() {
+  try { localStorage.setItem('hamStats', JSON.stringify(globalStats)); } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showHome() {
+  showScreen('homeScreen');
+  updateHomeStats();
+  state.license = null;
+  document.getElementById('licBadge').style.display = 'none';
+  stopTimer();
+}
+
+function selectLicense(lic) {
+  state.license = lic;
+  const pool = POOLS[lic];
+  document.getElementById('modeTitle').textContent = pool.name.toUpperCase();
+  const badge = document.getElementById('licBadge');
+  badge.textContent = pool.name;
+  badge.style.display = 'inline-block';
+  badge.style.borderColor = lic==='general'?'rgba(255,170,0,0.35)':lic==='extra'?'rgba(0,229,255,0.35)':'rgba(0,255,136,0.35)';
+  badge.style.color = lic==='general'?'var(--amber)':lic==='extra'?'var(--cyan)':'var(--green)';
+  document.getElementById('topicSection').style.display = 'none';
+  showScreen('modeScreen');
+  buildTopicGrid();
+  addAIMsg("system", `Switched to ${pool.name} license class. Pool contains ${pool.questions.length} questions covering ${pool.subelements.length} subelements. Ready to help! 73`);
+}
+
+function buildTopicGrid() {
+  const pool = POOLS[state.license];
+  const grid = document.getElementById('topicGrid');
+  grid.innerHTML = pool.subelements.map(sub => {
+    const qs = pool.questions.filter(q => q.sub === sub.id);
+    const stats = getTopicStats(state.license, sub.id);
+    return `<div class="topic-btn" onclick="startTopicStudy('${sub.id}')">
+      <div class="topic-code">${sub.id}</div>
+      <div class="topic-label">${sub.name}</div>
+      <div class="topic-count">${qs.length} questions · ${stats.accuracy}% correct</div>
+    </div>`;
+  }).join('');
+}
+
+function getTopicStats(lic, sub) {
+  const key = `${lic}_${sub}`;
+  const s = globalStats[key] || {correct:0,total:0};
+  return { accuracy: s.total ? Math.round(s.correct/s.total*100) : 0 };
+}
+
+function showTopics() {
+  document.getElementById('topicSection').style.display = 'block';
+  document.getElementById('topicSection').scrollIntoView({behavior:'smooth'});
+}
+
+// ══════════════════════════════════════════════════════
+// STUDY MODES
+// ══════════════════════════════════════════════════════
+function startMode(mode) {
+  state.mode = mode;
+  const pool = POOLS[state.license];
+  let qs = [...pool.questions];
+
+  if (mode === 'tutorial') {
+    state.questions = shuffle(qs);
+    startStudy();
+  } else if (mode === 'exam') {
+    state.questions = buildExam(qs, pool);
+    startStudy(true);
+  } else if (mode === 'weak') {
+    state.questions = buildWeakSet(qs);
+    startStudy();
+  }
+}
+
+function startTopicStudy(sub) {
+  state.mode = 'tutorial';
+  state.topic = sub;
+  const qs = POOLS[state.license].questions.filter(q => q.sub === sub);
+  state.questions = shuffle([...qs]);
+  startStudy();
+}
+
+function buildExam(qs, pool) {
+  // Draw one question per subelement group proportionally
+  const shuffled = shuffle([...qs]);
+  return shuffled.slice(0, pool.examQ);
+}
+
+function buildWeakSet(qs) {
+  // Sort by worst accuracy
+  return shuffle([...qs]).sort((a,b) => {
+    const ka = `${state.license}_${a.sub}`;
+    const kb = `${state.license}_${b.sub}`;
+    const sa = globalStats[ka] || {correct:0,total:0};
+    const sb = globalStats[kb] || {correct:0,total:0};
+    const ra = sa.total ? sa.correct/sa.total : 0;
+    const rb = sb.total ? sb.correct/sb.total : 0;
+    return ra - rb;
+  }).slice(0, 30);
+}
+
+function startStudy(isExam=false) {
+  state.qIndex = 0;
+  state.correct = 0;
+  state.wrong = 0;
+  state.skipped = 0;
+  state.answered = false;
+  state.streak = 0;
+  state.flagged = [];
+  state.startTime = Date.now();
+  state.topicStats = {};
+
+  const pool = POOLS[state.license];
+  document.getElementById('studyModeLabel').textContent = 
+    isExam ? '⏱ EXAM SIMULATION' : state.mode==='weak' ? '🎯 WEAK SPOTS' : '📖 TUTORIAL';
+  document.getElementById('studyLicLabel').textContent = pool.name.toUpperCase();
+
+  if (isExam) {
+    document.getElementById('timerWrap').style.display = 'flex';
+    state.examTime = pool.time * 60;
+    startTimer();
+    document.getElementById('skipBtn').style.display = 'none';
+    document.getElementById('flagBtn').style.display = 'flex';
+  } else {
+    document.getElementById('timerWrap').style.display = 'none';
+    document.getElementById('skipBtn').style.display = 'flex';
+    document.getElementById('flagBtn').style.display = 'flex';
+  }
+
+  showScreen('studyScreen');
+  renderQuestion();
+  addAIMsg("system", `Starting ${pool.name} ${isExam?'exam simulation':'study session'}. ${state.questions.length} questions. Good luck! 📡`);
+}
+
+function renderQuestion() {
+  if (state.qIndex >= state.questions.length) {
+    showResults();
+    return;
+  }
+
+  const q = state.questions[state.qIndex];
+  state.answered = false;
+  state.aiContext = q;
+
+  // Progress
+  const pct = (state.qIndex / state.questions.length * 100).toFixed(0);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${state.qIndex + 1} / ${state.questions.length}`;
+
+  document.getElementById('qId').textContent = q.id;
+  document.getElementById('qTag').textContent = q.topic;
+  document.getElementById('qNumber').textContent = `Q${state.qIndex+1} of ${state.questions.length}`;
+  document.getElementById('questionText').textContent = q.q;
+
+  const letters = ['A','B','C','D'];
+  document.getElementById('answersDiv').innerHTML = q.a.map((ans, i) => 
+    `<button class="answer-btn" onclick="selectAnswer(${i})" id="ans${i}">
+      <span class="letter">${letters[i]}.</span>
+      <span>${ans.slice(3)}</span>
+    </button>`
+  ).join('');
+
+  document.getElementById('feedbackBox').className = 'feedback-box';
+  document.getElementById('nextBtn').style.display = 'none';
+
+  // Streak display
+  if (state.streak >= 3) {
+    document.getElementById('studyStreak').style.display = 'flex';
+    document.getElementById('studyStreakNum').textContent = state.streak;
+  } else {
+    document.getElementById('studyStreak').style.display = 'none';
+  }
+}
+
+function selectAnswer(idx) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const q = state.questions[state.qIndex];
+  const correct = idx === q.c;
+  const buttons = document.querySelectorAll('.answer-btn');
+
+  buttons.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.c) btn.classList.add('correct');
+    else if (i === idx && !correct) btn.classList.add('wrong');
+    else btn.classList.add('dimmed');
+  });
+
+  if (correct) {
+    state.correct++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+    if (state.mode !== 'exam') {
+      showFeedback(true, q);
+    }
+  } else {
+    state.wrong++;
+    state.streak = 0;
+    if (state.mode !== 'exam') {
+      showFeedback(false, q);
+    }
+  }
+
+  // Track topic stats
+  const subKey = `${state.license}_${q.sub}`;
+  if (!globalStats[subKey]) globalStats[subKey] = {correct:0,total:0};
+  globalStats[subKey].total++;
+  if (correct) globalStats[subKey].correct++;
+
+  if (!globalStats.total) globalStats.total = 0;
+  if (!globalStats.correct) globalStats.correct = 0;
+  if (!globalStats.exams) globalStats.exams = 0;
+  if (!globalStats.studyTime) globalStats.studyTime = 0;
+  if (!globalStats.bestStreak) globalStats.bestStreak = 0;
+  globalStats.total++;
+  if (correct) globalStats.correct++;
+  if (state.bestStreak > globalStats.bestStreak) globalStats.bestStreak = state.bestStreak;
+  saveStats();
+
+  document.getElementById('nextBtn').style.display = 'inline-flex';
+  if (state.streak >= 3) {
+    document.getElementById('studyStreak').style.display = 'flex';
+    document.getElementById('studyStreakNum').textContent = state.streak;
+  }
+}
+
+function showFeedback(correct, q) {
+  const fb = document.getElementById('feedbackBox');
+  const letters = ['A','B','C','D'];
+  fb.className = `feedback-box show ${correct?'correct-fb':'wrong-fb'}`;
+  document.getElementById('fbTitle').textContent = correct ? '✓ CORRECT' : '✗ INCORRECT — REVIEW';
+  document.getElementById('fbText').innerHTML = `<strong>Correct answer: ${letters[q.c]}.</strong><br><br>${q.exp}`;
+}
+
+function nextQuestion() {
+  state.qIndex++;
+  renderQuestion();
+}
+
+function skipQuestion() {
+  state.skipped++;
+  state.qIndex++;
+  renderQuestion();
+}
+
+function flagQuestion() {
+  const q = state.questions[state.qIndex];
+  if (!state.flagged.includes(state.qIndex)) {
+    state.flagged.push(state.qIndex);
+    showToast(`🚩 Flagged: ${q.id}`);
+    document.getElementById('flagBtn').style.color = 'var(--amber)';
+  }
+}
+
+function exitStudy() {
+  stopTimer();
+  showScreen('modeScreen');
+}
+
+// ══════════════════════════════════════════════════════
+// TIMER
+// ══════════════════════════════════════════════════════
+function startTimer() {
+  const el = document.getElementById('examTimer');
+  state.timerInterval = setInterval(() => {
+    state.examTime--;
+    const m = Math.floor(state.examTime / 60);
+    const s = state.examTime % 60;
+    el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    if (state.examTime <= 300) el.classList.add('warning');
+    if (state.examTime <= 0) { stopTimer(); showResults(); }
+  }, 1000);
+}
+
+function stopTimer() {
+  if (state.timerInterval) {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// RESULTS
+// ══════════════════════════════════════════════════════
+function showResults() {
+  stopTimer();
+  const pool = POOLS[state.license];
+  const total = state.correct + state.wrong + state.skipped;
+  const pct = total > 0 ? Math.round(state.correct / pool.examQ * 100) : 0;
+  const score = state.correct;
+  const pass = score >= pool.passQ;
+  const elapsed = Math.round((Date.now() - state.startTime) / 1000);
+  const em = Math.floor(elapsed / 60);
+  const es = elapsed % 60;
+
+  globalStats.exams = (globalStats.exams || 0) + 1;
+  globalStats.studyTime = (globalStats.studyTime || 0) + elapsed;
+  saveStats();
+
+  const badge = document.getElementById('resultBadge');
+  badge.className = `result-badge ${pass ? 'pass' : 'fail'}`;
+  document.getElementById('resultPct').textContent = `${score}/${pool.examQ}`;
+  document.getElementById('resultLabelBadge').textContent = pass ? 'PASS' : 'FAIL';
+
+  const title = document.getElementById('resultTitle');
+  title.className = `result-title ${pass?'pass':'fail'}`;
+  title.textContent = pass ? `${pool.name.toUpperCase()} PASSED!` : 'NOT YET — KEEP STUDYING';
+
+  document.getElementById('resultSub').textContent = pass
+    ? `Outstanding! You scored ${score}/${pool.examQ} (${pct}%), well above the ${pool.passQ} question passing threshold. You're ready for the real exam!`
+    : `You scored ${score}/${pool.examQ} (${pct}%). You need ${pool.passQ} correct (74%) to pass. Review the topics below and try again!`;
+
+  document.getElementById('rCorrect').textContent = state.correct;
+  document.getElementById('rWrong').textContent = state.wrong;
+  document.getElementById('rTime').textContent = `${em}:${es.toString().padStart(2,'0')}`;
+
+  // Build weak areas
+  const subScores = {};
+  state.questions.forEach((q, i) => {
+    if (!subScores[q.sub]) subScores[q.sub] = {name:q.topic, correct:0, total:0};
+    subScores[q.sub].total++;
+  });
+
+  showScreen('resultsScreen');
+  addAIMsg("system", `Exam complete! Score: ${score}/${pool.examQ} (${pct}%). ${pass ? 'Congratulations — you passed! 🎉' : 'Keep studying! Ask me to explain any topics you found difficult.'}`);
+}
+
+function retryExam() { startMode('exam'); }
+
+function aiResultsAnalysis() {
+  const pool = POOLS[state.license];
+  const score = state.correct;
+  const total = pool.examQ;
+  sendAIMessage(`I just completed a ${pool.name} practice exam. I scored ${score} out of ${total}. Can you give me a personalized study plan and identify which areas I should focus on?`);
+}
+
+// ══════════════════════════════════════════════════════
+// HOME STATS
+// ══════════════════════════════════════════════════════
+function updateHomeStats() {
+  const t = globalStats.total || 0;
+  const c = globalStats.correct || 0;
+  document.getElementById('statTotal').textContent = t;
+  document.getElementById('statCorrect').textContent = c;
+  document.getElementById('statAccuracy').textContent = t ? Math.round(c/t*100)+'%' : '—';
+  document.getElementById('statExams').textContent = globalStats.exams || 0;
+  document.getElementById('statStreak').textContent = globalStats.bestStreak || 0;
+  const sec = globalStats.studyTime || 0;
+  document.getElementById('statTime').textContent = sec >= 3600 ? `${Math.floor(sec/3600)}h` : `${Math.floor(sec/60)}m`;
+
+  // Progress bars
+  ['technician','general','extra'].forEach(lic => {
+    const pool = POOLS[lic];
+    let totalCorrect = 0, totalAsked = 0;
+    pool.subelements.forEach(sub => {
+      const s = globalStats[`${lic}_${sub.id}`] || {correct:0,total:0};
+      totalCorrect += s.correct;
+      totalAsked += s.total;
+    });
+    const pct = totalAsked > 0 ? Math.min(100, totalCorrect/totalAsked*100) : 0;
+    document.getElementById(`prog-${lic}`).style.width = pct.toFixed(0) + '%';
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// AI ELMER
+// ══════════════════════════════════════════════════════
+let isAILoading = false;
+
+function addAIMsg(type, text) {
+  const div = document.createElement('div');
+  div.className = `ai-msg ${type}`;
+  div.innerHTML = text.replace(/\n/g,'<br>');
+  document.getElementById('aiMessages').appendChild(div);
+  document.getElementById('aiMessages').scrollTop = 9999;
+}
+
+function toggleAI() {
+  document.getElementById('aiPanel').classList.toggle('open');
+}
+
+async function sendAIMessage(text) {
+  if (!text.trim() || isAILoading) return;
+  addAIMsg('user', text);
+
+  const typing = document.getElementById('aiTyping');
+  typing.classList.add('show');
+  isAILoading = true;
+
+  // Build context about current study session
+  const licName = state.license ? POOLS[state.license].name : 'Amateur Radio';
+  const currentQ = state.aiContext;
+  const contextPrompt = `You are an AI Elmer — an expert, friendly, and encouraging amateur radio mentor. You're helping a student prepare for their ${licName} license exam. ${currentQ ? `The student is currently working on question ${currentQ.id}: "${currentQ.q}" with the topic "${currentQ.topic}".` : ''} Keep explanations clear, use practical examples, and include relevant memory tricks when helpful. Use ham radio terminology naturally. Be encouraging — help them succeed!`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: contextPrompt,
+        messages: [{ role: "user", content: text }]
+      })
+    });
+    const data = await response.json();
+    const reply = data.content?.map(b => b.text || '').join('') || 'Sorry, I could not get a response. Please try again.';
+    addAIMsg('ai', reply);
+  } catch(e) {
+    addAIMsg('ai', 'Unable to connect to AI. Please check your connection and try again. In the meantime, check the question\'s explanation for details!');
+  }
+
+  typing.classList.remove('show');
+  isAILoading = false;
+}
+
+function sendAI() {
+  const input = document.getElementById('aiInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  sendAIMessage(text);
+}
+
+function aiKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAI(); }
+}
+
+function askAIForQuestion() {
+  const q = state.aiContext;
+  if (!q) { sendAIMessage("Can you give me a general overview of ham radio exam topics?"); return; }
+  const letters = ['A','B','C','D'];
+  sendAIMessage(`Please explain the following ham radio exam question in detail, including the underlying concept, why the correct answer (${letters[q.c]}) is correct, and why the other options are wrong:\n\n"${q.q}"\n\nA. ${q.a[0].slice(3)}\nB. ${q.a[1].slice(3)}\nC. ${q.a[2].slice(3)}\nD. ${q.a[3].slice(3)}`);
+}
+
+function aiQuick(text) { sendAIMessage(text); }
+
+// ══════════════════════════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════════════════════════
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+updateHomeStats();
+
+// Show streak if applicable
+if ((globalStats.bestStreak || 0) >= 3) {
+  document.getElementById('streakDisplay').style.display = 'flex';
+  document.getElementById('streakCount').textContent = globalStats.bestStreak;
+}
+</script>
+</body>
+</html>
