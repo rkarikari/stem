@@ -653,6 +653,10 @@ body::after{
   </div><!-- /main -->
 </div><!-- /app -->
 
+<footer style="text-align:center;padding:.6rem 1rem;font-family:'Share Tech Mono',monospace;font-size:.58rem;color:#2a5a3a;letter-spacing:.18em;border-top:1px solid #0f2014;background:#050a06;position:relative;z-index:1;">
+  © R.N.K 9G5AR &nbsp;·&nbsp; RADIOSPORT
+</footer>
+
 <button class="ai-toggle" onclick="toggleAI()" title="AI Elmer">🤖</button>
 <div class="toast" id="toast"></div>
 
@@ -2743,6 +2747,17 @@ function clearAIMessages() {
   addAIMsg('system', 'Chat cleared. Ask me anything about your ham radio exam!');
 }
 
+function stripReasoning(text) {
+  // Remove reasoning/thinking blocks emitted by some models (DeepSeek, etc.)
+  // Handles <think>…</think>, <thinking>…</thinking>, and <reasoning>…</reasoning>
+  // including multi-line and nested content, then trims stray whitespace.
+  return text
+    .replace(/<think[\s\S]*?<\/think>/gi, '')
+    .replace(/<thinking[\s\S]*?<\/thinking>/gi, '')
+    .replace(/<reasoning[\s\S]*?<\/reasoning>/gi, '')
+    .trim();
+}
+
 async function sendAIMessage(text) {
   if (!text.trim() || isAILoading) return;
   // Flag if AI is consulted during a live exam
@@ -2771,7 +2786,7 @@ async function sendAIMessage(text) {
         seed: Math.floor(Math.random() * 99999)
       })
     });
-    const reply = (await response.text()).trim() || 'Sorry, I could not get a response. Please try again.';
+    const reply = stripReasoning(await response.text()) || 'Sorry, I could not get a response. Please try again.';
     addAIMsg('ai', reply);
   } catch(e) {
     addAIMsg('ai', 'Unable to connect to AI. Please check your connection and try again. In the meantime, check the question\'s explanation for details!');
@@ -2926,7 +2941,7 @@ function generateCertificate() {
         <!-- SIGNATURE LINE -->
         <div style="display:flex;justify-content:space-around;align-items:flex-end;margin-bottom:1.2rem;">
           <div style="text-align:center;">
-            <div style="font-family:'Palatino Linotype',Palatino,serif;font-size:1.35rem;color:${licAccent};border-bottom:1px solid #ccc;padding:.2rem 1.5rem .1rem;margin-bottom:.3rem;">RadioSport AI</div>
+            <div style="font-family:'Palatino Linotype',Palatino,serif;font-size:1.35rem;color:${licAccent};border-bottom:1px solid #ccc;padding:.2rem 1.5rem .1rem;margin-bottom:.3rem;">RadioSport</div>
             <div style="font-family:Arial,sans-serif;font-size:.52rem;color:#888;letter-spacing:.12em;">AUTHORIZED EXAMINER</div>
             <div style="font-family:Arial,sans-serif;font-size:.5rem;color:#aaa;">RadioSport Exam System</div>
           </div>
@@ -2941,6 +2956,7 @@ function generateCertificate() {
           This certificate confirms successful completion of a practice exam administered by RadioSport Exam System and is intended for educational demonstration purposes.
           It is suitable for inclusion with FCC Amateur Radio license applications (Form 605), club membership requests, employment portfolios, and educational records.
           It does not replace an official FCC license grant. · radioSport.ai · Cert No. ${certNo}
+          <br><span style="letter-spacing:.12em;">© R.N.K 9G5AR &nbsp;·&nbsp; RADIOSPORT</span>
         </div>
       </div><!-- /body -->
     </div><!-- /border frame -->
