@@ -3432,7 +3432,9 @@ async function verifyCertCode() {
   if (input === state.currentSession.unlockCode) {
     errEl.style.display = 'none';
     await updateSessionField(state.currentSession.sessionId, { codeUsed: true });
-    openCertModal();
+    // Look up any already-registered name for this session
+    const sess = localGetSessions().find(s => s.sessionId === state.currentSession.sessionId);
+    openCertModal(sess && sess.candidateName, sess && sess.candidateOrg);
   } else {
     errEl.style.display = 'block';
     document.getElementById('certUnlockInput').style.borderColor = 'rgba(255,68,102,0.6)';
@@ -3467,18 +3469,43 @@ async function retrieveCertificate() {
   state.license = sess.license;
   state.correct = sess.score;
   state.currentSession = { sessionId: sess.sessionId, unlockCode: sess.unlockCode };
-  // Mark as used
   await updateSessionField(sess.sessionId, { codeUsed: true });
-  // Clear inputs
   document.getElementById('retrieveSessionId').value = '';
   document.getElementById('retrieveCode').value = '';
-  openCertModal();
+  openCertModal(sess.candidateName, sess.candidateOrg);
 }
 
-function openCertModal() {
+function openCertModal(existingName, existingOrg) {
+  const nameEl = document.getElementById('certNameInput');
+  const orgEl  = document.getElementById('certOrgInput');
+  const notice = document.getElementById('certNameLockedNotice');
+
+  if (existingName) {
+    // Name already registered — lock both fields
+    nameEl.value    = existingName;
+    orgEl.value     = existingOrg || '';
+    nameEl.readOnly = true;
+    orgEl.readOnly  = true;
+    nameEl.style.opacity = '0.6';
+    nameEl.style.cursor  = 'not-allowed';
+    orgEl.style.opacity  = '0.6';
+    orgEl.style.cursor   = 'not-allowed';
+    if (notice) notice.style.display = 'block';
+  } else {
+    // No name yet — editable
+    nameEl.readOnly = false;
+    orgEl.readOnly  = false;
+    nameEl.style.opacity = '';
+    nameEl.style.cursor  = '';
+    orgEl.style.opacity  = '';
+    orgEl.style.cursor   = '';
+    if (notice) notice.style.display = 'none';
+    nameEl.focus();
+  }
+
   document.getElementById('certNameModal').style.display = 'flex';
-  document.getElementById('certNameInput').focus();
 }
+
 function closeCertModal() {
   document.getElementById('certNameModal').style.display = 'none';
 }
@@ -3765,10 +3792,7 @@ function adminGenerateCert(sessionId, unlockCode, license, score, candidateName,
   state.correct = score;
   state.currentSession = { sessionId, unlockCode };
   document.getElementById('adminPanelModal').style.display = 'none';
-  // Pre-fill name/org if already stored
-  document.getElementById('certNameInput').value = candidateName || '';
-  document.getElementById('certOrgInput').value  = candidateOrg  || '';
-  openCertModal();
+  openCertModal(candidateName, candidateOrg);
 }
 
 async function clearAllSessions() {
@@ -3916,12 +3940,15 @@ function generateCertificate() {
   document.getElementById('certNameModal').style.display = 'none';
   document.getElementById('certModal').style.display = 'block';
 
-  // Persist name + org against this session record
+  // Persist name + org only if not already registered (immutable once set)
   if (state.currentSession) {
-    updateSessionField(state.currentSession.sessionId, {
-      candidateName: name,
-      candidateOrg:  org || ''
-    });
+    const existing = localGetSessions().find(s => s.sessionId === state.currentSession.sessionId);
+    if (!existing || !existing.candidateName) {
+      updateSessionField(state.currentSession.sessionId, {
+        candidateName: name,
+        candidateOrg:  org || ''
+      });
+    }
   }
 }
 
@@ -3956,6 +3983,10 @@ if ((globalStats.bestStreak || 0) >= 3) {
   <div style="background:#0a110b;border:1px solid #1a3320;border-radius:8px;padding:2rem;max-width:420px;width:90%;text-align:center;">
     <div style="font-family:'Orbitron',monospace;font-size:.9rem;font-weight:700;color:gold;letter-spacing:.15em;margin-bottom:.5rem;">🏅 CERTIFICATE DETAILS</div>
     <div style="font-size:.65rem;color:#4a8860;margin-bottom:1.5rem;">Enter your name as it should appear on the certificate.</div>
+    <!-- Shown only when name is already registered and locked -->
+    <div id="certNameLockedNotice" style="display:none;margin-bottom:1rem;padding:.55rem .9rem;border-radius:4px;border:1px solid rgba(255,170,0,0.4);background:rgba(255,170,0,0.07);font-size:.6rem;color:#ffaa00;line-height:1.6;text-align:left;">
+      🔒 <strong>Name locked.</strong> This session already has a registered name and cannot be changed.
+    </div>
     <input id="certNameInput" type="text" placeholder="Full Name" style="width:100%;background:#060e07;border:1px solid #1a3320;border-radius:4px;padding:.6rem .9rem;font-family:'Share Tech Mono',monospace;font-size:.85rem;color:#a0ffcc;outline:none;margin-bottom:.8rem;" onkeydown="if(event.key==='Enter')document.getElementById('certOrgInput').focus()" />
     <input id="certOrgInput" type="text" placeholder="Organization / Club (optional)" style="width:100%;background:#060e07;border:1px solid #1a3320;border-radius:4px;padding:.6rem .9rem;font-family:'Share Tech Mono',monospace;font-size:.85rem;color:#a0ffcc;outline:none;margin-bottom:1.2rem;" onkeydown="if(event.key==='Enter')generateCertificate()" />
     <div style="display:flex;gap:.8rem;justify-content:center;">

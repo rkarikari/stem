@@ -3626,6 +3626,7 @@ function renderAdminPanel(source='server') {
         <thead>
           <tr style="border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);">
             <th style="padding:.5rem .8rem;text-align:left;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text-dim);letter-spacing:.1em;">SESSION ID</th>
+            <th style="padding:.5rem .6rem;text-align:left;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text-dim);letter-spacing:.1em;">NAME</th>
             <th style="padding:.5rem .6rem;text-align:left;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text-dim);letter-spacing:.1em;">CLASS</th>
             <th style="padding:.5rem .6rem;text-align:center;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text-dim);letter-spacing:.1em;">SCORE</th>
             <th style="padding:.5rem .6rem;text-align:left;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text-dim);letter-spacing:.1em;">DATE / TIME</th>
@@ -3663,6 +3664,7 @@ function renderSessionTable(sessions) {
       : `<span title="Originated on this machine" style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--text-dim);background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:2px;padding:.1rem .3rem;margin-left:.4rem;vertical-align:middle;letter-spacing:.08em;">LOCAL</span>`;
     return `<tr style="border-bottom:1px solid var(--border2);">
       <td style="padding:.55rem .8rem;font-family:'Courier New',monospace;font-size:.7rem;color:var(--cyan);white-space:nowrap;">${s.sessionId}${foreignBadge}</td>
+      <td style="padding:.55rem .6rem;font-size:.68rem;color:var(--text-bright);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${s.candidateName||''}${s.candidateOrg?' · '+s.candidateOrg:''}">${s.candidateName ? `<span style="color:var(--text-bright)">${s.candidateName}</span>${s.candidateOrg?`<br><span style="font-size:.55rem;color:var(--text-dim)">${s.candidateOrg}</span>`:''}` : '<span style="color:var(--text-dim);font-style:italic">—</span>'}</td>
       <td style="padding:.55rem .6rem;font-size:.62rem;color:var(--amber);font-family:'Orbitron',monospace;">${licLabel[s.license]||s.license.toUpperCase()}</td>
       <td style="padding:.55rem .6rem;font-size:.7rem;color:var(--text);text-align:center;">${s.score}/${s.total} <span style="color:var(--text-dim)">(${s.pct}%)</span></td>
       <td style="padding:.55rem .6rem;font-size:.58rem;color:var(--text-dim);white-space:nowrap;">${dateStr}</td>
@@ -3675,7 +3677,7 @@ function renderSessionTable(sessions) {
       <td style="padding:.55rem .6rem;">
         <div style="display:flex;gap:.35rem;flex-wrap:wrap;">
           <button onclick="adminCopyCode('${s.unlockCode}','${s.sessionId}',${i})" style="font-family:'Orbitron',monospace;font-size:.44rem;font-weight:700;padding:.2rem .5rem;border-radius:3px;cursor:pointer;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.3);color:var(--cyan);">⎘ COPY</button>
-          <button onclick="adminGenerateCert('${s.sessionId}','${s.unlockCode}','${s.license}',${s.score})" style="font-family:'Orbitron',monospace;font-size:.44rem;font-weight:700;padding:.2rem .5rem;border-radius:3px;cursor:pointer;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.35);color:gold;">🏅 CERT</button>
+          <button onclick="adminGenerateCert('${s.sessionId}','${s.unlockCode}','${s.license}',${s.score},${JSON.stringify(s.candidateName||'')},${JSON.stringify(s.candidateOrg||'')})" style="font-family:'Orbitron',monospace;font-size:.44rem;font-weight:700;padding:.2rem .5rem;border-radius:3px;cursor:pointer;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.35);color:gold;">🏅 CERT</button>
         </div>
       </td>
       <td style="padding:.55rem .6rem;text-align:center;font-family:'Orbitron',monospace;font-size:.5rem;color:${statusColor};">${statusLabel}</td>
@@ -3758,11 +3760,14 @@ async function adminCopyCode(code, sessionId, idx) {
   }
 }
 
-function adminGenerateCert(sessionId, unlockCode, license, score) {
+function adminGenerateCert(sessionId, unlockCode, license, score, candidateName, candidateOrg) {
   state.license = license;
   state.correct = score;
   state.currentSession = { sessionId, unlockCode };
   document.getElementById('adminPanelModal').style.display = 'none';
+  // Pre-fill name/org if already stored
+  document.getElementById('certNameInput').value = candidateName || '';
+  document.getElementById('certOrgInput').value  = candidateOrg  || '';
   openCertModal();
 }
 
@@ -3910,6 +3915,14 @@ function generateCertificate() {
   document.getElementById('certificateDoc').innerHTML = html;
   document.getElementById('certNameModal').style.display = 'none';
   document.getElementById('certModal').style.display = 'block';
+
+  // Persist name + org against this session record
+  if (state.currentSession) {
+    updateSessionField(state.currentSession.sessionId, {
+      candidateName: name,
+      candidateOrg:  org || ''
+    });
+  }
 }
 
 function printCertificate() {
