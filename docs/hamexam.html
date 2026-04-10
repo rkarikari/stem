@@ -3759,14 +3759,14 @@ async function adminCopyCode(code, sessionId, idx) {
 }
 
 function adminGenerateCert(sessionId, unlockCode, license, score) {
-  // Set state so generateCertificate() works correctly
   state.license = license;
   state.correct = score;
   state.currentSession = { sessionId, unlockCode };
-  // Close admin panel before opening cert modal
   document.getElementById('adminPanelModal').style.display = 'none';
   openCertModal();
 }
+
+async function clearAllSessions() {
   const hasServer = isServerConfigured();
   const msg = hasServer
     ? 'Clear ALL records?\n\n• YES — delete from server (affects all machines)\n• Cancel to abort'
@@ -3971,6 +3971,7 @@ if ((globalStats.bestStreak || 0) >= 3) {
     <div style="font-family:'Orbitron',monospace;font-size:.8rem;font-weight:700;color:var(--cyan);letter-spacing:.18em;margin-bottom:.3rem;">ADMIN ACCESS</div>
     <div style="font-size:.6rem;color:var(--text-dim);margin-bottom:1.4rem;letter-spacing:.05em;">Enter administrator password to continue</div>
     <form onsubmit="event.preventDefault();submitAdminLogin()" autocomplete="on">
+      <input type="text" name="username" value="admin" autocomplete="username" style="display:none;" readonly />
       <input id="adminPassInput" type="password" placeholder="Password" autocomplete="current-password"
         style="width:100%;background:#060e07;border:1px solid var(--border);border-radius:4px;padding:.55rem .9rem;font-family:'Share Tech Mono',monospace;font-size:.9rem;color:var(--text);outline:none;margin-bottom:.8rem;letter-spacing:.1em;" />
       <div id="adminLoginError" style="display:none;font-size:.6rem;color:var(--red);margin-bottom:.7rem;">✗ Incorrect password.</div>
