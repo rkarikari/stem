@@ -2970,7 +2970,7 @@ function showResults() {
     const sessionId = generateSessionId();
     const unlockCode = generateUnlockCode();
     state.currentSession = { sessionId, unlockCode };
-    storeSession({ sessionId, unlockCode, license: state.license, score, total: pool.examQ, pct, date: new Date().toISOString() });
+    storeSession({ sessionId, unlockCode, license: state.license, score, total: pool.examQ, pct, date: new Date().toISOString() }); // fire-and-forget async (local write is sync inside)
     document.getElementById('sessionIdDisplay').textContent = sessionId;
     certWrap.style.display = 'block';
     document.getElementById('certUnlockInput').value = '';
@@ -3142,9 +3142,134 @@ let certData = {};
 
 // ══════════════════════════════════════════════════════
 // SESSION & UNLOCK CODE SYSTEM
+// Dual-layer storage: localStorage (instant/offline cache)
+// + JSONBin.io server (cross-device, source of truth)
 // ══════════════════════════════════════════════════════
-const ADMIN_PASSWORD = 'radiosport2025'; // Change via Admin panel
+const ADMIN_PASSWORD = 'radiosport2025';
+const JSONBIN_BASE   = 'https://api.jsonbin.io/v3';
 
+// ── Server config helpers ─────────────────────────────
+function getServerCfg() {
+  try { return JSON.parse(localStorage.getItem('rs_server_cfg') || 'null'); } catch(e) { return null; }
+}
+function saveServerCfg(cfg) {
+  localStorage.setItem('rs_server_cfg', JSON.stringify(cfg));
+}
+function isServerConfigured() {
+  const c = getServerCfg();
+  return c && c.apiKey && c.binId;
+}
+
+// ── JSONBin API wrappers ──────────────────────────────
+async function jbFetch(path, method='GET', body=null) {
+  const cfg = getServerCfg();
+  if (!cfg || !cfg.apiKey) throw new Error('Server not configured');
+  const opts = {
+    method,
+    headers: { 'Content-Type':'application/json', 'X-Master-Key': cfg.apiKey }
+  };
+  if (body !== null) opts.body = JSON.stringify(body);
+  const res = await fetch(JSONBIN_BASE + path, opts);
+  if (!res.ok) {
+    const txt = await res.text().catch(()=>'');
+    throw new Error(`JSONBin ${res.status}: ${txt}`);
+  }
+  return res.json();
+}
+
+async function serverReadSessions() {
+  const cfg = getServerCfg();
+  const data = await jbFetch(`/b/${cfg.binId}/latest`);
+  return Array.isArray(data.record) ? data.record : [];
+}
+
+async function serverWriteSessions(sessions) {
+  const cfg = getServerCfg();
+  await jbFetch(`/b/${cfg.binId}`, 'PUT', sessions);
+}
+
+async function serverCreateBin(apiKey) {
+  const res = await fetch(`${JSONBIN_BASE}/b`, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'X-Master-Key': apiKey, 'X-Bin-Name': 'RadioSport-Sessions', 'X-Bin-Private': 'true' },
+    body: JSON.stringify([])
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(()=>'');
+    throw new Error(`Create bin failed ${res.status}: ${txt}`);
+  }
+  const data = await res.json();
+  return data.metadata.id;
+}
+
+// ── Merge sessions for DISPLAY only — result is never written to localStorage ──
+// Sessions from other machines (_foreign) are shown in the admin panel but
+// never touch localStorage on this machine.
+function mergeForDisplay(server, local) {
+  const map = new Map();
+  local.forEach(s => map.set(s.sessionId, s));
+  server.forEach(s => {
+    if (map.has(s.sessionId)) {
+      // Own session: update its codeSent/codeUsed status from server
+      map.set(s.sessionId, s);
+    } else {
+      // Foreign session: in-memory only, flagged so updateSessionField skips local write
+      map.set(s.sessionId, { ...s, _foreign: true });
+    }
+  });
+  return [...map.values()].sort((a,b) => new Date(b.date) - new Date(a.date));
+}
+
+// ── Local storage helpers ─────────────────────────────
+function localGetSessions() {
+  try { return JSON.parse(localStorage.getItem('rs_sessions') || '[]'); } catch(e) { return []; }
+}
+function localSetSessions(sessions) {
+  localStorage.setItem('rs_sessions', JSON.stringify(sessions));
+}
+
+// ── Public API ────────────────────────────────────────
+function getSessions() { return localGetSessions(); }
+
+async function storeSession(sess) {
+  const record = { ...sess, codeSent: false, codeUsed: false };
+  // 1. Write to local immediately
+  const local = localGetSessions();
+  local.unshift(record);
+  localSetSessions(local);
+  // 2. Push to server in background (don't block UI)
+  if (isServerConfigured()) {
+    try {
+      const server = await serverReadSessions();
+      server.unshift(record);
+      await serverWriteSessions(server);
+    } catch(e) {
+      console.warn('Server write failed (local saved):', e.message);
+    }
+  }
+}
+
+async function updateSessionField(sessionId, fields) {
+  // Only update localStorage if this session originated on this machine
+  const local = localGetSessions();
+  const li = local.findIndex(s => s.sessionId === sessionId);
+  if (li >= 0) {
+    Object.assign(local[li], fields);
+    localSetSessions(local); // safe: this session is ours
+  }
+  // Always update server (works for both own and foreign sessions)
+  if (isServerConfigured()) {
+    try {
+      const server = await serverReadSessions();
+      const si = server.findIndex(s => s.sessionId === sessionId);
+      if (si >= 0) { Object.assign(server[si], fields); await serverWriteSessions(server); }
+    } catch(e) {
+      console.warn('Server update failed:', e.message);
+    }
+  }
+}
+
+// ── Code & Session ID generators ─────────────────────
 function generateSessionId() {
   const yr = new Date().getFullYear();
   const rnd = Math.random().toString(36).substring(2,6).toUpperCase();
@@ -3158,17 +3283,7 @@ function generateUnlockCode() {
     if (i === 3) code += '-';
     code += chars[Math.floor(Math.random() * chars.length)];
   }
-  return code; // e.g. ABC-1234
-}
-
-function storeSession(sess) {
-  let sessions = JSON.parse(localStorage.getItem('rs_sessions') || '[]');
-  sessions.unshift({ ...sess, codeSent: false, codeUsed: false });
-  localStorage.setItem('rs_sessions', JSON.stringify(sessions));
-}
-
-function getSessions() {
-  return JSON.parse(localStorage.getItem('rs_sessions') || '[]');
+  return code;
 }
 
 function copySessionId() {
@@ -3177,16 +3292,13 @@ function copySessionId() {
   showToast('Session ID copied!');
 }
 
-function verifyCertCode() {
+async function verifyCertCode() {
   const input = document.getElementById('certUnlockInput').value.trim().toUpperCase();
   const errEl = document.getElementById('certUnlockError');
   if (!state.currentSession) return;
   if (input === state.currentSession.unlockCode) {
     errEl.style.display = 'none';
-    // Mark code as used
-    let sessions = getSessions();
-    const idx = sessions.findIndex(s => s.sessionId === state.currentSession.sessionId);
-    if (idx >= 0) { sessions[idx].codeUsed = true; localStorage.setItem('rs_sessions', JSON.stringify(sessions)); }
+    await updateSessionField(state.currentSession.sessionId, { codeUsed: true });
     openCertModal();
   } else {
     errEl.style.display = 'block';
@@ -3199,7 +3311,6 @@ function openCertModal() {
   document.getElementById('certNameModal').style.display = 'flex';
   document.getElementById('certNameInput').focus();
 }
-
 function closeCertModal() {
   document.getElementById('certNameModal').style.display = 'none';
 }
@@ -3208,6 +3319,7 @@ function closeCertModal() {
 // ADMIN PANEL
 // ══════════════════════════════════════════════════════
 let adminAuthed = false;
+let adminSessions = []; // current working set shown in panel
 
 function openAdminLogin() {
   document.getElementById('adminLoginModal').style.display = 'flex';
@@ -3230,9 +3342,12 @@ function submitAdminLogin() {
   }
 }
 
-function openAdminPanel() {
-  renderAdminPanel();
+async function openAdminPanel() {
+  // Start with local data immediately, then refresh from server
+  adminSessions = localGetSessions();
+  renderAdminPanel('local');
   document.getElementById('adminPanelModal').style.display = 'flex';
+  await adminRefresh();
 }
 
 function closeAdminPanel() {
@@ -3240,122 +3355,250 @@ function closeAdminPanel() {
   adminAuthed = false;
 }
 
-function renderAdminPanel() {
-  const sessions = getSessions();
-  const licLabel = { technician:'TECH', general:'GEN', extra:'EXTRA' };
+async function adminRefresh() {
+  const indicator = document.getElementById('syncIndicator');
+  if (indicator) { indicator.textContent = '⟳ Syncing…'; indicator.style.color = 'var(--amber)'; }
+  if (!isServerConfigured()) {
+    adminSessions = localGetSessions();
+    renderSessionTable(adminSessions);
+    if (indicator) { indicator.textContent = '⚠ No server — local only'; indicator.style.color = 'var(--text-dim)'; }
+    return;
+  }
+  try {
+    const server = await serverReadSessions();
+    const local  = localGetSessions();
+    // Merge for display only — foreign (server-only) records are in memory, never localStorage
+    adminSessions = mergeForDisplay(server, local);
+    renderSessionTable(adminSessions);
+    if (indicator) {
+      indicator.textContent = `☁ Server · ${adminSessions.length} record${adminSessions.length!==1?'s':''}`;
+      indicator.style.color = 'var(--green)';
+    }
+  } catch(e) {
+    // Server unreachable — fall back to local-only display, no localStorage writes
+    adminSessions = localGetSessions();
+    renderSessionTable(adminSessions);
+    if (indicator) { indicator.textContent = '✗ Server error — showing local only'; indicator.style.color = 'var(--red)'; }
+    console.error('Admin refresh error:', e);
+  }
+}
 
-  let rows = sessions.length === 0
-    ? `<tr><td colspan="7" style="text-align:center;padding:1.5rem;color:var(--text-dim);font-size:.65rem;">No sessions recorded yet.</td></tr>`
-    : sessions.map((s,i) => {
-        const d = new Date(s.date);
-        const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-        const statusColor = s.codeUsed ? 'var(--green)' : s.codeSent ? 'var(--amber)' : 'var(--text-dim)';
-        const statusLabel = s.codeUsed ? '✓ USED' : s.codeSent ? '⟳ SENT' : '— PENDING';
-        return `<tr style="border-bottom:1px solid var(--border2);">
-          <td style="padding:.55rem .8rem;font-family:'Courier New',monospace;font-size:.7rem;color:var(--cyan);white-space:nowrap;">${s.sessionId}</td>
-          <td style="padding:.55rem .6rem;font-size:.65rem;color:var(--amber);font-family:'Orbitron',monospace;">${licLabel[s.license]||s.license.toUpperCase()}</td>
-          <td style="padding:.55rem .6rem;font-size:.7rem;color:var(--text);text-align:center;">${s.score}/${s.total} <span style="color:var(--text-dim)">(${s.pct}%)</span></td>
-          <td style="padding:.55rem .6rem;font-size:.6rem;color:var(--text-dim);white-space:nowrap;">${dateStr}</td>
-          <td style="padding:.55rem .8rem;">
-            <div style="display:flex;align-items:center;gap:.5rem;">
-              <span id="code-display-${i}" style="font-family:'Courier New',monospace;font-size:.75rem;color:${s.codeUsed?'var(--text-dim)':'gold'};letter-spacing:.12em;filter:${s.codeSent||s.codeUsed?'none':'blur(4px)'};transition:filter .3s;user-select:${s.codeSent||s.codeUsed?'all':'none'};" data-code="${s.unlockCode}">${s.unlockCode}</span>
-              ${!s.codeSent && !s.codeUsed ? `<button onclick="revealCode(${i})" style="font-family:'Orbitron',monospace;font-size:.45rem;font-weight:700;letter-spacing:.08em;padding:.2rem .45rem;border-radius:3px;cursor:pointer;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.4);color:gold;">REVEAL</button>` : ''}
-            </div>
-          </td>
-          <td style="padding:.55rem .6rem;">
-            <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
-              <button onclick="adminCopyCode('${s.unlockCode}','${s.sessionId}',${i})" style="font-family:'Orbitron',monospace;font-size:.45rem;font-weight:700;letter-spacing:.08em;padding:.2rem .5rem;border-radius:3px;cursor:pointer;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.3);color:var(--cyan);">⎘ COPY</button>
-            </div>
-          </td>
-          <td style="padding:.55rem .6rem;text-align:center;font-family:'Orbitron',monospace;font-size:.5rem;color:${statusColor};">${statusLabel}</td>
-        </tr>`;
-      }).join('');
-
-  const storedPw = localStorage.getItem('rs_admin_pw') || ADMIN_PASSWORD;
+function renderAdminPanel(source='server') {
+  const cfg = getServerCfg() || {};
+  const configured = isServerConfigured();
 
   document.getElementById('adminPanelContent').innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;flex-wrap:wrap;gap:.6rem;">
+    <!-- HEADER ROW -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.1rem;flex-wrap:wrap;gap:.6rem;">
       <div>
         <div style="font-family:'Orbitron',monospace;font-size:.8rem;font-weight:700;color:var(--cyan);letter-spacing:.15em;">⚙ ADMIN PANEL</div>
-        <div style="font-size:.58rem;color:var(--text-dim);margin-top:.2rem;">${sessions.length} session${sessions.length!==1?'s':''} recorded</div>
+        <div id="syncIndicator" style="font-size:.58rem;color:var(--text-dim);margin-top:.25rem;">${configured ? '⟳ Loading…' : '⚠ No server — local only'}</div>
       </div>
-      <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
-        <button onclick="clearAllSessions()" style="font-family:'Orbitron',monospace;font-size:.5rem;font-weight:700;letter-spacing:.1em;padding:.3rem .65rem;border-radius:3px;cursor:pointer;background:rgba(255,68,102,0.08);border:1px solid rgba(255,68,102,0.35);color:var(--red);">🗑 CLEAR ALL</button>
-        <button onclick="openChangePassword()" style="font-family:'Orbitron',monospace;font-size:.5rem;font-weight:700;letter-spacing:.1em;padding:.3rem .65rem;border-radius:3px;cursor:pointer;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.25);color:var(--cyan);">🔑 CHANGE PW</button>
-        <button onclick="closeAdminPanel()" style="font-family:'Orbitron',monospace;font-size:.5rem;font-weight:700;letter-spacing:.1em;padding:.3rem .65rem;border-radius:3px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--text-dim);">✕ CLOSE</button>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+        <button onclick="adminRefresh()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.28rem .6rem;border-radius:3px;cursor:pointer;background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.3);color:var(--green);">⟳ REFRESH</button>
+        <button onclick="clearAllSessions()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.28rem .6rem;border-radius:3px;cursor:pointer;background:rgba(255,68,102,0.07);border:1px solid rgba(255,68,102,0.3);color:var(--red);">🗑 CLEAR ALL</button>
+        <button onclick="toggleAdminSettings()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.28rem .6rem;border-radius:3px;cursor:pointer;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.25);color:var(--cyan);">⚙ SETTINGS</button>
+        <button onclick="closeAdminPanel()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.28rem .6rem;border-radius:3px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--text-dim);">✕ CLOSE</button>
       </div>
     </div>
-    <div style="font-size:.6rem;color:var(--text-dim);margin-bottom:.8rem;padding:.6rem .9rem;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.15);border-radius:4px;line-height:1.6;">
-      <strong style="color:var(--cyan)">Workflow:</strong> Test takers receive their <strong style="color:var(--text)">Session ID</strong> on the results screen. They present this ID to you. Click <strong style="color:gold">REVEAL</strong> to see their unlock code, then <strong style="color:var(--cyan)">COPY</strong> and send it to them. They enter the code to generate their certificate.
+
+    <!-- WORKFLOW HINT -->
+    <div style="font-size:.6rem;color:var(--text-dim);margin-bottom:.8rem;padding:.55rem .9rem;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.15);border-radius:4px;line-height:1.6;">
+      <strong style="color:var(--cyan)">Workflow:</strong> Candidate passes → receives <strong style="color:var(--text)">Session ID</strong> → presents it to you → click <strong style="color:gold">REVEAL</strong> → <strong style="color:var(--cyan)">COPY</strong> code → send to candidate → they enter it to generate their certificate.
     </div>
+
+    <!-- SETTINGS PANEL (collapsed by default) -->
+    <div id="adminSettingsPanel" style="display:none;margin-bottom:1rem;padding:1rem 1.2rem;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:5px;">
+
+      <!-- CLOUD STORAGE SECTION -->
+      <div style="margin-bottom:1.1rem;">
+        <div style="font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:var(--cyan);letter-spacing:.12em;margin-bottom:.5rem;">
+          ☁ CLOUD STORAGE <span style="font-family:'Share Tech Mono';font-size:.55rem;font-weight:normal;color:var(--text-dim);letter-spacing:0;"> — JSONBin.io (free)</span>
+        </div>
+        <div style="font-size:.6rem;color:var(--text-dim);line-height:1.7;margin-bottom:.8rem;">
+          Sessions are written to JSONBin.io so the admin can view them from any device.
+          Get a free API key at <strong style="color:var(--cyan)">jsonbin.io</strong> → Account → API Keys → Master Key.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:.5rem;margin-bottom:.5rem;align-items:center;">
+          <input id="cfgApiKey" type="password" placeholder="$2a$10$… Master Key" value="${cfg.apiKey||''}"
+            style="background:#060e07;border:1px solid var(--border);border-radius:4px;padding:.45rem .7rem;font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--text);outline:none;width:100%;" />
+          <button onclick="toggleApiKeyVisibility()" style="font-family:'Orbitron',monospace;font-size:.45rem;padding:.4rem .55rem;border-radius:3px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--text-dim);" id="apiKeyToggle">SHOW</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto auto;gap:.5rem;align-items:center;">
+          <input id="cfgBinId" type="text" placeholder="Bin ID (e.g. 64abc123…)" value="${cfg.binId||''}"
+            style="background:#060e07;border:1px solid var(--border);border-radius:4px;padding:.45rem .7rem;font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--text);outline:none;width:100%;" />
+          <button onclick="saveServerSettings()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.4rem .7rem;border-radius:3px;cursor:pointer;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.35);color:var(--cyan);white-space:nowrap;">SAVE</button>
+          <button onclick="adminCreateBin()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.4rem .7rem;border-radius:3px;cursor:pointer;background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.3);color:var(--green);white-space:nowrap;">+ AUTO-CREATE</button>
+        </div>
+        <div id="serverSettingsMsg" style="display:none;font-size:.6rem;margin-top:.45rem;"></div>
+        <div style="font-size:.57rem;color:var(--text-dim);margin-top:.5rem;line-height:1.5;">
+          <strong style="color:var(--amber)">AUTO-CREATE</strong> — enter your Master Key and click this to create a new private bin automatically (no Bin ID needed).
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border2);margin:.8rem 0;">
+
+      <!-- PASSWORD SECTION -->
+      <div>
+        <div style="font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:var(--cyan);letter-spacing:.12em;margin-bottom:.5rem;">🔑 ADMIN PASSWORD</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+          <input id="newPwInput" type="password" placeholder="New password (min 4 chars)"
+            style="background:#060e07;border:1px solid var(--border);border-radius:4px;padding:.45rem .7rem;font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--text);outline:none;min-width:200px;" />
+          <button onclick="saveNewPassword()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.4rem .8rem;border-radius:3px;cursor:pointer;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.35);color:var(--cyan);">SAVE</button>
+        </div>
+        <div id="pwSaveMsg" style="display:none;font-size:.6rem;color:var(--green);margin-top:.4rem;">✓ Password updated.</div>
+      </div>
+    </div>
+
+    <!-- SESSION TABLE -->
     <div style="overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;">
         <thead>
           <tr style="border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);">
-            <th style="padding:.5rem .8rem;text-align:left;font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text-dim);letter-spacing:.1em;font-weight:700;">SESSION ID</th>
-            <th style="padding:.5rem .6rem;text-align:left;font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text-dim);letter-spacing:.1em;font-weight:700;">CLASS</th>
-            <th style="padding:.5rem .6rem;text-align:center;font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text-dim);letter-spacing:.1em;font-weight:700;">SCORE</th>
-            <th style="padding:.5rem .6rem;text-align:left;font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text-dim);letter-spacing:.1em;font-weight:700;">DATE / TIME</th>
-            <th style="padding:.5rem .8rem;text-align:left;font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text-dim);letter-spacing:.1em;font-weight:700;">UNLOCK CODE</th>
-            <th style="padding:.5rem .6rem;font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text-dim);letter-spacing:.1em;font-weight:700;">ACTIONS</th>
-            <th style="padding:.5rem .6rem;text-align:center;font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text-dim);letter-spacing:.1em;font-weight:700;">STATUS</th>
+            <th style="padding:.5rem .8rem;text-align:left;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text-dim);letter-spacing:.1em;">SESSION ID</th>
+            <th style="padding:.5rem .6rem;text-align:left;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text-dim);letter-spacing:.1em;">CLASS</th>
+            <th style="padding:.5rem .6rem;text-align:center;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text-dim);letter-spacing:.1em;">SCORE</th>
+            <th style="padding:.5rem .6rem;text-align:left;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text-dim);letter-spacing:.1em;">DATE / TIME</th>
+            <th style="padding:.5rem .8rem;text-align:left;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text-dim);letter-spacing:.1em;">UNLOCK CODE</th>
+            <th style="padding:.5rem .6rem;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text-dim);letter-spacing:.1em;">ACTIONS</th>
+            <th style="padding:.5rem .6rem;text-align:center;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text-dim);letter-spacing:.1em;">STATUS</th>
           </tr>
         </thead>
-        <tbody id="adminSessionRows">${rows}</tbody>
+        <tbody id="adminSessionRows"><tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-dim);font-size:.65rem;">Loading…</td></tr></tbody>
       </table>
     </div>
-    <div id="changePwSection" style="display:none;margin-top:1.2rem;padding:1rem 1.2rem;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.2);border-radius:5px;">
-      <div style="font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:var(--cyan);letter-spacing:.12em;margin-bottom:.6rem;">CHANGE ADMIN PASSWORD</div>
-      <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
-        <input id="newPwInput" type="password" placeholder="New password" style="background:#060e07;border:1px solid var(--border);border-radius:4px;padding:.45rem .7rem;font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--text);outline:none;min-width:200px;" />
-        <button onclick="saveNewPassword()" style="font-family:'Orbitron',monospace;font-size:.5rem;font-weight:700;letter-spacing:.1em;padding:.4rem .8rem;border-radius:3px;cursor:pointer;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.35);color:var(--cyan);">SAVE</button>
-        <button onclick="document.getElementById('changePwSection').style.display='none'" style="font-family:'Orbitron',monospace;font-size:.5rem;letter-spacing:.1em;padding:.4rem .7rem;border-radius:3px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--text-dim);">CANCEL</button>
-      </div>
-      <div id="pwSaveMsg" style="display:none;font-size:.6rem;color:var(--green);margin-top:.4rem;">✓ Password updated.</div>
-    </div>
   `;
+  // Render whatever sessions we already have (local)
+  renderSessionTable(adminSessions);
 }
 
-function revealCode(idx) {
-  const el = document.getElementById(`code-display-${idx}`);
-  if (el) {
-    el.style.filter = 'none';
-    el.style.userSelect = 'all';
-    const btn = el.nextElementSibling;
-    if (btn) btn.remove();
-    // Mark as codeSent
-    let sessions = getSessions();
-    if (sessions[idx]) {
-      sessions[idx].codeSent = true;
-      localStorage.setItem('rs_sessions', JSON.stringify(sessions));
-    }
+function renderSessionTable(sessions) {
+  const licLabel = { technician:'TECH', general:'GEN', extra:'EXTRA' };
+  const tbody = document.getElementById('adminSessionRows');
+  if (!tbody) return;
+  if (!sessions || sessions.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:1.5rem;color:var(--text-dim);font-size:.65rem;">No sessions recorded yet.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = sessions.map((s, i) => {
+    const d = new Date(s.date);
+    const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    const statusColor = s.codeUsed ? 'var(--green)' : s.codeSent ? 'var(--amber)' : 'var(--text-dim)';
+    const statusLabel = s.codeUsed ? '✓ USED' : s.codeSent ? '⟳ SENT' : '— PENDING';
+    const codeBlur = (!s.codeSent && !s.codeUsed) ? 'blur(5px)' : 'none';
+    const codeSelect = (s.codeSent || s.codeUsed) ? 'all' : 'none';
+    // Foreign sessions (from other machines) get a subtle cloud badge on the Session ID
+    const foreignBadge = s._foreign
+      ? `<span title="From another machine — not stored locally here" style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--cyan);background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.25);border-radius:2px;padding:.1rem .3rem;margin-left:.4rem;vertical-align:middle;letter-spacing:.08em;">☁</span>`
+      : `<span title="Originated on this machine" style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--text-dim);background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:2px;padding:.1rem .3rem;margin-left:.4rem;vertical-align:middle;letter-spacing:.08em;">LOCAL</span>`;
+    return `<tr style="border-bottom:1px solid var(--border2);">
+      <td style="padding:.55rem .8rem;font-family:'Courier New',monospace;font-size:.7rem;color:var(--cyan);white-space:nowrap;">${s.sessionId}${foreignBadge}</td>
+      <td style="padding:.55rem .6rem;font-size:.62rem;color:var(--amber);font-family:'Orbitron',monospace;">${licLabel[s.license]||s.license.toUpperCase()}</td>
+      <td style="padding:.55rem .6rem;font-size:.7rem;color:var(--text);text-align:center;">${s.score}/${s.total} <span style="color:var(--text-dim)">(${s.pct}%)</span></td>
+      <td style="padding:.55rem .6rem;font-size:.58rem;color:var(--text-dim);white-space:nowrap;">${dateStr}</td>
+      <td style="padding:.55rem .8rem;">
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <span id="code-display-${i}" style="font-family:'Courier New',monospace;font-size:.75rem;color:${s.codeUsed?'var(--text-dim)':'gold'};letter-spacing:.12em;filter:${codeBlur};transition:filter .3s;user-select:${codeSelect};">${s.unlockCode}</span>
+          ${!s.codeSent && !s.codeUsed ? `<button onclick="revealCode(${i})" style="font-family:'Orbitron',monospace;font-size:.44rem;font-weight:700;padding:.2rem .45rem;border-radius:3px;cursor:pointer;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.4);color:gold;">REVEAL</button>` : ''}
+        </div>
+      </td>
+      <td style="padding:.55rem .6rem;">
+        <button onclick="adminCopyCode('${s.unlockCode}','${s.sessionId}',${i})" style="font-family:'Orbitron',monospace;font-size:.44rem;font-weight:700;padding:.2rem .5rem;border-radius:3px;cursor:pointer;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.3);color:var(--cyan);">⎘ COPY</button>
+      </td>
+      <td style="padding:.55rem .6rem;text-align:center;font-family:'Orbitron',monospace;font-size:.5rem;color:${statusColor};">${statusLabel}</td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleAdminSettings() {
+  const p = document.getElementById('adminSettingsPanel');
+  if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleApiKeyVisibility() {
+  const input = document.getElementById('cfgApiKey');
+  const btn   = document.getElementById('apiKeyToggle');
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'HIDE'; }
+  else { input.type = 'password'; btn.textContent = 'SHOW'; }
+}
+
+function saveServerSettings() {
+  const apiKey = document.getElementById('cfgApiKey').value.trim();
+  const binId  = document.getElementById('cfgBinId').value.trim();
+  const msg    = document.getElementById('serverSettingsMsg');
+  if (!apiKey) { showSettingsMsg('✗ API key is required.', 'var(--red)'); return; }
+  saveServerCfg({ apiKey, binId });
+  showSettingsMsg(binId ? '✓ Settings saved. Refreshing…' : '✓ API key saved. Enter Bin ID or click AUTO-CREATE.', 'var(--green)');
+  if (binId) adminRefresh();
+}
+
+async function adminCreateBin() {
+  const apiKey = document.getElementById('cfgApiKey').value.trim();
+  if (!apiKey) { showSettingsMsg('✗ Enter your Master Key first.', 'var(--red)'); return; }
+  showSettingsMsg('⟳ Creating bin…', 'var(--amber)');
+  try {
+    // Temporarily save the key so serverCreateBin can use it
+    saveServerCfg({ apiKey, binId: '' });
+    const binId = await serverCreateBin(apiKey);
+    saveServerCfg({ apiKey, binId });
+    document.getElementById('cfgBinId').value = binId;
+    // Push existing local sessions to the new bin
+    const local = localGetSessions();
+    if (local.length > 0) await serverWriteSessions(local);
+    showSettingsMsg(`✓ Bin created: ${binId}. Connected!`, 'var(--green)');
+    adminRefresh();
+  } catch(e) {
+    showSettingsMsg(`✗ ${e.message}`, 'var(--red)');
   }
 }
 
-function adminCopyCode(code, sessionId, idx) {
+function showSettingsMsg(text, color) {
+  const el = document.getElementById('serverSettingsMsg');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = color;
+  el.style.display = 'block';
+}
+
+async function revealCode(idx) {
+  const el = document.getElementById(`code-display-${idx}`);
+  if (!el) return;
+  el.style.filter = 'none';
+  el.style.userSelect = 'all';
+  const btn = el.nextElementSibling;
+  if (btn && btn.tagName === 'BUTTON') btn.remove();
+  const sess = adminSessions[idx];
+  if (sess && !sess.codeSent) {
+    sess.codeSent = true;
+    await updateSessionField(sess.sessionId, { codeSent: true });
+  }
+}
+
+async function adminCopyCode(code, sessionId, idx) {
   navigator.clipboard.writeText(code).catch(()=>{});
   showToast(`Code for ${sessionId} copied!`);
-  // Also mark as sent
-  let sessions = getSessions();
-  if (sessions[idx] && !sessions[idx].codeUsed) {
-    sessions[idx].codeSent = true;
-    localStorage.setItem('rs_sessions', JSON.stringify(sessions));
+  const sess = adminSessions[idx];
+  if (sess && !sess.codeUsed) {
+    sess.codeSent = true;
+    await updateSessionField(sessionId, { codeSent: true });
+    renderSessionTable(adminSessions);
   }
-  // Re-render to update status
-  renderAdminPanel();
 }
 
-function clearAllSessions() {
-  if (!confirm('Delete ALL session records? This cannot be undone.')) return;
-  localStorage.removeItem('rs_sessions');
-  renderAdminPanel();
-}
-
-function openChangePassword() {
-  const sec = document.getElementById('changePwSection');
-  sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
-  document.getElementById('pwSaveMsg').style.display = 'none';
-  document.getElementById('newPwInput').value = '';
+async function clearAllSessions() {
+  const hasServer = isServerConfigured();
+  const msg = hasServer
+    ? 'Clear ALL records?\n\n• YES — delete from server (affects all machines)\n• Cancel to abort'
+    : 'Clear all local session records on this machine? This cannot be undone.';
+  if (!confirm(msg)) return;
+  localSetSessions([]);
+  adminSessions = [];
+  if (hasServer) {
+    try { await serverWriteSessions([]); } catch(e) { console.warn('Server clear failed:', e); }
+  }
+  renderSessionTable([]);
+  const ind = document.getElementById('syncIndicator');
+  if (ind) ind.textContent = hasServer ? '☁ Server · 0 records' : '⚠ No server — local only';
 }
 
 function saveNewPassword() {
@@ -3367,14 +3610,7 @@ function saveNewPassword() {
   setTimeout(() => { document.getElementById('pwSaveMsg').style.display = 'none'; }, 2500);
 }
 
-function openCertModal() {
-  document.getElementById('certNameModal').style.display = 'flex';
-  document.getElementById('certNameInput').focus();
-}
-
-function closeCertModal() {
-  document.getElementById('certNameModal').style.display = 'none';
-}
+function openChangePassword() {} // No-op: merged into settings panel
 
 function generateCertificate() {
   const name = document.getElementById('certNameInput').value.trim() || 'Candidate Name';
