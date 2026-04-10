@@ -523,6 +523,33 @@ body::after{
             <div class="stat-mini"><div class="stat-mini-val" id="statTime">0m</div><div class="stat-mini-lbl">STUDY TIME</div></div>
           </div>
         </div>
+
+        <!-- RETRIEVE CERTIFICATE -->
+        <div style="max-width:900px;margin:2rem auto 0;">
+          <div class="section-head">RETRIEVE CERTIFICATE</div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1.4rem 1.6rem;">
+            <div style="font-size:.65rem;color:var(--text-dim);line-height:1.7;margin-bottom:1.1rem;">
+              Already passed? Enter your <strong style="color:var(--text)">Session ID</strong> and <strong style="color:gold">Unlock Code</strong> received from your administrator to generate your certificate at any time.
+            </div>
+            <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;">
+              <div>
+                <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--cyan);letter-spacing:.12em;margin-bottom:.35rem;">SESSION ID</div>
+                <input id="retrieveSessionId" type="text" placeholder="RS-2025-XXXX"
+                  style="background:#060e07;border:1px solid rgba(0,229,255,0.3);border-radius:4px;padding:.5rem .8rem;font-family:'Courier New',monospace;font-size:.85rem;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;outline:none;width:160px;"
+                  oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')document.getElementById('retrieveCode').focus()" />
+              </div>
+              <div>
+                <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:gold;letter-spacing:.12em;margin-bottom:.35rem;">UNLOCK CODE</div>
+                <input id="retrieveCode" type="text" placeholder="ABC-1234" maxlength="9"
+                  style="background:#060e07;border:1px solid rgba(255,215,0,0.3);border-radius:4px;padding:.5rem .8rem;font-family:'Courier New',monospace;font-size:.85rem;color:#ffe066;letter-spacing:.2em;text-transform:uppercase;outline:none;width:140px;"
+                  oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')retrieveCertificate()" />
+              </div>
+              <button onclick="retrieveCertificate()" style="font-family:'Orbitron',monospace;font-size:.58rem;font-weight:700;letter-spacing:.12em;padding:.52rem 1.2rem;border-radius:4px;cursor:pointer;background:rgba(255,215,0,0.1);border:1px solid gold;color:gold;">🏅 RETRIEVE ▶</button>
+            </div>
+            <div id="retrieveError" style="display:none;font-size:.6rem;color:var(--red);margin-top:.6rem;letter-spacing:.05em;">✗ Session ID or code not found. Check your details and try again.</div>
+          </div>
+        </div>
+
       </div><!-- /homeScreen -->
 
       <!-- MODE SCREEN -->
@@ -654,6 +681,11 @@ body::after{
               </div>
               <div id="certUnlockError" style="display:none;font-size:.6rem;color:var(--red);margin-top:.5rem;letter-spacing:.05em;">✗ Invalid code. Please check with your administrator.</div>
             </div>
+          </div>
+
+          <!-- Telegram collection notice (shown on pass) -->
+          <div id="telegramNotice" style="display:none;margin-top:1.2rem;padding:.85rem 1.2rem;border-radius:5px;border:1px solid rgba(0,229,255,0.25);background:rgba(0,229,255,0.05);font-size:.68rem;color:var(--text-dim);line-height:1.8;text-align:center;">
+            📡 <strong style="color:var(--cyan);font-family:'Orbitron',monospace;letter-spacing:.08em;">Contact: RadioSport[crrc]</strong> — Telegram group for Certificate collection details.
           </div>
           <div id="weakAreasSection" style="margin-top:2rem;text-align:left;"></div>
         </div>
@@ -2544,7 +2576,6 @@ const FIGURES = {
         <polyline points="15,30 20,18 28,42 36,18 44,42 52,18 60,42 65,30" stroke="#00ff88" stroke-width="1.5" fill="none"/>
         <line x1="65" y1="30" x2="80" y2="30" stroke="#00ff88" stroke-width="1.5"/>
         <text x="40" y="12" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">1</text>
-        <text x="40" y="55" fill="#a0ffcc" font-size="8" text-anchor="middle" font-family="monospace">RESISTOR</text>
       </g>
       <!-- Component 2: NPN Transistor -->
       <g transform="translate(150,10)">
@@ -2555,7 +2586,6 @@ const FIGURES = {
         <!-- Arrow on emitter -->
         <polyline points="44,59 50,64 42,68" stroke="#00ff88" stroke-width="1.5" fill="none"/>
         <text x="30" y="8" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">2</text>
-        <text x="30" y="95" fill="#a0ffcc" font-size="8" text-anchor="middle" font-family="monospace">TRANSISTOR</text>
       </g>
       <!-- Component 3: Lamp -->
       <g transform="translate(270,10)">
@@ -2565,7 +2595,6 @@ const FIGURES = {
         <line x1="22" y1="32" x2="38" y2="58" stroke="#00ff88" stroke-width="1.5"/>
         <line x1="38" y1="32" x2="22" y2="58" stroke="#00ff88" stroke-width="1.5"/>
         <text x="30" y="8" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">3</text>
-        <text x="30" y="82" fill="#a0ffcc" font-size="8" text-anchor="middle" font-family="monospace">LAMP</text>
       </g>
       <!-- Component 4: Battery -->
       <g transform="translate(380,20)">
@@ -2579,7 +2608,6 @@ const FIGURES = {
         <line x1="73" y1="25" x2="73" y2="55" stroke="#00ff88" stroke-width="2.5"/>
         <line x1="73" y1="40" x2="98" y2="40" stroke="#00ff88" stroke-width="1.5"/>
         <text x="49" y="12" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">4</text>
-        <text x="49" y="72" fill="#a0ffcc" font-size="8" text-anchor="middle" font-family="monospace">BATTERY</text>
       </g>
     </svg>
   </div>`,
@@ -2595,8 +2623,6 @@ const FIGURES = {
         <circle cx="55" cy="35" r="3" fill="#00ff88"/>
         <line x1="58" y1="35" x2="76" y2="35" stroke="#00ff88" stroke-width="1.5"/>
         <text x="38" y="10" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">3</text>
-        <text x="38" y="60" fill="#a0ffcc" font-size="8" text-anchor="middle" font-family="monospace">SWITCH</text>
-        <text x="38" y="70" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">(SPST)</text>
       </g>
       <!-- Component 4: Transformer -->
       <g transform="translate(110,15)">
@@ -2609,7 +2635,6 @@ const FIGURES = {
         <line x1="70" y1="45" x2="80" y2="45" stroke="#00ff88" stroke-width="1.5"/>
         <line x1="140" y1="45" x2="150" y2="45" stroke="#00ff88" stroke-width="1.5"/>
         <text x="70" y="10" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">4</text>
-        <text x="70" y="82" fill="#a0ffcc" font-size="8" text-anchor="middle" font-family="monospace">TRANSFORMER</text>
       </g>
       <!-- Component 6: Capacitor -->
       <g transform="translate(290,20)">
@@ -2618,7 +2643,6 @@ const FIGURES = {
         <line x1="33" y1="18" x2="33" y2="52" stroke="#00ff88" stroke-width="2.5"/>
         <line x1="33" y1="35" x2="58" y2="35" stroke="#00ff88" stroke-width="1.5"/>
         <text x="29" y="10" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">6</text>
-        <text x="29" y="68" fill="#a0ffcc" font-size="8" text-anchor="middle" font-family="monospace">CAPACITOR</text>
       </g>
       <!-- Component 8: LED -->
       <g transform="translate(380,15)">
@@ -2630,7 +2654,6 @@ const FIGURES = {
         <line x1="52" y1="20" x2="62" y2="8" stroke="#00ff88" stroke-width="1" stroke-dasharray="2,1"/>
         <line x1="58" y1="28" x2="68" y2="16" stroke="#00ff88" stroke-width="1" stroke-dasharray="2,1"/>
         <text x="30" y="8" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">8</text>
-        <text x="30" y="78" fill="#a0ffcc" font-size="8" text-anchor="middle" font-family="monospace">LED</text>
       </g>
       <!-- Component 9: Variable Resistor -->
       <g transform="translate(470,20)">
@@ -2641,7 +2664,6 @@ const FIGURES = {
         <line x1="20" y1="52" x2="40" y2="10" stroke="#00ff88" stroke-width="1.5"/>
         <polyline points="36,12 40,10 40,16" stroke="#00ff88" stroke-width="1.5" fill="none"/>
         <text x="30" y="10" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">9</text>
-        <text x="30" y="72" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">VAR. RESISTOR</text>
       </g>
     </svg>
   </div>`,
@@ -2653,7 +2675,6 @@ const FIGURES = {
       <g transform="translate(20,25)">
         <rect x="0" y="0" width="70" height="55" stroke="#00ff88" stroke-width="1.5" fill="none"/>
         <text x="35" y="25" fill="#a0ffcc" font-size="8" text-anchor="middle" font-family="monospace">TX</text>
-        <text x="35" y="38" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">XMTR</text>
         <line x1="70" y1="27" x2="90" y2="27" stroke="#00ff88" stroke-width="1.5"/>
         <text x="35" y="-4" fill="#ffaa00" font-size="8" text-anchor="middle" font-family="monospace">1</text>
       </g>
@@ -2674,7 +2695,6 @@ const FIGURES = {
         <line x1="20" y1="62" x2="55" y2="18" stroke="#00ff88" stroke-width="1.5"/>
         <polyline points="50,19 55,18 53,24" stroke="#00ff88" stroke-width="1.5" fill="none"/>
         <text x="42" y="5" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">3</text>
-        <text x="42" y="80" fill="#a0ffcc" font-size="8" text-anchor="middle" font-family="monospace">VAR. INDUCTOR</text>
       </g>
       <!-- Component 4: Antenna -->
       <g transform="translate(330,10)">
@@ -2689,7 +2709,6 @@ const FIGURES = {
         <line x1="-30" y1="70" x2="0" y2="70" stroke="#00ff88" stroke-width="1.5"/>
         <line x1="0" y1="70" x2="30" y2="70" stroke="#00ff88" stroke-width="1.5"/>
         <text x="30" y="-2" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">4</text>
-        <text x="30" y="108" fill="#a0ffcc" font-size="8" text-anchor="middle" font-family="monospace">ANTENNA</text>
       </g>
     </svg>
   </div>`,
@@ -2715,7 +2734,6 @@ const FIGURES = {
         <line x1="44" y1="30" x2="62" y2="10" stroke="#00ff88" stroke-width="1.5"/>
         <line x1="44" y1="70" x2="62" y2="90" stroke="#00ff88" stroke-width="1.5"/>
         <text x="33" y="8" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">1</text>
-        <text x="33" y="108" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">N-CH JFET</text>
       </g>
 
       <!-- Symbol 2: NPN BJT -->
@@ -2728,7 +2746,6 @@ const FIGURES = {
         <line x1="22" y1="68" x2="58" y2="88" stroke="#00ff88" stroke-width="1.5"/>
         <polygon points="47,80 54,85 48,89" fill="#00ff88"/>
         <text x="28" y="8" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">2</text>
-        <text x="28" y="108" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">NPN BJT</text>
       </g>
 
       <!-- Symbol 3: PNP BJT -->
@@ -2740,7 +2757,6 @@ const FIGURES = {
         <!-- Arrow points IN toward base (PNP: on collector line) -->
         <polygon points="30,28 37,22 35,30" fill="#00ff88"/>
         <text x="28" y="8" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">3</text>
-        <text x="28" y="108" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">PNP BJT</text>
       </g>
 
       <!-- Symbol 4: Rectifier Diode -->
@@ -2750,7 +2766,6 @@ const FIGURES = {
         <line x1="46" y1="24" x2="46" y2="56" stroke="#00ff88" stroke-width="2"/>
         <line x1="46" y1="40" x2="62" y2="40" stroke="#00ff88" stroke-width="1.5"/>
         <text x="31" y="12" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">4</text>
-        <text x="31" y="76" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">DIODE</text>
       </g>
 
       <!-- Symbol 5: Zener Diode -->
@@ -2763,7 +2778,6 @@ const FIGURES = {
         <line x1="46" y1="56" x2="38" y2="64" stroke="#00ff88" stroke-width="2"/>
         <line x1="46" y1="40" x2="62" y2="40" stroke="#00ff88" stroke-width="1.5"/>
         <text x="31" y="12" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">5</text>
-        <text x="31" y="78" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">ZENER</text>
       </g>
 
       <!-- Symbol 6: Multiple-winding Transformer -->
@@ -2788,8 +2802,6 @@ const FIGURES = {
         <line x1="42" y1="52" x2="62" y2="52" stroke="#00ff88" stroke-width="1.5"/>
         <line x1="42" y1="88" x2="62" y2="88" stroke="#00ff88" stroke-width="1.5"/>
         <text x="31" y="6"  fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">6</text>
-        <text x="31" y="106" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">MULTI-WIND.</text>
-        <text x="31" y="116" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">TRANSFORMER</text>
       </g>
 
       <!-- ══ ROW 2: Symbols 7–11 ══ -->
@@ -2805,8 +2817,6 @@ const FIGURES = {
         <!-- Tap (center lead coming down from coil midpoint at bump 3) -->
         <line x1="34" y1="50" x2="34" y2="70" stroke="#00ff88" stroke-width="1.5"/>
         <text x="34" y="12" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">7</text>
-        <text x="34" y="86" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">TAPPED</text>
-        <text x="34" y="96" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">INDUCTOR</text>
       </g>
 
       <!-- Symbol 8: NPN Darlington Transistor -->
@@ -2826,7 +2836,6 @@ const FIGURES = {
         <line x1="32" y1="50" x2="44" y2="60" stroke="#00ff88" stroke-width="1"/>
         <polygon points="36,55 42,60 37,63" fill="#00ff88"/>
         <text x="26" y="6" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">8</text>
-        <text x="26" y="106" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">DARLINGTON</text>
       </g>
 
       <!-- Symbol 9: Varactor (Varicap) Diode -->
@@ -2838,7 +2847,6 @@ const FIGURES = {
         <line x1="48" y1="16" x2="48" y2="44" stroke="#00ff88" stroke-width="2"/>
         <line x1="48" y1="30" x2="60" y2="30" stroke="#00ff88" stroke-width="1.5"/>
         <text x="30" y="4"  fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">9</text>
-        <text x="30" y="60" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">VARACTOR</text>
       </g>
 
       <!-- Symbol 10: Tunnel Diode -->
@@ -2851,7 +2859,6 @@ const FIGURES = {
         <line x1="44" y1="44" x2="50" y2="38" stroke="#00ff88" stroke-width="1.5"/>
         <line x1="44" y1="30" x2="60" y2="30" stroke="#00ff88" stroke-width="1.5"/>
         <text x="30" y="4"  fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">10</text>
-        <text x="30" y="60" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">TUNNEL DIODE</text>
       </g>
 
       <!-- Symbol 11: SCR (Silicon Controlled Rectifier) -->
@@ -2863,7 +2870,6 @@ const FIGURES = {
         <!-- Gate lead (from cathode bar) -->
         <line x1="42" y1="44" x2="56" y2="58" stroke="#00ff88" stroke-width="1.5"/>
         <text x="28" y="4"  fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">11</text>
-        <text x="28" y="74" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">SCR</text>
       </g>
 
     </svg>
@@ -3076,8 +3082,8 @@ function showResults() {
   showScreen('resultsScreen');
   const certWrap = document.getElementById('certBtnWrap');
   const certNotice = document.getElementById('certAINotice');
+  const tgNotice = document.getElementById('telegramNotice');
   if (pass && !state.aiUsedDuringExam) {
-    // Generate session ID + unlock code for this pass
     const sessionId = generateSessionId();
     const unlockCode = generateUnlockCode();
     state.currentSession = { sessionId, unlockCode };
@@ -3087,12 +3093,15 @@ function showResults() {
     document.getElementById('certUnlockInput').value = '';
     document.getElementById('certUnlockError').style.display = 'none';
     if (certNotice) certNotice.style.display = 'none';
+    if (tgNotice) tgNotice.style.display = 'block';
   } else if (pass && state.aiUsedDuringExam) {
     certWrap.style.display = 'none';
     if (certNotice) certNotice.style.display = 'block';
+    if (tgNotice) tgNotice.style.display = 'none';
   } else {
     certWrap.style.display = 'none';
     if (certNotice) certNotice.style.display = 'none';
+    if (tgNotice) tgNotice.style.display = 'none';
   }
   addAIMsg("system", `Exam complete! Score: ${score}/${pool.examQ} (${pct}%). ${pass ? 'Congratulations — you passed! 🎉' : 'Keep studying! Ask me to explain any topics you found difficult.'}`);
 }
@@ -3431,6 +3440,41 @@ async function verifyCertCode() {
   }
 }
 
+async function retrieveCertificate() {
+  const sessionId = document.getElementById('retrieveSessionId').value.trim().toUpperCase();
+  const code      = document.getElementById('retrieveCode').value.trim().toUpperCase();
+  const errEl     = document.getElementById('retrieveError');
+  errEl.style.display = 'none';
+
+  if (!sessionId || !code) { errEl.textContent = '✗ Please enter both Session ID and Unlock Code.'; errEl.style.display = 'block'; return; }
+
+  // Search local first
+  let sessions = localGetSessions();
+  let sess = sessions.find(s => s.sessionId === sessionId);
+
+  // If not found locally, try server
+  if (!sess && isServerConfigured()) {
+    try {
+      const server = await serverReadSessions();
+      sess = server.find(s => s.sessionId === sessionId);
+    } catch(e) { /* server unavailable */ }
+  }
+
+  if (!sess) { errEl.textContent = '✗ Session ID not found. Check your details and try again.'; errEl.style.display = 'block'; return; }
+  if (sess.unlockCode !== code) { errEl.textContent = '✗ Incorrect unlock code for this session.'; errEl.style.display = 'block'; return; }
+
+  // Valid — restore state enough to generate the certificate
+  state.license = sess.license;
+  state.correct = sess.score;
+  state.currentSession = { sessionId: sess.sessionId, unlockCode: sess.unlockCode };
+  // Mark as used
+  await updateSessionField(sess.sessionId, { codeUsed: true });
+  // Clear inputs
+  document.getElementById('retrieveSessionId').value = '';
+  document.getElementById('retrieveCode').value = '';
+  openCertModal();
+}
+
 function openCertModal() {
   document.getElementById('certNameModal').style.display = 'flex';
   document.getElementById('certNameInput').focus();
@@ -3629,7 +3673,10 @@ function renderSessionTable(sessions) {
         </div>
       </td>
       <td style="padding:.55rem .6rem;">
-        <button onclick="adminCopyCode('${s.unlockCode}','${s.sessionId}',${i})" style="font-family:'Orbitron',monospace;font-size:.44rem;font-weight:700;padding:.2rem .5rem;border-radius:3px;cursor:pointer;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.3);color:var(--cyan);">⎘ COPY</button>
+        <div style="display:flex;gap:.35rem;flex-wrap:wrap;">
+          <button onclick="adminCopyCode('${s.unlockCode}','${s.sessionId}',${i})" style="font-family:'Orbitron',monospace;font-size:.44rem;font-weight:700;padding:.2rem .5rem;border-radius:3px;cursor:pointer;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.3);color:var(--cyan);">⎘ COPY</button>
+          <button onclick="adminGenerateCert('${s.sessionId}','${s.unlockCode}','${s.license}',${s.score})" style="font-family:'Orbitron',monospace;font-size:.44rem;font-weight:700;padding:.2rem .5rem;border-radius:3px;cursor:pointer;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.35);color:gold;">🏅 CERT</button>
+        </div>
       </td>
       <td style="padding:.55rem .6rem;text-align:center;font-family:'Orbitron',monospace;font-size:.5rem;color:${statusColor};">${statusLabel}</td>
     </tr>`;
@@ -3709,6 +3756,14 @@ async function adminCopyCode(code, sessionId, idx) {
     await updateSessionField(sessionId, { codeSent: true });
     renderSessionTable(adminSessions);
   }
+}
+
+function adminGenerateCert(sessionId, unlockCode, license, score) {
+  state.license = license;
+  state.correct = score;
+  state.currentSession = { sessionId, unlockCode };
+  document.getElementById('adminPanelModal').style.display = 'none';
+  openCertModal();
 }
 
 async function clearAllSessions() {
@@ -3916,6 +3971,7 @@ if ((globalStats.bestStreak || 0) >= 3) {
     <div style="font-family:'Orbitron',monospace;font-size:.8rem;font-weight:700;color:var(--cyan);letter-spacing:.18em;margin-bottom:.3rem;">ADMIN ACCESS</div>
     <div style="font-size:.6rem;color:var(--text-dim);margin-bottom:1.4rem;letter-spacing:.05em;">Enter administrator password to continue</div>
     <form onsubmit="event.preventDefault();submitAdminLogin()" autocomplete="on">
+      <input type="text" name="username" value="admin" autocomplete="username" style="display:none;" readonly />
       <input id="adminPassInput" type="password" placeholder="Password" autocomplete="current-password"
         style="width:100%;background:#060e07;border:1px solid var(--border);border-radius:4px;padding:.55rem .9rem;font-family:'Share Tech Mono',monospace;font-size:.9rem;color:var(--text);outline:none;margin-bottom:.8rem;letter-spacing:.1em;" />
       <div id="adminLoginError" style="display:none;font-size:.6rem;color:var(--red);margin-bottom:.7rem;">✗ Incorrect password.</div>
