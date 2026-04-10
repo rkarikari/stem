@@ -3180,19 +3180,32 @@ async function jbFetch(path, method='GET', body=null) {
 async function serverReadSessions() {
   const cfg = getServerCfg();
   const data = await jbFetch(`/b/${cfg.binId}/latest`);
-  return Array.isArray(data.record) ? data.record : [];
+  // Bin stores { sessions: [...] } wrapper — never a bare array
+  const rec = data.record;
+  if (rec && Array.isArray(rec.sessions)) return rec.sessions;
+  // Legacy: if bin somehow has a bare array, migrate it
+  if (Array.isArray(rec)) return rec;
+  return [];
 }
 
 async function serverWriteSessions(sessions) {
   const cfg = getServerCfg();
-  await jbFetch(`/b/${cfg.binId}`, 'PUT', sessions);
+  // Always write as { sessions: [...] } so the bin is never "blank"
+  await jbFetch(`/b/${cfg.binId}`, 'PUT', { sessions });
 }
 
 async function serverCreateBin(apiKey) {
+  // JSONBin rejects empty arrays as "blank" — initialise with a non-empty object
+  const initRecord = { sessions: [], created: new Date().toISOString(), app: 'RadioSport-ExamSystem' };
   const res = await fetch(`${JSONBIN_BASE}/b`, {
     method: 'POST',
-    headers: { 'Content-Type':'application/json', 'X-Master-Key': apiKey, 'X-Bin-Name': 'RadioSport-Sessions', 'X-Bin-Private': 'true' },
-    body: JSON.stringify([])
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': apiKey,
+      'X-Bin-Name': 'RadioSport-Sessions',
+      'X-Bin-Private': 'true'
+    },
+    body: JSON.stringify(initRecord)
   });
   if (!res.ok) {
     const txt = await res.text().catch(()=>'');
@@ -3421,6 +3434,7 @@ function renderAdminPanel(source='server') {
         </div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:.5rem;margin-bottom:.5rem;align-items:center;">
           <input id="cfgApiKey" type="password" placeholder="$2a$10$… Master Key" value="${cfg.apiKey||''}"
+            autocomplete="off"
             style="background:#060e07;border:1px solid var(--border);border-radius:4px;padding:.45rem .7rem;font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--text);outline:none;width:100%;" />
           <button onclick="toggleApiKeyVisibility()" style="font-family:'Orbitron',monospace;font-size:.45rem;padding:.4rem .55rem;border-radius:3px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--text-dim);" id="apiKeyToggle">SHOW</button>
         </div>
@@ -3443,6 +3457,7 @@ function renderAdminPanel(source='server') {
         <div style="font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:var(--cyan);letter-spacing:.12em;margin-bottom:.5rem;">🔑 ADMIN PASSWORD</div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
           <input id="newPwInput" type="password" placeholder="New password (min 4 chars)"
+            autocomplete="new-password"
             style="background:#060e07;border:1px solid var(--border);border-radius:4px;padding:.45rem .7rem;font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--text);outline:none;min-width:200px;" />
           <button onclick="saveNewPassword()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.4rem .8rem;border-radius:3px;cursor:pointer;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.35);color:var(--cyan);">SAVE</button>
         </div>
@@ -3789,16 +3804,17 @@ if ((globalStats.bestStreak || 0) >= 3) {
     <div style="font-size:1.6rem;margin-bottom:.5rem;">⚙</div>
     <div style="font-family:'Orbitron',monospace;font-size:.8rem;font-weight:700;color:var(--cyan);letter-spacing:.18em;margin-bottom:.3rem;">ADMIN ACCESS</div>
     <div style="font-size:.6rem;color:var(--text-dim);margin-bottom:1.4rem;letter-spacing:.05em;">Enter administrator password to continue</div>
-    <input id="adminPassInput" type="password" placeholder="Password"
-      style="width:100%;background:#060e07;border:1px solid var(--border);border-radius:4px;padding:.55rem .9rem;font-family:'Share Tech Mono',monospace;font-size:.9rem;color:var(--text);outline:none;margin-bottom:.8rem;letter-spacing:.1em;"
-      onkeydown="if(event.key==='Enter')submitAdminLogin()" />
-    <div id="adminLoginError" style="display:none;font-size:.6rem;color:var(--red);margin-bottom:.7rem;">✗ Incorrect password.</div>
-    <div style="display:flex;gap:.7rem;justify-content:center;">
-      <button onclick="document.getElementById('adminLoginModal').style.display='none'"
-        style="font-family:'Orbitron',monospace;font-size:.55rem;font-weight:700;letter-spacing:.12em;padding:.45rem .9rem;border-radius:4px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--text-dim);">CANCEL</button>
-      <button onclick="submitAdminLogin()"
-        style="font-family:'Orbitron',monospace;font-size:.55rem;font-weight:700;letter-spacing:.12em;padding:.45rem 1.1rem;border-radius:4px;cursor:pointer;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.4);color:var(--cyan);">LOGIN ▶</button>
-    </div>
+    <form onsubmit="event.preventDefault();submitAdminLogin()" autocomplete="on">
+      <input id="adminPassInput" type="password" placeholder="Password" autocomplete="current-password"
+        style="width:100%;background:#060e07;border:1px solid var(--border);border-radius:4px;padding:.55rem .9rem;font-family:'Share Tech Mono',monospace;font-size:.9rem;color:var(--text);outline:none;margin-bottom:.8rem;letter-spacing:.1em;" />
+      <div id="adminLoginError" style="display:none;font-size:.6rem;color:var(--red);margin-bottom:.7rem;">✗ Incorrect password.</div>
+      <div style="display:flex;gap:.7rem;justify-content:center;">
+        <button type="button" onclick="document.getElementById('adminLoginModal').style.display='none'"
+          style="font-family:'Orbitron',monospace;font-size:.55rem;font-weight:700;letter-spacing:.12em;padding:.45rem .9rem;border-radius:4px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--text-dim);">CANCEL</button>
+        <button type="submit"
+          style="font-family:'Orbitron',monospace;font-size:.55rem;font-weight:700;letter-spacing:.12em;padding:.45rem 1.1rem;border-radius:4px;cursor:pointer;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.4);color:var(--cyan);">LOGIN ▶</button>
+      </div>
+    </form>
   </div>
 </div>
 
