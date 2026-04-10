@@ -2695,66 +2695,177 @@ const FIGURES = {
   </div>`,
 
   'G7-1': `<div class="fig-wrap">
-    <div class="fig-title">FIGURE G7-1 — Semiconductor Schematic Symbols</div>
-    <svg viewBox="0 0 560 130" xmlns="http://www.w3.org/2000/svg" class="fig-svg">
+    <div class="fig-title">FIGURE G7-1 — Semiconductor &amp; Component Schematic Symbols</div>
+    <svg viewBox="0 0 610 280" xmlns="http://www.w3.org/2000/svg" class="fig-svg">
+
+      <!-- ══ ROW 1: Symbols 1–6 ══ -->
+
       <!-- Symbol 1: N-channel JFET -->
-      <g transform="translate(20,15)">
-        <line x1="30" y1="0" x2="30" y2="100" stroke="#00ff88" stroke-width="1.5"/>
-        <line x1="0" y1="40" x2="30" y2="40" stroke="#00ff88" stroke-width="1.5"/>
-        <!-- Gate arrow pointing in (N-ch) -->
-        <polyline points="0,40 14,40 20,34" stroke="#00ff88" stroke-width="1.5" fill="none"/>
-        <polyline points="14,36 14,44" stroke="#00ff88" stroke-width="1.5"/>
-        <line x1="14" y1="20" x2="14" y2="80" stroke="#00ff88" stroke-width="2"/>
-        <line x1="14" y1="20" x2="50" y2="5" stroke="#00ff88" stroke-width="1.5"/>
-        <line x1="14" y1="80" x2="50" y2="95" stroke="#00ff88" stroke-width="1.5"/>
-        <!-- drain arrow -->
-        <polyline points="36,16 42,10 38,6" stroke="#00ff88" stroke-width="1.5" fill="none"/>
-        <text x="25" y="-4" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">1</text>
-        <text x="25" y="115" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">FET (N-CH)</text>
+      <g transform="translate(8,18)">
+        <line x1="28" y1="10" x2="28" y2="90" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="28" y1="30" x2="44" y2="30" stroke="#00ff88" stroke-width="2"/>
+        <line x1="28" y1="70" x2="44" y2="70" stroke="#00ff88" stroke-width="2"/>
+        <line x1="44" y1="18" x2="44" y2="82" stroke="#00ff88" stroke-width="2"/>
+        <!-- Gate with arrow pointing at channel (N-ch) -->
+        <line x1="4" y1="50" x2="22" y2="50" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="22" y1="38" x2="22" y2="62" stroke="#00ff88" stroke-width="2"/>
+        <polyline points="13,50 22,44" stroke="#00ff88" stroke-width="1.5" fill="none"/>
+        <polygon points="22,44 14,48 16,42" fill="#00ff88"/>
+        <!-- Drain and source leads -->
+        <line x1="44" y1="30" x2="62" y2="10" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="44" y1="70" x2="62" y2="90" stroke="#00ff88" stroke-width="1.5"/>
+        <text x="33" y="8" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">1</text>
+        <text x="33" y="108" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">N-CH JFET</text>
       </g>
-      <!-- Symbol 2: NPN transistor -->
-      <g transform="translate(120,15)">
-        <line x1="30" y1="20" x2="30" y2="80" stroke="#00ff88" stroke-width="1.5"/>
-        <line x1="0" y1="50" x2="30" y2="50" stroke="#00ff88" stroke-width="1.5"/>
-        <line x1="30" y1="32" x2="60" y2="12" stroke="#00ff88" stroke-width="1.5"/>
-        <line x1="30" y1="68" x2="60" y2="88" stroke="#00ff88" stroke-width="1.5"/>
-        <!-- Arrow on emitter (NPN points out) -->
-        <polyline points="44,77 50,84 44,86" stroke="#00ff88" stroke-width="1.5" fill="none"/>
-        <text x="30" y="-4" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">2</text>
-        <text x="30" y="110" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">NPN BJT</text>
+
+      <!-- Symbol 2: NPN BJT -->
+      <g transform="translate(88,18)">
+        <line x1="22" y1="20" x2="22" y2="80" stroke="#00ff88" stroke-width="2"/>
+        <line x1="0" y1="50" x2="22" y2="50" stroke="#00ff88" stroke-width="1.5"/>
+        <!-- Collector -->
+        <line x1="22" y1="32" x2="58" y2="12" stroke="#00ff88" stroke-width="1.5"/>
+        <!-- Emitter with arrow (NPN: arrow points out) -->
+        <line x1="22" y1="68" x2="58" y2="88" stroke="#00ff88" stroke-width="1.5"/>
+        <polygon points="47,80 54,85 48,89" fill="#00ff88"/>
+        <text x="28" y="8" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">2</text>
+        <text x="28" y="108" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">NPN BJT</text>
       </g>
-      <!-- Symbol 3: PNP transistor -->
-      <g transform="translate(220,15)">
-        <line x1="30" y1="20" x2="30" y2="80" stroke="#00ff88" stroke-width="1.5"/>
-        <line x1="0" y1="50" x2="30" y2="50" stroke="#00ff88" stroke-width="1.5"/>
-        <line x1="30" y1="32" x2="60" y2="12" stroke="#00ff88" stroke-width="1.5"/>
-        <line x1="30" y1="68" x2="60" y2="88" stroke="#00ff88" stroke-width="1.5"/>
-        <!-- Arrow on emitter (PNP points in) -->
-        <polyline points="46,25 40,20 46,18" stroke="#00ff88" stroke-width="1.5" fill="none"/>
-        <text x="30" y="-4" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">3</text>
-        <text x="30" y="110" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">PNP BJT</text>
+
+      <!-- Symbol 3: PNP BJT -->
+      <g transform="translate(168,18)">
+        <line x1="22" y1="20" x2="22" y2="80" stroke="#00ff88" stroke-width="2"/>
+        <line x1="0" y1="50" x2="22" y2="50" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="22" y1="32" x2="58" y2="12" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="22" y1="68" x2="58" y2="88" stroke="#00ff88" stroke-width="1.5"/>
+        <!-- Arrow points IN toward base (PNP: on collector line) -->
+        <polygon points="30,28 37,22 35,30" fill="#00ff88"/>
+        <text x="28" y="8" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">3</text>
+        <text x="28" y="108" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">PNP BJT</text>
       </g>
-      <!-- Symbol 4: Regular diode -->
-      <g transform="translate(320,30)">
-        <line x1="0" y1="40" x2="15" y2="40" stroke="#00ff88" stroke-width="1.5"/>
-        <polygon points="15,25 15,55 45,40" stroke="#00ff88" stroke-width="1.5" fill="none"/>
-        <line x1="45" y1="25" x2="45" y2="55" stroke="#00ff88" stroke-width="2"/>
-        <line x1="45" y1="40" x2="60" y2="40" stroke="#00ff88" stroke-width="1.5"/>
-        <text x="30" y="10" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">4</text>
-        <text x="30" y="75" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">DIODE</text>
+
+      <!-- Symbol 4: Rectifier Diode -->
+      <g transform="translate(244,28)">
+        <line x1="0" y1="40" x2="16" y2="40" stroke="#00ff88" stroke-width="1.5"/>
+        <polygon points="16,24 16,56 46,40" stroke="#00ff88" stroke-width="1.5" fill="none"/>
+        <line x1="46" y1="24" x2="46" y2="56" stroke="#00ff88" stroke-width="2"/>
+        <line x1="46" y1="40" x2="62" y2="40" stroke="#00ff88" stroke-width="1.5"/>
+        <text x="31" y="12" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">4</text>
+        <text x="31" y="76" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">DIODE</text>
       </g>
-      <!-- Symbol 5: Zener diode -->
-      <g transform="translate(410,30)">
-        <line x1="0" y1="40" x2="15" y2="40" stroke="#00ff88" stroke-width="1.5"/>
-        <polygon points="15,25 15,55 45,40" stroke="#00ff88" stroke-width="1.5" fill="none"/>
-        <!-- Zener bar (bent ends) -->
-        <line x1="45" y1="25" x2="45" y2="55" stroke="#00ff88" stroke-width="2"/>
-        <line x1="45" y1="25" x2="52" y2="18" stroke="#00ff88" stroke-width="2"/>
-        <line x1="45" y1="55" x2="38" y2="62" stroke="#00ff88" stroke-width="2"/>
-        <line x1="45" y1="40" x2="60" y2="40" stroke="#00ff88" stroke-width="1.5"/>
-        <text x="30" y="10" fill="#ffaa00" font-size="9" text-anchor="middle" font-family="monospace">5</text>
-        <text x="30" y="75" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">ZENER DIODE</text>
+
+      <!-- Symbol 5: Zener Diode -->
+      <g transform="translate(326,28)">
+        <line x1="0" y1="40" x2="16" y2="40" stroke="#00ff88" stroke-width="1.5"/>
+        <polygon points="16,24 16,56 46,40" stroke="#00ff88" stroke-width="1.5" fill="none"/>
+        <line x1="46" y1="24" x2="46" y2="56" stroke="#00ff88" stroke-width="2"/>
+        <!-- Zener bent cathode bar -->
+        <line x1="46" y1="24" x2="54" y2="16" stroke="#00ff88" stroke-width="2"/>
+        <line x1="46" y1="56" x2="38" y2="64" stroke="#00ff88" stroke-width="2"/>
+        <line x1="46" y1="40" x2="62" y2="40" stroke="#00ff88" stroke-width="1.5"/>
+        <text x="31" y="12" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">5</text>
+        <text x="31" y="78" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">ZENER</text>
       </g>
+
+      <!-- Symbol 6: Multiple-winding Transformer -->
+      <g transform="translate(408,16)">
+        <!-- Primary coil (left side, 4 bumps going down) -->
+        <path d="M 20 88 C 10 82,10 70,20 64 C 30 70,30 58,20 52 C 10 58,10 46,20 40 C 30 46,30 34,20 28 C 10 34,10 22,20 16"
+              stroke="#00ff88" stroke-width="1.5" fill="none"/>
+        <!-- Core (two vertical lines) -->
+        <line x1="28" y1="12" x2="28" y2="92" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="34" y1="12" x2="34" y2="92" stroke="#00ff88" stroke-width="1.5"/>
+        <!-- Secondary top coil (right side, 3 bumps) -->
+        <path d="M 42 16 C 52 22,52 34,42 40 C 32 34,32 46,42 52 C 52 46,52 58,42 64"
+              stroke="#00ff88" stroke-width="1.5" fill="none"/>
+        <!-- Secondary bottom coil (right side, 3 bumps) -->
+        <path d="M 42 40 C 52 46,52 58,42 64 C 32 58,32 70,42 76 C 52 70,52 82,42 88"
+              stroke="#00ff88" stroke-width="1.5" fill="none"/>
+        <!-- Lead wires: primary top, primary bottom -->
+        <line x1="0"  y1="16" x2="20" y2="16" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="0"  y1="88" x2="20" y2="88" stroke="#00ff88" stroke-width="1.5"/>
+        <!-- Lead wires: secondary top, center-tap, secondary bottom -->
+        <line x1="42" y1="16" x2="62" y2="16" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="42" y1="52" x2="62" y2="52" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="42" y1="88" x2="62" y2="88" stroke="#00ff88" stroke-width="1.5"/>
+        <text x="31" y="6"  fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">6</text>
+        <text x="31" y="106" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">MULTI-WIND.</text>
+        <text x="31" y="116" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">TRANSFORMER</text>
+      </g>
+
+      <!-- ══ ROW 2: Symbols 7–11 ══ -->
+
+      <!-- Symbol 7: Tapped Inductor -->
+      <g transform="translate(30,162)">
+        <!-- Coil bumps (5 bumps) -->
+        <path d="M 4 50 C 4 38,16 38,16 50 C 16 38,28 38,28 50 C 28 38,40 38,40 50 C 40 38,52 38,52 50 C 52 38,64 38,64 50"
+              stroke="#00ff88" stroke-width="1.5" fill="none"/>
+        <!-- Lead wires -->
+        <line x1="0"  y1="50" x2="4"  y2="50" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="64" y1="50" x2="68" y2="50" stroke="#00ff88" stroke-width="1.5"/>
+        <!-- Tap (center lead coming down from coil midpoint at bump 3) -->
+        <line x1="34" y1="50" x2="34" y2="70" stroke="#00ff88" stroke-width="1.5"/>
+        <text x="34" y="12" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">7</text>
+        <text x="34" y="86" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">TAPPED</text>
+        <text x="34" y="96" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">INDUCTOR</text>
+      </g>
+
+      <!-- Symbol 8: NPN Darlington Transistor -->
+      <g transform="translate(126,158)">
+        <!-- Outer transistor base bar -->
+        <line x1="22" y1="18" x2="22" y2="82" stroke="#00ff88" stroke-width="2"/>
+        <line x1="0"  y1="50" x2="22" y2="50" stroke="#00ff88" stroke-width="1.5"/>
+        <!-- Outer collector -->
+        <line x1="22" y1="30" x2="56" y2="12" stroke="#00ff88" stroke-width="1.5"/>
+        <!-- Outer emitter with arrow -->
+        <line x1="22" y1="70" x2="56" y2="88" stroke="#00ff88" stroke-width="1.5"/>
+        <polygon points="42,78 49,84 43,87" fill="#00ff88"/>
+        <!-- Inner transistor (pre-driver) -->
+        <line x1="32" y1="34" x2="32" y2="54" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="22" y1="38" x2="32" y2="38" stroke="#00ff88" stroke-width="1"/>
+        <line x1="32" y1="38" x2="44" y2="28" stroke="#00ff88" stroke-width="1"/>
+        <line x1="32" y1="50" x2="44" y2="60" stroke="#00ff88" stroke-width="1"/>
+        <polygon points="36,55 42,60 37,63" fill="#00ff88"/>
+        <text x="26" y="6" fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">8</text>
+        <text x="26" y="106" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">DARLINGTON</text>
+      </g>
+
+      <!-- Symbol 9: Varactor (Varicap) Diode -->
+      <g transform="translate(224,172)">
+        <line x1="0"  y1="30" x2="16" y2="30" stroke="#00ff88" stroke-width="1.5"/>
+        <polygon points="16,16 16,44 44,30" stroke="#00ff88" stroke-width="1.5" fill="none"/>
+        <!-- Cathode bar with capacitor plates -->
+        <line x1="44" y1="16" x2="44" y2="44" stroke="#00ff88" stroke-width="2"/>
+        <line x1="48" y1="16" x2="48" y2="44" stroke="#00ff88" stroke-width="2"/>
+        <line x1="48" y1="30" x2="60" y2="30" stroke="#00ff88" stroke-width="1.5"/>
+        <text x="30" y="4"  fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">9</text>
+        <text x="30" y="60" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">VARACTOR</text>
+      </g>
+
+      <!-- Symbol 10: Tunnel Diode -->
+      <g transform="translate(312,172)">
+        <line x1="0"  y1="30" x2="16" y2="30" stroke="#00ff88" stroke-width="1.5"/>
+        <polygon points="16,16 16,44 44,30" stroke="#00ff88" stroke-width="1.5" fill="none"/>
+        <!-- Cathode bar with small notches (tunnel diode) -->
+        <line x1="44" y1="16" x2="44" y2="44" stroke="#00ff88" stroke-width="2"/>
+        <line x1="44" y1="16" x2="38" y2="22" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="44" y1="44" x2="50" y2="38" stroke="#00ff88" stroke-width="1.5"/>
+        <line x1="44" y1="30" x2="60" y2="30" stroke="#00ff88" stroke-width="1.5"/>
+        <text x="30" y="4"  fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">10</text>
+        <text x="30" y="60" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">TUNNEL DIODE</text>
+      </g>
+
+      <!-- Symbol 11: SCR (Silicon Controlled Rectifier) -->
+      <g transform="translate(404,172)">
+        <line x1="0"  y1="30" x2="14" y2="30" stroke="#00ff88" stroke-width="1.5"/>
+        <polygon points="14,16 14,44 42,30" stroke="#00ff88" stroke-width="1.5" fill="none"/>
+        <line x1="42" y1="16" x2="42" y2="44" stroke="#00ff88" stroke-width="2"/>
+        <line x1="42" y1="30" x2="56" y2="30" stroke="#00ff88" stroke-width="1.5"/>
+        <!-- Gate lead (from cathode bar) -->
+        <line x1="42" y1="44" x2="56" y2="58" stroke="#00ff88" stroke-width="1.5"/>
+        <text x="28" y="4"  fill="#ffaa00" font-size="10" text-anchor="middle" font-family="monospace" font-weight="bold">11</text>
+        <text x="28" y="74" fill="#a0ffcc" font-size="7" text-anchor="middle" font-family="monospace">SCR</text>
+      </g>
+
     </svg>
   </div>`
 };
@@ -2765,7 +2876,7 @@ const QUESTION_FIGURES = {
   'T6C06':'T2','T6C07':'T2','T6C08':'T2','T6C09':'T2',
   'T6C10':'T3','T6C11':'T3',
   'T6D03':'T2',
-  'G7A09':'G7-1','G7A10':'G7-1','G7A11':'G7-1'
+  'G7A09':'G7-1','G7A10':'G7-1','G7A11':'G7-1','G7A12':'G7-1','G7A13':'G7-1'
 };
 
 function renderQuestion() {
