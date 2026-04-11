@@ -42,6 +42,70 @@
   --shadow-sm:0 2px 8px rgba(0,0,0,0.3);
 }
 
+/* ── AUTH TABS ── */
+.auth-tabs{display:flex;gap:0;margin-bottom:1.5rem;border-bottom:1px solid var(--border);}
+.auth-tab{
+  flex:1;padding:.55rem .5rem;text-align:center;
+  font-size:.8rem;font-weight:500;color:var(--text-muted);
+  cursor:pointer;border-bottom:2px solid transparent;
+  transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;
+  font-family:'DM Sans',sans-serif;
+}
+.auth-tab:hover{color:var(--text);}
+.auth-tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+
+/* ── GOOGLE SIGN-IN ── */
+.google-btn{
+  width:100%;padding:.65rem;border-radius:var(--radius-sm);
+  background:#fff;color:#3c4043;border:1px solid #dadce0;
+  font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;
+  cursor:pointer;transition:box-shadow .15s,background .15s;
+  display:flex;align-items:center;justify-content:center;gap:.65rem;
+  margin-bottom:.85rem;
+}
+.google-btn:hover{background:#f8f9fa;box-shadow:0 1px 6px rgba(0,0,0,.2);}
+.google-btn:disabled{opacity:.55;cursor:not-allowed;}
+.google-btn svg{flex-shrink:0;}
+.auth-divider-or{
+  display:flex;align-items:center;gap:.75rem;
+  font-size:.72rem;color:var(--text-muted);margin-bottom:.85rem;
+}
+.auth-divider-or::before,.auth-divider-or::after{content:'';flex:1;border-top:1px solid var(--border);}
+
+/* ── GOOGLE AVATAR ── */
+.google-user-chip{
+  display:flex;align-items:center;gap:.65rem;
+  background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--radius);padding:.6rem .85rem;margin-bottom:1rem;
+}
+.google-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+.google-avatar-placeholder{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,#ea4335,#fbbc05);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+.google-user-info .google-user-name{font-size:.85rem;font-weight:600;color:var(--text-bright);}
+.google-user-info .google-user-email{font-size:.72rem;color:var(--text-muted);}
+
+/* ── PENDING / STATUS BADGE ── */
+.auth-badge-pending{background:rgba(245,158,11,.15);color:var(--warning);border:1px solid rgba(245,158,11,.3);padding:.15rem .5rem;border-radius:20px;font-size:.65rem;font-weight:600;}
+.auth-badge-google{background:rgba(234,67,53,.1);color:#ea4335;border:1px solid rgba(234,67,53,.3);padding:.15rem .5rem;border-radius:20px;font-size:.65rem;font-weight:600;}
+.auth-notice{
+  background:var(--primary-muted);border:1px solid var(--primary-border);
+  color:var(--primary);font-size:.78rem;padding:.6rem .85rem;
+  border-radius:var(--radius-sm);margin-bottom:.9rem;line-height:1.5;
+}
+.auth-notice.warn{background:var(--warning-muted);border-color:rgba(245,158,11,.3);color:var(--warning);}
+
+/* ── PENDING APPROVAL (admin) ── */
+.pending-row{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.6rem .75rem;border:1px solid rgba(245,158,11,.3);
+  border-radius:var(--radius-sm);background:rgba(245,158,11,.07);
+  margin-bottom:.4rem;
+}
+
 /* ── AUTH OVERLAY ── */
 #authOverlay{
   position:fixed;inset:0;z-index:9999;
@@ -748,66 +812,178 @@ td.actions-cell{display:flex;gap:.3rem;}
 ═════════════════════════════════════════════ -->
 <div id="authOverlay">
 
-  <!-- First-run: Create Admin -->
-  <div id="authSetup" style="display:none;width:100%;max-width:420px;">
+  <!-- ① First-run: Create Admin -->
+  <div id="authSetup" style="display:none;width:100%;max-width:430px;">
     <div class="auth-box">
       <div class="auth-logo">
         <div class="auth-logo-icon">📡</div>
         <div class="auth-logo-text">Radio<span>Sport</span> Log</div>
       </div>
       <div class="auth-title">Welcome — First-Time Setup</div>
-      <div class="auth-sub">Create your admin account to get started. The admin has full access and manages all operators.</div>
+      <div class="auth-sub">No accounts found. Create the admin account to get started.</div>
       <form autocomplete="on" onsubmit="createAdminAccount();return false;">
-      <div class="auth-error" id="setupError"></div>
-      <div class="auth-field">
-        <label>Admin Callsign <span style="color:var(--danger)">*</span></label>
-        <input class="callsign-inp" type="text" id="setupCall" name="username" placeholder="9G5AR" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
-      </div>
-      <div class="auth-field">
-        <label>Operator Name</label>
-        <input type="text" id="setupName" name="name" placeholder="R.N.K" autocomplete="name">
-      </div>
-      <div class="auth-field">
-        <label>Password <span style="color:var(--danger)">*</span></label>
-        <input type="password" id="setupPass" name="new-password" placeholder="Choose a strong password" autocomplete="new-password">
-      </div>
-      <div class="auth-field">
-        <label>Confirm Password <span style="color:var(--danger)">*</span></label>
-        <input type="password" id="setupPass2" name="confirm-password" placeholder="Repeat password" autocomplete="new-password">
-      </div>
-      <button type="submit" class="auth-btn">🔐 Create Admin Account</button>
+        <div class="auth-error" id="setupError"></div>
+        <div class="auth-field">
+          <label>Admin Callsign <span style="color:var(--danger)">*</span></label>
+          <input class="callsign-inp" type="text" id="setupCall" name="username" placeholder="9G5AR" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
+        </div>
+        <div class="auth-field">
+          <label>Operator Name</label>
+          <input type="text" id="setupName" name="name" placeholder="R.N.K" autocomplete="name">
+        </div>
+        <div class="auth-field">
+          <label>Password <span style="color:var(--danger)">*</span></label>
+          <input type="password" id="setupPass" name="new-password" placeholder="Choose a strong password" autocomplete="new-password">
+        </div>
+        <div class="auth-field">
+          <label>Confirm Password <span style="color:var(--danger)">*</span></label>
+          <input type="password" id="setupPass2" name="confirm-password" placeholder="Repeat password" autocomplete="new-password">
+        </div>
+        <button type="submit" class="auth-btn">🔐 Create Admin Account</button>
       </form>
-      <div class="auth-footer">RadioSport Log · R.N.K 9G5AR RadioSport</div>
+      <div class="auth-footer" style="margin-top:1rem;">RadioSport Log · R.N.K 9G5AR RadioSport</div>
     </div>
   </div>
 
-  <!-- Login Form -->
-  <div id="authLogin" style="display:none;width:100%;max-width:380px;">
+  <!-- ② Login / Register (tabbed) -->
+  <div id="authLogin" style="display:none;width:100%;max-width:400px;">
     <div class="auth-box">
       <div class="auth-logo">
         <div class="auth-logo-icon">📡</div>
         <div class="auth-logo-text">Radio<span>Sport</span> Log</div>
       </div>
-      <div class="auth-title">Sign In</div>
-      <div class="auth-sub">Enter your callsign and password to access your log</div>
-      <form autocomplete="on" onsubmit="doLogin();return false;">
-      <div class="auth-error" id="loginError"></div>
-      <div class="auth-field">
-        <label>Callsign</label>
-        <input class="callsign-inp" type="text" id="loginCall" name="username" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
+
+      <!-- Google Sign-In button (shown when client ID configured) -->
+      <div id="googleSignInWrap">
+        <button type="button" class="google-btn" id="googleSignInBtn" onclick="startGoogleSignIn()">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+          Continue with Google
+        </button>
+        <div class="auth-divider-or">or</div>
       </div>
-      <div class="auth-field">
-        <label>Password</label>
-        <input type="password" id="loginPass" name="password" placeholder="••••••••" autocomplete="current-password">
+
+      <!-- Google not configured: inline setup panel (no login required) -->
+      <div id="googleClientIdNotice" style="display:none; margin-bottom:.85rem;">
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+          <button type="button"
+            onclick="document.getElementById('googleSetupPanel').style.display=document.getElementById('googleSetupPanel').style.display==='none'?'':'none';this.textContent=document.getElementById('googleSetupPanel').style.display===''?'▲ Google Sign-In — hide setup':'⚙ Configure Google Sign-In (optional)'"
+            style="width:100%;padding:.6rem .9rem;background:none;border:none;color:var(--text-secondary);font-size:.78rem;font-weight:500;cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:.5rem;">
+            ⚙ Configure Google Sign-In (optional)
+          </button>
+          <div id="googleSetupPanel" style="display:none;padding:.75rem 1rem 1rem;border-top:1px solid var(--border);">
+            <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:.75rem;line-height:1.6;">
+              Paste your Google OAuth 2.0 Client ID to enable "Continue with Google" for all operators.
+              Get one free at <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--primary);">console.cloud.google.com</a>
+              → Create Credentials → OAuth Client ID → Web application.
+              Add this page's URL to <em>Authorized JavaScript origins</em>.
+            </p>
+            <div style="display:flex;gap:.5rem;align-items:flex-end;">
+              <div style="flex:1;">
+                <label style="font-size:.72rem;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:.3rem;">Google OAuth Client ID</label>
+                <input type="text" id="loginPageClientId"
+                  placeholder="123456789-abcdef.apps.googleusercontent.com"
+                  style="width:100%;background:var(--bg-input);border:1px solid var(--border);color:var(--text-bright);font-size:.8rem;padding:.5rem .7rem;border-radius:var(--radius-sm);outline:none;font-family:'DM Sans',sans-serif;"
+                  onfocus="this.style.borderColor='var(--primary)'"
+                  onblur="this.style.borderColor='var(--border)'">
+              </div>
+              <button type="button" onclick="saveLoginPageClientId()"
+                style="padding:.5rem .9rem;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);font-size:.78rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;">
+                Save &amp; Enable
+              </button>
+            </div>
+            <div id="loginClientIdMsg" style="font-size:.72rem;margin-top:.4rem;display:none;"></div>
+          </div>
+        </div>
       </div>
-      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.9rem;">
-        <input type="checkbox" id="rememberMe" style="accent-color:var(--primary);">
-        <label for="rememberMe" style="font-size:.78rem;color:var(--text-muted);cursor:pointer;">Keep me signed in</label>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabSignIn" onclick="authShowTab('signin')">Sign In</button>
+        <button class="auth-tab" id="tabRegister" onclick="authShowTab('register')">New Operator</button>
       </div>
-      <button type="submit" class="auth-btn" id="loginBtn">Sign In →</button>
+
+      <!-- Sign-In panel -->
+      <div id="panelSignIn">
+        <form autocomplete="on" onsubmit="doLogin();return false;">
+          <div class="auth-error" id="loginError"></div>
+          <div class="auth-field">
+            <label>Callsign</label>
+            <input class="callsign-inp" type="text" id="loginCall" name="username" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
+          </div>
+          <div class="auth-field">
+            <label>Password</label>
+            <input type="password" id="loginPass" name="password" placeholder="••••••••" autocomplete="current-password">
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.9rem;">
+            <input type="checkbox" id="rememberMe" style="accent-color:var(--primary);">
+            <label for="rememberMe" style="font-size:.78rem;color:var(--text-muted);cursor:pointer;">Keep me signed in</label>
+          </div>
+          <button type="submit" class="auth-btn" id="loginBtn">Sign In →</button>
+        </form>
+      </div>
+
+      <!-- Register panel -->
+      <div id="panelRegister" style="display:none;">
+        <div class="auth-notice">
+          📻 New operators are created with <strong>User</strong> role. An admin can promote you to Admin in the Admin Panel.
+        </div>
+        <form autocomplete="on" onsubmit="doSelfRegister();return false;">
+          <div class="auth-error" id="registerError"></div>
+          <div class="auth-field">
+            <label>Callsign <span style="color:var(--danger)">*</span></label>
+            <input class="callsign-inp" type="text" id="regCall" name="username" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
+          </div>
+          <div class="auth-field">
+            <label>Operator Name</label>
+            <input type="text" id="regName" name="name" placeholder="John Doe" autocomplete="name">
+          </div>
+          <div class="auth-field">
+            <label>QTH</label>
+            <input type="text" id="regQth" placeholder="City, Country" autocomplete="address-level2">
+          </div>
+          <div class="auth-field">
+            <label>Password <span style="color:var(--danger)">*</span></label>
+            <input type="password" id="regPass" name="new-password" placeholder="At least 6 characters" autocomplete="new-password">
+          </div>
+          <div class="auth-field">
+            <label>Confirm Password <span style="color:var(--danger)">*</span></label>
+            <input type="password" id="regPass2" name="confirm-password" placeholder="Repeat password" autocomplete="new-password">
+          </div>
+          <button type="submit" class="auth-btn" id="registerBtn">📋 Register Operator</button>
+        </form>
+      </div>
+
+      <div class="auth-footer" style="margin-top:1rem;">RadioSport Log · © 2026 R.N.K 9G5AR RadioSport</div>
+    </div>
+  </div>
+
+  <!-- ③ Google — Complete Registration (new Google user, needs callsign) -->
+  <div id="authGoogleComplete" style="display:none;width:100%;max-width:400px;">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">📡</div>
+        <div class="auth-logo-text">Radio<span>Sport</span> Log</div>
+      </div>
+      <div class="auth-title">Complete Registration</div>
+      <div class="auth-sub">Google sign-in successful! Enter your callsign to finish creating your operator account.</div>
+      <div id="googleCompleteChip" class="google-user-chip" style="margin-top:.25rem;"></div>
+      <form autocomplete="on" onsubmit="doGoogleComplete();return false;">
+        <div class="auth-error" id="googleCompleteError"></div>
+        <div class="auth-field">
+          <label>Callsign <span style="color:var(--danger)">*</span></label>
+          <input class="callsign-inp" type="text" id="googleCompleteCall" name="callsign" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()" autocomplete="off">
+        </div>
+        <div class="auth-field">
+          <label>QTH</label>
+          <input type="text" id="googleCompleteQth" placeholder="City, Country" autocomplete="address-level2">
+        </div>
+        <div class="auth-notice" style="font-size:.75rem;">
+          🔑 Your Google account will be your login — no separate password needed. You can set one later in Settings.
+        </div>
+        <button type="submit" class="auth-btn">✅ Complete Registration</button>
       </form>
-      <div class="auth-footer" style="margin-top:1rem;">
-        RadioSport Log · © 2026 R.N.K 9G5AR RadioSport
+      <div style="text-align:center;margin-top:.75rem;">
+        <a href="#" onclick="showAuthPanel('login')" style="font-size:.75rem;color:var(--text-muted);">← Back to Sign In</a>
       </div>
     </div>
   </div>
@@ -865,8 +1041,15 @@ td.actions-cell{display:flex;gap:.3rem;}
       <div class="sync-dot" id="syncDot"></div>
       <span id="syncLabel">☁ Sync</span>
     </div>
+    <!-- Pending registrations bell (admin only) -->
+    <div id="pendingBell" style="display:none;cursor:pointer;position:relative;" onclick="showScreen('adminScreen',null)" title="Pending registrations awaiting approval">
+      <span style="font-size:1.1rem;">🔔</span>
+      <span id="pendingBellCount" style="position:absolute;top:-4px;right:-6px;background:var(--danger);color:#fff;font-size:.55rem;font-weight:700;padding:.1rem .3rem;border-radius:10px;line-height:1.2;"></span>
+    </div>
     <div class="user-chip" onclick="isAdmin()?openUserModal():null" id="navChip" style="cursor:default;">
-      <div class="user-avatar" id="navAvatar">?</div>
+      <div id="navAvatarWrap" style="flex-shrink:0;">
+        <div class="user-avatar" id="navAvatar">?</div>
+      </div>
       <div>
         <div style="display:flex;align-items:center;gap:.4rem;">
           <div class="user-chip-call" id="navCallsign">—</div>
@@ -1410,6 +1593,34 @@ td.actions-cell{display:flex;gap:.3rem;}
           <button class="btn btn-ghost btn-sm" onclick="openDeleteUserModal()">Remove Operator</button>
         </div>
       </div>
+
+      <!-- Google Sign-In config — admin only -->
+      <div class="card" id="googleConfigCard" style="display:none;">
+        <div class="card-title">🔵 Google Sign-In</div>
+        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:.9rem;line-height:1.6;">
+          Enable "Continue with Google" on the login page for all operators.
+          Get a free Client ID at
+          <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--primary);">console.cloud.google.com</a>
+          → Create Credentials → OAuth 2.0 Client ID → Web application.
+          Add this page's full URL to <strong>Authorized JavaScript origins</strong>.
+        </p>
+        <div class="form-grid">
+          <div class="field form-full">
+            <label>Google OAuth Client ID</label>
+            <input type="text" id="sGoogleClientId"
+              placeholder="123456789-abcdef.apps.googleusercontent.com"
+              oninput="document.getElementById('googleClientIdStatus').style.display='none'">
+            <span style="font-size:.7rem;color:var(--text-muted);margin-top:.2rem;display:block;">
+              Paste your Client ID here. Leave blank to disable Google Sign-In.
+            </span>
+          </div>
+        </div>
+        <div id="googleClientIdStatus" style="display:none;font-size:.78rem;padding:.4rem .7rem;border-radius:var(--radius-sm);margin-bottom:.5rem;"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" onclick="saveGoogleClientIdSetting()">🔵 Save & Enable Google Sign-In</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearGoogleClientId()">✕ Disable Google Sign-In</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1478,9 +1689,9 @@ td.actions-cell{display:flex;gap:.3rem;}
   <!-- Gmail Settings Panel -->
   <div class="two-col">
     <div class="card">
-      <div class="card-title">✉ Gmail Account Settings</div>
+      <div class="card-title">✉ Gmail Settings</div>
       <p style="font-size:.8rem;color:var(--text-secondary);margin-bottom:1rem;line-height:1.6;">
-        Configure your Gmail account for sending QSL confirmations. RadioSport Log uses your connected Gmail account via the Google Gmail connector to compose and send personalized QSL emails with an embedded QSL card.
+        Configure your Gmail account for sending QSL confirmation emails. RadioSport Log uses your connected Gmail account to send personalised QSL emails with an embedded QSL card.
       </p>
       <div class="form-grid">
         <div class="field">
@@ -1659,6 +1870,15 @@ td.actions-cell{display:flex;gap:.3rem;}
       <div id="adminUserList"></div>
     </div>
 
+    <!-- Pending Registrations -->
+    <div class="card" id="pendingCard" style="display:none;">
+      <div class="card-title" style="color:var(--warning);">⏳ Pending Registrations <span class="card-badge" id="pendingCount">0</span></div>
+      <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:.75rem;line-height:1.5;">
+        These operators self-registered and are awaiting your approval before they can log in.
+      </p>
+      <div id="pendingList"></div>
+    </div>
+
     <!-- System Stats -->
     <div style="display:flex;flex-direction:column;gap:1.25rem;">
       <div class="card">
@@ -1822,36 +2042,38 @@ td.actions-cell{display:flex;gap:.3rem;}
     <div class="modal-header">
       <div class="modal-title">Add Operator</div>
     </div>
-    <div class="form-grid">
-      <div class="field">
-        <label>Callsign <span class="required">*</span></label>
-        <input class="callsign-inp" type="text" id="nuCall" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()">
+    <form autocomplete="on" onsubmit="createUser();return false;">
+      <div class="form-grid">
+        <div class="field">
+          <label>Callsign <span class="required">*</span></label>
+          <input class="callsign-inp" type="text" id="nuCall" name="username" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
+        </div>
+        <div class="field">
+          <label>Operator Name</label>
+          <input type="text" id="nuName" name="name" placeholder="John Doe" autocomplete="name">
+        </div>
+        <div class="field form-full">
+          <label>QTH</label>
+          <input type="text" id="nuQth" placeholder="City, Country" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Password <span class="required">*</span></label>
+          <input type="password" id="nuPass" name="new-password" placeholder="Set a password" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label>Role</label>
+          <select id="nuRole">
+            <option value="user">Operator (User)</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
       </div>
-      <div class="field">
-        <label>Operator Name</label>
-        <input type="text" id="nuName" placeholder="John Doe">
+      <div id="nuError" class="auth-error" style="margin-top:.5rem;"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('newUserModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Operator</button>
       </div>
-      <div class="field form-full">
-        <label>QTH</label>
-        <input type="text" id="nuQth" placeholder="City, Country">
-      </div>
-      <div class="field">
-        <label>Password <span class="required">*</span></label>
-        <input type="password" id="nuPass" placeholder="Set a password" autocomplete="new-password">
-      </div>
-      <div class="field">
-        <label>Role</label>
-        <select id="nuRole">
-          <option value="user">Operator (User)</option>
-          <option value="admin">Administrator</option>
-        </select>
-      </div>
-    </div>
-    <div id="nuError" class="auth-error" style="margin-top:.5rem;"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('newUserModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="createUser()">Create Operator</button>
-    </div>
+    </form>
   </div>
 </div>
 
@@ -1864,6 +2086,10 @@ td.actions-cell{display:flex;gap:.3rem;}
     </div>
     <div class="auth-error" id="changePassError" style="margin-bottom:.75rem;"></div>
     <form autocomplete="on" onsubmit="doChangePassword();return false;">
+    <!-- Hidden username so browser associates password fields with an account (accessibility) -->
+    <input type="text" name="username" id="changePassUsername"
+      autocomplete="username" aria-hidden="true"
+      style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;">
     <div class="form-grid">
       <div class="field form-full" id="oldPassRow">
         <label>Current Password</label>
@@ -1890,32 +2116,32 @@ td.actions-cell{display:flex;gap:.3rem;}
 // ══════════════════════════════════════════════
 //  AUTH SYSTEM
 // ══════════════════════════════════════════════
-const AUTH_STORE  = 'rsl_auth_accounts';   // {callsign: {hash, role, name}}
-const SESSION_KEY = 'rsl_session';         // sessionStorage key
-let SESSION = null; // {call, role}
+const AUTH_STORE    = 'rsl_auth_accounts';   // {call: {hash,role,name,googleSub,googleEmail,googlePic,approved}}
+const PENDING_STORE = 'rsl_pending_accounts';// {call: {hash,name,qth,googleSub,googleEmail,googlePic,requestedAt}}
+const SESSION_KEY   = 'rsl_session';
+let SESSION = null;
 
-// SHA-256 hash (async)
+// ── SHA-256 ──
 async function sha256(str){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-function authAccounts(){
-  try{ return JSON.parse(localStorage.getItem(AUTH_STORE)||'{}'); }catch(e){ return {}; }
-}
-function saveAuthAccounts(accs){ localStorage.setItem(AUTH_STORE, JSON.stringify(accs)); }
+function authAccounts(){ try{ return JSON.parse(localStorage.getItem(AUTH_STORE)||'{}'); }catch(e){ return {}; } }
+function saveAuthAccounts(a){ localStorage.setItem(AUTH_STORE, JSON.stringify(a)); }
+function pendingAccounts(){ try{ return JSON.parse(localStorage.getItem(PENDING_STORE)||'{}'); }catch(e){ return {}; } }
+function savePendingAccounts(p){ localStorage.setItem(PENDING_STORE, JSON.stringify(p)); }
 
 function getSession(){
   try{
     const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY+'_persist');
     if(!raw) return null;
     const s = JSON.parse(raw);
-    if(!s || !s.call) return null;
-    return s;
+    return s&&s.call ? s : null;
   }catch(e){ return null; }
 }
-function setSession(call, role, persist){
-  const s = {call, role};
+function setSession(call, role, persist, extra={}){
+  const s = {call, role, ...extra};
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
   if(persist) localStorage.setItem(SESSION_KEY+'_persist', JSON.stringify(s));
   SESSION = s;
@@ -1925,13 +2151,64 @@ function clearSession(){
   localStorage.removeItem(SESSION_KEY+'_persist');
   SESSION = null;
 }
-
 function isAdmin(){ return SESSION && SESSION.role === 'admin'; }
 function isLoggedIn(){ return !!SESSION; }
+function hasAnyAccount(){ return Object.keys(authAccounts()).length > 0; }
 
-// ── First run: is admin account set up? ──
-function hasAnyAccount(){
-  return Object.keys(authAccounts()).length > 0;
+// ── UI helpers ──
+function authShowTab(tab){
+  document.getElementById('panelSignIn').style.display    = tab==='signin'   ? '' : 'none';
+  document.getElementById('panelRegister').style.display  = tab==='register' ? '' : 'none';
+  document.getElementById('tabSignIn').classList.toggle('active',   tab==='signin');
+  document.getElementById('tabRegister').classList.toggle('active', tab==='register');
+  document.getElementById('loginError').classList.remove('show');
+  document.getElementById('registerError').classList.remove('show');
+}
+function showAuthPanel(panel){
+  document.getElementById('authSetup').style.display         = panel==='setup'    ? '' : 'none';
+  document.getElementById('authLogin').style.display         = panel==='login'    ? '' : 'none';
+  document.getElementById('authGoogleComplete').style.display= panel==='gcomplete'? '' : 'none';
+}
+function refreshPendingBell(){
+  const bell = el('pendingBell');
+  if(!bell || !isAdmin()) return;
+  const count = Object.keys(pendingAccounts()).length;
+  bell.style.display = count > 0 ? '' : 'none';
+  const countEl = el('pendingBellCount');
+  if(countEl) countEl.textContent = count > 0 ? count : '';
+}
+
+// ── Self-Register ──
+async function doSelfRegister(){
+  const call  = (document.getElementById('regCall').value||'').trim().toUpperCase();
+  const name  = (document.getElementById('regName').value||'').trim();
+  const qth   = (document.getElementById('regQth').value||'').trim();
+  const pass  = document.getElementById('regPass').value;
+  const pass2 = document.getElementById('regPass2').value;
+  const errEl = document.getElementById('registerError');
+  const btn   = document.getElementById('registerBtn');
+  errEl.classList.remove('show');
+  if(!call){ errEl.textContent='Callsign is required.'; errEl.classList.add('show'); return; }
+  if(pass.length < 6){ errEl.textContent='Password must be at least 6 characters.'; errEl.classList.add('show'); return; }
+  if(pass !== pass2){ errEl.textContent='Passwords do not match.'; errEl.classList.add('show'); return; }
+  const accs = authAccounts();
+  const pend = pendingAccounts();
+  if(accs[call]){ errEl.textContent='Callsign already registered. Sign in instead.'; errEl.classList.add('show'); return; }
+  if(pend[call]){ errEl.textContent='Registration already pending approval for this callsign.'; errEl.classList.add('show'); return; }
+  btn.disabled=true; btn.textContent='Registering…';
+  const hash = await sha256(call + ':' + pass);
+  pend[call] = { hash, name: name||call, qth, role:'user', requestedAt: Date.now() };
+  savePendingAccounts(pend);
+  refreshPendingBell();
+  btn.disabled=false; btn.textContent='📋 Register Operator';
+  errEl.style.background='var(--success-muted)'; errEl.style.borderColor='var(--success-border)'; errEl.style.color='var(--success)';
+  errEl.textContent='✅ Registration submitted! An admin will review and approve your account.';
+  errEl.classList.add('show');
+  document.getElementById('regCall').value='';
+  document.getElementById('regName').value='';
+  document.getElementById('regQth').value='';
+  document.getElementById('regPass').value='';
+  document.getElementById('regPass2').value='';
 }
 
 // ── Create admin on first run ──
@@ -1947,63 +2224,79 @@ async function createAdminAccount(){
   if(pass !== pass2){ errEl.textContent='Passwords do not match.'; errEl.classList.add('show'); return; }
   const hash = await sha256(call + ':' + pass);
   const accs = authAccounts();
-  accs[call] = {hash, role:'admin', name: name||call, createdAt: Date.now()};
+  accs[call] = { hash, role:'admin', name: name||call, approved:true, createdAt: Date.now() };
   saveAuthAccounts(accs);
-  // Also register in hamlog users
   const users = JSON.parse(localStorage.getItem('hamlog_users')||'[]');
   if(!users.includes(call)) users.push(call);
   localStorage.setItem('hamlog_users', JSON.stringify(users));
   localStorage.setItem(`hamlog_${call}_settings`, JSON.stringify({myCall:call,myName:name||call,myQth:'',myGrid:'',defPower:'100'}));
-  toast(`Admin account ${call} created — welcome!`,'ok');
   setSession(call,'admin',true);
   bootApp(call);
 }
 
-// ── Login ──
+// ── Standard Login ──
 async function doLogin(){
-  const call = (document.getElementById('loginCall').value||'').trim().toUpperCase();
-  const pass = document.getElementById('loginPass').value;
+  const call     = (document.getElementById('loginCall').value||'').trim().toUpperCase();
+  const pass     = document.getElementById('loginPass').value;
   const remember = document.getElementById('rememberMe').checked;
-  const errEl = document.getElementById('loginError');
-  const btn   = document.getElementById('loginBtn');
+  const errEl    = document.getElementById('loginError');
+  const btn      = document.getElementById('loginBtn');
   errEl.classList.remove('show');
   if(!call || !pass){ errEl.textContent='Enter callsign and password.'; errEl.classList.add('show'); return; }
-  btn.disabled = true; btn.textContent = 'Signing in…';
+  btn.disabled=true; btn.textContent='Signing in…';
   const accs = authAccounts();
   const acc  = accs[call];
-  if(!acc){ errEl.textContent='Callsign not found. Contact the admin.'; errEl.classList.add('show'); btn.disabled=false; btn.textContent='Sign In →'; return; }
+  if(!acc){
+    // Check if pending
+    const pend = pendingAccounts();
+    if(pend[call]){
+      errEl.textContent='⏳ Your registration is pending admin approval.';
+    } else {
+      errEl.textContent='Callsign not found. Register below or contact the admin.';
+    }
+    errEl.classList.add('show'); btn.disabled=false; btn.textContent='Sign In →'; return;
+  }
+  if(!acc.hash){ errEl.textContent='This account uses Google Sign-In — use the button above.'; errEl.classList.add('show'); btn.disabled=false; btn.textContent='Sign In →'; return; }
   const hash = await sha256(call + ':' + pass);
   if(hash !== acc.hash){ errEl.textContent='Incorrect password.'; errEl.classList.add('show'); btn.disabled=false; btn.textContent='Sign In →'; return; }
-  setSession(call, acc.role, remember);
-  btn.textContent = '✓ Signed in';
+  btn.textContent='✓ Signed in';
+  setSession(call, acc.role, remember, {name:acc.name, pic:acc.googlePic||null});
   bootApp(call);
 }
 
 // ── Logout ──
 function doLogout(){
   openConfirm('Sign Out', `Sign out of ${SESSION?SESSION.call:''}?`, ()=>{
+    // Revoke Google One Tap if active
+    if(window.google && window.google.accounts && SESSION && SESSION.googleEmail){
+      try{ google.accounts.id.revoke(SESSION.googleEmail, ()=>{}); }catch(e){}
+    }
     clearSession();
     SESSION = null;
-    // Hide app, show login
+    showAuthPanel('login');
     document.getElementById('authOverlay').classList.remove('hidden');
-    document.getElementById('authLogin').style.display='';
-    document.getElementById('authSetup').style.display='none';
     document.getElementById('loginCall').value='';
     document.getElementById('loginPass').value='';
     document.getElementById('loginError').classList.remove('show');
-    document.getElementById('loginBtn').disabled=false;
-    document.getElementById('loginBtn').textContent='Sign In →';
+    const btn = document.getElementById('loginBtn');
+    if(btn){ btn.disabled=false; btn.textContent='Sign In →'; }
+    authShowTab('signin');
+    initGoogleSignIn();
   });
 }
 
 // ── Change Password ──
-let _changePassTarget = null; // null = self, else callsign (admin reset)
+let _changePassTarget = null;
 function openChangePassModal(targetCall){
-  _changePassTarget = targetCall; // null = own password
+  _changePassTarget = targetCall;
   const forSelf = !targetCall || targetCall === SESSION.call;
+  const target  = targetCall || SESSION.call;
   document.getElementById('changePassFor').textContent = forSelf
     ? `Changing password for ${SESSION.call}`
     : `Admin reset for ${targetCall}`;
+  // Populate hidden username so browser password manager works correctly
+  const unField = document.getElementById('changePassUsername');
+  if(unField) unField.value = target;
   document.getElementById('oldPassRow').style.display = forSelf ? '' : 'none';
   document.getElementById('oldPass').value='';
   document.getElementById('newPass').value='';
@@ -2011,37 +2304,271 @@ function openChangePassModal(targetCall){
   document.getElementById('changePassError').classList.remove('show');
   openModal('changePassModal');
 }
-
 async function doChangePassword(){
-  const target = _changePassTarget || SESSION.call;
+  const target  = _changePassTarget || SESSION.call;
   const forSelf = !_changePassTarget || _changePassTarget === SESSION.call;
   const oldPass = document.getElementById('oldPass').value;
   const newPass = document.getElementById('newPass').value;
   const newPass2= document.getElementById('newPass2').value;
   const errEl   = document.getElementById('changePassError');
   errEl.classList.remove('show');
-  if(newPass.length < 6){ errEl.textContent='New password must be at least 6 characters.'; errEl.classList.add('show'); return; }
+  if(newPass.length < 6){ errEl.textContent='Password must be at least 6 characters.'; errEl.classList.add('show'); return; }
   if(newPass !== newPass2){ errEl.textContent='Passwords do not match.'; errEl.classList.add('show'); return; }
   const accs = authAccounts();
   const acc  = accs[target];
   if(!acc){ errEl.textContent='Account not found.'; errEl.classList.add('show'); return; }
-  // Verify old password for self (skip for admin resetting another)
-  if(forSelf){
+  if(forSelf && acc.hash){
     const oldHash = await sha256(target + ':' + oldPass);
     if(oldHash !== acc.hash){ errEl.textContent='Current password is incorrect.'; errEl.classList.add('show'); return; }
   }
-  const newHash = await sha256(target + ':' + newPass);
-  accs[target].hash = newHash;
+  accs[target].hash = await sha256(target + ':' + newPass);
   saveAuthAccounts(accs);
   closeModal('changePassModal');
   toast(`Password updated for ${target}`,'ok');
+}
+
+// ══════════════════════════════════════════════
+//  GOOGLE SIGN-IN (Google Identity Services)
+// ══════════════════════════════════════════════
+const GOOGLE_CLIENT_ID_KEY = 'rsl_google_client_id';
+let _pendingGoogleCredential = null; // JWT credential while awaiting callsign entry
+
+function getGoogleClientId(){
+  // Check settings first, then localStorage fallback
+  const cfg = typeof loadGmailSettings === 'function' ? loadGmailSettings() : {};
+  return cfg.googleClientId || localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || '';
+}
+
+// Save Client ID directly from the login page (no login required)
+function saveLoginPageClientId(){
+  const inp = document.getElementById('loginPageClientId');
+  const msgEl = document.getElementById('loginClientIdMsg');
+  const val = (inp ? inp.value : '').trim();
+  if(!val){
+    msgEl.style.color='var(--danger)'; msgEl.textContent='Paste a Client ID first.'; msgEl.style.display='';
+    return;
+  }
+  if(!val.includes('.apps.googleusercontent.com')){
+    msgEl.style.color='var(--danger)'; msgEl.textContent='That doesn\'t look like a valid Google Client ID.'; msgEl.style.display='';
+    return;
+  }
+  localStorage.setItem(GOOGLE_CLIENT_ID_KEY, val);
+  msgEl.style.color='var(--success)'; msgEl.textContent='✓ Saved! Enabling Google Sign-In…'; msgEl.style.display='';
+  setTimeout(()=>{ initGoogleSignIn(); msgEl.style.display='none'; }, 1200);
+}
+
+function initGoogleSignIn(){
+  const clientId = getGoogleClientId();
+  const wrapEl   = document.getElementById('googleSignInWrap');
+  const noticeEl = document.getElementById('googleClientIdNotice');
+  // Pre-fill login page field if it exists
+  const lpInput  = document.getElementById('loginPageClientId');
+  if(lpInput && !lpInput.value && clientId) lpInput.value = clientId;
+  if(!wrapEl) return;
+  if(!clientId){
+    wrapEl.style.display  = 'none';
+    if(noticeEl) noticeEl.style.display = '';
+    return;
+  }
+  if(noticeEl) noticeEl.style.display = 'none';
+  wrapEl.style.display = '';
+  // Load GIS library if not loaded
+  if(!window.google || !window.google.accounts){
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.defer = true;
+    s.onload = () => _initGIS(clientId);
+    document.head.appendChild(s);
+  } else {
+    _initGIS(clientId);
+  }
+}
+
+function _initGIS(clientId){
+  if(!window.google || !window.google.accounts) return;
+  google.accounts.id.initialize({
+    client_id:            clientId,
+    callback:             handleGoogleCredential,
+    auto_select:          true,
+    cancel_on_tap_outside:false,
+    context:              'signin',
+    use_fedcm_for_prompt: true        // FedCM opt-in — stops the deprecation warning
+  });
+
+  // Render the official Google button into the button wrapper (FedCM-compatible)
+  const btnEl = document.getElementById('googleSignInBtn');
+  if(btnEl && btnEl.parentNode){
+    // Replace raw button with GIS-rendered button to avoid manual prompt calls
+    const wrapper = document.createElement('div');
+    wrapper.id = 'googleBtnRendered';
+    btnEl.style.display = 'none';   // hide our custom button
+    btnEl.parentNode.insertBefore(wrapper, btnEl);
+    try{
+      google.accounts.id.renderButton(wrapper, {
+        theme: 'outline',
+        size:  'large',
+        text:  'continue_with',
+        shape: 'rectangular',
+        width: 340
+      });
+    } catch(e){ btnEl.style.display = ''; } // fallback to custom button
+  }
+
+  // Attempt One Tap / FedCM auto prompt for returning users
+  // Errors are non-fatal (ad blockers block the log endpoint — that is expected)
+  try{
+    google.accounts.id.prompt((notification) => {
+      // FedCM-compatible status check — use getMomentType() not the deprecated boolean methods
+      const type   = typeof notification.getMomentType   === 'function' ? notification.getMomentType()   : '';
+      const reason = typeof notification.getSkippedReason=== 'function' ? notification.getSkippedReason(): '';
+      const dismissed = typeof notification.getDismissedReason === 'function' ? notification.getDismissedReason() : '';
+      // If prompt was not shown or was dismissed, make sure our button is visible
+      const notShown = type === 'skipped' || type === 'dismissed' ||
+                       (typeof notification.isNotDisplayed  === 'function' && notification.isNotDisplayed()) ||
+                       (typeof notification.isSkippedMoment === 'function' && notification.isSkippedMoment()) ||
+                       (typeof notification.isDismissedMoment === 'function' && notification.isDismissedMoment());
+      if(notShown){
+        const rendered = document.getElementById('googleBtnRendered');
+        if(rendered) rendered.style.display = '';
+        if(btnEl)    btnEl.style.display    = '';
+      }
+    });
+  } catch(e){
+    // Silently ignore — ad blockers block gsi/log endpoint, which throws ERR_BLOCKED_BY_CLIENT
+  }
+}
+
+function startGoogleSignIn(){
+  const clientId = getGoogleClientId();
+  if(!clientId){ alert('Google Client ID not configured. See Settings → Google Sign-In.'); return; }
+  if(!window.google || !window.google.accounts){
+    const btn = document.getElementById('googleSignInBtn');
+    if(btn){ btn.disabled=true; btn.textContent='Loading Google…'; }
+    const s = document.createElement('script');
+    s.src   = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.onerror = () => {
+      if(btn){ btn.disabled=false; btn.textContent='Continue with Google'; }
+      toast('Could not load Google Sign-In library','warn');
+    };
+    s.onload = () => {
+      _initGIS(clientId);
+      if(btn){ btn.disabled=false; }
+    };
+    document.head.appendChild(s);
+  } else {
+    // GIS already loaded — just re-initialise (handles the case where client ID changed)
+    _initGIS(clientId);
+  }
+}
+
+// Called by GIS with a JWT credential
+function handleGoogleCredential(response){
+  const credential = response.credential;
+  // Decode JWT payload (base64url)
+  const parts = credential.split('.');
+  const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+  const googleSub   = payload.sub;
+  const googleEmail = payload.email;
+  const googleName  = payload.name || payload.email.split('@')[0];
+  const googlePic   = payload.picture || '';
+
+  // Look for existing account linked to this Google sub
+  const accs = authAccounts();
+  const existing = Object.values(accs).find(a=>a.googleSub===googleSub);
+  const existingCall = Object.keys(accs).find(k=>accs[k].googleSub===googleSub);
+
+  if(existing && existingCall){
+    // Auto-login — restore Google email into session for logout revoke
+    setSession(existingCall, existing.role, true, {name:existing.name, pic:googlePic, googleEmail});
+    toast(`Welcome back, ${existingCall}!`, 'ok');
+    bootApp(existingCall);
+    return;
+  }
+
+  // Also check by email (in case sub changed — rare)
+  const byEmail = Object.keys(accs).find(k=>accs[k].googleEmail===googleEmail);
+  if(byEmail){
+    accs[byEmail].googleSub = googleSub; // update sub
+    accs[byEmail].googlePic = googlePic;
+    saveAuthAccounts(accs);
+    setSession(byEmail, accs[byEmail].role, true, {name:accs[byEmail].name, pic:googlePic, googleEmail});
+    bootApp(byEmail);
+    return;
+  }
+
+  // New Google user — store credential, show callsign entry
+  _pendingGoogleCredential = { googleSub, googleEmail, googleName, googlePic, credential };
+  // Show complete-registration panel
+  showAuthPanel('gcomplete');
+  document.getElementById('authOverlay').classList.remove('hidden');
+  // Populate chip
+  const chip = document.getElementById('googleCompleteChip');
+  chip.innerHTML = `
+    ${googlePic ? `<img src="${googlePic}" class="google-avatar" referrerpolicy="no-referrer">` : `<div class="google-avatar-placeholder">${googleName.charAt(0).toUpperCase()}</div>`}
+    <div class="google-user-info">
+      <div class="google-user-name">${googleName}</div>
+      <div class="google-user-email">${googleEmail}</div>
+    </div>
+    <span class="auth-badge auth-badge-google">Google</span>
+  `;
+  document.getElementById('googleCompleteCall').value='';
+  document.getElementById('googleCompleteQth').value='';
+  document.getElementById('googleCompleteError').classList.remove('show');
+}
+
+async function doGoogleComplete(){
+  if(!_pendingGoogleCredential){ showAuthPanel('login'); return; }
+  const call = (document.getElementById('googleCompleteCall').value||'').trim().toUpperCase();
+  const qth  = (document.getElementById('googleCompleteQth').value||'').trim();
+  const errEl = document.getElementById('googleCompleteError');
+  errEl.classList.remove('show');
+  if(!call){ errEl.textContent='Callsign is required.'; errEl.classList.add('show'); return; }
+
+  const {googleSub, googleEmail, googleName, googlePic} = _pendingGoogleCredential;
+  const accs = authAccounts();
+  if(accs[call] && !accs[call].googleSub){
+    // Account exists but no Google link — link it
+    accs[call].googleSub = googleSub;
+    accs[call].googleEmail = googleEmail;
+    accs[call].googlePic = googlePic;
+    saveAuthAccounts(accs);
+    setSession(call, accs[call].role, true, {name:accs[call].name, pic:googlePic, googleEmail});
+    toast(`Google account linked to ${call}`, 'ok');
+    _pendingGoogleCredential = null;
+    bootApp(call);
+    return;
+  }
+  if(accs[call]){ errEl.textContent='Callsign already registered with a different Google account.'; errEl.classList.add('show'); return; }
+
+  // Check pending
+  const pend = pendingAccounts();
+  if(pend[call]){ errEl.textContent='Registration already pending for this callsign.'; errEl.classList.add('show'); return; }
+
+  // Create pending Google account (no password hash needed)
+  pend[call] = {
+    hash: null, name: googleName||call, qth,
+    role: 'user', googleSub, googleEmail, googlePic,
+    requestedAt: Date.now()
+  };
+  savePendingAccounts(pend);
+  refreshPendingBell();
+  _pendingGoogleCredential = null;
+
+  errEl.style.background='var(--success-muted)'; errEl.style.borderColor='var(--success-border)'; errEl.style.color='var(--success)';
+  errEl.textContent='✅ Registration submitted! An admin will approve your account.';
+  errEl.classList.add('show');
+  setTimeout(()=>showAuthPanel('login'), 3000);
 }
 
 // ── Boot app after login ──
 async function bootApp(call){
   document.getElementById('authOverlay').classList.add('hidden');
   init();
-  // Post-init async: auto-pull cloud + patch logQso
+  // Update nav chip with session data (pic, role badge, pending bell)
+  updateNavChip();
+  refreshPendingBell();
   if(localStorage.getItem('hamlog_sync_pull_'+CURRENT_USER)==='1'){
     await cloudPull();
   } else {
@@ -2058,19 +2585,15 @@ async function bootApp(call){
 function authInit(){
   SESSION = getSession();
   if(!hasAnyAccount()){
-    // First run: show setup
-    document.getElementById('authSetup').style.display='';
-    document.getElementById('authLogin').style.display='none';
+    showAuthPanel('setup');
     return;
   }
   if(SESSION && SESSION.call){
-    // Valid session — boot directly
     bootApp(SESSION.call);
     return;
   }
-  // Show login
-  document.getElementById('authLogin').style.display='';
-  document.getElementById('authSetup').style.display='none';
+  showAuthPanel('login');
+  initGoogleSignIn();
 }
 
 // ══════════════════════════════════════════════
@@ -2089,15 +2612,19 @@ function renderAdminPanel(){
     const s   = loadSettings(call);
     const log = loadLog(call);
     const isCurrentAdmin = call === SESSION.call;
+    const googleBadge = acc.googleSub ? '<span class="auth-badge auth-badge-google" style="font-size:.58rem;padding:.1rem .35rem;">G</span>' : '';
     return `<div class="admin-user-row">
-      <div class="admin-user-avatar">${call.substr(0,2)}</div>
+      ${acc.googlePic
+        ? `<img src="${acc.googlePic}" class="google-avatar" style="width:34px;height:34px;" referrerpolicy="no-referrer">`
+        : `<div class="admin-user-avatar">${call.substr(0,2)}</div>`}
       <div class="admin-user-info">
-        <div style="display:flex;align-items:center;gap:.4rem;">
+        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
           <div class="admin-user-call">${call}</div>
           <span class="auth-badge ${acc.role==='admin'?'auth-badge-admin':'auth-badge-user'}">${acc.role==='admin'?'👑 ADMIN':'📻 USER'}</span>
+          ${googleBadge}
           ${isCurrentAdmin?'<span style="font-size:.65rem;color:var(--text-muted);">(you)</span>':''}
         </div>
-        <div class="admin-user-meta">${s.myName||'—'} · ${s.myQth||'No QTH'} · ${log.length} QSOs</div>
+        <div class="admin-user-meta">${s.myName||acc.name||'—'} · ${s.myQth||'No QTH'} · ${log.length} QSOs${acc.googleEmail?' · '+acc.googleEmail:''}</div>
       </div>
       <div class="admin-user-actions">
         <button class="btn btn-ghost btn-sm" onclick="adminViewLog('${call}')" title="View log">👁</button>
@@ -2110,17 +2637,78 @@ function renderAdminPanel(){
 
   // System stats
   const totalQsos = calls.reduce((n,c)=>n+loadLog(c).length,0);
+  const pendCount = Object.keys(pendingAccounts()).length;
   el('adminStats').innerHTML = `
     <div class="qsl-stat"><div class="qsl-stat-val">${calls.length}</div><div class="qsl-stat-label">Operators</div></div>
     <div class="qsl-stat"><div class="qsl-stat-val">${totalQsos}</div><div class="qsl-stat-label">Total QSOs</div></div>
     <div class="qsl-stat"><div class="qsl-stat-val">${calls.filter(c=>accs[c].role==='admin').length}</div><div class="qsl-stat-label">Admins</div></div>
-    <div class="qsl-stat"><div class="qsl-stat-val">${calls.filter(c=>accs[c].role==='user').length}</div><div class="qsl-stat-label">Users</div></div>
+    <div class="qsl-stat"><div class="qsl-stat-val" style="color:${pendCount?'var(--warning)':'inherit'}">${pendCount}</div><div class="qsl-stat-label">Pending</div></div>
   `;
+
+  // Pending approvals
+  const pend = pendingAccounts();
+  const pendCalls = Object.keys(pend);
+  el('pendingCard').style.display = pendCalls.length ? '' : 'none';
+  el('pendingCount').textContent = pendCalls.length;
+  el('pendingList').innerHTML = pendCalls.map(call=>{
+    const p = pend[call];
+    const googleBadge = p.googleSub ? '<span class="auth-badge auth-badge-google" style="font-size:.58rem;">G</span>' : '';
+    return `<div class="pending-row">
+      ${p.googlePic
+        ? `<img src="${p.googlePic}" class="google-avatar" style="width:30px;height:30px;" referrerpolicy="no-referrer">`
+        : `<div class="admin-user-avatar" style="width:30px;height:30px;font-size:.7rem;">${call.substr(0,2)}</div>`}
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:.35rem;">
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text-bright);font-size:.88rem;">${call}</span>
+          ${googleBadge}
+        </div>
+        <div style="font-size:.7rem;color:var(--text-muted);">${p.name||'—'} · ${p.qth||'No QTH'}${p.googleEmail?' · '+p.googleEmail:''}</div>
+        <div style="font-size:.65rem;color:var(--text-muted);">Requested: ${new Date(p.requestedAt).toLocaleString()}</div>
+      </div>
+      <div style="display:flex;gap:.3rem;">
+        <button class="btn btn-success btn-sm" onclick="adminApprove('${call}')">✓ Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="adminRejectPending('${call}')">✕ Reject</button>
+      </div>
+    </div>`;
+  }).join('');
 
   // View-as dropdown
   const sel = el('adminViewUser');
-  sel.innerHTML = '<option value="">— Choose operator —</option>' +
+  if(sel) sel.innerHTML = '<option value="">— Choose operator —</option>' +
     calls.map(c=>`<option value="${c}">${c} (${loadLog(c).length} QSOs)</option>`).join('');
+}
+
+function adminApprove(call){
+  if(!isAdmin()) return;
+  const pend = pendingAccounts();
+  const p = pend[call]; if(!p) return;
+  const accs = authAccounts();
+  accs[call] = {
+    hash: p.hash||null, role:'user', name:p.name||call,
+    googleSub: p.googleSub||null, googleEmail: p.googleEmail||null,
+    googlePic: p.googlePic||null, approved:true, createdAt: Date.now()
+  };
+  saveAuthAccounts(accs);
+  // Register in hamlog users
+  const users = JSON.parse(localStorage.getItem('hamlog_users')||'[]');
+  if(!users.includes(call)) users.push(call);
+  localStorage.setItem('hamlog_users', JSON.stringify(users));
+  if(!localStorage.getItem(`hamlog_${call}_settings`)){
+    localStorage.setItem(`hamlog_${call}_settings`, JSON.stringify({myCall:call,myName:p.name||call,myQth:p.qth||'',defPower:'100'}));
+  }
+  USERS[call]=true; saveUsers();
+  delete pend[call]; savePendingAccounts(pend);
+  renderAdminPanel(); renderUserSwitchers(); refreshPendingBell();
+  toast(`${call} approved and activated`,'ok');
+}
+
+function adminRejectPending(call){
+  openConfirm(`Reject ${call}`,`Permanently reject and delete the registration request for ${call}?`,()=>{
+    const pend = pendingAccounts();
+    delete pend[call]; savePendingAccounts(pend);
+    renderAdminPanel(); refreshPendingBell();
+    toast(`${call} registration rejected`,'warn');
+  });
 }
 
 function adminViewLog(call){
@@ -2541,29 +3129,60 @@ function renderUserSwitchers(){
   // Hide admin-only UI elements for regular users
   const multiCard = el('multiUserCard');
   if(multiCard) multiCard.style.display = isAdmin() ? '' : 'none';
+  const gcCard = el('googleConfigCard');
+  if(gcCard) gcCard.style.display = isAdmin() ? '' : 'none';
 }
 
 function updateNavChip(){
   const s = SETTINGS;
   el('navCallsign').textContent = s.myCall || '—';
   el('navOperator').textContent = s.myName || 'Unknown';
-  el('navAvatar').textContent = (s.myCall||'?').substr(0,2);
   el('logSubtitle').textContent = s.myCall
     ? `${s.myCall} — ${s.myQth||'No QTH'} ${s.myGrid?'('+s.myGrid+')':''}`
     : 'No station configured';
+
+  // Avatar: Google pic or initials
+  const avatarWrap = el('navAvatarWrap');
+  if(avatarWrap && SESSION){
+    const pic = SESSION.pic;
+    if(pic){
+      avatarWrap.innerHTML = `<img src="${pic}" referrerpolicy="no-referrer"
+        style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;"
+        onerror="this.style.display='none';document.getElementById('navAvatar').style.display=''">
+        <div class="user-avatar" id="navAvatar" style="display:none;">${(s.myCall||'?').substr(0,2)}</div>`;
+    } else {
+      avatarWrap.innerHTML = `<div class="user-avatar" id="navAvatar">${(s.myCall||'?').substr(0,2)}</div>`;
+    }
+  }
+
   // Role badge
   const badge = el('navRoleBadge');
-  if(SESSION){
+  if(badge && SESSION){
     badge.style.display='';
     badge.className = `auth-badge ${SESSION.role==='admin'?'auth-badge-admin':'auth-badge-user'}`;
     badge.textContent = SESSION.role==='admin' ? '👑 ADMIN' : '📻 USER';
   }
+
   // Admin nav button
   const adminBtn = el('adminNavBtn');
   if(adminBtn) adminBtn.style.display = isAdmin() ? '' : 'none';
+
   // User chip pointer for admin only
   const chip = el('navChip');
   if(chip) chip.style.cursor = isAdmin() ? 'pointer' : 'default';
+
+  // Pending registrations bell (admin only)
+  const bell = el('pendingBell');
+  if(bell){
+    if(isAdmin()){
+      const count = Object.keys(pendingAccounts()).length;
+      bell.style.display = count > 0 ? '' : 'none';
+      const countEl = el('pendingBellCount');
+      if(countEl) countEl.textContent = count > 0 ? count : '';
+    } else {
+      bell.style.display = 'none';
+    }
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -2583,7 +3202,7 @@ function showScreen(id, btn){
   if(id==='dxccScreen') renderDxcc();
   if(id==='awardsScreen') renderAwards();
   if(id==='lotwScreen') updateLotwStats();
-  if(id==='settingsScreen'){ renderUserSwitchers(); }
+  if(id==='settingsScreen'){ renderUserSwitchers(); applyGmailSettings(); }
   if(id==='adminScreen'){ renderAdminPanel(); }
 }
 
@@ -3635,12 +4254,48 @@ Please confirm receipt via your preferred bureau or direct QSL.
 function loadGmailSettings(){
   try{ return JSON.parse(localStorage.getItem(userKey(CURRENT_USER,'gmail'))||'{}'); }catch(e){ return {}; }
 }
+// ── Google Client ID helpers (post-login, Settings screen) ──
+function saveGoogleClientIdSetting(){
+  const inp = el('sGoogleClientId');
+  const statusEl = el('googleClientIdStatus');
+  if(!inp) return;
+  const val = inp.value.trim();
+  if(!val){
+    if(statusEl){ statusEl.style.cssText='display:block;background:var(--danger-muted);color:var(--danger);border:1px solid rgba(239,68,68,.3);padding:.4rem .7rem;border-radius:4px;'; statusEl.textContent='Paste a Client ID first.'; }
+    return;
+  }
+  if(!val.includes('.apps.googleusercontent.com')){
+    if(statusEl){ statusEl.style.cssText='display:block;background:var(--danger-muted);color:var(--danger);border:1px solid rgba(239,68,68,.3);padding:.4rem .7rem;border-radius:4px;'; statusEl.textContent="Doesn't look like a valid Google Client ID — should end with .apps.googleusercontent.com"; }
+    return;
+  }
+  localStorage.setItem(GOOGLE_CLIENT_ID_KEY, val);
+  const cfg = loadGmailSettings(); cfg.googleClientId = val;
+  localStorage.setItem(userKey(CURRENT_USER,'gmail'), JSON.stringify(cfg));
+  if(statusEl){ statusEl.style.cssText='display:block;background:var(--success-muted);color:var(--success);border:1px solid var(--success-border);padding:.4rem .7rem;border-radius:4px;'; statusEl.textContent='✓ Saved! Google Sign-In is now enabled on the login page.'; }
+  initGoogleSignIn();
+  toast('Google Sign-In enabled','ok');
+}
+
+function clearGoogleClientId(){
+  openConfirm('Disable Google Sign-In','Remove the Google Client ID and disable Google Sign-In on the login page?', ()=>{
+    localStorage.removeItem(GOOGLE_CLIENT_ID_KEY);
+    const cfg = loadGmailSettings(); delete cfg.googleClientId;
+    localStorage.setItem(userKey(CURRENT_USER,'gmail'), JSON.stringify(cfg));
+    const inp = el('sGoogleClientId'); if(inp) inp.value='';
+    const statusEl = el('googleClientIdStatus');
+    if(statusEl){ statusEl.style.cssText='display:block;background:var(--warning-muted);color:var(--warning);border:1px solid rgba(245,158,11,.3);padding:.4rem .7rem;border-radius:4px;'; statusEl.textContent='Google Sign-In disabled.'; }
+    initGoogleSignIn();
+    toast('Google Sign-In disabled','warn');
+  });
+}
+
 function saveGmailSettings(){
   const cfg = {
-    from:    el('sGmailFrom').value.trim(),
-    name:    el('sGmailName').value.trim(),
-    subject: el('sGmailSubject').value.trim() || DEFAULT_SUBJECT,
-    body:    el('sGmailBody').value || DEFAULT_BODY
+    from:    el('sGmailFrom') ? el('sGmailFrom').value.trim() : '',
+    name:    el('sGmailName') ? el('sGmailName').value.trim() : '',
+    subject: el('sGmailSubject') ? (el('sGmailSubject').value.trim() || DEFAULT_SUBJECT) : DEFAULT_SUBJECT,
+    body:    el('sGmailBody') ? (el('sGmailBody').value || DEFAULT_BODY) : DEFAULT_BODY,
+    googleClientId: localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || ''
   };
   localStorage.setItem(userKey(CURRENT_USER,'gmail'), JSON.stringify(cfg));
   toast('Gmail settings saved','ok');
@@ -3652,10 +4307,16 @@ function resetGmailTemplate(){
 }
 function applyGmailSettings(){
   const cfg = loadGmailSettings();
-  if(el('sGmailFrom')) el('sGmailFrom').value = cfg.from||'';
-  if(el('sGmailName')) el('sGmailName').value = cfg.name||SETTINGS.myName||'';
+  if(el('sGmailFrom'))    el('sGmailFrom').value    = cfg.from||'';
+  if(el('sGmailName'))    el('sGmailName').value    = cfg.name||SETTINGS.myName||'';
   if(el('sGmailSubject')) el('sGmailSubject').value = cfg.subject||DEFAULT_SUBJECT;
   if(el('sGmailBody'))    el('sGmailBody').value    = cfg.body||DEFAULT_BODY;
+  // Settings screen Google field
+  const gcInp = el('sGoogleClientId');
+  if(gcInp) gcInp.value = cfg.googleClientId || localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || '';
+  // Show Google config card only for admin
+  const gcCard = el('googleConfigCard');
+  if(gcCard) gcCard.style.display = isAdmin() ? '' : 'none';
 }
 
 function fillTemplate(tpl, q){

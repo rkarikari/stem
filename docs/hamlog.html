@@ -3,6 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+  DEPLOYMENT REQUIREMENT — Cross-Origin-Opener-Policy
+  =====================================================
+  To prevent the "COOP policy would block window.postMessage" console error
+  from Google Sign-In, your hosting server MUST send this HTTP response header:
+
+    Cross-Origin-Opener-Policy: same-origin-allow-popups
+
+  How to set it per platform:
+  • Netlify  →  netlify.toml:  add header for "/*"
+  • Vercel   →  vercel.json:   add header for "/(.*)"
+  • Apache   →  .htaccess:     Header set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+  • Nginx    →  nginx.conf:    add_header Cross-Origin-Opener-Policy "same-origin-allow-popups";
+  • GitHub Pages → not configurable; consider Netlify/Cloudflare Pages instead.
+
+  NOTE: "ERR_BLOCKED_BY_CLIENT" errors from play.google.com/log are caused by
+  ad-blockers in the user's browser and are harmless — they are already caught
+  and silently ignored by this app.
+-->
 <title>RadioSport Log — Amateur Radio Station Logger</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%233b82f6'/><text x='16' y='22' font-size='18' text-anchor='middle' fill='white'>📡</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -2419,16 +2438,10 @@ function _initGIS(clientId){
   // Errors are non-fatal (ad blockers block the log endpoint — that is expected)
   try{
     google.accounts.id.prompt((notification) => {
-      // FedCM-compatible status check — use getMomentType() not the deprecated boolean methods
-      const type   = typeof notification.getMomentType   === 'function' ? notification.getMomentType()   : '';
-      const reason = typeof notification.getSkippedReason=== 'function' ? notification.getSkippedReason(): '';
-      const dismissed = typeof notification.getDismissedReason === 'function' ? notification.getDismissedReason() : '';
-      // If prompt was not shown or was dismissed, make sure our button is visible
-      const notShown = type === 'skipped' || type === 'dismissed' ||
-                       (typeof notification.isNotDisplayed  === 'function' && notification.isNotDisplayed()) ||
-                       (typeof notification.isSkippedMoment === 'function' && notification.isSkippedMoment()) ||
-                       (typeof notification.isDismissedMoment === 'function' && notification.isDismissedMoment());
-      if(notShown){
+      // FedCM-compatible status check — getMomentType() only (deprecated boolean methods removed)
+      const type = typeof notification.getMomentType === 'function' ? notification.getMomentType() : 'skipped';
+      // Any type other than 'display' means the prompt was not shown; ensure button is visible
+      if(type !== 'display'){
         const rendered = document.getElementById('googleBtnRendered');
         if(rendered) rendered.style.display = '';
         if(btnEl)    btnEl.style.display    = '';
@@ -2565,6 +2578,8 @@ async function doGoogleComplete(){
 // ── Boot app after login ──
 async function bootApp(call){
   document.getElementById('authOverlay').classList.add('hidden');
+  // Ensure SESSION is set before init() so CURRENT_USER is always bound to the logged-in user
+  if(!SESSION) SESSION = getSession();
   init();
   // Update nav chip with session data (pic, role badge, pending bell)
   updateNavChip();
@@ -3033,8 +3048,11 @@ function el(id){return document.getElementById(id);}
 //  MULTI-USER
 // ══════════════════════════════════════════════
 function switchUser(call){
-  if(!isAdmin() && call !== SESSION.call){
-    toast('Permission denied — admin only','warn'); return;
+  // Non-admins may only ever view their own data — enforce regardless of how this is called
+  if(!isAdmin()){
+    if(!SESSION || call !== SESSION.call){
+      toast('Permission denied — admin only','warn'); return;
+    }
   }
   CURRENT_USER = call;
   LOG = loadLog(call);
@@ -3955,14 +3973,15 @@ function init(){
   const sessionCall = SESSION ? SESSION.call : null;
 
   const users = loadUsers();
-  if(sessionCall && (users.includes(sessionCall) || Object.keys(authAccounts()).includes(sessionCall))){
-    // Ensure user is in USERS map
+  if(sessionCall){
+    // Always lock CURRENT_USER to the authenticated session — never load another user's data
     if(!USERS[sessionCall]){ USERS[sessionCall]=true; saveUsers(); }
     CURRENT_USER = sessionCall;
   } else if(users.length){
+    // No active session — legacy/fallback path (should not normally be reached after auth gate)
     CURRENT_USER = users[0];
   } else {
-    CURRENT_USER = sessionCall || 'UNKNOWN';
+    CURRENT_USER = 'UNKNOWN';
     USERS[CURRENT_USER]=true; saveUsers();
   }
 
