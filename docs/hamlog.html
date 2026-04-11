@@ -2042,36 +2042,38 @@ td.actions-cell{display:flex;gap:.3rem;}
     <div class="modal-header">
       <div class="modal-title">Add Operator</div>
     </div>
-    <div class="form-grid">
-      <div class="field">
-        <label>Callsign <span class="required">*</span></label>
-        <input class="callsign-inp" type="text" id="nuCall" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()">
+    <form autocomplete="on" onsubmit="createUser();return false;">
+      <div class="form-grid">
+        <div class="field">
+          <label>Callsign <span class="required">*</span></label>
+          <input class="callsign-inp" type="text" id="nuCall" name="username" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
+        </div>
+        <div class="field">
+          <label>Operator Name</label>
+          <input type="text" id="nuName" name="name" placeholder="John Doe" autocomplete="name">
+        </div>
+        <div class="field form-full">
+          <label>QTH</label>
+          <input type="text" id="nuQth" placeholder="City, Country" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Password <span class="required">*</span></label>
+          <input type="password" id="nuPass" name="new-password" placeholder="Set a password" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label>Role</label>
+          <select id="nuRole">
+            <option value="user">Operator (User)</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
       </div>
-      <div class="field">
-        <label>Operator Name</label>
-        <input type="text" id="nuName" placeholder="John Doe">
+      <div id="nuError" class="auth-error" style="margin-top:.5rem;"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('newUserModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Operator</button>
       </div>
-      <div class="field form-full">
-        <label>QTH</label>
-        <input type="text" id="nuQth" placeholder="City, Country">
-      </div>
-      <div class="field">
-        <label>Password <span class="required">*</span></label>
-        <input type="password" id="nuPass" placeholder="Set a password" autocomplete="new-password">
-      </div>
-      <div class="field">
-        <label>Role</label>
-        <select id="nuRole">
-          <option value="user">Operator (User)</option>
-          <option value="admin">Administrator</option>
-        </select>
-      </div>
-    </div>
-    <div id="nuError" class="auth-error" style="margin-top:.5rem;"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('newUserModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="createUser()">Create Operator</button>
-    </div>
+    </form>
   </div>
 </div>
 
@@ -2084,6 +2086,10 @@ td.actions-cell{display:flex;gap:.3rem;}
     </div>
     <div class="auth-error" id="changePassError" style="margin-bottom:.75rem;"></div>
     <form autocomplete="on" onsubmit="doChangePassword();return false;">
+    <!-- Hidden username so browser associates password fields with an account (accessibility) -->
+    <input type="text" name="username" id="changePassUsername"
+      autocomplete="username" aria-hidden="true"
+      style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;">
     <div class="form-grid">
       <div class="field form-full" id="oldPassRow">
         <label>Current Password</label>
@@ -2284,9 +2290,13 @@ let _changePassTarget = null;
 function openChangePassModal(targetCall){
   _changePassTarget = targetCall;
   const forSelf = !targetCall || targetCall === SESSION.call;
+  const target  = targetCall || SESSION.call;
   document.getElementById('changePassFor').textContent = forSelf
     ? `Changing password for ${SESSION.call}`
     : `Admin reset for ${targetCall}`;
+  // Populate hidden username so browser password manager works correctly
+  const unField = document.getElementById('changePassUsername');
+  if(unField) unField.value = target;
   document.getElementById('oldPassRow').style.display = forSelf ? '' : 'none';
   document.getElementById('oldPass').value='';
   document.getElementById('newPass').value='';
@@ -2378,43 +2388,78 @@ function initGoogleSignIn(){
 function _initGIS(clientId){
   if(!window.google || !window.google.accounts) return;
   google.accounts.id.initialize({
-    client_id: clientId,
-    callback: handleGoogleCredential,
-    auto_select: true,         // auto-sign-in if previously used
-    cancel_on_tap_outside: false,
-    context: 'signin'
+    client_id:            clientId,
+    callback:             handleGoogleCredential,
+    auto_select:          true,
+    cancel_on_tap_outside:false,
+    context:              'signin',
+    use_fedcm_for_prompt: true        // FedCM opt-in — stops the deprecation warning
   });
-  // Show One Tap prompt (auto-login for returning Google users)
-  google.accounts.id.prompt((notification) => {
-    // If dismissed or not displayed, show manual button
-    if(notification.isSkippedMoment() || notification.isDismissedMoment()){
-      document.getElementById('googleSignInBtn').style.display = '';
-    }
-  });
+
+  // Render the official Google button into the button wrapper (FedCM-compatible)
+  const btnEl = document.getElementById('googleSignInBtn');
+  if(btnEl && btnEl.parentNode){
+    // Replace raw button with GIS-rendered button to avoid manual prompt calls
+    const wrapper = document.createElement('div');
+    wrapper.id = 'googleBtnRendered';
+    btnEl.style.display = 'none';   // hide our custom button
+    btnEl.parentNode.insertBefore(wrapper, btnEl);
+    try{
+      google.accounts.id.renderButton(wrapper, {
+        theme: 'outline',
+        size:  'large',
+        text:  'continue_with',
+        shape: 'rectangular',
+        width: 340
+      });
+    } catch(e){ btnEl.style.display = ''; } // fallback to custom button
+  }
+
+  // Attempt One Tap / FedCM auto prompt for returning users
+  // Errors are non-fatal (ad blockers block the log endpoint — that is expected)
+  try{
+    google.accounts.id.prompt((notification) => {
+      // FedCM-compatible status check — use getMomentType() not the deprecated boolean methods
+      const type   = typeof notification.getMomentType   === 'function' ? notification.getMomentType()   : '';
+      const reason = typeof notification.getSkippedReason=== 'function' ? notification.getSkippedReason(): '';
+      const dismissed = typeof notification.getDismissedReason === 'function' ? notification.getDismissedReason() : '';
+      // If prompt was not shown or was dismissed, make sure our button is visible
+      const notShown = type === 'skipped' || type === 'dismissed' ||
+                       (typeof notification.isNotDisplayed  === 'function' && notification.isNotDisplayed()) ||
+                       (typeof notification.isSkippedMoment === 'function' && notification.isSkippedMoment()) ||
+                       (typeof notification.isDismissedMoment === 'function' && notification.isDismissedMoment());
+      if(notShown){
+        const rendered = document.getElementById('googleBtnRendered');
+        if(rendered) rendered.style.display = '';
+        if(btnEl)    btnEl.style.display    = '';
+      }
+    });
+  } catch(e){
+    // Silently ignore — ad blockers block gsi/log endpoint, which throws ERR_BLOCKED_BY_CLIENT
+  }
 }
 
 function startGoogleSignIn(){
   const clientId = getGoogleClientId();
-  if(!clientId){ alert('Google Client ID not configured. See Admin → Settings.'); return; }
+  if(!clientId){ alert('Google Client ID not configured. See Settings → Google Sign-In.'); return; }
   if(!window.google || !window.google.accounts){
     const btn = document.getElementById('googleSignInBtn');
-    btn.disabled=true; btn.textContent='Loading Google…';
+    if(btn){ btn.disabled=true; btn.textContent='Loading Google…'; }
     const s = document.createElement('script');
-    s.src = 'https://accounts.google.com/gsi/client';
+    s.src   = 'https://accounts.google.com/gsi/client';
     s.async = true;
+    s.onerror = () => {
+      if(btn){ btn.disabled=false; btn.textContent='Continue with Google'; }
+      toast('Could not load Google Sign-In library','warn');
+    };
     s.onload = () => {
       _initGIS(clientId);
-      btn.disabled=false; btn.innerHTML='<svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg> Continue with Google';
-      google.accounts.id.prompt();
+      if(btn){ btn.disabled=false; }
     };
     document.head.appendChild(s);
   } else {
-    google.accounts.id.prompt((n)=>{
-      if(n.isSkippedMoment()||n.isDismissedMoment()){
-        // Fallback: open popup manually
-        google.accounts.id.renderButton(document.getElementById('googleSignInBtn').parentNode, {theme:'outline', size:'large', text:'continue_with', shape:'rectangular'});
-      }
-    });
+    // GIS already loaded — just re-initialise (handles the case where client ID changed)
+    _initGIS(clientId);
   }
 }
 
