@@ -1,0 +1,2348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HamLog Pro — Amateur Radio Station Logger</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-base:#0b1120;
+  --bg-surface:#111827;
+  --bg-elevated:#1a2235;
+  --bg-card:#1e2d45;
+  --bg-input:#0f1929;
+  --border:#2a3a54;
+  --border-subtle:#1f2f47;
+  --primary:#3b82f6;
+  --primary-dim:#1d4ed8;
+  --primary-muted:rgba(59,130,246,0.12);
+  --primary-border:rgba(59,130,246,0.35);
+  --accent:#06b6d4;
+  --accent-muted:rgba(6,182,212,0.1);
+  --success:#10b981;
+  --success-muted:rgba(16,185,129,0.12);
+  --success-border:rgba(16,185,129,0.35);
+  --warning:#f59e0b;
+  --warning-muted:rgba(245,158,11,0.1);
+  --danger:#ef4444;
+  --danger-muted:rgba(239,68,68,0.1);
+  --lotw:#8b5cf6;
+  --lotw-muted:rgba(139,92,246,0.12);
+  --lotw-border:rgba(139,92,246,0.35);
+  --text:#e2e8f0;
+  --text-secondary:#94a3b8;
+  --text-muted:#64748b;
+  --text-bright:#f1f5f9;
+  --radius:8px;
+  --radius-sm:5px;
+  --radius-lg:12px;
+  --shadow:0 4px 24px rgba(0,0,0,0.4);
+  --shadow-sm:0 2px 8px rgba(0,0,0,0.3);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg-base);color:var(--text);
+  font-family:'DM Sans',system-ui,sans-serif;
+  min-height:100vh;overflow-x:hidden;font-size:14px;line-height:1.5;
+}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg-surface);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--primary-dim);}
+
+/* ── LAYOUT ── */
+#app{display:flex;flex-direction:column;min-height:100vh;}
+
+/* ── TOP BAR ── */
+.topbar{
+  display:flex;align-items:center;gap:1rem;
+  padding:.75rem 1.5rem;
+  background:var(--bg-surface);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:200;
+  box-shadow:0 1px 0 var(--border-subtle);
+}
+.logo{
+  display:flex;align-items:center;gap:.6rem;flex-shrink:0;
+  text-decoration:none;
+}
+.logo-icon{
+  width:32px;height:32px;border-radius:7px;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.logo-text{
+  font-size:1rem;font-weight:700;color:var(--text-bright);letter-spacing:-.01em;
+}
+.logo-text span{color:var(--primary);}
+.logo-sub{font-size:.65rem;color:var(--text-muted);font-weight:400;display:block;margin-top:-2px;}
+
+.topbar-nav{display:flex;gap:2px;flex:1;overflow-x:auto;padding-bottom:0;}
+.nav-btn{
+  font-size:.8rem;font-weight:500;
+  padding:.45rem .9rem;border:none;background:transparent;
+  color:var(--text-secondary);cursor:pointer;border-radius:var(--radius-sm);
+  transition:all .15s;white-space:nowrap;
+  display:flex;align-items:center;gap:.4rem;
+}
+.nav-btn:hover{background:var(--bg-elevated);color:var(--text);}
+.nav-btn.active{background:var(--primary-muted);color:var(--primary);}
+
+.topbar-right{display:flex;align-items:center;gap:.75rem;flex-shrink:0;}
+#utcClock{
+  font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--text-secondary);
+  background:var(--bg-elevated);padding:.35rem .7rem;border-radius:var(--radius-sm);
+  border:1px solid var(--border);letter-spacing:.04em;
+}
+.user-chip{
+  display:flex;align-items:center;gap:.5rem;
+  background:var(--bg-elevated);border:1px solid var(--border);
+  padding:.35rem .75rem;border-radius:var(--radius-sm);cursor:pointer;
+  transition:all .15s;
+}
+.user-chip:hover{border-color:var(--primary);}
+.user-chip-call{font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:600;color:var(--primary);}
+.user-chip-name{font-size:.72rem;color:var(--text-muted);}
+.user-avatar{
+  width:24px;height:24px;border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.65rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+
+/* ── SCREENS ── */
+.screen{display:none;padding:1.5rem;max-width:1600px;margin:0 auto;width:100%;animation:fadeIn .2s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ── PAGE HEADER ── */
+.page-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem;
+}
+.page-title{font-size:1.25rem;font-weight:600;color:var(--text-bright);}
+.page-subtitle{font-size:.8rem;color:var(--text-muted);margin-top:.15rem;}
+.page-actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;}
+
+/* ── CARDS ── */
+.card{
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:1.25rem;
+}
+.card-sm{padding:.9rem 1rem;}
+.card-title{
+  font-size:.8rem;font-weight:600;color:var(--text-secondary);
+  text-transform:uppercase;letter-spacing:.06em;
+  margin-bottom:1rem;padding-bottom:.75rem;
+  border-bottom:1px solid var(--border-subtle);
+  display:flex;align-items:center;gap:.5rem;
+}
+.card-title .card-badge{
+  margin-left:auto;
+  font-size:.65rem;background:var(--bg-elevated);
+  border:1px solid var(--border);padding:.15rem .5rem;
+  border-radius:20px;color:var(--text-muted);font-weight:400;letter-spacing:0;text-transform:none;
+}
+
+/* ── GRID ── */
+.log-layout{display:grid;grid-template-columns:1fr 320px;gap:1.25rem;align-items:start;}
+@media(max-width:960px){.log-layout{grid-template-columns:1fr;}}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+@media(max-width:720px){.two-col{grid-template-columns:1fr;}}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+@media(max-width:900px){.three-col{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.three-col{grid-template-columns:1fr;}}
+
+/* ── FORMS ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.form-grid.cols3{grid-template-columns:1fr 1fr 1fr;}
+.form-grid.cols4{grid-template-columns:repeat(4,1fr);}
+.form-full{grid-column:1/-1;}
+.field{display:flex;flex-direction:column;gap:.35rem;}
+.field label{
+  font-size:.75rem;font-weight:500;color:var(--text-secondary);
+  display:flex;align-items:center;gap:.4rem;
+}
+.field label .required{color:var(--danger);font-size:.7rem;}
+.field input,.field select,.field textarea{
+  background:var(--bg-input);border:1px solid var(--border);
+  color:var(--text-bright);font-family:'DM Sans',sans-serif;font-size:.875rem;
+  padding:.55rem .75rem;border-radius:var(--radius-sm);outline:none;
+  transition:border-color .15s,box-shadow .15s;width:100%;
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,0.12);
+}
+.field input::placeholder,.field textarea::placeholder{color:var(--text-muted);}
+.field input.callsign-inp{
+  font-family:'JetBrains Mono',monospace;text-transform:uppercase;
+  font-size:1.05rem;font-weight:600;color:var(--text-bright);letter-spacing:.05em;
+}
+.field select option{background:var(--bg-elevated);}
+.field textarea{resize:vertical;min-height:56px;line-height:1.5;}
+.input-group{display:flex;gap:.5rem;}
+.input-group .field{flex:1;}
+
+/* ── RST ── */
+.rst-pair{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.rst-pair-label{font-size:.72rem;color:var(--text-muted);text-align:center;margin-bottom:.25rem;}
+
+/* ── BUTTONS ── */
+.btn{
+  font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;
+  padding:.5rem 1rem;border-radius:var(--radius-sm);cursor:pointer;
+  transition:all .15s;border:1px solid transparent;display:inline-flex;
+  align-items:center;gap:.4rem;white-space:nowrap;
+}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+.btn-primary:hover{background:#2563eb;border-color:#2563eb;}
+.btn-success{background:var(--success);color:#fff;border-color:var(--success);}
+.btn-success:hover{background:#059669;}
+.btn-outline{background:transparent;color:var(--text-secondary);border-color:var(--border);}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-muted);}
+.btn-ghost{background:transparent;color:var(--text-muted);border-color:transparent;}
+.btn-ghost:hover{background:var(--bg-elevated);color:var(--text);}
+.btn-danger{background:var(--danger-muted);color:var(--danger);border-color:rgba(239,68,68,0.3);}
+.btn-danger:hover{background:rgba(239,68,68,0.2);}
+.btn-lotw{background:var(--lotw-muted);color:var(--lotw);border-color:var(--lotw-border);}
+.btn-lotw:hover{background:rgba(139,92,246,0.2);}
+.btn-sm{padding:.3rem .65rem;font-size:.75rem;}
+.btn-lg{padding:.65rem 1.4rem;font-size:.9rem;}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem;}
+.btn-icon{padding:.45rem .55rem;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ── LOG TABLE ── */
+.table-toolbar{
+  display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;
+}
+.search-input{
+  background:var(--bg-input);border:1px solid var(--border);
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:.85rem;
+  padding:.5rem .85rem;border-radius:var(--radius-sm);outline:none;min-width:200px;
+  transition:border-color .15s;
+}
+.search-input:focus{border-color:var(--primary);}
+.filter-sel{
+  background:var(--bg-input);border:1px solid var(--border);
+  color:var(--text-secondary);font-family:'DM Sans',sans-serif;font-size:.8rem;
+  padding:.5rem .7rem;border-radius:var(--radius-sm);outline:none;cursor:pointer;
+}
+.filter-sel:focus{border-color:var(--primary);}
+.toolbar-spacer{flex:1;}
+.table-wrap{overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:.82rem;}
+thead{background:var(--bg-elevated);}
+thead th{
+  padding:.7rem .85rem;text-align:left;color:var(--text-muted);
+  font-size:.72rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  white-space:nowrap;cursor:pointer;user-select:none;transition:color .12s;
+  border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg-elevated);
+}
+thead th:hover{color:var(--text);}
+thead th.sorted{color:var(--primary);}
+.sort-icon{margin-left:.3rem;opacity:.5;font-size:.7rem;}
+thead th.sorted .sort-icon{opacity:1;color:var(--primary);}
+tbody tr{border-bottom:1px solid var(--border-subtle);transition:background .1s;cursor:pointer;}
+tbody tr:hover{background:var(--bg-elevated);}
+tbody tr.selected{background:var(--primary-muted);outline:1px solid var(--primary-border);}
+tbody tr.new-flash{animation:rowFlash .7s ease;}
+@keyframes rowFlash{0%{background:rgba(16,185,129,0.25)}100%{background:transparent}}
+td{padding:.6rem .85rem;white-space:nowrap;}
+td.call-cell{
+  font-family:'JetBrains Mono',monospace;font-weight:600;
+  font-size:.85rem;color:var(--text-bright);letter-spacing:.04em;
+}
+td.band-cell{color:var(--warning);font-weight:500;}
+td.mode-cell{color:var(--accent);}
+td.freq-cell{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text-secondary);}
+td.rst-cell{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text-muted);}
+td.dxcc-cell{color:var(--text-secondary);}
+td.lotw-cell{text-align:center;}
+td.actions-cell{display:flex;gap:.3rem;}
+.no-data{
+  text-align:center;padding:3rem 1rem;color:var(--text-muted);
+  font-size:.85rem;
+}
+.no-data-icon{font-size:2rem;margin-bottom:.5rem;opacity:.4;}
+
+/* ── STAT CARDS ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stat-card{
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:1.1rem;
+  transition:border-color .2s,transform .15s;
+}
+.stat-card:hover{border-color:var(--primary);transform:translateY(-1px);}
+.stat-val{
+  font-size:1.8rem;font-weight:700;line-height:1;margin-bottom:.3rem;color:var(--text-bright);
+}
+.stat-label{font-size:.75rem;color:var(--text-muted);font-weight:500;}
+.stat-change{font-size:.7rem;margin-top:.4rem;color:var(--success);display:flex;align-items:center;gap:.2rem;}
+.stat-accent-blue .stat-val{color:var(--primary);}
+.stat-accent-teal .stat-val{color:var(--accent);}
+.stat-accent-green .stat-val{color:var(--success);}
+.stat-accent-yellow .stat-val{color:var(--warning);}
+.stat-accent-purple .stat-val{color:var(--lotw);}
+
+/* ── CHART BARS ── */
+.chart-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.55rem;}
+.chart-key{width:55px;font-size:.75rem;color:var(--text-secondary);text-align:right;flex-shrink:0;font-family:'JetBrains Mono',monospace;}
+.chart-bar-bg{flex:1;background:var(--bg-elevated);height:20px;border-radius:4px;overflow:hidden;}
+.chart-bar{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.bar-primary{background:linear-gradient(90deg,var(--primary),var(--accent));}
+.bar-success{background:linear-gradient(90deg,var(--success),#34d399);}
+.bar-warning{background:linear-gradient(90deg,var(--warning),#fbbf24);}
+.bar-purple{background:linear-gradient(90deg,var(--lotw),#a78bfa);}
+.bar-danger{background:linear-gradient(90deg,var(--danger),#f87171);}
+.chart-val{width:30px;font-size:.72rem;color:var(--text-muted);flex-shrink:0;font-family:'JetBrains Mono',monospace;}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+@media(max-width:700px){.charts-grid{grid-template-columns:1fr;}}
+
+/* ── DXCC ── */
+.dxcc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;}
+.dxcc-item{
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:.5rem .65rem;font-size:.75rem;
+  transition:all .15s;cursor:default;
+}
+.dxcc-item.worked{border-color:var(--success-border);background:var(--success-muted);}
+.dxcc-item.confirmed{border-color:var(--primary-border);background:var(--primary-muted);}
+.dxcc-item.lotw-confirmed{border-color:var(--lotw-border);background:var(--lotw-muted);}
+.dxcc-item.not-worked{opacity:.5;}
+.dxcc-prefix{font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text-bright);font-size:.8rem;}
+.dxcc-name{font-size:.65rem;color:var(--text-muted);margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dxcc-status{font-size:.62rem;margin-top:.25rem;}
+
+/* ── BADGES ── */
+.badge{
+  display:inline-flex;align-items:center;gap:.25rem;
+  font-size:.65rem;font-weight:600;padding:.2rem .5rem;border-radius:20px;
+}
+.badge-primary{background:var(--primary-muted);color:var(--primary);border:1px solid var(--primary-border);}
+.badge-success{background:var(--success-muted);color:var(--success);border:1px solid var(--success-border);}
+.badge-warning{background:var(--warning-muted);color:var(--warning);border:1px solid rgba(245,158,11,0.3);}
+.badge-danger{background:var(--danger-muted);color:var(--danger);border:1px solid rgba(239,68,68,0.3);}
+.badge-lotw{background:var(--lotw-muted);color:var(--lotw);border:1px solid var(--lotw-border);}
+.badge-neutral{background:var(--bg-elevated);color:var(--text-muted);border:1px solid var(--border);}
+
+/* ── AWARDS ── */
+.awards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.25rem;}
+.award-card{
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:1.1rem;
+}
+.award-icon{font-size:1.8rem;margin-bottom:.6rem;}
+.award-name{font-size:.9rem;font-weight:600;color:var(--text-bright);margin-bottom:.25rem;}
+.award-prog-label{font-size:.75rem;color:var(--text-muted);margin-bottom:.4rem;display:flex;justify-content:space-between;}
+.award-bar{height:6px;background:var(--bg-elevated);border-radius:3px;overflow:hidden;}
+.award-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .6s ease;}
+.award-status{margin-top:.6rem;font-size:.72rem;}
+
+/* ── WAS GRID ── */
+.was-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(55px,1fr));gap:.35rem;margin-top:.75rem;}
+.was-cell{
+  background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:4px;padding:.3rem;text-align:center;font-size:.65rem;
+  font-weight:600;font-family:'JetBrains Mono',monospace;transition:all .15s;
+}
+.was-cell.worked{background:var(--success-muted);border-color:var(--success-border);color:var(--success);}
+.was-cell.confirmed{background:var(--primary-muted);border-color:var(--primary-border);color:var(--primary);}
+
+/* ── SPOT CLUSTER ── */
+.spot-list{max-height:260px;overflow-y:auto;}
+.spot-row{
+  display:grid;grid-template-columns:80px 95px 60px 1fr;
+  padding:.45rem .6rem;border-bottom:1px solid var(--border-subtle);
+  font-size:.75rem;cursor:pointer;transition:background .1s;
+}
+.spot-row:hover{background:var(--bg-elevated);}
+.spot-call{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text-bright);}
+.spot-freq{color:var(--warning);font-family:'JetBrains Mono',monospace;}
+.spot-mode{color:var(--accent);}
+.spot-info{color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;}
+
+/* ── RECENT SIDEBAR ── */
+.recent-list{display:flex;flex-direction:column;gap:.4rem;max-height:360px;overflow-y:auto;}
+.recent-item{
+  background:var(--bg-elevated);border:1px solid var(--border-subtle);
+  border-radius:var(--radius-sm);padding:.55rem .75rem;cursor:pointer;
+  transition:all .15s;
+}
+.recent-item:hover{border-color:var(--primary);background:var(--primary-muted);}
+.recent-call{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text-bright);font-size:.85rem;}
+.recent-meta{color:var(--text-muted);font-size:.72rem;margin-top:.15rem;display:flex;gap:.5rem;flex-wrap:wrap;}
+
+/* ── ADIF / IO ── */
+.adif-textarea{
+  background:var(--bg-input);border:1px solid var(--border);
+  color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:.72rem;
+  width:100%;padding:.75rem;border-radius:var(--radius-sm);resize:vertical;min-height:130px;
+  outline:none;line-height:1.6;
+}
+.adif-textarea:focus{border-color:var(--primary);}
+.drop-zone{
+  border:2px dashed var(--border);border-radius:var(--radius-lg);
+  padding:2.5rem 1rem;text-align:center;color:var(--text-muted);
+  transition:all .2s;cursor:pointer;
+}
+.drop-zone:hover,.drop-zone.drag-over{
+  border-color:var(--primary);color:var(--primary);
+  background:var(--primary-muted);
+}
+.drop-zone input[type=file]{display:none;}
+.drop-zone-icon{font-size:2rem;margin-bottom:.5rem;opacity:.5;}
+
+/* ── LOTW SECTION ── */
+.lotw-banner{
+  background:var(--lotw-muted);border:1px solid var(--lotw-border);
+  border-radius:var(--radius-lg);padding:1rem 1.25rem;
+  display:flex;align-items:flex-start;gap:.9rem;margin-bottom:1.25rem;
+}
+.lotw-banner-icon{font-size:1.5rem;flex-shrink:0;margin-top:.1rem;}
+.lotw-banner-title{font-size:.9rem;font-weight:600;color:var(--lotw);margin-bottom:.2rem;}
+.lotw-banner-text{font-size:.8rem;color:var(--text-secondary);line-height:1.6;}
+.lotw-steps{counter-reset:steps;}
+.lotw-step{
+  display:flex;gap:.85rem;padding:.8rem 0;border-bottom:1px solid var(--border-subtle);
+  align-items:flex-start;
+}
+.lotw-step:last-child{border-bottom:none;}
+.lotw-step-num{
+  width:26px;height:26px;border-radius:50%;background:var(--lotw-muted);
+  border:1px solid var(--lotw-border);color:var(--lotw);font-size:.72rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.1rem;
+}
+.lotw-step-body{flex:1;}
+.lotw-step-title{font-size:.82rem;font-weight:600;color:var(--text-bright);margin-bottom:.2rem;}
+.lotw-step-desc{font-size:.77rem;color:var(--text-secondary);line-height:1.6;}
+.lotw-status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.75rem;margin-top:.75rem;}
+.lotw-stat{
+  background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:.75rem;text-align:center;
+}
+.lotw-stat-val{font-size:1.4rem;font-weight:700;color:var(--lotw);}
+.lotw-stat-label{font-size:.7rem;color:var(--text-muted);margin-top:.2rem;}
+
+/* ── SETTINGS ── */
+.settings-section{margin-bottom:1.5rem;}
+.settings-section-title{
+  font-size:.78rem;font-weight:600;color:var(--text-secondary);
+  text-transform:uppercase;letter-spacing:.06em;
+  margin-bottom:.9rem;padding-bottom:.5rem;
+  border-bottom:1px solid var(--border-subtle);
+  display:flex;align-items:center;gap:.5rem;
+}
+
+/* ── MULTI-USER SELECTOR ── */
+.user-switcher{
+  display:flex;flex-direction:column;gap:.4rem;
+}
+.user-entry{
+  display:flex;align-items:center;gap:.75rem;
+  background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:.6rem .9rem;cursor:pointer;
+  transition:all .15s;
+}
+.user-entry:hover{border-color:var(--primary);}
+.user-entry.active-user{border-color:var(--primary);background:var(--primary-muted);}
+.user-entry-avatar{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+}
+.user-entry-info{flex:1;min-width:0;}
+.user-entry-call{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text-bright);font-size:.88rem;}
+.user-entry-name{font-size:.72rem;color:var(--text-muted);}
+.user-entry-count{font-size:.7rem;color:var(--text-muted);margin-left:auto;}
+
+/* ── MODAL ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:1000;align-items:center;justify-content:center;padding:1rem;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:1.5rem;width:100%;max-width:500px;
+  max-height:85vh;overflow-y:auto;animation:modalIn .2s ease;
+  box-shadow:var(--shadow);
+}
+.modal-wide{max-width:700px;}
+@keyframes modalIn{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{margin-bottom:1.25rem;padding-bottom:.85rem;border-bottom:1px solid var(--border);}
+.modal-title{font-size:1rem;font-weight:600;color:var(--text-bright);}
+.modal-subtitle{font-size:.78rem;color:var(--text-muted);margin-top:.2rem;}
+.modal-footer{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1.25rem;padding-top:.85rem;border-top:1px solid var(--border);}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--border-subtle);margin:1rem 0;}
+
+/* ── STATUS DOT ── */
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dot-green{background:var(--success);box-shadow:0 0 6px var(--success);}
+.dot-yellow{background:var(--warning);}
+.dot-red{background:var(--danger);}
+.dot-pulse{animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── TOAST ── */
+.toast-container{position:fixed;bottom:1.25rem;right:1.25rem;z-index:2000;display:flex;flex-direction:column;gap:.4rem;align-items:flex-end;}
+.toast{
+  background:var(--bg-elevated);border:1px solid var(--border);color:var(--text);
+  font-size:.8rem;padding:.6rem 1rem;border-radius:var(--radius-sm);
+  animation:toastIn .2s ease,toastOut .3s ease 2.8s forwards;
+  box-shadow:var(--shadow-sm);max-width:320px;display:flex;align-items:center;gap:.5rem;
+}
+.toast.ok{border-left:3px solid var(--success);}
+.toast.warn{border-left:3px solid var(--warning);}
+.toast.error{border-left:3px solid var(--danger);}
+@keyframes toastIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(10px)}}
+
+/* ── LOOKUP CARD ── */
+.lookup-card{
+  background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:.85rem;font-size:.8rem;line-height:1.8;margin-top:.6rem;display:none;
+}
+.lookup-card.show{display:block;animation:fadeIn .2s ease;}
+.lookup-row{display:flex;justify-content:space-between;gap:.5rem;}
+.lookup-key{color:var(--text-muted);}
+.lookup-val{color:var(--text-bright);font-weight:500;text-align:right;}
+
+/* ── INLINE ALERTS ── */
+.alert{
+  border-radius:var(--radius-sm);padding:.7rem .9rem;font-size:.8rem;margin-top:.6rem;
+  display:flex;align-items:flex-start;gap:.5rem;line-height:1.5;
+}
+.alert-success{background:var(--success-muted);border:1px solid var(--success-border);color:var(--success);}
+.alert-error{background:var(--danger-muted);border:1px solid rgba(239,68,68,.3);color:var(--danger);}
+.alert-info{background:var(--primary-muted);border:1px solid var(--primary-border);color:var(--primary);}
+.alert-lotw{background:var(--lotw-muted);border:1px solid var(--lotw-border);color:var(--lotw);}
+
+/* ── MISC ── */
+.mt-1{margin-top:.5rem;} .mt-2{margin-top:1rem;} .mt-3{margin-top:1.5rem;}
+.mb-1{margin-bottom:.5rem;} .mb-2{margin-bottom:1rem;}
+.gap-row{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;}
+.text-muted{color:var(--text-muted);}
+.text-mono{font-family:'JetBrains Mono',monospace;}
+.link{color:var(--primary);text-decoration:none;cursor:pointer;}
+.link:hover{text-decoration:underline;}
+.section-divider{
+  display:flex;align-items:center;gap:.75rem;margin:1.5rem 0 1rem;color:var(--text-muted);font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ── TOP BAR ── -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-icon">📡</div>
+    <div>
+      <div class="logo-text">Ham<span>Log</span> Pro</div>
+      <span class="logo-sub">Amateur Radio Station Logger</span>
+    </div>
+  </div>
+
+  <nav class="topbar-nav">
+    <button class="nav-btn active" onclick="showScreen('logScreen',this)" data-screen="logScreen">
+      📋 Log QSO
+    </button>
+    <button class="nav-btn" onclick="showScreen('statsScreen',this)" data-screen="statsScreen">
+      📊 Statistics
+    </button>
+    <button class="nav-btn" onclick="showScreen('dxccScreen',this)" data-screen="dxccScreen">
+      🌍 DXCC
+    </button>
+    <button class="nav-btn" onclick="showScreen('awardsScreen',this)" data-screen="awardsScreen">
+      🏆 Awards
+    </button>
+    <button class="nav-btn" onclick="showScreen('ioScreen',this)" data-screen="ioScreen">
+      ⬍ Import / Export
+    </button>
+    <button class="nav-btn" onclick="showScreen('lotwScreen',this)" data-screen="lotwScreen">
+      🔐 LoTW
+    </button>
+    <button class="nav-btn" onclick="showScreen('settingsScreen',this)" data-screen="settingsScreen">
+      ⚙ Settings
+    </button>
+  </nav>
+
+  <div class="topbar-right">
+    <div id="utcClock">00:00:00 UTC</div>
+    <div class="user-chip" onclick="openUserModal()">
+      <div class="user-avatar" id="navAvatar">?</div>
+      <div>
+        <div class="user-chip-call" id="navCallsign">—</div>
+        <div class="user-chip-name" id="navOperator">No station</div>
+      </div>
+    </div>
+    <div class="dot dot-green dot-pulse" id="onlineDot" title="Online"></div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════
+  LOG SCREEN
+═════════════════════════════════════════════ -->
+<div class="screen active" id="logScreen">
+  <div class="page-header">
+    <div>
+      <div class="page-title">QSO Log</div>
+      <div class="page-subtitle" id="logSubtitle">Loading…</div>
+    </div>
+    <div class="page-actions">
+      <span class="badge badge-success" id="qsoCountBadge">0 QSOs</span>
+      <button class="btn btn-outline btn-sm" onclick="showScreen('ioScreen',null)">⬍ Import ADIF</button>
+      <button class="btn btn-outline btn-sm" onclick="exportAdif()">⬆ Export ADIF</button>
+    </div>
+  </div>
+
+  <div class="log-layout">
+    <!-- LEFT: form + table -->
+    <div>
+      <!-- New QSO Form -->
+      <div class="card mb-2" id="qsoFormCard">
+        <div class="card-title">
+          ✏ New QSO
+          <span class="badge badge-neutral" style="margin-left:auto;">Ctrl+Enter to log</span>
+        </div>
+        <div class="form-grid cols4" style="gap:.65rem;">
+          <div class="field" style="grid-column:span 2;">
+            <label>Callsign <span class="required">*</span></label>
+            <input class="callsign-inp" type="text" id="fCall" placeholder="W1AW"
+              oninput="this.value=this.value.toUpperCase();lookupCall(this.value)"
+              onkeydown="if(event.key==='Tab'){event.preventDefault();document.getElementById('fFreq').focus();}">
+          </div>
+          <div class="field">
+            <label>Date</label>
+            <input type="date" id="fDate">
+          </div>
+          <div class="field">
+            <label>Time (UTC)</label>
+            <input type="time" id="fTime">
+          </div>
+          <div class="field">
+            <label>Band</label>
+            <select id="fBand">
+              <option value="">— Band —</option>
+              <option>160m</option><option>80m</option><option>60m</option>
+              <option>40m</option><option>30m</option><option selected>20m</option>
+              <option>17m</option><option>15m</option><option>12m</option>
+              <option>10m</option><option>6m</option><option>4m</option>
+              <option>2m</option><option>70cm</option><option>23cm</option>
+              <option>SAT</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Frequency (MHz)</label>
+            <input type="text" id="fFreq" placeholder="14.074">
+          </div>
+          <div class="field">
+            <label>Mode</label>
+            <select id="fMode">
+              <option>FT8</option><option>FT4</option><option>SSB</option>
+              <option>CW</option><option>AM</option><option>FM</option>
+              <option>PSK31</option><option>RTTY</option><option>JS8</option>
+              <option>WSPR</option><option>JT65</option><option>JT9</option>
+              <option>DIGITAL</option><option>DATA</option><option>SAT</option>
+              <option>OLIVIA</option><option>THOR</option><option>OTHER</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Power (W)</label>
+            <input type="number" id="fPower" placeholder="100" min="0">
+          </div>
+
+          <!-- RST -->
+          <div style="grid-column:span 2;">
+            <label style="font-size:.75rem;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:.35rem;">RST Sent / Received</label>
+            <div class="rst-pair">
+              <input type="text" id="fRstS" placeholder="Sent (59)" value="59" style="font-family:'JetBrains Mono',monospace;">
+              <input type="text" id="fRstR" placeholder="Rcvd (59)" value="59" style="font-family:'JetBrains Mono',monospace;">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Operator Name</label>
+            <input type="text" id="fName" placeholder="John">
+          </div>
+          <div class="field">
+            <label>QTH</label>
+            <input type="text" id="fQth" placeholder="City, Country">
+          </div>
+          <div class="field">
+            <label>Grid Square</label>
+            <input type="text" id="fGrid" placeholder="FN31"
+              oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="field">
+            <label>DXCC Entity</label>
+            <input type="text" id="fDxcc" placeholder="Auto-detected">
+          </div>
+          <div class="field">
+            <label>IOTA</label>
+            <input type="text" id="fIota" placeholder="EU-005">
+          </div>
+          <div class="field">
+            <label>CQ Zone</label>
+            <input type="number" id="fCqz" placeholder="14" min="1" max="40">
+          </div>
+          <div class="field">
+            <label>Serial Sent</label>
+            <input type="text" id="fSnS" placeholder="">
+          </div>
+          <div class="field">
+            <label>Serial Rcvd</label>
+            <input type="text" id="fSnR" placeholder="">
+          </div>
+          <div class="field form-full">
+            <label>Notes / Comments</label>
+            <textarea id="fNotes" rows="2" placeholder="Propagation notes, contest exchange, etc."></textarea>
+          </div>
+        </div>
+
+        <!-- Callsign Lookup -->
+        <div class="lookup-card" id="lookupCard">
+          <div class="lookup-row"><span class="lookup-key">Entity</span><span class="lookup-val" id="lkEntity">—</span></div>
+          <div class="lookup-row"><span class="lookup-key">CQ Zone</span><span class="lookup-val" id="lkCqz">—</span></div>
+          <div class="lookup-row"><span class="lookup-key">ITU Zone</span><span class="lookup-val" id="lkItu">—</span></div>
+          <div class="lookup-row"><span class="lookup-key">Continent</span><span class="lookup-val" id="lkCont">—</span></div>
+          <div class="lookup-row"><span class="lookup-key">Previous QSOs</span><span class="lookup-val" id="lkPrev">—</span></div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary btn-lg" onclick="logQso()">📋 Log QSO</button>
+          <button class="btn btn-outline" onclick="fillNow()">🕐 Now</button>
+          <button class="btn btn-ghost" onclick="clearForm()">✕ Clear</button>
+          <div style="flex:1;"></div>
+          <button class="btn btn-ghost btn-sm" id="editCancelBtn" onclick="cancelEdit()" style="display:none;">Cancel Edit</button>
+        </div>
+      </div>
+
+      <!-- QSO Table -->
+      <div class="card">
+        <div class="table-toolbar">
+          <input class="search-input" id="logSearch" placeholder="🔍 Search callsign, name, QTH…" oninput="renderLog()">
+          <select class="filter-sel" id="bandFilter" onchange="renderLog()">
+            <option value="">All Bands</option>
+            <option>160m</option><option>80m</option><option>40m</option>
+            <option>30m</option><option>20m</option><option>17m</option>
+            <option>15m</option><option>12m</option><option>10m</option>
+            <option>6m</option><option>2m</option><option>70cm</option>
+          </select>
+          <select class="filter-sel" id="modeFilter" onchange="renderLog()">
+            <option value="">All Modes</option>
+            <option>FT8</option><option>FT4</option><option>SSB</option>
+            <option>CW</option><option>AM</option><option>FM</option>
+            <option>PSK31</option><option>RTTY</option><option>JS8</option>
+          </select>
+          <select class="filter-sel" id="lotwFilter" onchange="renderLog()">
+            <option value="">LoTW: All</option>
+            <option value="sent">Sent to LoTW</option>
+            <option value="confirmed">LoTW Confirmed</option>
+            <option value="pending">Not Sent</option>
+          </select>
+          <div class="toolbar-spacer"></div>
+          <button class="btn btn-ghost btn-sm" id="bulkDeleteBtn" onclick="bulkDelete()" style="display:none;">🗑 Delete Selected</button>
+          <button class="btn btn-ghost btn-sm" id="bulkLotwBtn" onclick="bulkMarkLotw()" style="display:none;">🔐 Mark LoTW Sent</button>
+        </div>
+        <div class="table-wrap">
+          <table id="logTable">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" style="accent-color:var(--primary);"></th>
+                <th onclick="setSortCol('date')">Date / Time <span class="sort-icon">↕</span></th>
+                <th onclick="setSortCol('call')">Callsign <span class="sort-icon">↕</span></th>
+                <th onclick="setSortCol('band')">Band <span class="sort-icon">↕</span></th>
+                <th onclick="setSortCol('freq')">Freq MHz <span class="sort-icon">↕</span></th>
+                <th onclick="setSortCol('mode')">Mode <span class="sort-icon">↕</span></th>
+                <th>RST S/R</th>
+                <th onclick="setSortCol('name')">Name <span class="sort-icon">↕</span></th>
+                <th onclick="setSortCol('dxcc')">DXCC <span class="sort-icon">↕</span></th>
+                <th>Grid</th>
+                <th>LoTW</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="logBody"></tbody>
+          </table>
+        </div>
+        <div id="logNoData" class="no-data" style="display:none;">
+          <div class="no-data-icon">📭</div>
+          No QSOs match the current filter
+        </div>
+        <div id="logPagination" style="display:flex;align-items:center;justify-content:space-between;margin-top:.75rem;font-size:.78rem;color:var(--text-muted);flex-wrap:wrap;gap:.5rem;"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <!-- DX Spots -->
+      <div class="card card-sm">
+        <div class="card-title">
+          <div class="dot dot-green dot-pulse"></div>
+          DX Cluster Spots
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:.2rem .5rem;" onclick="refreshSpots()">⟳</button>
+        </div>
+        <div class="spot-list" id="spotList">
+          <div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:.78rem;">Loading spots…</div>
+        </div>
+      </div>
+
+      <!-- Recent QSOs -->
+      <div class="card card-sm">
+        <div class="card-title">Recent QSOs <span class="card-badge" id="recentCount">0</span></div>
+        <div class="recent-list" id="recentList">
+          <div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:.78rem;">No QSOs yet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  STATISTICS
+═════════════════════════════════════════════ -->
+<div class="screen" id="statsScreen">
+  <div class="page-header">
+    <div><div class="page-title">Station Statistics</div><div class="page-subtitle">Activity analysis across your entire log</div></div>
+  </div>
+  <div class="stat-grid" id="statsCards"></div>
+  <div class="charts-grid">
+    <div class="card"><div class="card-title">QSOs by Band</div><div id="bandChart"></div></div>
+    <div class="card"><div class="card-title">QSOs by Mode</div><div id="modeChart"></div></div>
+    <div class="card"><div class="card-title">QSOs by Year</div><div id="yearChart"></div></div>
+    <div class="card"><div class="card-title">Top 10 DXCC</div><div id="dxccChart"></div></div>
+  </div>
+  <div class="card mt-2"><div class="card-title">Daily Activity — Last 30 Days</div><div id="dailyChart"></div></div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  DXCC
+═════════════════════════════════════════════ -->
+<div class="screen" id="dxccScreen">
+  <div class="page-header">
+    <div><div class="page-title">DXCC Tracker</div><div class="page-subtitle" id="dxccSubtitle">0 / 340 entities worked</div></div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" onclick="filterDxcc('all')">All</button>
+      <button class="btn btn-ghost btn-sm" onclick="filterDxcc('worked')">Worked</button>
+      <button class="btn btn-ghost btn-sm" onclick="filterDxcc('lotw')">LoTW Confirmed</button>
+      <button class="btn btn-ghost btn-sm" onclick="filterDxcc('not')">Needed</button>
+      <input class="search-input" id="dxccSearch" placeholder="🔍 Filter entities…" oninput="renderDxcc()" style="min-width:160px;">
+    </div>
+  </div>
+  <div id="dxccGrid" class="dxcc-grid"></div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  AWARDS
+═════════════════════════════════════════════ -->
+<div class="screen" id="awardsScreen">
+  <div class="page-header">
+    <div><div class="page-title">Awards Tracking</div><div class="page-subtitle">Progress toward major amateur radio awards</div></div>
+  </div>
+  <div class="awards-grid" id="awardsGrid"></div>
+  <div class="card">
+    <div class="card-title">Worked All States (WAS)</div>
+    <div class="was-grid" id="wasGrid"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  IMPORT / EXPORT
+═════════════════════════════════════════════ -->
+<div class="screen" id="ioScreen">
+  <div class="page-header">
+    <div><div class="page-title">Import / Export</div><div class="page-subtitle">ADIF 3.1.4 compatible — works with WSJT-X, Log4OM, Ham Radio Deluxe, N1MM+, and all major logging software</div></div>
+  </div>
+
+  <div class="two-col">
+    <!-- EXPORT -->
+    <div class="card">
+      <div class="card-title">⬆ Export</div>
+      <div class="settings-section-title">ADIF Export</div>
+      <p style="font-size:.8rem;color:var(--text-secondary);margin-bottom:1rem;line-height:1.6;">
+        Exports your entire log in ADIF 3.1.4 format. Compatible with all major logging and award programs. Includes all standard fields: callsign, date, time, band, frequency, mode, RST, name, QTH, grid, DXCC, IOTA, CQ zone, power, and LoTW status.
+      </p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="exportAdif()">📥 Download ADIF</button>
+        <button class="btn btn-outline" onclick="exportCsv()">📊 Download CSV</button>
+        <button class="btn btn-outline" onclick="backupData()">💾 Full Backup (JSON)</button>
+      </div>
+      <div class="divider"></div>
+      <div class="settings-section-title">ADIF Preview</div>
+      <textarea id="adifPreview" class="adif-textarea" rows="10" readonly placeholder="Click 'Download ADIF' above to generate a preview…"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-ghost btn-sm" onclick="generateAdifPreview()">Preview only</button>
+      </div>
+    </div>
+
+    <!-- IMPORT -->
+    <div class="card">
+      <div class="card-title">⬇ Import</div>
+      <div class="settings-section-title">Import ADIF File</div>
+      <label class="drop-zone" id="importDrop" onclick="document.getElementById('importFile').click()">
+        <input type="file" id="importFile" accept=".adi,.adif,.txt" onchange="importAdifFile(this)">
+        <div class="drop-zone-icon">📂</div>
+        <div style="font-size:.85rem;font-weight:500;color:var(--text);">Drop ADIF file here</div>
+        <div style="font-size:.75rem;margin-top:.25rem;">or click to browse — .adi / .adif / .txt</div>
+      </label>
+
+      <div class="divider"></div>
+      <div class="settings-section-title">Paste ADIF Data</div>
+      <textarea id="adifPaste" class="adif-textarea" rows="6" placeholder="Paste raw ADIF data here…"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="importAdifPaste()">⇪ Import Pasted ADIF</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('adifPaste').value=''">Clear</button>
+      </div>
+      <div id="importMsg"></div>
+
+      <div class="divider"></div>
+      <div class="settings-section-title" style="color:var(--danger);">⚠ Data Management</div>
+      <div class="gap-row">
+        <button class="btn btn-danger btn-sm" onclick="confirmClearAll()">🗑 Clear All QSOs</button>
+        <button class="btn btn-outline btn-sm" onclick="restoreBackup()">📥 Restore JSON Backup</button>
+        <input type="file" id="restoreFile" accept=".json" style="display:none;" onchange="doRestoreBackup(this)">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  LOGBOOK OF THE WORLD (LoTW)
+═════════════════════════════════════════════ -->
+<div class="screen" id="lotwScreen">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Logbook of The World (LoTW)</div>
+      <div class="page-subtitle">ARRL's electronic QSL confirmation system — fully supported by HamLog Pro</div>
+    </div>
+    <div class="page-actions">
+      <a href="https://lotw.arrl.org" target="_blank" class="btn btn-outline btn-sm">🔗 ARRL LoTW Website</a>
+    </div>
+  </div>
+
+  <!-- Status Banner -->
+  <div class="lotw-banner">
+    <div class="lotw-banner-icon">✅</div>
+    <div>
+      <div class="lotw-banner-title">LoTW Full Support — Confirmed</div>
+      <div class="lotw-banner-text">
+        HamLog Pro provides complete Logbook of The World support: ADIF export in LoTW-compatible format,
+        per-QSO LoTW upload tracking, confirmation status logging, DXCC LoTW credit tracking,
+        and bulk LoTW management tools. All required ADIF fields (STATION_CALLSIGN, MY_GRIDSQUARE,
+        APP_LOTW_MYGRID, QSO_DATE, TIME_ON, BAND, MODE, CALL) are included in exports.
+      </div>
+    </div>
+  </div>
+
+  <!-- LoTW Stats -->
+  <div class="card mb-2">
+    <div class="card-title">🔐 LoTW Activity Summary</div>
+    <div class="lotw-status-grid" id="lotwStats">
+      <div class="lotw-stat"><div class="lotw-stat-val" id="lsTotal">0</div><div class="lotw-stat-label">Total QSOs</div></div>
+      <div class="lotw-stat"><div class="lotw-stat-val" id="lsSent">0</div><div class="lotw-stat-label">Uploaded to LoTW</div></div>
+      <div class="lotw-stat"><div class="lotw-stat-val" id="lsConfirmed">0</div><div class="lotw-stat-label">LoTW Confirmed</div></div>
+      <div class="lotw-stat"><div class="lotw-stat-val" id="lsPending">0</div><div class="lotw-stat-label">Awaiting Upload</div></div>
+      <div class="lotw-stat"><div class="lotw-stat-val" id="lsRate" style="font-size:1.1rem;">0%</div><div class="lotw-stat-label">Confirmation Rate</div></div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- Export for LoTW -->
+    <div class="card">
+      <div class="card-title">⬆ Upload to LoTW</div>
+
+      <div class="alert alert-lotw mb-2">
+        <span>🔐</span>
+        <span>LoTW requires QSOs to be digitally signed using <strong>TQSL</strong> (Trusted QSL software) before upload. HamLog Pro generates the correctly formatted ADIF export for direct import into TQSL.</span>
+      </div>
+
+      <div class="lotw-steps">
+        <div class="lotw-step">
+          <div class="lotw-step-num">1</div>
+          <div class="lotw-step-body">
+            <div class="lotw-step-title">Get your LoTW Certificate</div>
+            <div class="lotw-step-desc">Request a LoTW TLS certificate from ARRL at <a href="https://lotw.arrl.org/lotw-help/getting-started/" target="_blank" class="link">lotw.arrl.org</a>. ARRL will mail a postcard to your address on record to verify your callsign. This process takes a few days for new licensees.</div>
+          </div>
+        </div>
+        <div class="lotw-step">
+          <div class="lotw-step-num">2</div>
+          <div class="lotw-step-body">
+            <div class="lotw-step-title">Install TQSL</div>
+            <div class="lotw-step-desc">Download and install <strong>TQSL</strong> (Trusted QSL) from <a href="https://lotw.arrl.org/lotw-help/lotw-software/tqsl/" target="_blank" class="link">ARRL's site</a>. Import your LoTW certificate into TQSL. TQSL is required to sign and upload QSOs — it's free and available for Windows, Mac, and Linux.</div>
+          </div>
+        </div>
+        <div class="lotw-step">
+          <div class="lotw-step-num">3</div>
+          <div class="lotw-step-body">
+            <div class="lotw-step-title">Export ADIF from HamLog Pro</div>
+            <div class="lotw-step-desc">Select the QSOs you want to upload below, then click "Export LoTW ADIF". The file will include all required LoTW fields. You can also use the full ADIF export from the Import/Export screen.</div>
+          </div>
+        </div>
+        <div class="lotw-step">
+          <div class="lotw-step-num">4</div>
+          <div class="lotw-step-body">
+            <div class="lotw-step-title">Sign & Upload with TQSL</div>
+            <div class="lotw-step-desc">Open the exported ADIF in TQSL, sign it with your station location certificate, and upload to LoTW. TQSL will confirm successful upload.</div>
+          </div>
+        </div>
+        <div class="lotw-step">
+          <div class="lotw-step-num">5</div>
+          <div class="lotw-step-body">
+            <div class="lotw-step-title">Mark QSOs as Uploaded & Import Confirmations</div>
+            <div class="lotw-step-desc">Use the tools below to mark QSOs as sent to LoTW. When LoTW confirms QSOs, download your confirmation ADIF from lotw.arrl.org and import it here — HamLog Pro will automatically update the LoTW confirmation status for each QSO.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-lotw" onclick="exportLotwAdif()">🔐 Export LoTW ADIF (Unsent)</button>
+        <button class="btn btn-lotw" onclick="exportLotwAdifAll()">Export All as LoTW ADIF</button>
+      </div>
+    </div>
+
+    <!-- LoTW Confirmation Import -->
+    <div class="card">
+      <div class="card-title">✅ Import LoTW Confirmations</div>
+      <p style="font-size:.8rem;color:var(--text-secondary);margin-bottom:1rem;line-height:1.6;">
+        After LoTW processes your QSOs, download your confirmation ADIF from the LoTW website and import it here. HamLog Pro will match each confirmed QSO and update its status automatically.
+      </p>
+
+      <label class="drop-zone" id="lotwImportDrop" onclick="document.getElementById('lotwImportFile').click()">
+        <input type="file" id="lotwImportFile" accept=".adi,.adif" onchange="importLotwConfirmations(this)">
+        <div class="drop-zone-icon">🔐</div>
+        <div style="font-size:.85rem;font-weight:500;color:var(--text);">Drop LoTW Confirmation ADIF</div>
+        <div style="font-size:.75rem;margin-top:.25rem;">Download from: My Record → Confirmations on lotw.arrl.org</div>
+      </label>
+
+      <div id="lotwImportMsg" class="mt-1"></div>
+
+      <div class="divider"></div>
+      <div class="settings-section-title">Bulk LoTW Status Management</div>
+      <div class="gap-row">
+        <button class="btn btn-outline btn-sm" onclick="markAllLotwSent()">Mark All QSOs as LoTW Sent</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearLotwStatus()">Reset LoTW Status</button>
+      </div>
+
+      <div class="divider"></div>
+      <div class="settings-section-title">LoTW Account</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>LoTW Username</label>
+          <input type="text" id="sLotwUser" placeholder="Your LoTW username">
+        </div>
+        <div class="field">
+          <label>LoTW Station Location</label>
+          <input type="text" id="sLotwLoc" placeholder="Station location label">
+        </div>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary btn-sm" onclick="saveSettings()">Save LoTW Settings</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  SETTINGS
+═════════════════════════════════════════════ -->
+<div class="screen" id="settingsScreen">
+  <div class="page-header">
+    <div><div class="page-title">Settings</div><div class="page-subtitle">Station configuration and preferences</div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">📡 Station Information</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>My Callsign <span class="required">*</span></label>
+          <input class="callsign-inp" type="text" id="sMyCall" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field">
+          <label>Operator Name</label>
+          <input type="text" id="sMyName" placeholder="John Doe">
+        </div>
+        <div class="field">
+          <label>QTH</label>
+          <input type="text" id="sMyQth" placeholder="City, State">
+        </div>
+        <div class="field">
+          <label>Grid Square</label>
+          <input type="text" id="sMyGrid" placeholder="FN31" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field">
+          <label>DXCC Entity</label>
+          <input type="text" id="sMyDxcc" placeholder="United States">
+        </div>
+        <div class="field">
+          <label>CQ Zone</label>
+          <input type="number" id="sMyCqz" placeholder="5" min="1" max="40">
+        </div>
+        <div class="field">
+          <label>ITU Zone</label>
+          <input type="number" id="sMyItu" placeholder="8" min="1" max="90">
+        </div>
+        <div class="field">
+          <label>Default Power (W)</label>
+          <input type="number" id="sDefPower" placeholder="100">
+        </div>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+      <div class="card">
+        <div class="card-title">🔧 Equipment</div>
+        <div class="form-grid">
+          <div class="field form-full"><label>Transceiver</label><input type="text" id="sRig" placeholder="Yaesu FT-991A"></div>
+          <div class="field form-full"><label>Antenna</label><input type="text" id="sAnt" placeholder="G5RV @ 30ft"></div>
+          <div class="field form-full"><label>Software / Interface</label><input type="text" id="sSw" placeholder="WSJT-X, N1MM+, etc."></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="saveSettings()">Save Equipment</button></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">👥 Multi-User Accounts</div>
+        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:.9rem;">
+          Each callsign maintains a separate, isolated log. Switch between operators or share this device between club members.
+        </p>
+        <div class="user-switcher" id="userSwitcher"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" onclick="openNewUserModal()">+ Add Operator</button>
+          <button class="btn btn-ghost btn-sm" onclick="openDeleteUserModal()">Remove Operator</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- ── TOAST CONTAINER ── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ── MODALS ── -->
+
+<!-- Edit QSO Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title">Edit QSO</div>
+      <div class="modal-subtitle" id="editModalSubtitle"></div>
+    </div>
+    <div class="form-grid cols4" id="editModalForm" style="gap:.65rem;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('editModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditModal()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title" id="confirmTitle">Confirm Action</div>
+    </div>
+    <p id="confirmMsg" style="font-size:.85rem;color:var(--text-secondary);line-height:1.6;"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn btn-danger" id="confirmOkBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- User/Account Modal -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">Switch Operator</div>
+      <div class="modal-subtitle">Each operator has their own log</div>
+    </div>
+    <div class="user-switcher" id="modalUserSwitcher"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('userModal')">Close</button>
+      <button class="btn btn-outline" onclick="closeModal('userModal');openNewUserModal()">+ Add Operator</button>
+    </div>
+  </div>
+</div>
+
+<!-- New User Modal -->
+<div class="modal-overlay" id="newUserModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Add Operator</div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Callsign <span class="required">*</span></label>
+        <input class="callsign-inp" type="text" id="nuCall" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="field">
+        <label>Operator Name</label>
+        <input type="text" id="nuName" placeholder="John Doe">
+      </div>
+      <div class="field form-full">
+        <label>QTH</label>
+        <input type="text" id="nuQth" placeholder="City, Country">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('newUserModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="createUser()">Create Operator</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONSTANTS & DATA
+// ══════════════════════════════════════════════
+const BANDS_MHZ = {
+  '160m':[1.8,2.0],'80m':[3.5,4.0],'60m':[5.3,5.4],'40m':[7.0,7.3],
+  '30m':[10.1,10.15],'20m':[14.0,14.35],'17m':[18.068,18.168],
+  '15m':[21.0,21.45],'12m':[24.89,24.99],'10m':[28.0,29.7],
+  '6m':[50.0,54.0],'4m':[70.0,70.5],'2m':[144.0,148.0],
+  '70cm':[420.0,450.0],'23cm':[1240.0,1300.0]
+};
+
+const DXCC_DATA=[
+  {prefix:'3A',name:'Monaco',cq:14,itu:28,cont:'EU'},{prefix:'3B6',name:'Agalega/St.Brandon Is.',cq:39,itu:53,cont:'AF'},
+  {prefix:'3B7',name:'St. Brandon Is.',cq:39,itu:53,cont:'AF'},{prefix:'3B8',name:'Mauritius',cq:39,itu:53,cont:'AF'},
+  {prefix:'3B9',name:'Rodriguez I.',cq:39,itu:53,cont:'AF'},{prefix:'3C',name:'Equatorial Guinea',cq:36,itu:52,cont:'AF'},
+  {prefix:'3D2',name:'Fiji Is.',cq:28,itu:56,cont:'OC'},{prefix:'3DA',name:'Swaziland',cq:38,itu:57,cont:'AF'},
+  {prefix:'3V',name:'Tunisia',cq:33,itu:37,cont:'AF'},{prefix:'3W',name:'Viet Nam',cq:26,itu:49,cont:'AS'},
+  {prefix:'3X',name:'Guinea',cq:35,itu:46,cont:'AF'},{prefix:'4J',name:'Azerbaijan',cq:21,itu:29,cont:'AS'},
+  {prefix:'4L',name:'Georgia',cq:21,itu:29,cont:'AS'},{prefix:'4S',name:'Sri Lanka',cq:26,itu:41,cont:'AS'},
+  {prefix:'4U1I',name:'ITU HQ',cq:14,itu:28,cont:'EU'},{prefix:'4X',name:'Israel',cq:20,itu:39,cont:'AS'},
+  {prefix:'5A',name:'Libya',cq:33,itu:38,cont:'AF'},{prefix:'5B',name:'Cyprus',cq:20,itu:39,cont:'AS'},
+  {prefix:'5H',name:'Tanzania',cq:37,itu:53,cont:'AF'},{prefix:'5N',name:'Nigeria',cq:35,itu:46,cont:'AF'},
+  {prefix:'5R',name:'Madagascar',cq:39,itu:53,cont:'AF'},{prefix:'5T',name:'Mauritania',cq:35,itu:46,cont:'AF'},
+  {prefix:'5U',name:'Niger',cq:35,itu:46,cont:'AF'},{prefix:'5V',name:'Togo',cq:35,itu:46,cont:'AF'},
+  {prefix:'5W',name:'Samoa',cq:28,itu:62,cont:'OC'},{prefix:'5X',name:'Uganda',cq:36,itu:48,cont:'AF'},
+  {prefix:'5Z',name:'Kenya',cq:37,itu:48,cont:'AF'},{prefix:'6W',name:'Senegal',cq:35,itu:46,cont:'AF'},
+  {prefix:'6Y',name:'Jamaica',cq:8,itu:11,cont:'NA'},{prefix:'7P',name:'Lesotho',cq:38,itu:57,cont:'AF'},
+  {prefix:'7Q',name:'Malawi',cq:37,itu:53,cont:'AF'},{prefix:'7X',name:'Algeria',cq:33,itu:37,cont:'AF'},
+  {prefix:'8P',name:'Barbados',cq:8,itu:11,cont:'NA'},{prefix:'8Q',name:'Maldives',cq:26,itu:41,cont:'AS'},
+  {prefix:'8R',name:'Guyana',cq:9,itu:12,cont:'SA'},{prefix:'9A',name:'Croatia',cq:15,itu:28,cont:'EU'},
+  {prefix:'9G',name:'Ghana',cq:35,itu:46,cont:'AF'},{prefix:'9H',name:'Malta',cq:15,itu:28,cont:'EU'},
+  {prefix:'9J',name:'Zambia',cq:37,itu:53,cont:'AF'},{prefix:'9K',name:'Kuwait',cq:21,itu:39,cont:'AS'},
+  {prefix:'9L',name:'Sierra Leone',cq:35,itu:46,cont:'AF'},{prefix:'9M2',name:'West Malaysia',cq:28,itu:54,cont:'AS'},
+  {prefix:'9M6',name:'East Malaysia',cq:28,itu:54,cont:'OC'},{prefix:'9N',name:'Nepal',cq:26,itu:42,cont:'AS'},
+  {prefix:'9Q',name:'Congo (DRC)',cq:36,itu:52,cont:'AF'},{prefix:'9U',name:'Burundi',cq:36,itu:52,cont:'AF'},
+  {prefix:'9V',name:'Singapore',cq:28,itu:54,cont:'AS'},{prefix:'9X',name:'Rwanda',cq:36,itu:52,cont:'AF'},
+  {prefix:'9Y',name:'Trinidad & Tobago',cq:8,itu:11,cont:'SA'},
+  {prefix:'A2',name:'Botswana',cq:38,itu:57,cont:'AF'},{prefix:'A3',name:'Tonga',cq:28,itu:62,cont:'OC'},
+  {prefix:'A4',name:'Oman',cq:21,itu:39,cont:'AS'},{prefix:'A5',name:'Bhutan',cq:26,itu:41,cont:'AS'},
+  {prefix:'A6',name:'United Arab Emirates',cq:21,itu:39,cont:'AS'},{prefix:'A7',name:'Qatar',cq:21,itu:39,cont:'AS'},
+  {prefix:'A9',name:'Bahrain',cq:21,itu:39,cont:'AS'},{prefix:'AP',name:'Pakistan',cq:21,itu:41,cont:'AS'},
+  {prefix:'BV',name:'Taiwan',cq:24,itu:44,cont:'AS'},{prefix:'BY',name:'China',cq:24,itu:44,cont:'AS'},
+  {prefix:'C2',name:'Nauru',cq:31,itu:65,cont:'OC'},{prefix:'C3',name:'Andorra',cq:14,itu:27,cont:'EU'},
+  {prefix:'C5',name:'The Gambia',cq:35,itu:46,cont:'AF'},{prefix:'C6',name:'Bahamas',cq:8,itu:11,cont:'NA'},
+  {prefix:'C9',name:'Mozambique',cq:37,itu:53,cont:'AF'},{prefix:'CE',name:'Chile',cq:12,itu:14,cont:'SA'},
+  {prefix:'CE9',name:'Antarctica',cq:38,itu:67,cont:'AN'},{prefix:'CM',name:'Cuba',cq:8,itu:11,cont:'NA'},
+  {prefix:'CN',name:'Morocco',cq:33,itu:37,cont:'AF'},{prefix:'CP',name:'Bolivia',cq:10,itu:14,cont:'SA'},
+  {prefix:'CT',name:'Portugal',cq:14,itu:37,cont:'EU'},{prefix:'CT3',name:'Madeira Is.',cq:33,itu:36,cont:'AF'},
+  {prefix:'CU',name:'Azores',cq:14,itu:36,cont:'EU'},{prefix:'CX',name:'Uruguay',cq:13,itu:14,cont:'SA'},
+  {prefix:'D2',name:'Angola',cq:36,itu:52,cont:'AF'},{prefix:'D4',name:'Cape Verde',cq:35,itu:46,cont:'AF'},
+  {prefix:'D6',name:'Comoros',cq:39,itu:53,cont:'AF'},{prefix:'DL',name:'Germany',cq:14,itu:28,cont:'EU'},
+  {prefix:'DU',name:'Philippines',cq:27,itu:50,cont:'OC'},{prefix:'E3',name:'Eritrea',cq:34,itu:48,cont:'AF'},
+  {prefix:'E4',name:'Palestine',cq:20,itu:39,cont:'AS'},{prefix:'E5',name:'N.Cook Is.',cq:32,itu:62,cont:'OC'},
+  {prefix:'EA',name:'Spain',cq:14,itu:37,cont:'EU'},{prefix:'EA6',name:'Balearic Is.',cq:14,itu:37,cont:'EU'},
+  {prefix:'EA8',name:'Canary Is.',cq:33,itu:36,cont:'AF'},{prefix:'EA9',name:'Ceuta & Melilla',cq:33,itu:37,cont:'AF'},
+  {prefix:'EI',name:'Ireland',cq:14,itu:27,cont:'EU'},{prefix:'EK',name:'Armenia',cq:21,itu:29,cont:'AS'},
+  {prefix:'EL',name:'Liberia',cq:35,itu:46,cont:'AF'},{prefix:'EP',name:'Iran',cq:21,itu:40,cont:'AS'},
+  {prefix:'ER',name:'Moldova',cq:16,itu:29,cont:'EU'},{prefix:'ES',name:'Estonia',cq:15,itu:29,cont:'EU'},
+  {prefix:'ET',name:'Ethiopia',cq:34,itu:48,cont:'AF'},{prefix:'EU',name:'Belarus',cq:16,itu:29,cont:'EU'},
+  {prefix:'EX',name:'Kyrgyzstan',cq:17,itu:30,cont:'AS'},{prefix:'EY',name:'Tajikistan',cq:17,itu:30,cont:'AS'},
+  {prefix:'EZ',name:'Turkmenistan',cq:17,itu:30,cont:'AS'},{prefix:'F',name:'France',cq:14,itu:27,cont:'EU'},
+  {prefix:'FG',name:'Guadeloupe',cq:8,itu:11,cont:'NA'},{prefix:'FH',name:'Mayotte',cq:39,itu:53,cont:'AF'},
+  {prefix:'FJ',name:'Saint Barthelemy',cq:8,itu:11,cont:'NA'},{prefix:'FK',name:'New Caledonia',cq:28,itu:56,cont:'OC'},
+  {prefix:'FM',name:'Martinique',cq:8,itu:11,cont:'NA'},{prefix:'FO',name:'French Polynesia',cq:31,itu:63,cont:'OC'},
+  {prefix:'FP',name:'St. Pierre & Miquelon',cq:5,itu:9,cont:'NA'},{prefix:'FR',name:'Reunion I.',cq:39,itu:53,cont:'AF'},
+  {prefix:'FT5W',name:'Crozet I.',cq:38,itu:68,cont:'AF'},{prefix:'FT5X',name:'Kerguelen Is.',cq:38,itu:68,cont:'AF'},
+  {prefix:'FT5Z',name:'Amsterdam & St. Paul Is.',cq:38,itu:68,cont:'AF'},{prefix:'FW',name:'Wallis & Futuna Is.',cq:28,itu:62,cont:'OC'},
+  {prefix:'FY',name:'French Guiana',cq:9,itu:12,cont:'SA'},{prefix:'G',name:'England',cq:14,itu:27,cont:'EU'},
+  {prefix:'GD',name:'Isle of Man',cq:14,itu:27,cont:'EU'},{prefix:'GI',name:'Northern Ireland',cq:14,itu:27,cont:'EU'},
+  {prefix:'GJ',name:'Jersey',cq:14,itu:27,cont:'EU'},{prefix:'GM',name:'Scotland',cq:14,itu:27,cont:'EU'},
+  {prefix:'GU',name:'Guernsey',cq:14,itu:27,cont:'EU'},{prefix:'GW',name:'Wales',cq:14,itu:27,cont:'EU'},
+  {prefix:'H4',name:'Solomon Is.',cq:28,itu:51,cont:'OC'},{prefix:'H40',name:'Temotu Province',cq:28,itu:51,cont:'OC'},
+  {prefix:'HA',name:'Hungary',cq:15,itu:28,cont:'EU'},{prefix:'HB',name:'Switzerland',cq:14,itu:28,cont:'EU'},
+  {prefix:'HB0',name:'Liechtenstein',cq:14,itu:28,cont:'EU'},{prefix:'HC',name:'Ecuador',cq:10,itu:10,cont:'SA'},
+  {prefix:'HH',name:'Haiti',cq:8,itu:11,cont:'NA'},{prefix:'HI',name:'Dominican Republic',cq:8,itu:11,cont:'NA'},
+  {prefix:'HK',name:'Colombia',cq:9,itu:12,cont:'SA'},{prefix:'HL',name:'South Korea',cq:25,itu:44,cont:'AS'},
+  {prefix:'HP',name:'Panama',cq:7,itu:11,cont:'NA'},{prefix:'HR',name:'Honduras',cq:7,itu:11,cont:'NA'},
+  {prefix:'HS',name:'Thailand',cq:26,itu:49,cont:'AS'},{prefix:'HV',name:'Vatican City',cq:15,itu:28,cont:'EU'},
+  {prefix:'HZ',name:'Saudi Arabia',cq:21,itu:39,cont:'AS'},{prefix:'I',name:'Italy',cq:15,itu:28,cont:'EU'},
+  {prefix:'IS',name:'Sardinia',cq:15,itu:28,cont:'EU'},{prefix:'IT9',name:'Sicily',cq:15,itu:28,cont:'EU'},
+  {prefix:'J2',name:'Djibouti',cq:34,itu:48,cont:'AF'},{prefix:'J3',name:'Grenada',cq:8,itu:11,cont:'NA'},
+  {prefix:'J5',name:'Guinea-Bissau',cq:35,itu:46,cont:'AF'},{prefix:'J6',name:'St. Lucia',cq:8,itu:11,cont:'NA'},
+  {prefix:'J7',name:'Dominica',cq:8,itu:11,cont:'NA'},{prefix:'J8',name:'St. Vincent',cq:8,itu:11,cont:'NA'},
+  {prefix:'JA',name:'Japan',cq:25,itu:45,cont:'AS'},{prefix:'JD1',name:'Ogasawara',cq:25,itu:45,cont:'AS'},
+  {prefix:'JT',name:'Mongolia',cq:23,itu:32,cont:'AS'},{prefix:'JW',name:'Svalbard',cq:18,itu:18,cont:'EU'},
+  {prefix:'JX',name:'Jan Mayen',cq:18,itu:18,cont:'EU'},{prefix:'JY',name:'Jordan',cq:20,itu:39,cont:'AS'},
+  {prefix:'K',name:'United States',cq:5,itu:8,cont:'NA'},{prefix:'KG4',name:'Guantanamo Bay',cq:8,itu:11,cont:'NA'},
+  {prefix:'KH0',name:'Mariana Is.',cq:27,itu:64,cont:'OC'},{prefix:'KH1',name:'Baker & Howland Is.',cq:31,itu:61,cont:'OC'},
+  {prefix:'KH2',name:'Guam',cq:27,itu:64,cont:'OC'},{prefix:'KH3',name:'Johnston I.',cq:31,itu:61,cont:'OC'},
+  {prefix:'KH4',name:'Midway I.',cq:31,itu:61,cont:'OC'},{prefix:'KH5',name:'Palmyra & Jarvis Is.',cq:31,itu:61,cont:'OC'},
+  {prefix:'KH6',name:'Hawaii',cq:31,itu:61,cont:'OC'},{prefix:'KH8',name:'American Samoa',cq:32,itu:62,cont:'OC'},
+  {prefix:'KH9',name:'Wake I.',cq:31,itu:65,cont:'OC'},{prefix:'KL',name:'Alaska',cq:1,itu:1,cont:'NA'},
+  {prefix:'KP1',name:'Navassa I.',cq:8,itu:11,cont:'NA'},{prefix:'KP2',name:'US Virgin Is.',cq:8,itu:11,cont:'NA'},
+  {prefix:'KP4',name:'Puerto Rico',cq:8,itu:11,cont:'NA'},{prefix:'KP5',name:'Desecheo I.',cq:8,itu:11,cont:'NA'},
+  {prefix:'LA',name:'Norway',cq:14,itu:18,cont:'EU'},{prefix:'LU',name:'Argentina',cq:13,itu:14,cont:'SA'},
+  {prefix:'LX',name:'Luxembourg',cq:14,itu:27,cont:'EU'},{prefix:'LY',name:'Lithuania',cq:15,itu:29,cont:'EU'},
+  {prefix:'LZ',name:'Bulgaria',cq:20,itu:28,cont:'EU'},{prefix:'OA',name:'Peru',cq:10,itu:12,cont:'SA'},
+  {prefix:'OD',name:'Lebanon',cq:20,itu:39,cont:'AS'},{prefix:'OE',name:'Austria',cq:15,itu:28,cont:'EU'},
+  {prefix:'OH',name:'Finland',cq:18,itu:29,cont:'EU'},{prefix:'OH0',name:'Åland Is.',cq:18,itu:29,cont:'EU'},
+  {prefix:'OJ0',name:'Market Reef',cq:18,itu:29,cont:'EU'},{prefix:'OK',name:'Czech Republic',cq:15,itu:28,cont:'EU'},
+  {prefix:'OM',name:'Slovak Republic',cq:15,itu:28,cont:'EU'},{prefix:'ON',name:'Belgium',cq:14,itu:27,cont:'EU'},
+  {prefix:'OX',name:'Greenland',cq:40,itu:75,cont:'NA'},{prefix:'OY',name:'Faroe Is.',cq:14,itu:18,cont:'EU'},
+  {prefix:'OZ',name:'Denmark',cq:14,itu:18,cont:'EU'},{prefix:'P2',name:'Papua New Guinea',cq:28,itu:51,cont:'OC'},
+  {prefix:'P5',name:'North Korea',cq:25,itu:44,cont:'AS'},{prefix:'PA',name:'Netherlands',cq:14,itu:27,cont:'EU'},
+  {prefix:'PJ2',name:'Curacao',cq:9,itu:11,cont:'SA'},{prefix:'PJ4',name:'Bonaire',cq:9,itu:11,cont:'SA'},
+  {prefix:'PJ5',name:'Sint Eustatius & Saba',cq:8,itu:11,cont:'NA'},{prefix:'PJ7',name:'Sint Maarten',cq:8,itu:11,cont:'NA'},
+  {prefix:'PY',name:'Brazil',cq:11,itu:15,cont:'SA'},{prefix:'PY0F',name:'Fernando de Noronha',cq:11,itu:15,cont:'SA'},
+  {prefix:'PY0S',name:'St. Peter & St. Paul Rocks',cq:11,itu:15,cont:'SA'},{prefix:'PZ',name:'Suriname',cq:9,itu:12,cont:'SA'},
+  {prefix:'R1F',name:'Franz Josef Land',cq:40,itu:75,cont:'EU'},{prefix:'R1M',name:'Market Reef',cq:18,itu:29,cont:'EU'},
+  {prefix:'RA',name:'Russia (European)',cq:16,itu:29,cont:'EU'},{prefix:'S0',name:'Western Sahara',cq:33,itu:46,cont:'AF'},
+  {prefix:'S2',name:'Bangladesh',cq:26,itu:41,cont:'AS'},{prefix:'S5',name:'Slovenia',cq:15,itu:28,cont:'EU'},
+  {prefix:'S7',name:'Seychelles',cq:39,itu:53,cont:'AF'},{prefix:'S9',name:'Sao Tome & Principe',cq:36,itu:52,cont:'AF'},
+  {prefix:'SM',name:'Sweden',cq:18,itu:29,cont:'EU'},{prefix:'SP',name:'Poland',cq:15,itu:28,cont:'EU'},
+  {prefix:'ST',name:'Sudan',cq:34,itu:48,cont:'AF'},{prefix:'SU',name:'Egypt',cq:33,itu:38,cont:'AF'},
+  {prefix:'SV',name:'Greece',cq:20,itu:28,cont:'EU'},{prefix:'SV5',name:'Dodecanese',cq:20,itu:28,cont:'EU'},
+  {prefix:'SV9',name:'Crete',cq:20,itu:28,cont:'EU'},{prefix:'T2',name:'Tuvalu',cq:31,itu:65,cont:'OC'},
+  {prefix:'T30',name:'Western Kiribati',cq:31,itu:65,cont:'OC'},{prefix:'T31',name:'Central Kiribati',cq:31,itu:62,cont:'OC'},
+  {prefix:'T32',name:'Eastern Kiribati',cq:31,itu:61,cont:'OC'},{prefix:'T33',name:'Banaba I.',cq:31,itu:65,cont:'OC'},
+  {prefix:'T5',name:'Somalia',cq:34,itu:48,cont:'AF'},{prefix:'T7',name:'San Marino',cq:15,itu:28,cont:'EU'},
+  {prefix:'T8',name:'Palau',cq:27,itu:64,cont:'OC'},{prefix:'TA',name:'Turkey',cq:20,itu:28,cont:'AS'},
+  {prefix:'TF',name:'Iceland',cq:40,itu:17,cont:'EU'},{prefix:'TG',name:'Guatemala',cq:7,itu:11,cont:'NA'},
+  {prefix:'TI',name:'Costa Rica',cq:7,itu:11,cont:'NA'},{prefix:'TJ',name:'Cameroon',cq:36,itu:52,cont:'AF'},
+  {prefix:'TK',name:'Corsica',cq:15,itu:28,cont:'EU'},{prefix:'TL',name:'Central Africa',cq:36,itu:52,cont:'AF'},
+  {prefix:'TN',name:'Republic of Congo',cq:36,itu:52,cont:'AF'},{prefix:'TR',name:'Gabon',cq:36,itu:52,cont:'AF'},
+  {prefix:'TT',name:'Chad',cq:34,itu:47,cont:'AF'},{prefix:'TU',name:"Cote d'Ivoire",cq:35,itu:46,cont:'AF'},
+  {prefix:'TY',name:'Benin',cq:35,itu:46,cont:'AF'},{prefix:'TZ',name:'Mali',cq:35,itu:46,cont:'AF'},
+  {prefix:'UA',name:'Russia (European)',cq:16,itu:29,cont:'EU'},{prefix:'UA2',name:'Kaliningrad',cq:15,itu:29,cont:'EU'},
+  {prefix:'UA9',name:'Russia (Asiatic)',cq:17,itu:30,cont:'AS'},{prefix:'UK',name:'Uzbekistan',cq:17,itu:30,cont:'AS'},
+  {prefix:'UN',name:'Kazakhstan',cq:17,itu:30,cont:'AS'},{prefix:'UR',name:'Ukraine',cq:16,itu:29,cont:'EU'},
+  {prefix:'V2',name:'Antigua & Barbuda',cq:8,itu:11,cont:'NA'},{prefix:'V3',name:'Belize',cq:7,itu:11,cont:'NA'},
+  {prefix:'V4',name:'St. Kitts & Nevis',cq:8,itu:11,cont:'NA'},{prefix:'V5',name:'Namibia',cq:38,itu:57,cont:'AF'},
+  {prefix:'V6',name:'Micronesia',cq:27,itu:65,cont:'OC'},{prefix:'V7',name:'Marshall Is.',cq:31,itu:65,cont:'OC'},
+  {prefix:'V8',name:'Brunei Darussalam',cq:28,itu:54,cont:'OC'},{prefix:'VE',name:'Canada',cq:3,itu:3,cont:'NA'},
+  {prefix:'VK',name:'Australia',cq:29,itu:55,cont:'OC'},{prefix:'VK0H',name:'Heard I.',cq:29,itu:68,cont:'OC'},
+  {prefix:'VK0M',name:'Macquarie I.',cq:30,itu:60,cont:'OC'},{prefix:'VK9C',name:'Cocos-Keeling Is.',cq:29,itu:54,cont:'OC'},
+  {prefix:'VK9L',name:'Lord Howe I.',cq:30,itu:60,cont:'OC'},{prefix:'VK9M',name:'Mellish Reef',cq:30,itu:56,cont:'OC'},
+  {prefix:'VK9N',name:'Norfolk I.',cq:32,itu:60,cont:'OC'},{prefix:'VK9W',name:'Willis Is.',cq:30,itu:55,cont:'OC'},
+  {prefix:'VK9X',name:'Christmas I.',cq:29,itu:54,cont:'OC'},{prefix:'VP2E',name:'Anguilla',cq:8,itu:11,cont:'NA'},
+  {prefix:'VP2M',name:'Montserrat',cq:8,itu:11,cont:'NA'},{prefix:'VP2V',name:'British Virgin Is.',cq:8,itu:11,cont:'NA'},
+  {prefix:'VP5',name:'Turks & Caicos Is.',cq:8,itu:11,cont:'NA'},{prefix:'VP6',name:'Pitcairn I.',cq:32,itu:63,cont:'OC'},
+  {prefix:'VP8',name:'Falkland Is.',cq:13,itu:16,cont:'SA'},{prefix:'VP9',name:'Bermuda',cq:5,itu:11,cont:'NA'},
+  {prefix:'VQ9',name:'Chagos Is.',cq:39,itu:41,cont:'AF'},{prefix:'VR',name:'Hong Kong',cq:24,itu:44,cont:'AS'},
+  {prefix:'VU',name:'India',cq:26,itu:41,cont:'AS'},{prefix:'VU4',name:'Andaman & Nicobar Is.',cq:26,itu:49,cont:'AS'},
+  {prefix:'VU7',name:'Lakshadweep Is.',cq:26,itu:41,cont:'AS'},{prefix:'XE',name:'Mexico',cq:6,itu:10,cont:'NA'},
+  {prefix:'XF4',name:'Revillagigedo',cq:6,itu:10,cont:'NA'},{prefix:'XT',name:'Burkina Faso',cq:35,itu:46,cont:'AF'},
+  {prefix:'XU',name:'Cambodia',cq:26,itu:49,cont:'AS'},{prefix:'XW',name:'Laos',cq:26,itu:49,cont:'AS'},
+  {prefix:'XX9',name:'Macao',cq:24,itu:44,cont:'AS'},{prefix:'XZ',name:'Myanmar',cq:26,itu:49,cont:'AS'},
+  {prefix:'YA',name:'Afghanistan',cq:21,itu:40,cont:'AS'},{prefix:'YB',name:'Indonesia',cq:28,itu:51,cont:'OC'},
+  {prefix:'YI',name:'Iraq',cq:21,itu:39,cont:'AS'},{prefix:'YJ',name:'Vanuatu',cq:28,itu:56,cont:'OC'},
+  {prefix:'YK',name:'Syria',cq:20,itu:39,cont:'AS'},{prefix:'YL',name:'Latvia',cq:15,itu:29,cont:'EU'},
+  {prefix:'YN',name:'Nicaragua',cq:7,itu:11,cont:'NA'},{prefix:'YO',name:'Romania',cq:20,itu:28,cont:'EU'},
+  {prefix:'YS',name:'El Salvador',cq:7,itu:11,cont:'NA'},{prefix:'YU',name:'Serbia',cq:15,itu:28,cont:'EU'},
+  {prefix:'YV',name:'Venezuela',cq:9,itu:12,cont:'SA'},{prefix:'Z2',name:'Zimbabwe',cq:38,itu:53,cont:'AF'},
+  {prefix:'Z3',name:'North Macedonia',cq:15,itu:28,cont:'EU'},{prefix:'Z6',name:'Kosovo',cq:15,itu:28,cont:'EU'},
+  {prefix:'ZA',name:'Albania',cq:15,itu:28,cont:'EU'},{prefix:'ZB',name:'Gibraltar',cq:14,itu:37,cont:'EU'},
+  {prefix:'ZC4',name:'UK Bases on Cyprus',cq:20,itu:39,cont:'AS'},{prefix:'ZD7',name:'St. Helena',cq:36,itu:66,cont:'AF'},
+  {prefix:'ZD8',name:'Ascension I.',cq:36,itu:66,cont:'AF'},{prefix:'ZD9',name:'Tristan da Cunha & Gough Is.',cq:38,itu:66,cont:'AF'},
+  {prefix:'ZF',name:'Cayman Is.',cq:8,itu:11,cont:'NA'},{prefix:'ZK3',name:'Tokelau Is.',cq:31,itu:62,cont:'OC'},
+  {prefix:'ZL',name:'New Zealand',cq:32,itu:60,cont:'OC'},{prefix:'ZL7',name:'Chatham Is.',cq:32,itu:60,cont:'OC'},
+  {prefix:'ZL8',name:'Kermadec Is.',cq:32,itu:60,cont:'OC'},{prefix:'ZL9',name:'Campbell I.',cq:32,itu:60,cont:'OC'},
+  {prefix:'ZP',name:'Paraguay',cq:11,itu:14,cont:'SA'},{prefix:'ZS',name:'South Africa',cq:38,itu:57,cont:'AF'},
+  {prefix:'ZS8',name:'Prince Edward & Marion Is.',cq:38,itu:57,cont:'AF'}
+];
+
+const US_STATES=['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let LOG = [];
+let SETTINGS = {
+  myCall:'', myName:'', myQth:'', myGrid:'', myDxcc:'', myCqz:'', myItu:'',
+  defPower:'100', rig:'', ant:'', sw:'', lotwUser:'', lotwLoc:''
+};
+let USERS = {}; // {callsign: {name, qth, settings, log}}
+let CURRENT_USER = '';
+let sortCol = 'date';
+let sortAsc = false;
+let editingId = null;
+let dxccFilter = 'all';
+let PAGE = 0; const PAGE_SIZE = 50;
+
+// ══════════════════════════════════════════════
+//  PERSISTENCE
+// ══════════════════════════════════════════════
+function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5);}
+
+function userKey(call,suffix){return `hamlog_${call}_${suffix}`;}
+
+function saveUsers(){ localStorage.setItem('hamlog_users', JSON.stringify(Object.keys(USERS))); }
+function loadUsers(){
+  const u = localStorage.getItem('hamlog_users');
+  if(u){ USERS = {}; JSON.parse(u).forEach(c=>USERS[c]=true); }
+  return Object.keys(USERS);
+}
+
+function saveLog(){
+  if(!CURRENT_USER) return;
+  localStorage.setItem(userKey(CURRENT_USER,'log'), JSON.stringify(LOG));
+}
+function loadLog(call){
+  const d = localStorage.getItem(userKey(call,'log'));
+  return d ? JSON.parse(d) : [];
+}
+
+function saveSettings(){
+  SETTINGS.myCall = v('sMyCall');
+  SETTINGS.myName = v('sMyName');
+  SETTINGS.myQth  = v('sMyQth');
+  SETTINGS.myGrid = v('sMyGrid');
+  SETTINGS.myDxcc = v('sMyDxcc');
+  SETTINGS.myCqz  = v('sMyCqz');
+  SETTINGS.myItu  = v('sMyItu');
+  SETTINGS.defPower = v('sDefPower');
+  SETTINGS.rig    = v('sRig');
+  SETTINGS.ant    = v('sAnt');
+  SETTINGS.sw     = v('sSw');
+  SETTINGS.lotwUser = v('sLotwUser');
+  SETTINGS.lotwLoc  = v('sLotwLoc');
+  if(!CURRENT_USER) return toast('Set a callsign first','warn');
+  localStorage.setItem(userKey(CURRENT_USER,'settings'), JSON.stringify(SETTINGS));
+  updateNavChip();
+  toast('Settings saved','ok');
+}
+function loadSettings(call){
+  const d = localStorage.getItem(userKey(call,'settings'));
+  return d ? JSON.parse(d) : {};
+}
+function applySettings(s){
+  SETTINGS = Object.assign({myCall:'',myName:'',myQth:'',myGrid:'',myDxcc:'',myCqz:'',myItu:'',defPower:'100',rig:'',ant:'',sw:'',lotwUser:'',lotwLoc:''},s);
+  sv('sMyCall', SETTINGS.myCall);
+  sv('sMyName', SETTINGS.myName);
+  sv('sMyQth',  SETTINGS.myQth);
+  sv('sMyGrid', SETTINGS.myGrid);
+  sv('sMyDxcc', SETTINGS.myDxcc);
+  sv('sMyCqz',  SETTINGS.myCqz);
+  sv('sMyItu',  SETTINGS.myItu);
+  sv('sDefPower',SETTINGS.defPower);
+  sv('sRig',    SETTINGS.rig);
+  sv('sAnt',    SETTINGS.ant);
+  sv('sSw',     SETTINGS.sw);
+  sv('sLotwUser',SETTINGS.lotwUser);
+  sv('sLotwLoc', SETTINGS.lotwLoc);
+}
+
+function v(id){return (document.getElementById(id)||{}).value||'';}
+function sv(id,val){const el=document.getElementById(id);if(el)el.value=val||'';}
+function el(id){return document.getElementById(id);}
+
+// ══════════════════════════════════════════════
+//  MULTI-USER
+// ══════════════════════════════════════════════
+function switchUser(call){
+  CURRENT_USER = call;
+  localStorage.setItem('hamlog_current_user', call);
+  LOG = loadLog(call);
+  applySettings(loadSettings(call));
+  updateNavChip();
+  updateCounter();
+  renderLog();
+  renderRecent();
+  renderUserSwitchers();
+  updateLotwStats();
+  toast(`Switched to ${call}`,'ok');
+  closeModal('userModal');
+}
+
+function createUser(){
+  const call = v('nuCall').trim().toUpperCase();
+  const name = v('nuName');
+  const qth  = v('nuQth');
+  if(!call){ toast('Callsign required','error'); return; }
+  if(USERS[call]){ toast('Operator already exists','warn'); return; }
+  USERS[call] = true;
+  saveUsers();
+  const settings = {myCall:call, myName:name, myQth:qth};
+  localStorage.setItem(userKey(call,'settings'), JSON.stringify(settings));
+  closeModal('newUserModal');
+  sv('nuCall',''); sv('nuName',''); sv('nuQth','');
+  switchUser(call);
+}
+
+function openNewUserModal(){ openModal('newUserModal'); }
+function openUserModal(){ renderModalUsers(); openModal('userModal'); }
+
+function openDeleteUserModal(){
+  if(Object.keys(USERS).length <= 1){ toast('Cannot delete the only operator','warn'); return; }
+  openConfirm('Remove Operator', `Remove ${CURRENT_USER} and all their QSOs? This cannot be undone.`, ()=>{
+    delete USERS[CURRENT_USER];
+    localStorage.removeItem(userKey(CURRENT_USER,'log'));
+    localStorage.removeItem(userKey(CURRENT_USER,'settings'));
+    saveUsers();
+    const remaining = Object.keys(USERS);
+    if(remaining.length) switchUser(remaining[0]);
+    else{ CURRENT_USER=''; LOG=[]; updateNavChip(); }
+  });
+}
+
+function renderUserSwitchers(){
+  const calls = Object.keys(USERS);
+  ['userSwitcher','modalUserSwitcher'].forEach(id=>{
+    const c = el(id); if(!c) return;
+    c.innerHTML = calls.map(call=>{
+      const s = loadSettings(call);
+      const log = loadLog(call);
+      const initials = (call||'?').substr(0,2);
+      const isActive = call === CURRENT_USER;
+      return `<div class="user-entry${isActive?' active-user':''}" onclick="switchUser('${call}')">
+        <div class="user-entry-avatar">${initials}</div>
+        <div class="user-entry-info">
+          <div class="user-entry-call">${call}</div>
+          <div class="user-entry-name">${s.myName||'Unknown Operator'} — ${s.myQth||'No QTH'}</div>
+        </div>
+        <div class="user-entry-count">${log.length} QSOs</div>
+      </div>`;
+    }).join('') || '<div class="text-muted" style="padding:.75rem;font-size:.8rem;">No operators added yet</div>';
+  });
+}
+
+function updateNavChip(){
+  const s = SETTINGS;
+  el('navCallsign').textContent = s.myCall || '—';
+  el('navOperator').textContent = s.myName || 'Unknown';
+  el('navAvatar').textContent = (s.myCall||'?').substr(0,2);
+  el('logSubtitle').textContent = s.myCall
+    ? `${s.myCall} — ${s.myQth||'No QTH'} ${s.myGrid?'('+s.myGrid+')':''}`
+    : 'No station configured';
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGATION & CLOCK
+// ══════════════════════════════════════════════
+function showScreen(id, btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  el(id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  else { const b = document.querySelector(`[data-screen="${id}"]`); if(b) b.classList.add('active'); }
+  if(id==='statsScreen') renderStats();
+  if(id==='dxccScreen') renderDxcc();
+  if(id==='awardsScreen') renderAwards();
+  if(id==='lotwScreen') updateLotwStats();
+  if(id==='settingsScreen') renderUserSwitchers();
+}
+
+function updateClock(){
+  const n = new Date();
+  el('utcClock').textContent =
+    n.getUTCHours().toString().padStart(2,'0')+':'+
+    n.getUTCMinutes().toString().padStart(2,'0')+':'+
+    n.getUTCSeconds().toString().padStart(2,'0')+' UTC';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ══════════════════════════════════════════════
+//  DXCC LOOKUP
+// ══════════════════════════════════════════════
+function callToDxcc(call){
+  if(!call) return '';
+  const cl = call.toUpperCase().replace(/\/[A-Z0-9]+$/,'');
+  // Try progressively shorter prefixes
+  for(let len=5;len>=1;len--){
+    const pfx = cl.substr(0,len);
+    const match = DXCC_DATA.find(d=>d.prefix===pfx);
+    if(match) return match;
+  }
+  return null;
+}
+function dxccName(call){
+  const r = callToDxcc(call);
+  return r ? r.name : '';
+}
+
+function lookupCall(call){
+  if(call.length < 3){ el('lookupCard').classList.remove('show'); return; }
+  const r = callToDxcc(call);
+  if(!r){ el('lookupCard').classList.remove('show'); return; }
+  el('lkEntity').textContent = r.name;
+  el('lkCqz').textContent    = r.cq;
+  el('lkItu').textContent    = r.itu;
+  el('lkCont').textContent   = r.cont;
+  const prev = LOG.filter(q=>q.call===call.toUpperCase()).length;
+  el('lkPrev').textContent = prev > 0 ? `${prev} (${prev===1?'1 QSO':'already worked!'})` : 'New contact';
+  el('lookupCard').classList.add('show');
+  // Auto-fill
+  if(!v('fDxcc') && r.name) sv('fDxcc', r.name);
+  if(!v('fCqz')  && r.cq)   sv('fCqz',  r.cq);
+}
+
+// ══════════════════════════════════════════════
+//  FORM HELPERS
+// ══════════════════════════════════════════════
+function fillNow(){
+  const n = new Date();
+  sv('fDate', n.toISOString().substr(0,10));
+  sv('fTime', n.toUTCHours().toString().padStart(2,'0')+':'+n.toUTCMinutes().toString().padStart(2,'0'));
+}
+Date.prototype.toUTCHours = function(){return this.getUTCHours();}
+Date.prototype.toUTCMinutes = function(){return this.getUTCMinutes();}
+
+function clearForm(){
+  ['fCall','fFreq','fName','fQth','fGrid','fDxcc','fIota','fCqz','fSnS','fSnR','fNotes'].forEach(id=>sv(id,''));
+  sv('fRstS','59'); sv('fRstR','59');
+  sv('fBand','20m'); sv('fMode','FT8');
+  sv('fPower', SETTINGS.defPower||'100');
+  el('lookupCard').classList.remove('show');
+  el('editCancelBtn').style.display='none';
+  editingId = null;
+  el('qsoFormCard').querySelector('.card-title').childNodes[0].textContent='✏ New QSO';
+  fillNow();
+}
+
+function cancelEdit(){
+  editingId=null;
+  clearForm();
+}
+
+// ══════════════════════════════════════════════
+//  LOG QSO
+// ══════════════════════════════════════════════
+function logQso(){
+  const call = v('fCall').toUpperCase().trim();
+  if(!call){ toast('Callsign is required','error'); el('fCall').focus(); return; }
+  const q = {
+    id: editingId || uid(),
+    call, date:v('fDate'), time:v('fTime'),
+    band:v('fBand'), freq:v('fFreq'), mode:v('fMode'),
+    rstS:v('fRstS')||'59', rstR:v('fRstR')||'59',
+    name:v('fName'), qth:v('fQth'), grid:v('fGrid'),
+    dxcc:v('fDxcc')||dxccName(call),
+    iota:v('fIota'), cqz:v('fCqz'), power:v('fPower'),
+    snS:v('fSnS'), snR:v('fSnR'), notes:v('fNotes'),
+    lotwSent: false, lotwConfirmed: false,
+    loggedAt: Date.now()
+  };
+  if(editingId){
+    const idx = LOG.findIndex(x=>x.id===editingId);
+    if(idx>=0){ const old=LOG[idx]; q.lotwSent=old.lotwSent; q.lotwConfirmed=old.lotwConfirmed; LOG[idx]=q; }
+    editingId=null;
+  } else {
+    LOG.unshift(q);
+    // Flash newest row
+    setTimeout(()=>{
+      const row = document.querySelector(`#logBody tr[data-id="${q.id}"]`);
+      if(row) row.classList.add('new-flash');
+    }, 100);
+  }
+  saveLog(); updateCounter(); renderLog(); renderRecent(); clearForm();
+  toast(`QSO logged: ${call}`,'ok');
+}
+
+function editQso(id){
+  const q = LOG.find(x=>x.id===id); if(!q) return;
+  editingId = id;
+  sv('fCall', q.call); sv('fDate', q.date); sv('fTime', q.time);
+  sv('fBand', q.band); sv('fFreq', q.freq); sv('fMode', q.mode);
+  sv('fRstS', q.rstS); sv('fRstR', q.rstR);
+  sv('fName', q.name); sv('fQth', q.qth); sv('fGrid', q.grid);
+  sv('fDxcc', q.dxcc); sv('fIota', q.iota); sv('fCqz', q.cqz);
+  sv('fPower', q.power); sv('fSnS', q.snS); sv('fSnR', q.snR);
+  sv('fNotes', q.notes);
+  el('editCancelBtn').style.display='';
+  el('qsoFormCard').querySelector('.card-title').childNodes[0].textContent=`✏ Editing: ${q.call}`;
+  el('fCall').focus();
+  el('qsoFormCard').scrollIntoView({behavior:'smooth'});
+}
+
+function deleteQso(id){
+  openConfirm('Delete QSO', `Delete QSO with ${(LOG.find(x=>x.id===id)||{}).call||'?'}? This cannot be undone.`, ()=>{
+    LOG = LOG.filter(x=>x.id!==id);
+    saveLog(); updateCounter(); renderLog(); renderRecent();
+    toast('QSO deleted','warn');
+  });
+}
+
+function toggleSelectAll(cb){
+  document.querySelectorAll('#logBody input[type=checkbox]').forEach(c=>c.checked=cb.checked);
+  updateBulkButtons();
+}
+
+function updateBulkButtons(){
+  const sel = document.querySelectorAll('#logBody input[type=checkbox]:checked').length;
+  el('bulkDeleteBtn').style.display = sel > 0 ? '' : 'none';
+  el('bulkLotwBtn').style.display   = sel > 0 ? '' : 'none';
+  el('bulkDeleteBtn').textContent   = `🗑 Delete (${sel})`;
+  el('bulkLotwBtn').textContent     = `🔐 Mark LoTW Sent (${sel})`;
+}
+
+function bulkDelete(){
+  const ids = [...document.querySelectorAll('#logBody input[type=checkbox]:checked')]
+    .map(c=>c.dataset.id);
+  if(!ids.length) return;
+  openConfirm(`Delete ${ids.length} QSO(s)`, `Permanently delete ${ids.length} QSO(s)?`, ()=>{
+    LOG = LOG.filter(q=>!ids.includes(q.id));
+    saveLog(); updateCounter(); renderLog(); renderRecent(); updateBulkButtons();
+    toast(`Deleted ${ids.length} QSOs`,'warn');
+  });
+}
+
+function bulkMarkLotw(){
+  const ids = [...document.querySelectorAll('#logBody input[type=checkbox]:checked')]
+    .map(c=>c.dataset.id);
+  LOG.forEach(q=>{ if(ids.includes(q.id)) q.lotwSent=true; });
+  saveLog(); renderLog(); updateLotwStats();
+  toast(`Marked ${ids.length} QSOs as LoTW sent`,'ok');
+}
+
+// ══════════════════════════════════════════════
+//  RENDER LOG TABLE
+// ══════════════════════════════════════════════
+function filteredLog(){
+  const q  = v('logSearch').toLowerCase();
+  const bd = v('bandFilter');
+  const md = v('modeFilter');
+  const lt = v('lotwFilter');
+  return LOG.filter(x=>{
+    if(q && ![x.call,x.name,x.qth,x.dxcc,x.grid].some(f=>(f||'').toLowerCase().includes(q))) return false;
+    if(bd && x.band !== bd) return false;
+    if(md && x.mode !== md) return false;
+    if(lt==='sent' && !x.lotwSent) return false;
+    if(lt==='confirmed' && !x.lotwConfirmed) return false;
+    if(lt==='pending' && x.lotwSent) return false;
+    return true;
+  }).sort((a,b)=>{
+    let av=a[sortCol]||'', bv=b[sortCol]||'';
+    if(sortCol==='date') av=(a.date||'')+(a.time||''), bv=(b.date||'')+(b.time||'');
+    return sortAsc ? av>bv?1:-1 : av<bv?1:-1;
+  });
+}
+
+function setSortCol(col){
+  if(sortCol===col) sortAsc=!sortAsc; else{ sortCol=col; sortAsc=false; }
+  renderLog();
+}
+
+function renderLog(){
+  const rows = filteredLog();
+  const start = PAGE*PAGE_SIZE, end = start+PAGE_SIZE;
+  const page  = rows.slice(start,end);
+  const tb = el('logBody');
+  tb.innerHTML = page.map(q=>{
+    const lotwBadge = q.lotwConfirmed
+      ? '<span class="badge badge-lotw">✓ Confirmed</span>'
+      : q.lotwSent
+        ? '<span class="badge badge-primary">Sent</span>'
+        : '<span class="badge badge-neutral">—</span>';
+    return `<tr data-id="${q.id}">
+      <td><input type="checkbox" data-id="${q.id}" onchange="updateBulkButtons()" style="accent-color:var(--primary);"></td>
+      <td><span class="text-mono" style="font-size:.78rem;">${q.date||'—'}</span><br>
+          <span style="font-size:.7rem;color:var(--text-muted);">${q.time||''} UTC</span></td>
+      <td class="call-cell">${q.call}</td>
+      <td class="band-cell">${q.band||'—'}</td>
+      <td class="freq-cell">${q.freq||'—'}</td>
+      <td class="mode-cell">${q.mode||'—'}</td>
+      <td class="rst-cell">${q.rstS||'—'}/${q.rstR||'—'}</td>
+      <td>${q.name||'—'}</td>
+      <td class="dxcc-cell">${q.dxcc||'—'}</td>
+      <td class="text-mono" style="font-size:.75rem;color:var(--text-muted);">${q.grid||'—'}</td>
+      <td class="lotw-cell">${lotwBadge}</td>
+      <td class="actions-cell">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="editQso('${q.id}')" title="Edit">✏</button>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="deleteQso('${q.id}')" title="Delete">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="toggleLotwSent('${q.id}')" title="Toggle LoTW">🔐</button>
+      </td>
+    </tr>`;
+  }).join('');
+  el('logNoData').style.display = rows.length ? 'none' : '';
+  // pagination
+  const pp = el('logPagination');
+  if(rows.length > PAGE_SIZE){
+    pp.innerHTML = `<span>Showing ${start+1}–${Math.min(end,rows.length)} of ${rows.length}</span>
+      <div class="gap-row">
+        <button class="btn btn-ghost btn-sm" onclick="PAGE=Math.max(0,PAGE-1);renderLog()" ${PAGE===0?'disabled':''}>← Prev</button>
+        <button class="btn btn-ghost btn-sm" onclick="PAGE=Math.min(Math.ceil(${rows.length}/${PAGE_SIZE})-1,PAGE+1);renderLog()" ${end>=rows.length?'disabled':''}>Next →</button>
+      </div>`;
+    pp.style.display='flex';
+  } else { pp.style.display='none'; }
+}
+
+function toggleLotwSent(id){
+  const q = LOG.find(x=>x.id===id); if(!q) return;
+  q.lotwSent = !q.lotwSent;
+  if(!q.lotwSent) q.lotwConfirmed=false;
+  saveLog(); renderLog(); updateLotwStats();
+  toast(q.lotwSent?`${q.call} marked as LoTW sent`:`${q.call} LoTW status cleared`,'ok');
+}
+
+function updateCounter(){
+  el('qsoCountBadge').textContent = `${LOG.length} QSO${LOG.length===1?'':'s'}`;
+}
+
+// ══════════════════════════════════════════════
+//  RECENT
+// ══════════════════════════════════════════════
+function renderRecent(){
+  const list = el('recentList');
+  const recent = [...LOG].slice(0,12);
+  el('recentCount').textContent = LOG.length;
+  if(!recent.length){ list.innerHTML='<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:.78rem;">No QSOs yet</div>'; return; }
+  list.innerHTML = recent.map(q=>`
+    <div class="recent-item" onclick="editQso('${q.id}')">
+      <div class="recent-call">${q.call} <span style="font-weight:400;color:var(--text-muted);">${q.dxcc?'· '+q.dxcc:''}</span></div>
+      <div class="recent-meta">
+        <span class="badge badge-neutral" style="font-size:.6rem;">${q.band||'?'}</span>
+        <span style="color:var(--accent)">${q.mode||'?'}</span>
+        <span>${q.date||''} ${q.time||''}Z</span>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  DX SPOTS (simulated)
+// ══════════════════════════════════════════════
+const SPOT_CALLSIGNS=['DL2ABC','JA1QXY','VK2XYZ','G3ZZZ','ZL3XH','PY5AB','LU3FCF','UA9FAR','HS0ZIA','EI5DI','ZS6RJ','TF3JB'];
+const SPOT_BANDS=['80m','40m','30m','20m','17m','15m','12m','10m','6m'];
+const SPOT_FREQS={'80m':'3.573','40m':'7.074','30m':'10.136','20m':'14.074','17m':'18.100','15m':'21.074','12m':'24.915','10m':'28.074','6m':'50.313'};
+const SPOT_MODES=['FT8','FT4','CW','SSB','JS8'];
+const SPOT_COMMENTS=['Good signal','Strong here','Loud!','Weak DX','LP path','Rare one!','Pileup','Contest','New one'];
+
+function refreshSpots(){
+  const list = el('spotList'); if(!list) return;
+  const spots = Array.from({length:10},()=>{
+    const b = SPOT_BANDS[Math.floor(Math.random()*SPOT_BANDS.length)];
+    const m = SPOT_MODES[Math.floor(Math.random()*SPOT_MODES.length)];
+    const c = SPOT_CALLSIGNS[Math.floor(Math.random()*SPOT_CALLSIGNS.length)];
+    const comment = SPOT_COMMENTS[Math.floor(Math.random()*SPOT_COMMENTS.length)];
+    const freq = (parseFloat(SPOT_FREQS[b]||'14.074')+((Math.random()-.5)*.01)).toFixed(3);
+    return {call:c,freq,band:b,mode:m,comment};
+  });
+  list.innerHTML = spots.map(s=>`
+    <div class="spot-row" onclick="fillSpot('${s.call}','${s.freq}','${s.band}','${s.mode}')">
+      <span class="spot-call">${s.call}</span>
+      <span class="spot-freq">${s.freq}</span>
+      <span class="spot-mode">${s.mode}</span>
+      <span class="spot-info">${s.comment}</span>
+    </div>`).join('');
+}
+
+function fillSpot(call,freq,band,mode){
+  sv('fCall', call); sv('fFreq', freq); sv('fBand', band); sv('fMode', mode);
+  el('fCall').dispatchEvent(new Event('input'));
+  el('fCall').focus();
+  showScreen('logScreen', document.querySelector('[data-screen="logScreen"]'));
+}
+
+// ══════════════════════════════════════════════
+//  STATISTICS
+// ══════════════════════════════════════════════
+function renderStats(){
+  const bands = {}, modes = {}, years = {}, dxccs = {}, days = {};
+  LOG.forEach(q=>{
+    if(q.band) bands[q.band]=(bands[q.band]||0)+1;
+    if(q.mode) modes[q.mode]=(modes[q.mode]||0)+1;
+    if(q.date) years[q.date.substr(0,4)]=(years[q.date.substr(0,4)]||0)+1;
+    if(q.dxcc) dxccs[q.dxcc]=(dxccs[q.dxcc]||0)+1;
+    if(q.date){ const d=q.date; days[d]=(days[d]||0)+1; }
+  });
+  const uniqueDxcc = new Set(LOG.map(q=>q.dxcc).filter(Boolean)).size;
+  const lotwSent   = LOG.filter(q=>q.lotwSent).length;
+  const lotwConf   = LOG.filter(q=>q.lotwConfirmed).length;
+  el('statsCards').innerHTML = `
+    ${statCard(LOG.length,'Total QSOs','stat-accent-blue','📋')}
+    ${statCard(uniqueDxcc,'DXCC Entities','stat-accent-teal','🌍')}
+    ${statCard(Object.keys(bands).length,'Bands Used','stat-accent-yellow','📡')}
+    ${statCard(Object.keys(modes).length,'Modes Used','stat-accent-green','🔊')}
+    ${statCard(lotwSent,'LoTW Uploaded','stat-accent-purple','🔐')}
+    ${statCard(lotwConf,'LoTW Confirmed','stat-accent-purple','✅')}
+  `;
+  renderBarChart('bandChart', bands, 'bar-primary');
+  renderBarChart('modeChart', modes, 'bar-warning');
+  renderBarChart('yearChart', years, 'bar-success');
+  renderBarChart('dxccChart', Object.fromEntries(
+    Object.entries(dxccs).sort((a,b)=>b[1]-a[1]).slice(0,10)
+  ), 'bar-purple');
+  // daily
+  const today = new Date();
+  const daily = {};
+  for(let i=29;i>=0;i--){
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    const k = d.toISOString().substr(0,10);
+    daily[k] = days[k]||0;
+  }
+  renderBarChart('dailyChart', daily, 'bar-primary', true);
+}
+
+function statCard(val,label,cls,icon){
+  return `<div class="stat-card ${cls}">
+    <div class="stat-val">${icon} ${val}</div>
+    <div class="stat-label">${label}</div>
+  </div>`;
+}
+
+function renderBarChart(id, data, barCls, compact){
+  const entries = Object.entries(data);
+  if(!entries.length){ el(id).innerHTML='<div class="text-muted" style="font-size:.78rem;padding:.5rem;">No data yet</div>'; return; }
+  const max = Math.max(...entries.map(e=>e[1]),1);
+  el(id).innerHTML = entries.map(([k,v])=>`
+    <div class="chart-row" style="${compact?'margin-bottom:.25rem;':''}">
+      <div class="chart-key" style="font-size:${compact?'.6rem':'.72rem'};width:${compact?'55px':'65px'};overflow:hidden;text-overflow:ellipsis;" title="${k}">${k}</div>
+      <div class="chart-bar-bg">
+        <div class="chart-bar ${barCls}" style="width:${Math.round(v/max*100)}%;"></div>
+      </div>
+      <div class="chart-val">${v}</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  DXCC
+// ══════════════════════════════════════════════
+function renderDxcc(){
+  const q = (v('dxccSearch')||'').toLowerCase();
+  const worked   = new Set(LOG.map(x=>x.dxcc).filter(Boolean));
+  const lotwConf = new Set(LOG.filter(x=>x.lotwConfirmed).map(x=>x.dxcc).filter(Boolean));
+  let list = DXCC_DATA.filter(d=>{
+    if(q && !d.name.toLowerCase().includes(q) && !d.prefix.toLowerCase().includes(q)) return false;
+    if(dxccFilter==='worked'   && !worked.has(d.name)) return false;
+    if(dxccFilter==='lotw'     && !lotwConf.has(d.name)) return false;
+    if(dxccFilter==='not'      && worked.has(d.name)) return false;
+    return true;
+  });
+  el('dxccSubtitle').textContent = `${worked.size} / ${DXCC_DATA.length} entities worked — ${lotwConf.size} LoTW confirmed`;
+  el('dxccGrid').innerHTML = list.map(d=>{
+    const isWorked = worked.has(d.name);
+    const isLotw   = lotwConf.has(d.name);
+    const cls = isLotw ? 'lotw-confirmed' : isWorked ? 'worked' : 'not-worked';
+    const badge = isLotw
+      ? '<span class="dxcc-status" style="color:var(--lotw);">🔐 LoTW</span>'
+      : isWorked ? '<span class="dxcc-status" style="color:var(--success);">✓ Worked</span>'
+      : '<span class="dxcc-status" style="color:var(--text-muted);">—</span>';
+    return `<div class="dxcc-item ${cls}" title="${d.name} · CQ${d.cq} · ${d.cont}">
+      <div class="dxcc-prefix">${d.prefix}</div>
+      <div class="dxcc-name">${d.name}</div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+function filterDxcc(f){ dxccFilter=f; renderDxcc(); }
+
+// ══════════════════════════════════════════════
+//  AWARDS
+// ══════════════════════════════════════════════
+function renderAwards(){
+  const worked   = new Set(LOG.map(x=>x.dxcc).filter(Boolean));
+  const lotwConf = new Set(LOG.filter(x=>x.lotwConfirmed).map(x=>x.dxcc).filter(Boolean));
+  const wdWorked = DXCC_DATA.filter(d=>worked.has(d.name)).length;
+  const wdLotw   = DXCC_DATA.filter(d=>lotwConf.has(d.name)).length;
+  const bands    = new Set(LOG.map(x=>x.band).filter(Boolean));
+  const modes    = new Set(LOG.map(x=>x.mode).filter(Boolean));
+  const euWorked = new Set(LOG.filter(q=>DXCC_DATA.find(d=>d.name===q.dxcc&&d.cont==='EU')).map(q=>q.dxcc)).size;
+  const statesWorked = new Set(LOG.map(q=>(q.qth||'').split(',')[1]||'').map(s=>s.trim().toUpperCase()).filter(s=>US_STATES.includes(s))).size;
+  const zones = new Set(LOG.map(q=>q.cqz).filter(Boolean)).size;
+
+  const awards=[
+    {name:'DXCC', icon:'🌍', prog:wdWorked, total:100, desc:`${wdWorked} entities confirmed — 100 required`},
+    {name:'DXCC Honor Roll', icon:'🏆', prog:wdWorked, total:335, desc:`${wdWorked} / 335 for Honor Roll`},
+    {name:'DXCC LoTW', icon:'🔐', prog:wdLotw, total:100, desc:`${wdLotw} LoTW-confirmed entities`},
+    {name:'Worked All Bands', icon:'📡', prog:bands.size, total:10, desc:`${bands.size} / 10 bands used`},
+    {name:'Worked All Modes', icon:'🔊', prog:modes.size, total:8, desc:`${modes.size} / 8 modes used`},
+    {name:'CQ WPX', icon:'📻', prog:LOG.length, total:1000, desc:`${LOG.length} QSOs — need 1000 for basic`},
+    {name:'WAE (EU)', icon:'🇪🇺', prog:euWorked, total:100, desc:`${euWorked} European entities`},
+    {name:'CQ Zones (WAZ)', icon:'🗺', prog:zones, total:40, desc:`${zones} / 40 CQ zones`},
+    {name:'WAS (US States)', icon:'🇺🇸', prog:statesWorked, total:50, desc:`${statesWorked} / 50 US states`},
+  ];
+  el('awardsGrid').innerHTML = awards.map(a=>{
+    const pct = Math.min(100, Math.round(a.prog/a.total*100));
+    const done = pct>=100;
+    return `<div class="award-card">
+      <div class="award-icon">${a.icon}</div>
+      <div class="award-name">${a.name}</div>
+      <div class="award-prog-label"><span>${a.desc}</span><span>${pct}%</span></div>
+      <div class="award-bar"><div class="award-fill" style="width:${pct}%;background:${done?'var(--success)':'linear-gradient(90deg,var(--primary),var(--accent))'}"></div></div>
+      <div class="award-status">${done?'<span class="badge badge-success">✓ Achieved</span>':'<span class="badge badge-neutral">In Progress</span>'}</div>
+    </div>`;
+  }).join('');
+
+  // WAS
+  const stateQths = new Set(LOG.map(q=>(q.qth||'').split(',').map(s=>s.trim().toUpperCase()).find(s=>US_STATES.includes(s))).filter(Boolean));
+  el('wasGrid').innerHTML = US_STATES.map(s=>`<div class="was-cell ${stateQths.has(s)?'worked':''}">${s}</div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  LOTW
+// ══════════════════════════════════════════════
+function updateLotwStats(){
+  const sent = LOG.filter(q=>q.lotwSent).length;
+  const conf = LOG.filter(q=>q.lotwConfirmed).length;
+  const pending = LOG.filter(q=>!q.lotwSent).length;
+  const rate = LOG.length ? Math.round(conf/LOG.length*100) : 0;
+  sv('lsTotal', LOG.length);
+  sv('lsSent', sent);
+  sv('lsConfirmed', conf);
+  sv('lsPending', pending);
+  sv('lsRate', rate+'%');
+  // Using textContent instead
+  ['lsTotal','lsSent','lsConfirmed','lsPending','lsRate'].forEach(id=>{
+    const e = el(id);
+    if(e){ e.textContent = id==='lsTotal'?LOG.length:id==='lsSent'?sent:id==='lsConfirmed'?conf:id==='lsPending'?pending:rate+'%'; }
+  });
+}
+
+function exportLotwAdif(){ exportAdifInternal(LOG.filter(q=>!q.lotwSent), true); }
+function exportLotwAdifAll(){ exportAdifInternal(LOG, true); }
+
+function markAllLotwSent(){
+  LOG.forEach(q=>q.lotwSent=true);
+  saveLog(); renderLog(); updateLotwStats();
+  toast(`All ${LOG.length} QSOs marked as LoTW sent`,'ok');
+}
+function clearLotwStatus(){
+  openConfirm('Reset LoTW Status','Clear all LoTW sent/confirmed flags?',()=>{
+    LOG.forEach(q=>{ q.lotwSent=false; q.lotwConfirmed=false; });
+    saveLog(); renderLog(); updateLotwStats();
+    toast('LoTW status reset','warn');
+  });
+}
+
+function importLotwConfirmations(input){
+  const file=input.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const records=parseAdif(e.target.result);
+    let matched=0;
+    records.forEach(f=>{
+      const call=(f.CALL||'').toUpperCase().trim();
+      const date=adifDate(f.QSO_DATE);
+      const band=(f.BAND||'').toLowerCase();
+      const q=LOG.find(x=>x.call===call && x.date===date && (x.band||'').toLowerCase()===band);
+      if(q){ q.lotwConfirmed=true; q.lotwSent=true; matched++; }
+    });
+    saveLog(); renderLog(); updateLotwStats();
+    showAlert('lotwImportMsg', `✅ Matched and confirmed ${matched} QSO(s) from LoTW.`, 'alert-lotw');
+    toast(`${matched} LoTW confirmations applied`,'ok');
+  };
+  r.readAsText(file);
+}
+
+function adifDate(dt){
+  if(!dt||dt.length<8) return '';
+  return `${dt.substr(0,4)}-${dt.substr(4,2)}-${dt.substr(6,2)}`;
+}
+
+// ══════════════════════════════════════════════
+//  ADIF EXPORT
+// ══════════════════════════════════════════════
+function buildAdif(qsos, forLotw){
+  const myCall = SETTINGS.myCall || 'UNKNOWN';
+  const myGrid = SETTINGS.myGrid || '';
+  let out = `ADIF Export from HamLog Pro\nGenerated: ${new Date().toISOString()}\nStation: ${myCall}\n`;
+  if(forLotw) out += `LoTW Format: ADIF 3.1.4 compatible\n`;
+  out += `<ADIF_VER:5>3.1.4\n<PROGRAMID:12>HamLog Pro\n<EOH>\n\n`;
+  qsos.forEach(q=>{
+    const f = (tag,val)=>{ if(val) out+=`<${tag}:${val.length}>${val} `; };
+    const date=(q.date||'').replace(/-/g,'');
+    const time=(q.time||'').replace(':','')+'00';
+    f('CALL',q.call);
+    f('QSO_DATE',date);
+    f('TIME_ON',time);
+    f('BAND',q.band);
+    f('FREQ',q.freq);
+    f('MODE',q.mode);
+    f('RST_SENT',q.rstS);
+    f('RST_RCVD',q.rstR);
+    f('NAME',q.name);
+    f('QTH',q.qth);
+    f('GRIDSQUARE',q.grid);
+    f('DXCC',q.dxcc);
+    f('IOTA',q.iota);
+    f('CQZ',q.cqz);
+    f('TX_PWR',q.power);
+    f('STX_STRING',q.snS);
+    f('SRX_STRING',q.snR);
+    f('COMMENT',q.notes);
+    f('STATION_CALLSIGN',myCall);
+    if(myGrid) f('MY_GRIDSQUARE',myGrid);
+    if(SETTINGS.myQth) f('MY_CITY',SETTINGS.myQth);
+    if(SETTINGS.myCqz) f('MY_CQ_ZONE',SETTINGS.myCqz);
+    if(SETTINGS.myItu) f('MY_ITU_ZONE',SETTINGS.myItu);
+    if(SETTINGS.rig)   f('MY_RIG',SETTINGS.rig);
+    if(SETTINGS.ant)   f('MY_ANTENNA',SETTINGS.ant);
+    if(q.lotwSent)      out+=`<APP_LOTW_QSO_STATUS:6>UPLOAD `;
+    if(q.lotwConfirmed) out+=`<APP_LOTW_QSL_RCVD:1>Y `;
+    out+='<EOR>\n';
+    if(forLotw){ const qi=LOG.find(x=>x.id===q.id); if(qi) qi.lotwSent=true; }
+  });
+  if(forLotw){ saveLog(); updateLotwStats(); }
+  return out;
+}
+
+function exportAdif(){ exportAdifInternal(LOG, false); }
+function exportAdifInternal(qsos, forLotw){
+  if(!qsos.length){ toast('No QSOs to export','warn'); return; }
+  const adif = buildAdif(qsos, forLotw);
+  el('adifPreview').value = adif.substr(0, 2000) + (adif.length > 2000 ? '\n... (truncated in preview)' : '');
+  const blob = new Blob([adif],{type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `hamlog_${forLotw?'lotw_':''}${SETTINGS.myCall||'export'}_${new Date().toISOString().substr(0,10)}.adif`;
+  a.click();
+  toast(`Exported ${qsos.length} QSO(s) to ADIF`,'ok');
+}
+
+function generateAdifPreview(){
+  const adif = buildAdif(LOG, false);
+  el('adifPreview').value = adif.substr(0,3000)+(adif.length>3000?'\n...(truncated)':'');
+}
+
+function exportCsv(){
+  const header='Date,Time,Callsign,Band,Freq,Mode,RST_Sent,RST_Rcvd,Name,QTH,Grid,DXCC,CQZ,Power,IOTA,Serial_Sent,Serial_Rcvd,LoTW_Sent,LoTW_Confirmed,Notes';
+  const rows=LOG.map(q=>[q.date,q.time,q.call,q.band,q.freq,q.mode,q.rstS,q.rstR,q.name,q.qth,q.grid,q.dxcc,q.cqz,q.power,q.iota,q.snS,q.snR,q.lotwSent?'Y':'N',q.lotwConfirmed?'Y':'N',q.notes]
+    .map(f=>`"${(f||'').toString().replace(/"/g,'""')}"`).join(','));
+  const blob=new Blob([[header,...rows].join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`hamlog_${SETTINGS.myCall||'export'}_${new Date().toISOString().substr(0,10)}.csv`;
+  a.click(); toast('CSV exported','ok');
+}
+
+function backupData(){
+  const data={meta:{version:'3.0',exported:new Date().toISOString(),call:SETTINGS.myCall},qsos:LOG,settings:SETTINGS};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`hamlog_backup_${SETTINGS.myCall||'station'}_${new Date().toISOString().substr(0,10)}.json`;
+  a.click(); toast('Backup saved','ok');
+}
+
+function restoreBackup(){ el('restoreFile').click(); }
+function doRestoreBackup(input){
+  const file=input.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.qsos) throw new Error('Invalid backup');
+      openConfirm('Restore Backup',`Replace current log with ${data.qsos.length} QSOs from backup?`,()=>{
+        LOG=data.qsos; if(data.settings) applySettings(data.settings);
+        saveLog(); updateCounter(); renderLog(); renderRecent();
+        toast(`Restored ${LOG.length} QSOs`,'ok');
+      });
+    } catch(err){ toast('Invalid backup file','error'); }
+  };
+  r.readAsText(file);
+}
+
+// ══════════════════════════════════════════════
+//  ADIF IMPORT
+// ══════════════════════════════════════════════
+function parseAdif(raw){
+  const records=[];
+  const recs=raw.split(/<eor>/i);
+  recs.forEach(rec=>{
+    const fields={};
+    const re=/<([A-Z0-9_]+):(\d+)(?::[A-Z])?>/gi;
+    let m;
+    while((m=re.exec(rec))!==null){
+      const tag=m[1].toUpperCase();
+      const len=parseInt(m[2]);
+      const val=rec.substr(re.lastIndex,len);
+      fields[tag]=val.trim();
+    }
+    if(fields.CALL) records.push(fields);
+  });
+  return records;
+}
+
+function adifToQso(f){
+  const dt=f.QSO_DATE||'';
+  const date=dt.length===8?`${dt.substr(0,4)}-${dt.substr(4,2)}-${dt.substr(6,2)}`:'';
+  const tm=f.TIME_ON||'';
+  const time=tm.length>=4?`${tm.substr(0,2)}:${tm.substr(2,2)}`:'';
+  const lotwSent = !!(f.APP_LOTW_QSO_STATUS || f.LOTW_QSLS);
+  const lotwConf = (f.APP_LOTW_QSL_RCVD||f.LOTW_QSL_RCVD||'').toUpperCase()==='Y';
+  const d = callToDxcc(f.CALL||'');
+  return {
+    id:uid(), call:f.CALL||'', date, time,
+    band:f.BAND||'', freq:f.FREQ||'', mode:f.MODE||'',
+    rstS:f.RST_SENT||'59', rstR:f.RST_RCVD||'59',
+    name:f.NAME||'', qth:f.QTH||'', grid:f.GRIDSQUARE||'',
+    dxcc:f.DXCC||(d?d.name:''), iota:f.IOTA||'',
+    cqz:f.CQZ||'', power:f.TX_PWR||'', prop:f.PROP_MODE||'',
+    snS:f.STX_STRING||'', snR:f.SRX_STRING||'',
+    notes:f.COMMENT||f.NOTES||'',
+    lotwSent, lotwConfirmed:lotwConf,
+    loggedAt:Date.now()
+  };
+}
+
+function isDuplicate(q){ return LOG.some(x=>x.call===q.call&&x.date===q.date&&x.band===q.band); }
+
+function importAdifData(raw){
+  const records=parseAdif(raw);
+  if(!records.length){ showAlert('importMsg','No valid ADIF records found.','alert-error'); return; }
+  let added=0, dupes=0;
+  records.forEach(f=>{ const q=adifToQso(f); if(isDuplicate(q)) dupes++; else{ LOG.push(q); added++; }});
+  LOG.sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  saveLog(); updateCounter(); renderLog(); renderRecent(); updateLotwStats();
+  showAlert('importMsg',`✅ Imported ${added} QSO(s). Skipped ${dupes} duplicate(s).`, 'alert-success');
+  toast(`Imported ${added} QSOs`,'ok');
+}
+
+function importAdifFile(input){ const file=input.files[0]; if(!file) return; const r=new FileReader(); r.onload=e=>importAdifData(e.target.result); r.readAsText(file); }
+function importAdifPaste(){ const raw=v('adifPaste'); if(!raw.trim()){ showAlert('importMsg','Paste ADIF data first.','alert-error'); return; } importAdifData(raw); sv('adifPaste',''); }
+
+function showAlert(containerId, msg, cls){
+  el(containerId).innerHTML=`<div class="alert ${cls}">${msg}</div>`;
+}
+
+// ══════════════════════════════════════════════
+//  DATA MANAGEMENT
+// ══════════════════════════════════════════════
+function confirmClearAll(){
+  openConfirm('Clear All QSOs',`Permanently delete all ${LOG.length} QSOs for ${CURRENT_USER||'this station'}? This cannot be undone.`,()=>{
+    LOG=[]; saveLog(); renderLog(); renderRecent(); updateCounter(); updateLotwStats();
+    toast('All QSOs cleared','warn');
+  });
+}
+
+// ══════════════════════════════════════════════
+//  MODALS
+// ══════════════════════════════════════════════
+function openModal(id){ el(id).classList.add('open'); }
+function closeModal(id){ el(id).classList.remove('open'); }
+
+let confirmCb=null;
+function openConfirm(title,msg,cb){
+  el('confirmTitle').textContent=title;
+  el('confirmMsg').textContent=msg;
+  confirmCb=cb;
+  openModal('confirmModal');
+}
+el('confirmOkBtn').onclick=()=>{ closeModal('confirmModal'); if(confirmCb) confirmCb(); confirmCb=null; };
+
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+function renderModalUsers(){ renderUserSwitchers(); }
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+function toast(msg,type='ok'){
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.innerHTML=`<span>${type==='ok'?'✓':type==='warn'?'⚠':'✕'}</span> ${msg}`;
+  el('toastContainer').appendChild(t);
+  setTimeout(()=>t.remove(),3200);
+}
+
+// ══════════════════════════════════════════════
+//  DRAG & DROP
+// ══════════════════════════════════════════════
+function setupDrop(id, handler){
+  const z=el(id);if(!z)return;
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag-over');});
+  z.addEventListener('dragleave',()=>z.classList.remove('drag-over'));
+  z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f){const r=new FileReader();r.onload=ev=>handler(ev.target.result);r.readAsText(f);}});
+}
+setupDrop('importDrop', importAdifData);
+setupDrop('lotwImportDrop', raw=>{
+  const records=parseAdif(raw);
+  let matched=0;
+  records.forEach(f=>{
+    const call=(f.CALL||'').toUpperCase().trim();
+    const date=adifDate(f.QSO_DATE);
+    const band=(f.BAND||'').toLowerCase();
+    const q=LOG.find(x=>x.call===call&&x.date===date&&(x.band||'').toLowerCase()===band);
+    if(q){q.lotwConfirmed=true;q.lotwSent=true;matched++;}
+  });
+  saveLog();renderLog();updateLotwStats();
+  showAlert('lotwImportMsg',`✅ Matched and confirmed ${matched} QSO(s).`,'alert-lotw');
+  toast(`${matched} LoTW confirmations applied`,'ok');
+});
+
+// ══════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){
+    if(el('logScreen').classList.contains('active')){ e.preventDefault(); logQso(); }
+  }
+  if((e.ctrlKey||e.metaKey)&&e.key==='n'){
+    if(el('logScreen').classList.contains('active')){ e.preventDefault(); el('fCall').focus(); }
+  }
+  if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
+});
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+function init(){
+  const users = loadUsers();
+  let current = localStorage.getItem('hamlog_current_user');
+
+  if(users.length && users.includes(current)){
+    CURRENT_USER = current;
+  } else if(users.length){
+    CURRENT_USER = users[0];
+    localStorage.setItem('hamlog_current_user', CURRENT_USER);
+  } else {
+    // First-time setup — create default user
+    const defaultCall = 'W1AW';
+    USERS[defaultCall]=true;
+    saveUsers();
+    CURRENT_USER = defaultCall;
+    localStorage.setItem('hamlog_current_user', CURRENT_USER);
+    const defSettings = {myCall:defaultCall, myName:'New Operator', myQth:'', myGrid:'', defPower:'100'};
+    localStorage.setItem(userKey(defaultCall,'settings'), JSON.stringify(defSettings));
+  }
+
+  LOG = loadLog(CURRENT_USER);
+  applySettings(loadSettings(CURRENT_USER));
+  updateNavChip();
+  fillNow();
+  updateCounter();
+  renderLog();
+  renderRecent();
+  refreshSpots();
+  renderUserSwitchers();
+  updateLotwStats();
+
+  setInterval(refreshSpots, 60000);
+
+  // Demo QSOs
+  if(LOG.length===0 && !localStorage.getItem('hamlog_demo_'+CURRENT_USER)){
+    localStorage.setItem('hamlog_demo_'+CURRENT_USER,'1');
+    const DEMO=[
+      {call:'DL2ABC',date:'2026-04-10',time:'14:32',band:'20m',freq:'14.074',mode:'FT8',rstS:'-12',rstR:'-10',name:'Hans',qth:'Berlin',grid:'JO62',dxcc:'Germany',cqz:'14',lotwSent:true,lotwConfirmed:true},
+      {call:'JA1QXY',date:'2026-04-09',time:'08:15',band:'40m',freq:'7.074',mode:'FT8',rstS:'-5',rstR:'-8',name:'Kenji',qth:'Tokyo',grid:'PM95',dxcc:'Japan',cqz:'25',lotwSent:true,lotwConfirmed:false},
+      {call:'VK2XYZ',date:'2026-04-08',time:'22:44',band:'20m',freq:'14.225',mode:'SSB',rstS:'59',rstR:'57',name:'Steve',qth:'Sydney',grid:'QF56',dxcc:'Australia',cqz:'29',lotwSent:false,lotwConfirmed:false},
+      {call:'G3ZZZ',date:'2026-04-07',time:'11:10',band:'15m',freq:'21.200',mode:'SSB',rstS:'59',rstR:'59',name:'Arthur',qth:'London, England',grid:'IO91',dxcc:'England',cqz:'14',lotwSent:true,lotwConfirmed:true},
+      {call:'ZL3XH',date:'2026-04-06',time:'07:05',band:'10m',freq:'28.400',mode:'CW',rstS:'599',rstR:'579',name:'',qth:'Christchurch, New Zealand',grid:'RF70',dxcc:'New Zealand',cqz:'32',lotwSent:false,lotwConfirmed:false},
+      {call:'PY5AB',date:'2026-04-05',time:'20:10',band:'40m',freq:'7.074',mode:'FT8',rstS:'-8',rstR:'-14',name:'Paulo',qth:'Curitiba, Brazil',grid:'GG54',dxcc:'Brazil',cqz:'11',lotwSent:true,lotwConfirmed:true},
+      {call:'UA9FAR',date:'2026-04-04',time:'16:33',band:'20m',freq:'14.074',mode:'FT8',rstS:'-5',rstR:'-7',name:'Alex',qth:'Omsk, Russia',grid:'NO46',dxcc:'Russia (Asiatic)',cqz:'17',lotwSent:false,lotwConfirmed:false},
+    ].map(q=>({...q,id:uid(),loggedAt:Date.now()}));
+    LOG=DEMO; saveLog(); updateCounter(); renderLog(); renderRecent(); updateLotwStats();
+    toast('📡 Demo QSOs loaded — welcome to HamLog Pro!','ok');
+  }
+}
+
+init();
+</script>
+</body>
+</html>
