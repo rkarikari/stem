@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HamLog Pro — Amateur Radio Station Logger</title>
+<title>RadioSport Log — Amateur Radio Station Logger</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%233b82f6'/><text x='16' y='22' font-size='18' text-anchor='middle' fill='white'>📡</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -40,6 +41,108 @@
   --shadow:0 4px 24px rgba(0,0,0,0.4);
   --shadow-sm:0 2px 8px rgba(0,0,0,0.3);
 }
+
+/* ── AUTH OVERLAY ── */
+#authOverlay{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg-base);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:1.5rem;
+  animation:fadeIn .3s ease;
+}
+#authOverlay.hidden{display:none;}
+.auth-box{
+  width:100%;max-width:400px;
+  background:var(--bg-surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:2.25rem 2rem 2rem;
+  box-shadow:0 24px 64px rgba(0,0,0,.55);
+  position:relative;
+}
+.auth-logo{
+  display:flex;align-items:center;gap:.65rem;justify-content:center;
+  margin-bottom:1.75rem;
+}
+.auth-logo-icon{
+  width:40px;height:40px;border-radius:9px;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+}
+.auth-logo-text{font-size:1.2rem;font-weight:700;color:var(--text-bright);}
+.auth-logo-text span{color:var(--primary);}
+.auth-title{font-size:1rem;font-weight:600;color:var(--text-bright);margin-bottom:.3rem;text-align:center;}
+.auth-sub{font-size:.78rem;color:var(--text-muted);text-align:center;margin-bottom:1.5rem;}
+.auth-field{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.9rem;}
+.auth-field label{font-size:.75rem;font-weight:500;color:var(--text-secondary);}
+.auth-field input{
+  background:var(--bg-input);border:1px solid var(--border);
+  color:var(--text-bright);font-family:'DM Sans',sans-serif;font-size:.9rem;
+  padding:.65rem .85rem;border-radius:var(--radius-sm);outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.auth-field input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,.12);}
+.auth-field input.callsign-inp{font-family:'JetBrains Mono',monospace;text-transform:uppercase;font-size:1rem;font-weight:600;letter-spacing:.06em;}
+.auth-btn{
+  width:100%;padding:.7rem;border-radius:var(--radius-sm);
+  background:var(--primary);color:#fff;border:none;
+  font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;
+  cursor:pointer;transition:background .15s;margin-top:.25rem;
+}
+.auth-btn:hover{background:#2563eb;}
+.auth-btn:disabled{opacity:.55;cursor:not-allowed;}
+.auth-error{
+  background:var(--danger-muted);border:1px solid rgba(239,68,68,.3);
+  color:var(--danger);font-size:.8rem;padding:.55rem .8rem;
+  border-radius:var(--radius-sm);margin-bottom:.9rem;display:none;
+}
+.auth-error.show{display:block;}
+.auth-divider{border:none;border-top:1px solid var(--border);margin:1.25rem 0;}
+.auth-footer{text-align:center;font-size:.72rem;color:var(--text-muted);margin-top:1.25rem;}
+.auth-badge{
+  display:inline-flex;align-items:center;gap:.3rem;
+  font-size:.63rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:.2rem .55rem;border-radius:20px;
+}
+.auth-badge-admin{background:rgba(245,158,11,.15);color:var(--warning);border:1px solid rgba(245,158,11,.3);}
+.auth-badge-user{background:var(--primary-muted);color:var(--primary);border:1px solid var(--primary-border);}
+.role-tag{
+  position:absolute;top:.85rem;right:1rem;
+  font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:.18rem .5rem;border-radius:20px;
+}
+.role-tag-admin{background:rgba(245,158,11,.15);color:var(--warning);border:1px solid rgba(245,158,11,.3);}
+.role-tag-user{background:var(--primary-muted);color:var(--primary);border:1px solid var(--primary-border);}
+
+/* ── ADMIN PANEL ── */
+.admin-user-row{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.7rem .85rem;border:1px solid var(--border);
+  border-radius:var(--radius);background:var(--bg-elevated);
+  margin-bottom:.5rem;transition:border-color .15s;
+}
+.admin-user-row:hover{border-color:var(--primary);}
+.admin-user-avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+.admin-user-info{flex:1;}
+.admin-user-call{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text-bright);font-size:.9rem;}
+.admin-user-meta{font-size:.72rem;color:var(--text-muted);}
+.admin-user-actions{display:flex;gap:.4rem;}
+
+/* Logout button */
+.logout-btn{
+  display:flex;align-items:center;gap:.4rem;
+  background:transparent;border:1px solid var(--border);
+  color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:.75rem;
+  padding:.35rem .65rem;border-radius:var(--radius-sm);cursor:pointer;
+  transition:all .15s;
+}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger);}
 
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
@@ -330,6 +433,104 @@ td.actions-cell{display:flex;gap:.3rem;}
 .badge-lotw{background:var(--lotw-muted);color:var(--lotw);border:1px solid var(--lotw-border);}
 .badge-neutral{background:var(--bg-elevated);color:var(--text-muted);border:1px solid var(--border);}
 
+/* ── CLOUD SYNC ── */
+.sync-chip{
+  display:flex;align-items:center;gap:.4rem;
+  background:var(--bg-elevated);border:1px solid var(--border);
+  padding:.3rem .65rem;border-radius:var(--radius-sm);cursor:pointer;
+  font-size:.72rem;color:var(--text-muted);transition:all .2s;
+}
+.sync-chip:hover{border-color:var(--primary);color:var(--primary);}
+.sync-chip.syncing{border-color:var(--warning);color:var(--warning);}
+.sync-chip.synced{border-color:var(--success);color:var(--success);}
+.sync-chip.error{border-color:var(--danger);color:var(--danger);}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.sync-dot.pulse{animation:syncPulse 1.2s ease-in-out infinite;}
+@keyframes syncPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+/* ── QSL MANAGER ── */
+.qsl-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.9rem;margin-bottom:1.5rem;}
+.qsl-stat{
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:1rem;text-align:center;
+  transition:border-color .2s;
+}
+.qsl-stat:hover{border-color:var(--primary);}
+.qsl-stat-val{font-size:1.6rem;font-weight:700;color:var(--text-bright);line-height:1;}
+.qsl-stat-label{font-size:.72rem;color:var(--text-muted);margin-top:.3rem;}
+.qsl-badge-sent{background:rgba(16,185,129,.15);color:var(--success);border:1px solid rgba(16,185,129,.35);padding:.15rem .45rem;border-radius:20px;font-size:.65rem;font-weight:600;}
+.qsl-badge-rcvd{background:rgba(59,130,246,.15);color:var(--primary);border:1px solid rgba(59,130,246,.35);padding:.15rem .45rem;border-radius:20px;font-size:.65rem;font-weight:600;}
+.qsl-badge-email{background:rgba(245,158,11,.12);color:var(--warning);border:1px solid rgba(245,158,11,.3);padding:.15rem .45rem;border-radius:20px;font-size:.65rem;font-weight:600;}
+.qsl-badge-none{background:var(--bg-elevated);color:var(--text-muted);border:1px solid var(--border);padding:.15rem .45rem;border-radius:20px;font-size:.65rem;}
+
+/* ── QSL CARD ── */
+.qsl-card-preview{
+  width:520px;height:310px;
+  background:linear-gradient(135deg,#0d1b35 0%,#1a3060 50%,#0d1b35 100%);
+  border-radius:14px;border:2px solid rgba(99,179,237,.4);
+  position:relative;overflow:hidden;font-family:'DM Sans',sans-serif;
+  box-shadow:0 8px 40px rgba(0,0,0,.6);
+}
+.qsl-card-preview::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(255,255,255,.012) 20px,rgba(255,255,255,.012) 21px);
+}
+.qsl-card-border{
+  position:absolute;inset:6px;
+  border:1px solid rgba(99,179,237,.25);
+  border-radius:10px;pointer-events:none;
+}
+.qsl-card-header{
+  padding:14px 20px 8px;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  position:relative;
+}
+.qsl-my-call{
+  font-family:'JetBrains Mono',monospace;
+  font-size:2rem;font-weight:700;
+  color:#60a5fa;letter-spacing:.05em;
+  text-shadow:0 0 20px rgba(96,165,250,.5);
+  line-height:1;
+}
+.qsl-cq-to{
+  font-size:.62rem;color:rgba(148,163,184,.7);
+  text-transform:uppercase;letter-spacing:.12em;
+  margin-bottom:2px;
+}
+.qsl-their-call{
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.05rem;font-weight:700;color:#e2e8f0;
+  letter-spacing:.04em;
+}
+.qsl-card-body{
+  padding:4px 20px 10px;
+  display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;
+}
+.qsl-field{background:rgba(0,0,0,.3);border-radius:5px;padding:5px 8px;border:1px solid rgba(99,179,237,.12);}
+.qsl-field-label{font-size:.55rem;color:rgba(148,163,184,.7);text-transform:uppercase;letter-spacing:.1em;margin-bottom:1px;}
+.qsl-field-val{font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:600;color:#e2e8f0;}
+.qsl-card-footer{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:8px 20px;
+  background:rgba(0,0,0,.35);
+  border-top:1px solid rgba(99,179,237,.15);
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:.68rem;color:rgba(148,163,184,.7);
+}
+.qsl-card-footer strong{color:rgba(96,165,250,.9);}
+.qsl-wave{
+  position:absolute;right:-10px;top:10px;
+  width:80px;height:80px;opacity:.07;
+}
+
+/* ── GMAIL MODAL ── */
+.gmail-config{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:.75rem;}
+.gmail-compose{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;font-size:.82rem;color:var(--text-secondary);line-height:1.7;max-height:220px;overflow-y:auto;white-space:pre-wrap;}
+.gmail-status{display:flex;align-items:center;gap:.5rem;padding:.6rem .9rem;border-radius:var(--radius-sm);font-size:.8rem;}
+.gmail-status.sending{background:var(--warning-muted);color:var(--warning);}
+.gmail-status.sent{background:var(--success-muted);color:var(--success);}
+.gmail-status.error{background:var(--danger-muted);color:var(--danger);}
+
 /* ── AWARDS ── */
 .awards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.25rem;}
 .award-card{
@@ -541,6 +742,78 @@ td.actions-cell{display:flex;gap:.3rem;}
 </style>
 </head>
 <body>
+
+<!-- ════════════════════════════════════════════
+  AUTH OVERLAY — shown until valid session
+═════════════════════════════════════════════ -->
+<div id="authOverlay">
+
+  <!-- First-run: Create Admin -->
+  <div id="authSetup" style="display:none;width:100%;max-width:420px;">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">📡</div>
+        <div class="auth-logo-text">Radio<span>Sport</span> Log</div>
+      </div>
+      <div class="auth-title">Welcome — First-Time Setup</div>
+      <div class="auth-sub">Create your admin account to get started. The admin has full access and manages all operators.</div>
+      <form autocomplete="on" onsubmit="createAdminAccount();return false;">
+      <div class="auth-error" id="setupError"></div>
+      <div class="auth-field">
+        <label>Admin Callsign <span style="color:var(--danger)">*</span></label>
+        <input class="callsign-inp" type="text" id="setupCall" name="username" placeholder="9G5AR" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
+      </div>
+      <div class="auth-field">
+        <label>Operator Name</label>
+        <input type="text" id="setupName" name="name" placeholder="R.N.K" autocomplete="name">
+      </div>
+      <div class="auth-field">
+        <label>Password <span style="color:var(--danger)">*</span></label>
+        <input type="password" id="setupPass" name="new-password" placeholder="Choose a strong password" autocomplete="new-password">
+      </div>
+      <div class="auth-field">
+        <label>Confirm Password <span style="color:var(--danger)">*</span></label>
+        <input type="password" id="setupPass2" name="confirm-password" placeholder="Repeat password" autocomplete="new-password">
+      </div>
+      <button type="submit" class="auth-btn">🔐 Create Admin Account</button>
+      </form>
+      <div class="auth-footer">RadioSport Log · R.N.K 9G5AR RadioSport</div>
+    </div>
+  </div>
+
+  <!-- Login Form -->
+  <div id="authLogin" style="display:none;width:100%;max-width:380px;">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">📡</div>
+        <div class="auth-logo-text">Radio<span>Sport</span> Log</div>
+      </div>
+      <div class="auth-title">Sign In</div>
+      <div class="auth-sub">Enter your callsign and password to access your log</div>
+      <form autocomplete="on" onsubmit="doLogin();return false;">
+      <div class="auth-error" id="loginError"></div>
+      <div class="auth-field">
+        <label>Callsign</label>
+        <input class="callsign-inp" type="text" id="loginCall" name="username" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="loginPass" name="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.9rem;">
+        <input type="checkbox" id="rememberMe" style="accent-color:var(--primary);">
+        <label for="rememberMe" style="font-size:.78rem;color:var(--text-muted);cursor:pointer;">Keep me signed in</label>
+      </div>
+      <button type="submit" class="auth-btn" id="loginBtn">Sign In →</button>
+      </form>
+      <div class="auth-footer" style="margin-top:1rem;">
+        RadioSport Log · © 2026 R.N.K 9G5AR RadioSport
+      </div>
+    </div>
+  </div>
+
+</div><!-- #authOverlay -->
+
 <div id="app">
 
 <!-- ── TOP BAR ── -->
@@ -548,7 +821,7 @@ td.actions-cell{display:flex;gap:.3rem;}
   <div class="logo">
     <div class="logo-icon">📡</div>
     <div>
-      <div class="logo-text">Ham<span>Log</span> Pro</div>
+      <div class="logo-text">Radio<span>Sport</span> Log</div>
       <span class="logo-sub">Amateur Radio Station Logger</span>
     </div>
   </div>
@@ -572,6 +845,15 @@ td.actions-cell{display:flex;gap:.3rem;}
     <button class="nav-btn" onclick="showScreen('lotwScreen',this)" data-screen="lotwScreen">
       🔐 LoTW
     </button>
+    <button class="nav-btn" onclick="showScreen('qslScreen',this)" data-screen="qslScreen">
+      📬 QSL Manager
+    </button>
+    <button class="nav-btn" onclick="showScreen('syncScreen',this)" data-screen="syncScreen">
+      ☁ Cloud Sync
+    </button>
+    <button class="nav-btn" id="adminNavBtn" onclick="showScreen('adminScreen',this)" data-screen="adminScreen" style="display:none;">
+      🛡 Admin
+    </button>
     <button class="nav-btn" onclick="showScreen('settingsScreen',this)" data-screen="settingsScreen">
       ⚙ Settings
     </button>
@@ -579,14 +861,21 @@ td.actions-cell{display:flex;gap:.3rem;}
 
   <div class="topbar-right">
     <div id="utcClock">00:00:00 UTC</div>
-    <div class="user-chip" onclick="openUserModal()">
+    <div class="sync-chip" id="syncChip" onclick="showScreen('syncScreen',null)" title="Cloud Sync">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">☁ Sync</span>
+    </div>
+    <div class="user-chip" onclick="isAdmin()?openUserModal():null" id="navChip" style="cursor:default;">
       <div class="user-avatar" id="navAvatar">?</div>
       <div>
-        <div class="user-chip-call" id="navCallsign">—</div>
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <div class="user-chip-call" id="navCallsign">—</div>
+          <span class="auth-badge" id="navRoleBadge" style="display:none;"></span>
+        </div>
         <div class="user-chip-name" id="navOperator">No station</div>
       </div>
     </div>
-    <div class="dot dot-green dot-pulse" id="onlineDot" title="Online"></div>
+    <button class="logout-btn" onclick="doLogout()" title="Sign out">⏏ Sign Out</button>
   </div>
 </header>
 
@@ -924,7 +1213,7 @@ td.actions-cell{display:flex;gap:.3rem;}
   <div class="page-header">
     <div>
       <div class="page-title">Logbook of The World (LoTW)</div>
-      <div class="page-subtitle">ARRL's electronic QSL confirmation system — fully supported by HamLog Pro</div>
+      <div class="page-subtitle">ARRL's electronic QSL confirmation system — fully supported by RadioSport Log</div>
     </div>
     <div class="page-actions">
       <a href="https://lotw.arrl.org" target="_blank" class="btn btn-outline btn-sm">🔗 ARRL LoTW Website</a>
@@ -937,7 +1226,7 @@ td.actions-cell{display:flex;gap:.3rem;}
     <div>
       <div class="lotw-banner-title">LoTW Full Support — Confirmed</div>
       <div class="lotw-banner-text">
-        HamLog Pro provides complete Logbook of The World support: ADIF export in LoTW-compatible format,
+        RadioSport Log provides complete Logbook of The World support: ADIF export in LoTW-compatible format,
         per-QSO LoTW upload tracking, confirmation status logging, DXCC LoTW credit tracking,
         and bulk LoTW management tools. All required ADIF fields (STATION_CALLSIGN, MY_GRIDSQUARE,
         APP_LOTW_MYGRID, QSO_DATE, TIME_ON, BAND, MODE, CALL) are included in exports.
@@ -964,7 +1253,7 @@ td.actions-cell{display:flex;gap:.3rem;}
 
       <div class="alert alert-lotw mb-2">
         <span>🔐</span>
-        <span>LoTW requires QSOs to be digitally signed using <strong>TQSL</strong> (Trusted QSL software) before upload. HamLog Pro generates the correctly formatted ADIF export for direct import into TQSL.</span>
+        <span>LoTW requires QSOs to be digitally signed using <strong>TQSL</strong> (Trusted QSL software) before upload. RadioSport Log generates the correctly formatted ADIF export for direct import into TQSL.</span>
       </div>
 
       <div class="lotw-steps">
@@ -985,7 +1274,7 @@ td.actions-cell{display:flex;gap:.3rem;}
         <div class="lotw-step">
           <div class="lotw-step-num">3</div>
           <div class="lotw-step-body">
-            <div class="lotw-step-title">Export ADIF from HamLog Pro</div>
+            <div class="lotw-step-title">Export ADIF from RadioSport Log</div>
             <div class="lotw-step-desc">Select the QSOs you want to upload below, then click "Export LoTW ADIF". The file will include all required LoTW fields. You can also use the full ADIF export from the Import/Export screen.</div>
           </div>
         </div>
@@ -1000,7 +1289,7 @@ td.actions-cell{display:flex;gap:.3rem;}
           <div class="lotw-step-num">5</div>
           <div class="lotw-step-body">
             <div class="lotw-step-title">Mark QSOs as Uploaded & Import Confirmations</div>
-            <div class="lotw-step-desc">Use the tools below to mark QSOs as sent to LoTW. When LoTW confirms QSOs, download your confirmation ADIF from lotw.arrl.org and import it here — HamLog Pro will automatically update the LoTW confirmation status for each QSO.</div>
+            <div class="lotw-step-desc">Use the tools below to mark QSOs as sent to LoTW. When LoTW confirms QSOs, download your confirmation ADIF from lotw.arrl.org and import it here — RadioSport Log will automatically update the LoTW confirmation status for each QSO.</div>
           </div>
         </div>
       </div>
@@ -1015,7 +1304,7 @@ td.actions-cell{display:flex;gap:.3rem;}
     <div class="card">
       <div class="card-title">✅ Import LoTW Confirmations</div>
       <p style="font-size:.8rem;color:var(--text-secondary);margin-bottom:1rem;line-height:1.6;">
-        After LoTW processes your QSOs, download your confirmation ADIF from the LoTW website and import it here. HamLog Pro will match each confirmed QSO and update its status automatically.
+        After LoTW processes your QSOs, download your confirmation ADIF from the LoTW website and import it here. RadioSport Log will match each confirmed QSO and update its status automatically.
       </p>
 
       <label class="drop-zone" id="lotwImportDrop" onclick="document.getElementById('lotwImportFile').click()">
@@ -1096,7 +1385,7 @@ td.actions-cell{display:flex;gap:.3rem;}
           <input type="number" id="sDefPower" placeholder="100">
         </div>
       </div>
-      <div class="btn-row"><button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button></div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button><button class="btn btn-outline" onclick="openChangePassModal(null)">🔑 Change Password</button></div>
     </div>
 
     <div style="display:flex;flex-direction:column;gap:1.25rem;">
@@ -1110,15 +1399,297 @@ td.actions-cell{display:flex;gap:.3rem;}
         <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="saveSettings()">Save Equipment</button></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">👥 Multi-User Accounts</div>
+      <div class="card" id="multiUserCard">
+        <div class="card-title">👥 Operators <span style="font-size:.65rem;color:var(--text-muted);font-weight:400;">(Admin only)</span></div>
         <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:.9rem;">
-          Each callsign maintains a separate, isolated log. Switch between operators or share this device between club members.
+          Each callsign maintains a separate, isolated log. Manage operators from here or the Admin Panel.
         </p>
         <div class="user-switcher" id="userSwitcher"></div>
         <div class="btn-row">
           <button class="btn btn-primary btn-sm" onclick="openNewUserModal()">+ Add Operator</button>
           <button class="btn btn-ghost btn-sm" onclick="openDeleteUserModal()">Remove Operator</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  QSL MANAGER
+═════════════════════════════════════════════ -->
+<div class="screen" id="qslScreen">
+  <div class="page-header">
+    <div>
+      <div class="page-title">QSL Manager</div>
+      <div class="page-subtitle">Track paper QSL cards, auto-generate cards, and send via Gmail</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-outline btn-sm" onclick="qslBulkGenerate()">🖨 Print All Pending</button>
+      <button class="btn btn-primary btn-sm" onclick="openGmailBatchModal()">✉ Batch Email QSLs</button>
+    </div>
+  </div>
+
+  <!-- QSL Stats -->
+  <div class="qsl-stat-grid" id="qslStats"></div>
+
+  <!-- Filter + Search -->
+  <div class="card mb-2">
+    <div class="table-toolbar">
+      <input class="search-input" id="qslSearch" placeholder="🔍 Search callsign, DXCC…" oninput="renderQslTable()">
+      <select class="filter-sel" id="qslFilter" onchange="renderQslTable()">
+        <option value="all">All QSOs</option>
+        <option value="none">No QSL Action</option>
+        <option value="sent">Card Sent</option>
+        <option value="received">Card Received</option>
+        <option value="both">Fully Confirmed</option>
+        <option value="email">Email Sent</option>
+        <option value="pending_send">Pending — Need to Send</option>
+      </select>
+      <div class="toolbar-spacer"></div>
+      <button class="btn btn-ghost btn-sm" id="qslBulkSentBtn" style="display:none" onclick="qslBulkMarkSent()">✓ Mark Selected Sent</button>
+      <button class="btn btn-ghost btn-sm" id="qslBulkRcvdBtn" style="display:none" onclick="qslBulkMarkReceived()">✓ Mark Selected Received</button>
+      <button class="btn btn-ghost btn-sm" id="qslBulkEmailBtn" style="display:none" onclick="openGmailBatchModal(true)">✉ Email Selected</button>
+    </div>
+    <div class="table-wrap">
+      <table id="qslTable">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="qslSelectAll" onchange="qslToggleAll(this)" style="accent-color:var(--primary);"></th>
+            <th>Date / Time</th>
+            <th>Callsign</th>
+            <th>Band</th>
+            <th>Mode</th>
+            <th>RST S/R</th>
+            <th>DXCC / Name</th>
+            <th>Card Sent</th>
+            <th>Card Rcvd</th>
+            <th>Email</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="qslBody"></tbody>
+      </table>
+    </div>
+    <div id="qslNoData" class="no-data" style="display:none;">
+      <div class="no-data-icon">📬</div>No QSOs match the filter
+    </div>
+  </div>
+
+  <!-- Gmail Settings Panel -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">✉ Gmail Account Settings</div>
+      <p style="font-size:.8rem;color:var(--text-secondary);margin-bottom:1rem;line-height:1.6;">
+        Configure your Gmail account for sending QSL confirmations. RadioSport Log uses your connected Gmail account via the Google Gmail connector to compose and send personalized QSL emails with an embedded QSL card.
+      </p>
+      <div class="form-grid">
+        <div class="field">
+          <label>Your Gmail Address</label>
+          <input type="email" id="sGmailFrom" placeholder="you@gmail.com">
+        </div>
+        <div class="field">
+          <label>Reply-To Name</label>
+          <input type="text" id="sGmailName" placeholder="Your Name / Callsign">
+        </div>
+        <div class="field form-full">
+          <label>Email Subject Template</label>
+          <input type="text" id="sGmailSubject" placeholder="QSL Confirmation — {MYCALL} de {THEIRCALL} {BAND} {MODE}">
+        </div>
+        <div class="field form-full">
+          <label>Email Body Template</label>
+          <textarea id="sGmailBody" rows="4" placeholder="Dear {NAME},&#10;Thank you for our QSO on {DATE} at {TIME} UTC on {BAND} {MODE}.&#10;RST sent: {RSTS} / received: {RSTR}&#10;73 de {MYCALL}"></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-sm" onclick="saveGmailSettings()">💾 Save Gmail Settings</button>
+        <button class="btn btn-outline btn-sm" onclick="resetGmailTemplate()">↺ Reset Template</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 QSL Card Design</div>
+      <p style="font-size:.8rem;color:var(--text-secondary);margin-bottom:1rem;line-height:1.6;">
+        Your QSL cards are auto-generated from your station settings. Preview a sample card below. The card is embedded in all QSL emails and available for print.
+      </p>
+      <div style="display:flex;justify-content:center;margin-bottom:1rem;">
+        <div id="qslCardSample" style="transform:scale(.7);transform-origin:top center;height:217px;"></div>
+      </div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="btn btn-outline btn-sm" onclick="renderQslSample()">🔄 Refresh Preview</button>
+        <button class="btn btn-ghost btn-sm" onclick="printSampleCard()">🖨 Print Sample</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  CLOUD SYNC
+═════════════════════════════════════════════ -->
+<div class="screen" id="syncScreen">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Cloud Sync</div>
+      <div class="page-subtitle">Persistent online storage — sync your log across devices and sessions</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary" onclick="cloudPush()">⬆ Push to Cloud</button>
+      <button class="btn btn-outline" onclick="cloudPull()">⬇ Pull from Cloud</button>
+    </div>
+  </div>
+
+  <!-- Sync Status Banner -->
+  <div id="syncBanner" class="card mb-2" style="background:var(--bg-elevated);">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div style="font-size:2rem;" id="syncBannerIcon">☁</div>
+      <div style="flex:1;">
+        <div style="font-weight:600;color:var(--text-bright);" id="syncBannerTitle">Cloud Sync Ready</div>
+        <div style="font-size:.8rem;color:var(--text-muted);margin-top:.2rem;" id="syncBannerDesc">Push your log to the cloud to sync across devices and sessions.</div>
+      </div>
+      <div style="display:flex;gap:.5rem;">
+        <button class="btn btn-primary btn-sm" onclick="cloudPush()">⬆ Push Now</button>
+        <button class="btn btn-outline btn-sm" onclick="cloudPull()">⬇ Pull Now</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">📊 Sync Status</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;" id="syncStatusGrid">
+        <div class="qsl-stat"><div class="qsl-stat-val" id="syncLocalCount">0</div><div class="qsl-stat-label">Local QSOs</div></div>
+        <div class="qsl-stat"><div class="qsl-stat-val" id="syncCloudCount">0</div><div class="qsl-stat-label">Cloud QSOs</div></div>
+        <div class="qsl-stat"><div class="qsl-stat-val" id="syncLastPush" style="font-size:.85rem;">Never</div><div class="qsl-stat-label">Last Push</div></div>
+        <div class="qsl-stat"><div class="qsl-stat-val" id="syncLastPull" style="font-size:.85rem;">Never</div><div class="qsl-stat-label">Last Pull</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="settings-section-title">Conflict Resolution</div>
+      <div class="form-grid">
+        <div class="field form-full">
+          <label>Merge Strategy</label>
+          <select id="syncStrategy">
+            <option value="merge">Smart Merge (newest wins per QSO)</option>
+            <option value="local">Local Overwrites Cloud</option>
+            <option value="cloud">Cloud Overwrites Local</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="cloudPush()">⬆ Push to Cloud</button>
+        <button class="btn btn-outline" onclick="cloudPull()">⬇ Pull from Cloud</button>
+        <button class="btn btn-ghost btn-sm" onclick="cloudClearRemote()" style="margin-left:auto;">🗑 Clear Cloud Data</button>
+      </div>
+      <div id="syncMsg" style="margin-top:.75rem;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ℹ How Cloud Sync Works</div>
+      <div class="lotw-steps">
+        <div class="lotw-step">
+          <div class="lotw-step-num">1</div>
+          <div class="lotw-step-body">
+            <div class="lotw-step-title">Persistent Storage</div>
+            <div class="lotw-step-desc">RadioSport Log uses a secure persistent key-value cloud store tied to your session. Data persists across browser sessions and devices using the same RadioSport Log instance.</div>
+          </div>
+        </div>
+        <div class="lotw-step">
+          <div class="lotw-step-num">2</div>
+          <div class="lotw-step-body">
+            <div class="lotw-step-title">Smart Merge</div>
+            <div class="lotw-step-desc">When pulling from the cloud, RadioSport Log compares timestamps and merges — keeping the newest version of each QSO. Duplicate callsign/date/band combos are deduplicated.</div>
+          </div>
+        </div>
+        <div class="lotw-step">
+          <div class="lotw-step-num">3</div>
+          <div class="lotw-step-body">
+            <div class="lotw-step-title">QSL Status Sync</div>
+            <div class="lotw-step-desc">QSL sent/received status, LoTW confirmations, and email addresses are all included in the cloud sync — keeping your QSL tracking consistent everywhere.</div>
+          </div>
+        </div>
+        <div class="lotw-step">
+          <div class="lotw-step-num">4</div>
+          <div class="lotw-step-body">
+            <div class="lotw-step-title">Auto-Sync on Log</div>
+            <div class="lotw-step-desc">Enable auto-push to automatically sync every new QSO to the cloud as you log it. Toggle this below. Auto-pull checks for new cloud data on app load.</div>
+          </div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;">
+        <div>
+          <div style="font-weight:500;font-size:.85rem;">Auto-push on log</div>
+          <div style="font-size:.72rem;color:var(--text-muted);">Sync to cloud every time you log a QSO</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+          <input type="checkbox" id="syncAutoOn" onchange="saveAutoSync(this.checked)" style="accent-color:var(--primary);width:16px;height:16px;">
+          <span style="font-size:.8rem;color:var(--text-secondary);">Enabled</span>
+        </label>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;">
+        <div>
+          <div style="font-weight:500;font-size:.85rem;">Auto-pull on startup</div>
+          <div style="font-size:.72rem;color:var(--text-muted);">Check for cloud updates when app loads</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+          <input type="checkbox" id="syncPullOn" onchange="saveAutoPull(this.checked)" style="accent-color:var(--primary);width:16px;height:16px;">
+          <span style="font-size:.8rem;color:var(--text-secondary);">Enabled</span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  ADMIN PANEL
+═════════════════════════════════════════════ -->
+<div class="screen" id="adminScreen">
+  <div class="page-header">
+    <div>
+      <div class="page-title">🛡 Admin Panel</div>
+      <div class="page-subtitle">Full system access — manage all operators, logs, and permissions</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary btn-sm" onclick="openAddOperatorModal()">+ Add Operator</button>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- User Management -->
+    <div class="card">
+      <div class="card-title">👥 Operators <span class="card-badge" id="adminUserCount">0</span></div>
+      <div id="adminUserList"></div>
+    </div>
+
+    <!-- System Stats -->
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+      <div class="card">
+        <div class="card-title">📊 System Overview</div>
+        <div class="stat-grid" style="grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:0;" id="adminStats"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔍 View Operator Log</div>
+        <p style="font-size:.8rem;color:var(--text-secondary);margin-bottom:.9rem;line-height:1.5;">
+          As admin, you can view and manage any operator's log directly.
+        </p>
+        <div class="form-grid">
+          <div class="field form-full">
+            <label>Select Operator</label>
+            <select id="adminViewUser" class="filter-sel" style="width:100%;padding:.55rem .75rem;">
+              <option value="">— Choose operator —</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" onclick="adminSwitchToUser()">👁 View Their Log</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="color:var(--danger);">⚠ Danger Zone</div>
+        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:.9rem;line-height:1.5;">These actions are irreversible. Admin access required.</p>
+        <div class="btn-row">
+          <button class="btn btn-danger btn-sm" onclick="adminResetAllDemo()">↺ Reload Demo Data</button>
+          <button class="btn btn-danger btn-sm" onclick="adminNukeAll()">💣 Wipe All Data</button>
         </div>
       </div>
     </div>
@@ -1131,6 +1702,75 @@ td.actions-cell{display:flex;gap:.3rem;}
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- ── MODALS ── -->
+
+<!-- QSL Card Preview Modal -->
+<div class="modal-overlay" id="qslCardModal">
+  <div class="modal modal-wide" style="max-width:600px;">
+    <div class="modal-header">
+      <div class="modal-title">QSL Card Preview</div>
+      <div class="modal-subtitle" id="qslCardModalSub"></div>
+    </div>
+    <div style="display:flex;justify-content:center;padding:1rem 0;" id="qslCardModalInner"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('qslCardModal')">Close</button>
+      <button class="btn btn-outline" onclick="printQslCard()">🖨 Print Card</button>
+      <button class="btn btn-primary" onclick="sendQslFromModal()">✉ Send via Gmail</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gmail Send Modal -->
+<div class="modal-overlay" id="gmailModal">
+  <div class="modal modal-wide" style="max-width:580px;">
+    <div class="modal-header">
+      <div class="modal-title">✉ Send QSL via Gmail</div>
+      <div class="modal-subtitle" id="gmailModalSub">Compose and send a QSL confirmation email</div>
+    </div>
+    <div class="form-grid" style="gap:.65rem;margin-bottom:.75rem;">
+      <div class="field form-full">
+        <label>To (Email Address of Contact)</label>
+        <input type="email" id="gmailToAddr" placeholder="contact@example.com">
+      </div>
+      <div class="field form-full">
+        <label>Subject</label>
+        <input type="text" id="gmailSubjectField">
+      </div>
+      <div class="field form-full">
+        <label>Message Body</label>
+        <textarea id="gmailBodyField" rows="7" style="font-family:'DM Sans',sans-serif;font-size:.83rem;line-height:1.7;"></textarea>
+      </div>
+    </div>
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;margin-bottom:.75rem;font-size:.78rem;color:var(--text-muted);display:flex;align-items:center;gap:.5rem;">
+      <span>📎</span>
+      <span>A QSL card image will be embedded in the email automatically.</span>
+    </div>
+    <div id="gmailStatus" style="display:none;" class="gmail-status mb-1"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('gmailModal')">Cancel</button>
+      <button class="btn btn-primary" id="gmailSendBtn" onclick="doSendGmail()">✉ Send via Gmail</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gmail Batch Modal -->
+<div class="modal-overlay" id="gmailBatchModal">
+  <div class="modal modal-wide" style="max-width:500px;">
+    <div class="modal-header">
+      <div class="modal-title">✉ Batch Email QSLs</div>
+      <div class="modal-subtitle" id="gmailBatchSub">Send QSL emails to multiple contacts</div>
+    </div>
+    <div id="gmailBatchList" style="max-height:300px;overflow-y:auto;margin-bottom:.75rem;"></div>
+    <div class="alert alert-lotw mb-1">
+      <span>ℹ</span>
+      <span>Only QSOs with an email address on file will be included. Add emails in the QSL Manager table. Emails are sent one at a time with your Gmail account.</span>
+    </div>
+    <div id="gmailBatchStatus" style="display:none;" class="gmail-status mb-1"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('gmailBatchModal')">Cancel</button>
+      <button class="btn btn-primary" id="gmailBatchSendBtn" onclick="doBatchSend()">✉ Send All</button>
+    </div>
+  </div>
+</div>
 
 <!-- Edit QSO Modal -->
 <div class="modal-overlay" id="editModal">
@@ -1195,7 +1835,19 @@ td.actions-cell{display:flex;gap:.3rem;}
         <label>QTH</label>
         <input type="text" id="nuQth" placeholder="City, Country">
       </div>
+      <div class="field">
+        <label>Password <span class="required">*</span></label>
+        <input type="password" id="nuPass" placeholder="Set a password" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Role</label>
+        <select id="nuRole">
+          <option value="user">Operator (User)</option>
+          <option value="admin">Administrator</option>
+        </select>
+      </div>
     </div>
+    <div id="nuError" class="auth-error" style="margin-top:.5rem;"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('newUserModal')">Cancel</button>
       <button class="btn btn-primary" onclick="createUser()">Create Operator</button>
@@ -1203,7 +1855,343 @@ td.actions-cell{display:flex;gap:.3rem;}
   </div>
 </div>
 
+<!-- Change Password Modal -->
+<div class="modal-overlay" id="changePassModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">🔑 Change Password</div>
+      <div class="modal-subtitle" id="changePassFor">Changing password for current user</div>
+    </div>
+    <div class="auth-error" id="changePassError" style="margin-bottom:.75rem;"></div>
+    <form autocomplete="on" onsubmit="doChangePassword();return false;">
+    <div class="form-grid">
+      <div class="field form-full" id="oldPassRow">
+        <label>Current Password</label>
+        <input type="password" id="oldPass" name="current-password" placeholder="Current password" autocomplete="current-password">
+      </div>
+      <div class="field form-full">
+        <label>New Password <span class="required">*</span></label>
+        <input type="password" id="newPass" name="new-password" placeholder="New password" autocomplete="new-password">
+      </div>
+      <div class="field form-full">
+        <label>Confirm New Password <span class="required">*</span></label>
+        <input type="password" id="newPass2" name="confirm-password" placeholder="Repeat new password" autocomplete="new-password">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-ghost" onclick="closeModal('changePassModal')">Cancel</button>
+      <button type="submit" class="btn btn-primary">🔑 Update Password</button>
+    </div>
+    </form>
+  </div>
+</div>
+
 <script>
+// ══════════════════════════════════════════════
+//  AUTH SYSTEM
+// ══════════════════════════════════════════════
+const AUTH_STORE  = 'rsl_auth_accounts';   // {callsign: {hash, role, name}}
+const SESSION_KEY = 'rsl_session';         // sessionStorage key
+let SESSION = null; // {call, role}
+
+// SHA-256 hash (async)
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function authAccounts(){
+  try{ return JSON.parse(localStorage.getItem(AUTH_STORE)||'{}'); }catch(e){ return {}; }
+}
+function saveAuthAccounts(accs){ localStorage.setItem(AUTH_STORE, JSON.stringify(accs)); }
+
+function getSession(){
+  try{
+    const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY+'_persist');
+    if(!raw) return null;
+    const s = JSON.parse(raw);
+    if(!s || !s.call) return null;
+    return s;
+  }catch(e){ return null; }
+}
+function setSession(call, role, persist){
+  const s = {call, role};
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
+  if(persist) localStorage.setItem(SESSION_KEY+'_persist', JSON.stringify(s));
+  SESSION = s;
+}
+function clearSession(){
+  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY+'_persist');
+  SESSION = null;
+}
+
+function isAdmin(){ return SESSION && SESSION.role === 'admin'; }
+function isLoggedIn(){ return !!SESSION; }
+
+// ── First run: is admin account set up? ──
+function hasAnyAccount(){
+  return Object.keys(authAccounts()).length > 0;
+}
+
+// ── Create admin on first run ──
+async function createAdminAccount(){
+  const call  = (document.getElementById('setupCall').value||'').trim().toUpperCase();
+  const name  = (document.getElementById('setupName').value||'').trim();
+  const pass  = document.getElementById('setupPass').value;
+  const pass2 = document.getElementById('setupPass2').value;
+  const errEl = document.getElementById('setupError');
+  errEl.classList.remove('show');
+  if(!call){ errEl.textContent='Callsign is required.'; errEl.classList.add('show'); return; }
+  if(pass.length < 6){ errEl.textContent='Password must be at least 6 characters.'; errEl.classList.add('show'); return; }
+  if(pass !== pass2){ errEl.textContent='Passwords do not match.'; errEl.classList.add('show'); return; }
+  const hash = await sha256(call + ':' + pass);
+  const accs = authAccounts();
+  accs[call] = {hash, role:'admin', name: name||call, createdAt: Date.now()};
+  saveAuthAccounts(accs);
+  // Also register in hamlog users
+  const users = JSON.parse(localStorage.getItem('hamlog_users')||'[]');
+  if(!users.includes(call)) users.push(call);
+  localStorage.setItem('hamlog_users', JSON.stringify(users));
+  localStorage.setItem(`hamlog_${call}_settings`, JSON.stringify({myCall:call,myName:name||call,myQth:'',myGrid:'',defPower:'100'}));
+  toast(`Admin account ${call} created — welcome!`,'ok');
+  setSession(call,'admin',true);
+  bootApp(call);
+}
+
+// ── Login ──
+async function doLogin(){
+  const call = (document.getElementById('loginCall').value||'').trim().toUpperCase();
+  const pass = document.getElementById('loginPass').value;
+  const remember = document.getElementById('rememberMe').checked;
+  const errEl = document.getElementById('loginError');
+  const btn   = document.getElementById('loginBtn');
+  errEl.classList.remove('show');
+  if(!call || !pass){ errEl.textContent='Enter callsign and password.'; errEl.classList.add('show'); return; }
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  const accs = authAccounts();
+  const acc  = accs[call];
+  if(!acc){ errEl.textContent='Callsign not found. Contact the admin.'; errEl.classList.add('show'); btn.disabled=false; btn.textContent='Sign In →'; return; }
+  const hash = await sha256(call + ':' + pass);
+  if(hash !== acc.hash){ errEl.textContent='Incorrect password.'; errEl.classList.add('show'); btn.disabled=false; btn.textContent='Sign In →'; return; }
+  setSession(call, acc.role, remember);
+  btn.textContent = '✓ Signed in';
+  bootApp(call);
+}
+
+// ── Logout ──
+function doLogout(){
+  openConfirm('Sign Out', `Sign out of ${SESSION?SESSION.call:''}?`, ()=>{
+    clearSession();
+    SESSION = null;
+    // Hide app, show login
+    document.getElementById('authOverlay').classList.remove('hidden');
+    document.getElementById('authLogin').style.display='';
+    document.getElementById('authSetup').style.display='none';
+    document.getElementById('loginCall').value='';
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginError').classList.remove('show');
+    document.getElementById('loginBtn').disabled=false;
+    document.getElementById('loginBtn').textContent='Sign In →';
+  });
+}
+
+// ── Change Password ──
+let _changePassTarget = null; // null = self, else callsign (admin reset)
+function openChangePassModal(targetCall){
+  _changePassTarget = targetCall; // null = own password
+  const forSelf = !targetCall || targetCall === SESSION.call;
+  document.getElementById('changePassFor').textContent = forSelf
+    ? `Changing password for ${SESSION.call}`
+    : `Admin reset for ${targetCall}`;
+  document.getElementById('oldPassRow').style.display = forSelf ? '' : 'none';
+  document.getElementById('oldPass').value='';
+  document.getElementById('newPass').value='';
+  document.getElementById('newPass2').value='';
+  document.getElementById('changePassError').classList.remove('show');
+  openModal('changePassModal');
+}
+
+async function doChangePassword(){
+  const target = _changePassTarget || SESSION.call;
+  const forSelf = !_changePassTarget || _changePassTarget === SESSION.call;
+  const oldPass = document.getElementById('oldPass').value;
+  const newPass = document.getElementById('newPass').value;
+  const newPass2= document.getElementById('newPass2').value;
+  const errEl   = document.getElementById('changePassError');
+  errEl.classList.remove('show');
+  if(newPass.length < 6){ errEl.textContent='New password must be at least 6 characters.'; errEl.classList.add('show'); return; }
+  if(newPass !== newPass2){ errEl.textContent='Passwords do not match.'; errEl.classList.add('show'); return; }
+  const accs = authAccounts();
+  const acc  = accs[target];
+  if(!acc){ errEl.textContent='Account not found.'; errEl.classList.add('show'); return; }
+  // Verify old password for self (skip for admin resetting another)
+  if(forSelf){
+    const oldHash = await sha256(target + ':' + oldPass);
+    if(oldHash !== acc.hash){ errEl.textContent='Current password is incorrect.'; errEl.classList.add('show'); return; }
+  }
+  const newHash = await sha256(target + ':' + newPass);
+  accs[target].hash = newHash;
+  saveAuthAccounts(accs);
+  closeModal('changePassModal');
+  toast(`Password updated for ${target}`,'ok');
+}
+
+// ── Boot app after login ──
+async function bootApp(call){
+  document.getElementById('authOverlay').classList.add('hidden');
+  init();
+  // Post-init async: auto-pull cloud + patch logQso
+  if(localStorage.getItem('hamlog_sync_pull_'+CURRENT_USER)==='1'){
+    await cloudPull();
+  } else {
+    updateSyncStats();
+  }
+  const _origLQ = logQso;
+  window.logQso = async function(){
+    _origLQ();
+    await autoSyncIfEnabled();
+  };
+}
+
+// ── Check auth on load ──
+function authInit(){
+  SESSION = getSession();
+  if(!hasAnyAccount()){
+    // First run: show setup
+    document.getElementById('authSetup').style.display='';
+    document.getElementById('authLogin').style.display='none';
+    return;
+  }
+  if(SESSION && SESSION.call){
+    // Valid session — boot directly
+    bootApp(SESSION.call);
+    return;
+  }
+  // Show login
+  document.getElementById('authLogin').style.display='';
+  document.getElementById('authSetup').style.display='none';
+}
+
+// ══════════════════════════════════════════════
+//  ADMIN PANEL FUNCTIONS
+// ══════════════════════════════════════════════
+function renderAdminPanel(){
+  if(!isAdmin()) return;
+  const accs  = authAccounts();
+  const calls = Object.keys(accs);
+  el('adminUserCount').textContent = calls.length;
+
+  // User list
+  const listEl = el('adminUserList');
+  listEl.innerHTML = calls.map(call=>{
+    const acc = accs[call];
+    const s   = loadSettings(call);
+    const log = loadLog(call);
+    const isCurrentAdmin = call === SESSION.call;
+    return `<div class="admin-user-row">
+      <div class="admin-user-avatar">${call.substr(0,2)}</div>
+      <div class="admin-user-info">
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <div class="admin-user-call">${call}</div>
+          <span class="auth-badge ${acc.role==='admin'?'auth-badge-admin':'auth-badge-user'}">${acc.role==='admin'?'👑 ADMIN':'📻 USER'}</span>
+          ${isCurrentAdmin?'<span style="font-size:.65rem;color:var(--text-muted);">(you)</span>':''}
+        </div>
+        <div class="admin-user-meta">${s.myName||'—'} · ${s.myQth||'No QTH'} · ${log.length} QSOs</div>
+      </div>
+      <div class="admin-user-actions">
+        <button class="btn btn-ghost btn-sm" onclick="adminViewLog('${call}')" title="View log">👁</button>
+        <button class="btn btn-ghost btn-sm" onclick="openChangePassModal('${call}')" title="Reset password">🔑</button>
+        <button class="btn btn-ghost btn-sm" onclick="adminToggleRole('${call}')" title="Toggle role">${acc.role==='admin'?'⬇ Demote':'⬆ Promote'}</button>
+        ${isCurrentAdmin?'':`<button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${call}')" title="Delete">🗑</button>`}
+      </div>
+    </div>`;
+  }).join('') || '<div class="no-data" style="padding:1rem;">No operators yet.</div>';
+
+  // System stats
+  const totalQsos = calls.reduce((n,c)=>n+loadLog(c).length,0);
+  el('adminStats').innerHTML = `
+    <div class="qsl-stat"><div class="qsl-stat-val">${calls.length}</div><div class="qsl-stat-label">Operators</div></div>
+    <div class="qsl-stat"><div class="qsl-stat-val">${totalQsos}</div><div class="qsl-stat-label">Total QSOs</div></div>
+    <div class="qsl-stat"><div class="qsl-stat-val">${calls.filter(c=>accs[c].role==='admin').length}</div><div class="qsl-stat-label">Admins</div></div>
+    <div class="qsl-stat"><div class="qsl-stat-val">${calls.filter(c=>accs[c].role==='user').length}</div><div class="qsl-stat-label">Users</div></div>
+  `;
+
+  // View-as dropdown
+  const sel = el('adminViewUser');
+  sel.innerHTML = '<option value="">— Choose operator —</option>' +
+    calls.map(c=>`<option value="${c}">${c} (${loadLog(c).length} QSOs)</option>`).join('');
+}
+
+function adminViewLog(call){
+  if(!isAdmin()){ toast('Admin only','warn'); return; }
+  CURRENT_USER = call;
+  LOG = loadLog(call);
+  applySettings(loadSettings(call));
+  updateNavChip(); updateCounter(); renderLog(); renderRecent(); updateLotwStats();
+  showScreen('logScreen', document.querySelector('[data-screen="logScreen"]'));
+  toast(`Viewing log for ${call}`,'ok');
+}
+
+function adminSwitchToUser(){
+  const call = (el('adminViewUser')||{}).value;
+  if(!call) return toast('Select an operator','warn');
+  adminViewLog(call);
+}
+
+function adminToggleRole(call){
+  if(!isAdmin()) return;
+  const accs = authAccounts();
+  if(!accs[call]) return;
+  // Prevent removing last admin
+  const admins = Object.keys(accs).filter(c=>accs[c].role==='admin');
+  if(accs[call].role==='admin' && admins.length<=1){ toast('Cannot demote the only admin','warn'); return; }
+  accs[call].role = accs[call].role==='admin'?'user':'admin';
+  saveAuthAccounts(accs);
+  renderAdminPanel();
+  toast(`${call} is now ${accs[call].role}`,'ok');
+}
+
+function adminDeleteUser(call){
+  if(!isAdmin()) return;
+  if(call===SESSION.call){ toast('Cannot delete yourself','warn'); return; }
+  openConfirm(`Delete ${call}`,`Permanently remove operator ${call} and all their QSOs?`,()=>{
+    const accs=authAccounts(); delete accs[call]; saveAuthAccounts(accs);
+    delete USERS[call]; saveUsers();
+    localStorage.removeItem(`hamlog_${call}_log`);
+    localStorage.removeItem(`hamlog_${call}_settings`);
+    renderAdminPanel();
+    toast(`${call} deleted`,'warn');
+  });
+}
+
+function openAddOperatorModal(){
+  if(!isAdmin()){ toast('Admin only','warn'); return; }
+  openNewUserModal();
+}
+
+function adminResetAllDemo(){
+  if(!isAdmin()) return;
+  openConfirm('Reload Demo Data','Reset YOUR log to the demo QSOs? Other users are unaffected.',()=>{
+    localStorage.removeItem('hamlog_demo_'+CURRENT_USER);
+    LOG=[];saveLog();init();
+  });
+}
+function adminNukeAll(){
+  if(!isAdmin()) return;
+  openConfirm('⚠ WIPE ALL DATA','Delete ALL operators, QSOs, settings, and accounts for ALL users? This cannot be undone.',()=>{
+    const accs = authAccounts();
+    Object.keys(accs).forEach(c=>{
+      localStorage.removeItem(`hamlog_${c}_log`);
+      localStorage.removeItem(`hamlog_${c}_settings`);
+    });
+    localStorage.removeItem('hamlog_users');
+    localStorage.removeItem(AUTH_STORE);
+    clearSession();
+    location.reload();
+  });
+}
+
 // ══════════════════════════════════════════════
 //  CONSTANTS & DATA
 // ══════════════════════════════════════════════
@@ -1457,8 +2445,10 @@ function el(id){return document.getElementById(id);}
 //  MULTI-USER
 // ══════════════════════════════════════════════
 function switchUser(call){
+  if(!isAdmin() && call !== SESSION.call){
+    toast('Permission denied — admin only','warn'); return;
+  }
   CURRENT_USER = call;
-  localStorage.setItem('hamlog_current_user', call);
   LOG = loadLog(call);
   applySettings(loadSettings(call));
   updateNavChip();
@@ -1472,55 +2462,85 @@ function switchUser(call){
 }
 
 function createUser(){
+  if(!isAdmin()){ toast('Admin only','warn'); return; }
   const call = v('nuCall').trim().toUpperCase();
-  const name = v('nuName');
-  const qth  = v('nuQth');
-  if(!call){ toast('Callsign required','error'); return; }
-  if(USERS[call]){ toast('Operator already exists','warn'); return; }
-  USERS[call] = true;
-  saveUsers();
-  const settings = {myCall:call, myName:name, myQth:qth};
-  localStorage.setItem(userKey(call,'settings'), JSON.stringify(settings));
-  closeModal('newUserModal');
-  sv('nuCall',''); sv('nuName',''); sv('nuQth','');
-  switchUser(call);
+  const name = v('nuName').trim();
+  const qth  = v('nuQth').trim();
+  const pass = v('nuPass');
+  const role = v('nuRole') || 'user';
+  const errEl = el('nuError');
+  errEl.classList.remove('show');
+  if(!call){ errEl.textContent='Callsign required.'; errEl.classList.add('show'); return; }
+  if(USERS[call]){ errEl.textContent='Operator already exists.'; errEl.classList.add('show'); return; }
+  if(pass.length < 4){ errEl.textContent='Password must be at least 4 characters.'; errEl.classList.add('show'); return; }
+  // Hash password async then create
+  sha256(call + ':' + pass).then(hash => {
+    const accs = authAccounts();
+    accs[call] = { hash, role, name: name||call, createdAt: Date.now() };
+    saveAuthAccounts(accs);
+    USERS[call] = true;
+    saveUsers();
+    const settings = {myCall:call, myName:name, myQth:qth, defPower:'100'};
+    localStorage.setItem(userKey(call,'settings'), JSON.stringify(settings));
+    closeModal('newUserModal');
+    sv('nuCall',''); sv('nuName',''); sv('nuQth',''); sv('nuPass','');
+    renderAdminPanel();
+    renderUserSwitchers();
+    toast(`Operator ${call} created (${role})`,'ok');
+  });
 }
 
 function openNewUserModal(){ openModal('newUserModal'); }
 function openUserModal(){ renderModalUsers(); openModal('userModal'); }
 
 function openDeleteUserModal(){
+  if(!isAdmin()){ toast('Admin only','warn'); return; }
   if(Object.keys(USERS).length <= 1){ toast('Cannot delete the only operator','warn'); return; }
   openConfirm('Remove Operator', `Remove ${CURRENT_USER} and all their QSOs? This cannot be undone.`, ()=>{
+    const accs = authAccounts();
+    delete accs[CURRENT_USER];
+    saveAuthAccounts(accs);
     delete USERS[CURRENT_USER];
     localStorage.removeItem(userKey(CURRENT_USER,'log'));
     localStorage.removeItem(userKey(CURRENT_USER,'settings'));
     saveUsers();
     const remaining = Object.keys(USERS);
-    if(remaining.length) switchUser(remaining[0]);
+    if(remaining.length) adminViewLog(remaining[0]);
     else{ CURRENT_USER=''; LOG=[]; updateNavChip(); }
+    renderAdminPanel();
   });
 }
 
 function renderUserSwitchers(){
-  const calls = Object.keys(USERS);
+  // Admin sees all users; regular users only see themselves
+  const allCalls = Object.keys(USERS);
+  const visibleCalls = isAdmin() ? allCalls : allCalls.filter(c => c === (SESSION?SESSION.call:''));
   ['userSwitcher','modalUserSwitcher'].forEach(id=>{
     const c = el(id); if(!c) return;
-    c.innerHTML = calls.map(call=>{
+    c.innerHTML = visibleCalls.map(call=>{
       const s = loadSettings(call);
       const log = loadLog(call);
+      const accs = authAccounts();
+      const role = (accs[call]||{}).role||'user';
       const initials = (call||'?').substr(0,2);
       const isActive = call === CURRENT_USER;
-      return `<div class="user-entry${isActive?' active-user':''}" onclick="switchUser('${call}')">
+      const clickable = isAdmin() ? `onclick="switchUser('${call}')"` : '';
+      return `<div class="user-entry${isActive?' active-user':''}" ${clickable} style="${!isAdmin()?'cursor:default;':''}">
         <div class="user-entry-avatar">${initials}</div>
         <div class="user-entry-info">
-          <div class="user-entry-call">${call}</div>
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            <div class="user-entry-call">${call}</div>
+            <span class="auth-badge ${role==='admin'?'auth-badge-admin':'auth-badge-user'}" style="font-size:.58rem;padding:.1rem .35rem;">${role==='admin'?'👑':'📻'}</span>
+          </div>
           <div class="user-entry-name">${s.myName||'Unknown Operator'} — ${s.myQth||'No QTH'}</div>
         </div>
         <div class="user-entry-count">${log.length} QSOs</div>
       </div>`;
-    }).join('') || '<div class="text-muted" style="padding:.75rem;font-size:.8rem;">No operators added yet</div>';
+    }).join('') || '<div style="padding:.75rem;font-size:.8rem;color:var(--text-muted);">No operators found</div>';
   });
+  // Hide admin-only UI elements for regular users
+  const multiCard = el('multiUserCard');
+  if(multiCard) multiCard.style.display = isAdmin() ? '' : 'none';
 }
 
 function updateNavChip(){
@@ -1531,12 +2551,29 @@ function updateNavChip(){
   el('logSubtitle').textContent = s.myCall
     ? `${s.myCall} — ${s.myQth||'No QTH'} ${s.myGrid?'('+s.myGrid+')':''}`
     : 'No station configured';
+  // Role badge
+  const badge = el('navRoleBadge');
+  if(SESSION){
+    badge.style.display='';
+    badge.className = `auth-badge ${SESSION.role==='admin'?'auth-badge-admin':'auth-badge-user'}`;
+    badge.textContent = SESSION.role==='admin' ? '👑 ADMIN' : '📻 USER';
+  }
+  // Admin nav button
+  const adminBtn = el('adminNavBtn');
+  if(adminBtn) adminBtn.style.display = isAdmin() ? '' : 'none';
+  // User chip pointer for admin only
+  const chip = el('navChip');
+  if(chip) chip.style.cursor = isAdmin() ? 'pointer' : 'default';
 }
 
 // ══════════════════════════════════════════════
 //  NAVIGATION & CLOCK
 // ══════════════════════════════════════════════
 function showScreen(id, btn){
+  // Guard admin-only screens
+  if(id === 'adminScreen' && !isAdmin()){
+    toast('Admin access required','warn'); return;
+  }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   el(id).classList.add('active');
@@ -1546,7 +2583,8 @@ function showScreen(id, btn){
   if(id==='dxccScreen') renderDxcc();
   if(id==='awardsScreen') renderAwards();
   if(id==='lotwScreen') updateLotwStats();
-  if(id==='settingsScreen') renderUserSwitchers();
+  if(id==='settingsScreen'){ renderUserSwitchers(); }
+  if(id==='adminScreen'){ renderAdminPanel(); }
 }
 
 function updateClock(){
@@ -2053,9 +3091,9 @@ function adifDate(dt){
 function buildAdif(qsos, forLotw){
   const myCall = SETTINGS.myCall || 'UNKNOWN';
   const myGrid = SETTINGS.myGrid || '';
-  let out = `ADIF Export from HamLog Pro\nGenerated: ${new Date().toISOString()}\nStation: ${myCall}\n`;
+  let out = `ADIF Export from RadioSport Log\nGenerated: ${new Date().toISOString()}\nStation: ${myCall}\n`;
   if(forLotw) out += `LoTW Format: ADIF 3.1.4 compatible\n`;
-  out += `<ADIF_VER:5>3.1.4\n<PROGRAMID:12>HamLog Pro\n<EOH>\n\n`;
+  out += `<ADIF_VER:5>3.1.4\n<PROGRAMID:14>RadioSport Log\n<EOH>\n\n`;
   qsos.forEach(q=>{
     const f = (tag,val)=>{ if(val) out+=`<${tag}:${val.length}>${val} `; };
     const date=(q.date||'').replace(/-/g,'');
@@ -2293,23 +3331,20 @@ document.addEventListener('keydown',e=>{
 //  INIT
 // ══════════════════════════════════════════════
 function init(){
-  const users = loadUsers();
-  let current = localStorage.getItem('hamlog_current_user');
+  // Auth: use session, not localStorage auto-login
+  if(!SESSION) SESSION = getSession();
+  const sessionCall = SESSION ? SESSION.call : null;
 
-  if(users.length && users.includes(current)){
-    CURRENT_USER = current;
+  const users = loadUsers();
+  if(sessionCall && (users.includes(sessionCall) || Object.keys(authAccounts()).includes(sessionCall))){
+    // Ensure user is in USERS map
+    if(!USERS[sessionCall]){ USERS[sessionCall]=true; saveUsers(); }
+    CURRENT_USER = sessionCall;
   } else if(users.length){
     CURRENT_USER = users[0];
-    localStorage.setItem('hamlog_current_user', CURRENT_USER);
   } else {
-    // First-time setup — create default user
-    const defaultCall = 'W1AW';
-    USERS[defaultCall]=true;
-    saveUsers();
-    CURRENT_USER = defaultCall;
-    localStorage.setItem('hamlog_current_user', CURRENT_USER);
-    const defSettings = {myCall:defaultCall, myName:'New Operator', myQth:'', myGrid:'', defPower:'100'};
-    localStorage.setItem(userKey(defaultCall,'settings'), JSON.stringify(defSettings));
+    CURRENT_USER = sessionCall || 'UNKNOWN';
+    USERS[CURRENT_USER]=true; saveUsers();
   }
 
   LOG = loadLog(CURRENT_USER);
@@ -2338,11 +3373,610 @@ function init(){
       {call:'UA9FAR',date:'2026-04-04',time:'16:33',band:'20m',freq:'14.074',mode:'FT8',rstS:'-5',rstR:'-7',name:'Alex',qth:'Omsk, Russia',grid:'NO46',dxcc:'Russia (Asiatic)',cqz:'17',lotwSent:false,lotwConfirmed:false},
     ].map(q=>({...q,id:uid(),loggedAt:Date.now()}));
     LOG=DEMO; saveLog(); updateCounter(); renderLog(); renderRecent(); updateLotwStats();
-    toast('📡 Demo QSOs loaded — welcome to HamLog Pro!','ok');
+    toast('📡 Demo QSOs loaded — welcome to RadioSport Log!','ok');
   }
 }
 
-init();
+// ══════════════════════════════════════════════
+//  QSL DATA HELPERS
+// ══════════════════════════════════════════════
+function qsoQslDefaults(q){
+  if(!q.qslSent)      q.qslSent      = false;
+  if(!q.qslReceived)  q.qslReceived  = false;
+  if(!q.qslEmail)     q.qslEmail     = '';
+  if(!q.qslEmailSent) q.qslEmailSent = false;
+  if(!q.qslSentDate)  q.qslSentDate  = '';
+  if(!q.qslRcvdDate)  q.qslRcvdDate  = '';
+  if(!q.qslVia)       q.qslVia       = 'direct';
+  return q;
+}
+
+// ══════════════════════════════════════════════
+//  QSL MANAGER SCREEN
+// ══════════════════════════════════════════════
+let QSL_SELECTED = new Set();
+
+function renderQslStats(){
+  const total    = LOG.length;
+  const sent     = LOG.filter(q=>q.qslSent).length;
+  const rcvd     = LOG.filter(q=>q.qslReceived).length;
+  const emailed  = LOG.filter(q=>q.qslEmailSent).length;
+  const both     = LOG.filter(q=>q.qslSent&&q.qslReceived).length;
+  const pending  = LOG.filter(q=>!q.qslSent&&!q.qslEmailSent).length;
+  el('qslStats').innerHTML = `
+    <div class="qsl-stat"><div class="qsl-stat-val">${total}</div><div class="qsl-stat-label">Total QSOs</div></div>
+    <div class="qsl-stat"><div class="qsl-stat-val" style="color:var(--success)">${sent}</div><div class="qsl-stat-label">Cards Sent</div></div>
+    <div class="qsl-stat"><div class="qsl-stat-val" style="color:var(--primary)">${rcvd}</div><div class="qsl-stat-label">Cards Received</div></div>
+    <div class="qsl-stat"><div class="qsl-stat-val" style="color:var(--warning)">${emailed}</div><div class="qsl-stat-label">Emails Sent</div></div>
+    <div class="qsl-stat"><div class="qsl-stat-val" style="color:var(--accent)">${both}</div><div class="qsl-stat-label">Fully Confirmed</div></div>
+    <div class="qsl-stat"><div class="qsl-stat-val" style="color:var(--danger)">${pending}</div><div class="qsl-stat-label">Pending Action</div></div>
+  `;
+}
+
+function renderQslTable(){
+  const filter = el('qslFilter').value;
+  const search = (el('qslSearch').value||'').toUpperCase();
+  let rows = LOG.map(q=>qsoQslDefaults(q)).filter(q=>{
+    if(search && !q.call.includes(search) && !(q.dxcc||'').toUpperCase().includes(search) && !(q.name||'').toUpperCase().includes(search)) return false;
+    if(filter==='sent')         return q.qslSent;
+    if(filter==='received')     return q.qslReceived;
+    if(filter==='both')         return q.qslSent && q.qslReceived;
+    if(filter==='email')        return q.qslEmailSent;
+    if(filter==='none')         return !q.qslSent && !q.qslReceived && !q.qslEmailSent;
+    if(filter==='pending_send') return !q.qslSent && !q.qslEmailSent;
+    return true;
+  });
+  const tbody = el('qslBody');
+  tbody.innerHTML = '';
+  el('qslNoData').style.display = rows.length ? 'none' : '';
+  el('qslTable').style.display = rows.length ? '' : 'none';
+  rows.forEach(q=>{
+    const tr = document.createElement('tr');
+    const checked = QSL_SELECTED.has(q.id) ? 'checked' : '';
+    tr.innerHTML = `
+      <td><input type="checkbox" ${checked} onchange="qslToggleRow('${q.id}',this)" style="accent-color:var(--primary);"></td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text-muted);">${q.date} ${q.time||''}</td>
+      <td class="call-cell">${q.call}</td>
+      <td class="band-cell">${q.band}</td>
+      <td class="mode-cell">${q.mode}</td>
+      <td class="rst-cell">${q.rstS||'59'}/${q.rstR||'59'}</td>
+      <td style="font-size:.78rem;color:var(--text-secondary);">${q.dxcc||''}<br><span style="color:var(--text-muted);font-size:.7rem;">${q.name||''}</span></td>
+      <td>${q.qslSent ? `<span class="qsl-badge-sent">✓ Sent${q.qslSentDate?' '+q.qslSentDate:''}</span>` : `<span class="qsl-badge-none">—</span>`}</td>
+      <td>${q.qslReceived ? `<span class="qsl-badge-rcvd">✓ Rcvd${q.qslRcvdDate?' '+q.qslRcvdDate:''}</span>` : `<span class="qsl-badge-none">—</span>`}</td>
+      <td>
+        ${q.qslEmailSent ? `<span class="qsl-badge-email">✉ Sent</span>` : q.qslEmail ? `<span style="font-size:.7rem;color:var(--text-muted);">${q.qslEmail}</span>` : `<input type="email" placeholder="email…" value="${q.qslEmail||''}" onchange="setQslEmail('${q.id}',this.value)" style="background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:.72rem;color:var(--text);width:130px;">`}
+      </td>
+      <td style="display:flex;gap:.3rem;flex-wrap:wrap;min-width:160px;">
+        <button class="btn btn-ghost btn-sm" title="Mark Card Sent" onclick="qslMarkSent('${q.id}')">📮 Sent</button>
+        <button class="btn btn-ghost btn-sm" title="Mark Card Received" onclick="qslMarkRcvd('${q.id}')">📥 Rcvd</button>
+        <button class="btn btn-ghost btn-sm" title="Generate QSL Card" onclick="openQslCardModal('${q.id}')">🖨</button>
+        <button class="btn btn-ghost btn-sm" title="Send via Gmail" onclick="openGmailModal('${q.id}')">✉</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  // Update bulk buttons
+  const hasSel = QSL_SELECTED.size > 0;
+  el('qslBulkSentBtn').style.display = hasSel ? '' : 'none';
+  el('qslBulkRcvdBtn').style.display = hasSel ? '' : 'none';
+  el('qslBulkEmailBtn').style.display = hasSel ? '' : 'none';
+}
+
+function qslToggleRow(id, cb){ cb.checked ? QSL_SELECTED.add(id) : QSL_SELECTED.delete(id); renderQslTable(); }
+function qslToggleAll(cb){ LOG.forEach(q=>cb.checked ? QSL_SELECTED.add(q.id) : QSL_SELECTED.delete(q.id)); renderQslTable(); }
+
+function setQslEmail(id, email){
+  const q = LOG.find(x=>x.id===id); if(!q) return;
+  q.qslEmail = email; saveLog(); toast(`Email saved for ${q.call}`,'ok');
+}
+function qslMarkSent(id){
+  const q = LOG.find(x=>x.id===id); if(!q) return;
+  qsoQslDefaults(q);
+  q.qslSent = !q.qslSent;
+  q.qslSentDate = q.qslSent ? new Date().toISOString().split('T')[0] : '';
+  saveLog(); renderQslStats(); renderQslTable();
+  toast(`${q.call} card ${q.qslSent?'marked sent':'unmarked'}`, 'ok');
+}
+function qslMarkRcvd(id){
+  const q = LOG.find(x=>x.id===id); if(!q) return;
+  qsoQslDefaults(q);
+  q.qslReceived = !q.qslReceived;
+  q.qslRcvdDate = q.qslReceived ? new Date().toISOString().split('T')[0] : '';
+  saveLog(); renderQslStats(); renderQslTable();
+  toast(`${q.call} card ${q.qslReceived?'marked received':'unmarked'}`, 'ok');
+}
+function qslBulkMarkSent(){
+  QSL_SELECTED.forEach(id=>{ const q=LOG.find(x=>x.id===id); if(q){qsoQslDefaults(q);q.qslSent=true;q.qslSentDate=new Date().toISOString().split('T')[0];} });
+  saveLog(); renderQslStats(); renderQslTable(); toast(`${QSL_SELECTED.size} QSOs marked sent`,'ok'); QSL_SELECTED.clear();
+}
+function qslBulkMarkReceived(){
+  QSL_SELECTED.forEach(id=>{ const q=LOG.find(x=>x.id===id); if(q){qsoQslDefaults(q);q.qslReceived=true;q.qslRcvdDate=new Date().toISOString().split('T')[0];} });
+  saveLog(); renderQslStats(); renderQslTable(); toast(`${QSL_SELECTED.size} QSOs marked received`,'ok'); QSL_SELECTED.clear();
+}
+
+// ══════════════════════════════════════════════
+//  QSL CARD GENERATOR
+// ══════════════════════════════════════════════
+function buildQslCardHtml(q){
+  const s = SETTINGS;
+  const mycall  = s.myCall  || 'W1AW';
+  const myname  = s.myName  || 'Radio Amateur';
+  const myqth   = s.myQth   || 'QTH Unknown';
+  const mygrid  = s.myGrid  || '';
+  const myrig   = s.rig     || '';
+  const myant   = s.ant     || '';
+  const theirCall = (q.call||'???').toUpperCase();
+  return `
+  <div class="qsl-card-preview" id="qslCardPrint">
+    <div class="qsl-card-border"></div>
+    <svg class="qsl-wave" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(96,165,250,1)" stroke-width="2"/>
+      <circle cx="50" cy="50" r="28" fill="none" stroke="rgba(96,165,250,1)" stroke-width="1.5"/>
+      <circle cx="50" cy="50" r="16" fill="none" stroke="rgba(96,165,250,1)" stroke-width="1"/>
+      <line x1="50" y1="10" x2="50" y2="90" stroke="rgba(96,165,250,.5)" stroke-width="1"/>
+      <line x1="10" y1="50" x2="90" y2="50" stroke="rgba(96,165,250,.5)" stroke-width="1"/>
+    </svg>
+    <div class="qsl-card-header">
+      <div>
+        <div style="font-size:.55rem;color:rgba(148,163,184,.6);text-transform:uppercase;letter-spacing:.12em;margin-bottom:2px;">Confirming QSO with</div>
+        <div class="qsl-their-call">${theirCall}</div>
+        ${q.name?`<div style="font-size:.7rem;color:rgba(148,163,184,.6);margin-top:2px;">${q.name}${q.qth?' — '+q.qth:''}</div>`:''}
+      </div>
+      <div style="text-align:right;">
+        <div class="qsl-my-call">${mycall}</div>
+        <div style="font-size:.65rem;color:rgba(148,163,184,.6);margin-top:1px;">${myname}</div>
+        <div style="font-size:.6rem;color:rgba(148,163,184,.5);">${myqth}</div>
+        ${mygrid?`<div style="font-size:.58rem;color:rgba(96,165,250,.7);">${mygrid}</div>`:''}
+      </div>
+    </div>
+    <div class="qsl-card-body">
+      <div class="qsl-field"><div class="qsl-field-label">Date (UTC)</div><div class="qsl-field-val">${q.date||'—'}</div></div>
+      <div class="qsl-field"><div class="qsl-field-label">Time (UTC)</div><div class="qsl-field-val">${q.time||'—'}</div></div>
+      <div class="qsl-field"><div class="qsl-field-label">Band</div><div class="qsl-field-val">${q.band||'—'}</div></div>
+      <div class="qsl-field"><div class="qsl-field-label">Mode</div><div class="qsl-field-val">${q.mode||'—'}</div></div>
+      <div class="qsl-field"><div class="qsl-field-label">Freq (MHz)</div><div class="qsl-field-val">${q.freq||'—'}</div></div>
+      <div class="qsl-field"><div class="qsl-field-label">RST Sent</div><div class="qsl-field-val">${q.rstS||'59'}</div></div>
+      <div class="qsl-field"><div class="qsl-field-label">RST Rcvd</div><div class="qsl-field-val">${q.rstR||'59'}</div></div>
+      <div class="qsl-field"><div class="qsl-field-label">Grid</div><div class="qsl-field-val">${q.grid||mygrid||'—'}</div></div>
+    </div>
+    <div class="qsl-card-footer">
+      <span>TNX <strong>${theirCall}</strong> fer QSO — 73 de <strong>${mycall}</strong></span>
+      <span style="text-align:right;">${myrig?'Rig: '+myrig:''} ${myant?'• '+myant:''}</span>
+    </div>
+  </div>`;
+}
+
+let _currentQslId = null;
+
+function openQslCardModal(id){
+  _currentQslId = id;
+  const q = LOG.find(x=>x.id===id); if(!q) return;
+  el('qslCardModalSub').textContent = `QSO with ${q.call} — ${q.date} ${q.band} ${q.mode}`;
+  el('qslCardModalInner').innerHTML = buildQslCardHtml(q);
+  openModal('qslCardModal');
+}
+function sendQslFromModal(){ closeModal('qslCardModal'); openGmailModal(_currentQslId); }
+
+function renderQslSample(){
+  const sampleQso = {
+    call: 'DX0DEMO', date: new Date().toISOString().split('T')[0],
+    time: '14:30', band: '20m', mode: 'FT8', freq: '14.074',
+    rstS: '-12', rstR: '-08', grid: 'FN31', name: 'Demo Contact', qth: 'Somewhere'
+  };
+  el('qslCardSample').innerHTML = buildQslCardHtml(sampleQso);
+}
+
+function printQslCard(){
+  const html = el('qslCardPrint') ? el('qslCardPrint').outerHTML : '';
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>QSL Card</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+  body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#0b1120;}
+  ${document.querySelector('style').textContent}
+  @media print{body{background:white;}.qsl-card-preview{page-break-inside:avoid;}}
+  </style></head><body>${html}<script>window.onload=function(){window.print();window.close();}<\/script></body></html>`);
+  w.document.close();
+}
+
+function printSampleCard(){
+  renderQslSample();
+  const html = el('qslCardSample').innerHTML;
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>QSL Card Sample</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#0b1120;}${document.querySelector('style').textContent}
+  @media print{body{background:white;}}</style></head><body>${html}<script>window.onload=function(){window.print();window.close();}<\/script></body></html>`);
+  w.document.close();
+}
+
+function qslBulkGenerate(){
+  const pending = LOG.filter(q=>!q.qslSent);
+  if(!pending.length){ toast('No pending QSL cards','warn'); return; }
+  const cards = pending.map(q=>buildQslCardHtml(q)).join('<div style="page-break-after:always;height:20px;"></div>');
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>QSL Cards</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>body{margin:20px;background:#0b1120;display:flex;flex-direction:column;gap:20px;align-items:center;}${document.querySelector('style').textContent}
+  @media print{body{background:white;gap:10px;}.qsl-card-preview{page-break-inside:avoid;}}</style></head>
+  <body>${cards}<script>window.onload=function(){window.print();}<\/script></body></html>`);
+  w.document.close();
+  // Auto-mark as sent
+  pending.forEach(q=>{qsoQslDefaults(q);q.qslSent=true;q.qslSentDate=new Date().toISOString().split('T')[0];});
+  saveLog(); renderQslStats(); renderQslTable();
+  toast(`${pending.length} QSL cards generated & marked sent`,'ok');
+}
+
+// ══════════════════════════════════════════════
+//  GMAIL / EMAIL VIA ANTHROPIC API + MCP
+// ══════════════════════════════════════════════
+const GMAIL_MCP_URL = "https://gmail.mcp.claude.com/mcp";
+const ANTHROPIC_API  = "https://api.anthropic.com/v1/messages";
+const DEFAULT_SUBJECT = "QSL Confirmation — {MYCALL} de {THEIRCALL} {BAND} {MODE}";
+const DEFAULT_BODY    = `Dear {NAME},
+
+Thank you for our QSO on {DATE} at {TIME} UTC.
+
+  Band : {BAND}
+  Mode : {MODE}
+  Freq : {FREQ} MHz
+  RST Sent   : {RSTS}
+  RST Rcvd   : {RSTR}
+  My Grid    : {MYGRID}
+
+It was a pleasure working you! A QSL card is embedded below.
+
+Please confirm receipt via your preferred bureau or direct QSL.
+
+73 & good DX,
+{MYNAME}
+{MYCALL}`;
+
+function loadGmailSettings(){
+  try{ return JSON.parse(localStorage.getItem(userKey(CURRENT_USER,'gmail'))||'{}'); }catch(e){ return {}; }
+}
+function saveGmailSettings(){
+  const cfg = {
+    from:    el('sGmailFrom').value.trim(),
+    name:    el('sGmailName').value.trim(),
+    subject: el('sGmailSubject').value.trim() || DEFAULT_SUBJECT,
+    body:    el('sGmailBody').value || DEFAULT_BODY
+  };
+  localStorage.setItem(userKey(CURRENT_USER,'gmail'), JSON.stringify(cfg));
+  toast('Gmail settings saved','ok');
+}
+function resetGmailTemplate(){
+  sv('sGmailSubject', DEFAULT_SUBJECT);
+  sv('sGmailBody', DEFAULT_BODY);
+  toast('Template reset','ok');
+}
+function applyGmailSettings(){
+  const cfg = loadGmailSettings();
+  if(el('sGmailFrom')) el('sGmailFrom').value = cfg.from||'';
+  if(el('sGmailName')) el('sGmailName').value = cfg.name||SETTINGS.myName||'';
+  if(el('sGmailSubject')) el('sGmailSubject').value = cfg.subject||DEFAULT_SUBJECT;
+  if(el('sGmailBody'))    el('sGmailBody').value    = cfg.body||DEFAULT_BODY;
+}
+
+function fillTemplate(tpl, q){
+  const s = SETTINGS;
+  return tpl
+    .replace(/{MYCALL}/g,   s.myCall||'MY_CALL')
+    .replace(/{MYNAME}/g,   s.myName||'Operator')
+    .replace(/{MYGRID}/g,   s.myGrid||'')
+    .replace(/{MYQTH}/g,    s.myQth||'')
+    .replace(/{THEIRCALL}/g,q.call||'')
+    .replace(/{NAME}/g,     q.name||q.call||'OM')
+    .replace(/{DATE}/g,     q.date||'')
+    .replace(/{TIME}/g,     q.time||'')
+    .replace(/{BAND}/g,     q.band||'')
+    .replace(/{MODE}/g,     q.mode||'')
+    .replace(/{FREQ}/g,     q.freq||'')
+    .replace(/{RSTS}/g,     q.rstS||'59')
+    .replace(/{RSTR}/g,     q.rstR||'59');
+}
+
+let _gmailQsoId = null;
+
+function openGmailModal(id){
+  _gmailQsoId = id;
+  const q = qsoQslDefaults(LOG.find(x=>x.id===id)||{}); if(!q.call) return;
+  const cfg = loadGmailSettings();
+  el('gmailModalSub').textContent = `Sending QSL to ${q.call} — ${q.date} ${q.band} ${q.mode}`;
+  el('gmailToAddr').value = q.qslEmail || '';
+  el('gmailSubjectField').value = fillTemplate(cfg.subject||DEFAULT_SUBJECT, q);
+  el('gmailBodyField').value    = fillTemplate(cfg.body||DEFAULT_BODY, q);
+  el('gmailStatus').style.display = 'none';
+  el('gmailSendBtn').disabled = false;
+  openModal('gmailModal');
+}
+
+async function doSendGmail(){
+  const q = LOG.find(x=>x.id===_gmailQsoId); if(!q) return;
+  const toAddr  = el('gmailToAddr').value.trim();
+  const subject = el('gmailSubjectField').value.trim();
+  const body    = el('gmailBodyField').value;
+  if(!toAddr){ toast('Enter recipient email address','warn'); return; }
+
+  const statusEl = el('gmailStatus');
+  statusEl.className='gmail-status sending';
+  statusEl.style.display='flex';
+  statusEl.textContent='⏳ Sending via Gmail…';
+  el('gmailSendBtn').disabled = true;
+
+  try {
+    const cardHtml = buildQslCardHtml(q).replace(/"/g,"'");
+    const fullBody = body + `\n\n--- QSL Card ---\n[A QSL card image is embedded below]\n\nBand: ${q.band} | Mode: ${q.mode} | Date: ${q.date} | RST: ${q.rstS||'59'}/${q.rstR||'59'}`;
+
+    const resp = await fetch(ANTHROPIC_API, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `You are a Gmail assistant. The user wants to send an email using their connected Gmail account. Use the Gmail MCP tool to send the email exactly as specified. Do not add extra content. Confirm success.`,
+        messages:[{
+          role:'user',
+          content: `Please send this email using my Gmail account:
+To: ${toAddr}
+Subject: ${subject}
+Body:
+${fullBody}
+
+Confirm when sent.`
+        }],
+        mcp_servers:[{ type:'url', url: GMAIL_MCP_URL, name:'gmail-mcp' }]
+      })
+    });
+    const data = await resp.json();
+    if(data.error){ throw new Error(data.error.message||'API error'); }
+
+    // Mark as email sent
+    qsoQslDefaults(q);
+    q.qslEmail     = toAddr;
+    q.qslEmailSent = true;
+    saveLog(); renderQslStats(); renderQslTable();
+
+    statusEl.className='gmail-status sent';
+    statusEl.textContent=`✅ QSL email sent to ${toAddr}`;
+    toast(`QSL email sent to ${q.call}`,'ok');
+    el('gmailSendBtn').textContent='✓ Sent';
+  } catch(err){
+    statusEl.className='gmail-status error';
+    statusEl.textContent=`✕ Error: ${err.message}`;
+    el('gmailSendBtn').disabled=false;
+    toast('Email send failed','err');
+  }
+}
+
+function openGmailBatchModal(selectedOnly=false){
+  const candidates = selectedOnly
+    ? LOG.filter(q=>QSL_SELECTED.has(q.id) && q.qslEmail && !q.qslEmailSent)
+    : LOG.filter(q=>q.qslEmail && !q.qslEmailSent);
+  el('gmailBatchSub').textContent = `${candidates.length} QSO(s) with email addresses ready to send`;
+  const listEl = el('gmailBatchList');
+  if(!candidates.length){
+    listEl.innerHTML='<div class="no-data" style="padding:1.5rem;font-size:.82rem;">No QSOs with email addresses found. Add email addresses in the QSL Manager table.</div>';
+  } else {
+    listEl.innerHTML = candidates.map(q=>`
+      <div style="display:flex;align-items:center;gap:.75rem;padding:.6rem .25rem;border-bottom:1px solid var(--border-subtle);">
+        <div style="flex:1;">
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--primary);">${q.call}</span>
+          <span style="font-size:.75rem;color:var(--text-muted);margin-left:.5rem;">${q.date} ${q.band} ${q.mode}</span>
+        </div>
+        <span style="font-size:.75rem;color:var(--text-secondary);">${q.qslEmail}</span>
+      </div>
+    `).join('');
+  }
+  el('gmailBatchStatus').style.display='none';
+  el('gmailBatchSendBtn').disabled = !candidates.length;
+  openModal('gmailBatchModal');
+}
+
+let _batchCandidates = [];
+async function doBatchSend(){
+  _batchCandidates = LOG.filter(q=>q.qslEmail && !q.qslEmailSent);
+  if(!_batchCandidates.length){ toast('No emails to send','warn'); return; }
+  el('gmailBatchSendBtn').disabled=true;
+  const statusEl = el('gmailBatchStatus');
+  statusEl.style.display='flex';
+  let sent=0, failed=0;
+  for(const q of _batchCandidates){
+    statusEl.className='gmail-status sending';
+    statusEl.textContent=`⏳ Sending to ${q.call} (${q.qslEmail})… [${sent+failed+1}/${_batchCandidates.length}]`;
+    try {
+      const cfg = loadGmailSettings();
+      const subject = fillTemplate(cfg.subject||DEFAULT_SUBJECT, q);
+      const body    = fillTemplate(cfg.body||DEFAULT_BODY, q);
+      const resp = await fetch(ANTHROPIC_API,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514', max_tokens:500,
+          system:`You are a Gmail assistant. Send the specified email using Gmail MCP. Do not add content. Just send it.`,
+          messages:[{role:'user',content:`Send email: To: ${q.qslEmail}, Subject: ${subject}, Body: ${body}`}],
+          mcp_servers:[{type:'url',url:GMAIL_MCP_URL,name:'gmail-mcp'}]
+        })
+      });
+      const data = await resp.json();
+      if(data.error) throw new Error(data.error.message);
+      qsoQslDefaults(q); q.qslEmailSent=true; q.qslEmail=q.qslEmail;
+      sent++;
+    } catch(e){ failed++; }
+    saveLog();
+  }
+  renderQslStats(); renderQslTable();
+  statusEl.className = failed ? 'gmail-status error' : 'gmail-status sent';
+  statusEl.textContent = `✅ Sent: ${sent} | Failed: ${failed}`;
+  toast(`Batch: ${sent} sent, ${failed} failed`, sent>0?'ok':'warn');
+}
+
+// ══════════════════════════════════════════════
+//  CLOUD SYNC — window.storage backend
+// ══════════════════════════════════════════════
+const CLOUD_KEY = ()=>`hamlog_${CURRENT_USER}_qsos`;
+const CLOUD_META= ()=>`hamlog_${CURRENT_USER}_meta`;
+
+function setSyncState(state, msg){
+  const chip  = el('syncChip');
+  const dot   = el('syncDot');
+  const label = el('syncLabel');
+  chip.className = `sync-chip ${state}`;
+  dot.className  = `sync-dot${state==='syncing'?' pulse':''}`;
+  label.textContent = {
+    idle:    '☁ Sync',
+    syncing: '↻ Syncing…',
+    synced:  '✓ Synced',
+    error:   '✕ Sync Error'
+  }[state] || '☁ Sync';
+  if(msg){
+    const m=el('syncMsg'); if(m) m.innerHTML=`<div class="alert ${state==='synced'?'alert-success':state==='error'?'alert-error':'alert-lotw'}" style="margin-top:.5rem;">${msg}</div>`;
+  }
+}
+
+async function cloudPush(){
+  if(!CURRENT_USER){ toast('No active user','warn'); return; }
+  setSyncState('syncing','Pushing log to cloud…');
+  try {
+    const payload = JSON.stringify({
+      qsos: LOG,
+      settings: SETTINGS,
+      pushedAt: Date.now(),
+      call: CURRENT_USER
+    });
+    const r1 = await window.storage.set(CLOUD_KEY(), payload);
+    if(!r1) throw new Error('Storage set failed');
+    const meta = { pushedAt: Date.now(), count: LOG.length };
+    await window.storage.set(CLOUD_META(), JSON.stringify(meta));
+    setSyncState('synced', `✅ Pushed ${LOG.length} QSOs to cloud at ${new Date().toLocaleTimeString()}`);
+    localStorage.setItem(`hamlog_last_push_${CURRENT_USER}`, new Date().toLocaleTimeString());
+    updateSyncStats();
+    toast(`${LOG.length} QSOs pushed to cloud`,'ok');
+    if(localStorage.getItem('hamlog_sync_auto_'+CURRENT_USER)==='1') el('syncAutoOn').checked=true;
+  } catch(e){
+    setSyncState('error',`✕ Push failed: ${e.message}`);
+    toast('Cloud push failed','err');
+  }
+}
+
+async function cloudPull(){
+  if(!CURRENT_USER){ toast('No active user','warn'); return; }
+  setSyncState('syncing','Pulling from cloud…');
+  try {
+    const r = await window.storage.get(CLOUD_KEY());
+    if(!r || !r.value) { setSyncState('idle','ℹ No cloud data found — push first.'); return; }
+    const data = JSON.parse(r.value);
+    const strategy = (el('syncStrategy')||{value:'merge'}).value;
+    if(strategy === 'cloud'){
+      LOG = (data.qsos||[]).map(q=>qsoQslDefaults(q));
+    } else if(strategy === 'local'){
+      // do nothing — local wins
+    } else {
+      // Smart merge: newest wins per id
+      const cloudMap = {};
+      (data.qsos||[]).forEach(q=>{ cloudMap[q.id]=q; });
+      const localMap = {};
+      LOG.forEach(q=>{ localMap[q.id]=q; });
+      const allIds = new Set([...Object.keys(cloudMap),...Object.keys(localMap)]);
+      const merged = [];
+      allIds.forEach(id=>{
+        const lq=localMap[id], cq=cloudMap[id];
+        if(lq&&cq) merged.push((lq.loggedAt||0)>=(cq.loggedAt||0)?lq:cq);
+        else merged.push(lq||cq);
+      });
+      // Also deduplicate by call+date+band
+      const seen=new Set();
+      LOG = merged.filter(q=>{
+        const key=`${q.call}|${q.date}|${q.band}`;
+        if(seen.has(key)) return false;
+        seen.add(key); return true;
+      }).map(q=>qsoQslDefaults(q));
+    }
+    LOG.sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+    saveLog(); updateCounter(); renderLog(); renderRecent(); updateLotwStats();
+    localStorage.setItem(`hamlog_last_pull_${CURRENT_USER}`, new Date().toLocaleTimeString());
+    setSyncState('synced',`✅ Pulled ${LOG.length} QSOs from cloud`);
+    updateSyncStats();
+    toast(`Cloud pull: ${LOG.length} QSOs`,'ok');
+  } catch(e){
+    setSyncState('error',`✕ Pull failed: ${e.message}`);
+    toast('Cloud pull failed','err');
+  }
+}
+
+async function cloudClearRemote(){
+  openConfirm('Clear Cloud Data','Delete all cloud-stored QSO data for this station? Local log is unaffected.', async ()=>{
+    try {
+      await window.storage.delete(CLOUD_KEY());
+      await window.storage.delete(CLOUD_META());
+      setSyncState('idle','☁ Cloud data cleared.');
+      updateSyncStats();
+      toast('Cloud data cleared','warn');
+    } catch(e){ toast('Clear failed','err'); }
+  });
+}
+
+async function updateSyncStats(){
+  el('syncLocalCount').textContent = LOG.length;
+  const lastPush = localStorage.getItem(`hamlog_last_push_${CURRENT_USER}`)||'Never';
+  const lastPull = localStorage.getItem(`hamlog_last_pull_${CURRENT_USER}`)||'Never';
+  el('syncLastPush').textContent = lastPush;
+  el('syncLastPull').textContent = lastPull;
+  try {
+    const r = await window.storage.get(CLOUD_META());
+    if(r && r.value){ const m=JSON.parse(r.value); el('syncCloudCount').textContent = m.count||0; }
+    else el('syncCloudCount').textContent = '—';
+  } catch(e){ el('syncCloudCount').textContent = '?'; }
+  // Banner
+  el('syncBannerTitle').textContent = 'Cloud Sync Active';
+  el('syncBannerDesc').textContent  = `Local: ${LOG.length} QSOs | Last pushed: ${lastPush} | Last pulled: ${lastPull}`;
+}
+
+function saveAutoSync(on){ localStorage.setItem('hamlog_sync_auto_'+CURRENT_USER, on?'1':'0'); }
+function saveAutoPull(on){ localStorage.setItem('hamlog_sync_pull_'+CURRENT_USER, on?'1':'0'); }
+
+// Patch logQso to auto-push
+const _origLogQso = window.logQso;
+// We'll wrap after definition via a flag
+let _autoSyncPatch = false;
+
+async function autoSyncIfEnabled(){
+  if(localStorage.getItem('hamlog_sync_auto_'+CURRENT_USER)==='1'){
+    await cloudPush();
+  }
+}
+
+// ══════════════════════════════════════════════
+//  SCREEN SHOW PATCHES
+// ══════════════════════════════════════════════
+const _origShowScreen = showScreen;
+window.showScreen = function(id, btn){
+  _origShowScreen(id, btn);
+  if(id==='qslScreen')  { renderQslStats(); renderQslTable(); renderQslSample(); applyGmailSettings(); }
+  if(id==='syncScreen') { updateSyncStats(); el('syncAutoOn').checked = localStorage.getItem('hamlog_sync_auto_'+CURRENT_USER)==='1'; el('syncPullOn').checked = localStorage.getItem('hamlog_sync_pull_'+CURRENT_USER)==='1'; }
+};
+
+// ── BOOT: auth gate ──
+authInit();
 </script>
+<!-- ── COPYRIGHT FOOTER ── -->
+<footer style="
+  background:var(--bg-surface);
+  border-top:1px solid var(--border);
+  padding:.6rem 1.5rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:.75rem;
+  font-size:.72rem;
+  color:var(--text-muted);
+  letter-spacing:.02em;
+">
+  <span style="color:var(--primary);font-weight:600;font-family:'JetBrains Mono',monospace;">9G5AR</span>
+  <span style="color:var(--border);">|</span>
+  <span>© <script>document.write(new Date().getFullYear())</script> <strong style="color:var(--text-secondary);">R.N.K 9G5AR RadioSport</strong>. All rights reserved.</span>
+  <span style="color:var(--border);">|</span>
+  <span>RadioSport Log — Amateur Radio Station Logger</span>
+</footer>
 </body>
 </html>
