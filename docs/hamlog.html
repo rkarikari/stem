@@ -41,6 +41,108 @@
   --shadow-sm:0 2px 8px rgba(0,0,0,0.3);
 }
 
+/* ── AUTH OVERLAY ── */
+#authOverlay{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg-base);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:1.5rem;
+  animation:fadeIn .3s ease;
+}
+#authOverlay.hidden{display:none;}
+.auth-box{
+  width:100%;max-width:400px;
+  background:var(--bg-surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:2.25rem 2rem 2rem;
+  box-shadow:0 24px 64px rgba(0,0,0,.55);
+  position:relative;
+}
+.auth-logo{
+  display:flex;align-items:center;gap:.65rem;justify-content:center;
+  margin-bottom:1.75rem;
+}
+.auth-logo-icon{
+  width:40px;height:40px;border-radius:9px;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+}
+.auth-logo-text{font-size:1.2rem;font-weight:700;color:var(--text-bright);}
+.auth-logo-text span{color:var(--primary);}
+.auth-title{font-size:1rem;font-weight:600;color:var(--text-bright);margin-bottom:.3rem;text-align:center;}
+.auth-sub{font-size:.78rem;color:var(--text-muted);text-align:center;margin-bottom:1.5rem;}
+.auth-field{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.9rem;}
+.auth-field label{font-size:.75rem;font-weight:500;color:var(--text-secondary);}
+.auth-field input{
+  background:var(--bg-input);border:1px solid var(--border);
+  color:var(--text-bright);font-family:'DM Sans',sans-serif;font-size:.9rem;
+  padding:.65rem .85rem;border-radius:var(--radius-sm);outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.auth-field input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,.12);}
+.auth-field input.callsign-inp{font-family:'JetBrains Mono',monospace;text-transform:uppercase;font-size:1rem;font-weight:600;letter-spacing:.06em;}
+.auth-btn{
+  width:100%;padding:.7rem;border-radius:var(--radius-sm);
+  background:var(--primary);color:#fff;border:none;
+  font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;
+  cursor:pointer;transition:background .15s;margin-top:.25rem;
+}
+.auth-btn:hover{background:#2563eb;}
+.auth-btn:disabled{opacity:.55;cursor:not-allowed;}
+.auth-error{
+  background:var(--danger-muted);border:1px solid rgba(239,68,68,.3);
+  color:var(--danger);font-size:.8rem;padding:.55rem .8rem;
+  border-radius:var(--radius-sm);margin-bottom:.9rem;display:none;
+}
+.auth-error.show{display:block;}
+.auth-divider{border:none;border-top:1px solid var(--border);margin:1.25rem 0;}
+.auth-footer{text-align:center;font-size:.72rem;color:var(--text-muted);margin-top:1.25rem;}
+.auth-badge{
+  display:inline-flex;align-items:center;gap:.3rem;
+  font-size:.63rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:.2rem .55rem;border-radius:20px;
+}
+.auth-badge-admin{background:rgba(245,158,11,.15);color:var(--warning);border:1px solid rgba(245,158,11,.3);}
+.auth-badge-user{background:var(--primary-muted);color:var(--primary);border:1px solid var(--primary-border);}
+.role-tag{
+  position:absolute;top:.85rem;right:1rem;
+  font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:.18rem .5rem;border-radius:20px;
+}
+.role-tag-admin{background:rgba(245,158,11,.15);color:var(--warning);border:1px solid rgba(245,158,11,.3);}
+.role-tag-user{background:var(--primary-muted);color:var(--primary);border:1px solid var(--primary-border);}
+
+/* ── ADMIN PANEL ── */
+.admin-user-row{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.7rem .85rem;border:1px solid var(--border);
+  border-radius:var(--radius);background:var(--bg-elevated);
+  margin-bottom:.5rem;transition:border-color .15s;
+}
+.admin-user-row:hover{border-color:var(--primary);}
+.admin-user-avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+.admin-user-info{flex:1;}
+.admin-user-call{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text-bright);font-size:.9rem;}
+.admin-user-meta{font-size:.72rem;color:var(--text-muted);}
+.admin-user-actions{display:flex;gap:.4rem;}
+
+/* Logout button */
+.logout-btn{
+  display:flex;align-items:center;gap:.4rem;
+  background:transparent;border:1px solid var(--border);
+  color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:.75rem;
+  padding:.35rem .65rem;border-radius:var(--radius-sm);cursor:pointer;
+  transition:all .15s;
+}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger);}
+
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{
@@ -639,6 +741,74 @@ td.actions-cell{display:flex;gap:.3rem;}
 </style>
 </head>
 <body>
+
+<!-- ════════════════════════════════════════════
+  AUTH OVERLAY — shown until valid session
+═════════════════════════════════════════════ -->
+<div id="authOverlay">
+
+  <!-- First-run: Create Admin -->
+  <div id="authSetup" style="display:none;width:100%;max-width:420px;">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">📡</div>
+        <div class="auth-logo-text">Radio<span>Sport</span> Log</div>
+      </div>
+      <div class="auth-title">Welcome — First-Time Setup</div>
+      <div class="auth-sub">Create your admin account to get started. The admin has full access and manages all operators.</div>
+      <div class="auth-error" id="setupError"></div>
+      <div class="auth-field">
+        <label>Admin Callsign <span style="color:var(--danger)">*</span></label>
+        <input class="callsign-inp" type="text" id="setupCall" placeholder="9G5AR" oninput="this.value=this.value.toUpperCase()" autocomplete="off">
+      </div>
+      <div class="auth-field">
+        <label>Operator Name</label>
+        <input type="text" id="setupName" placeholder="R.N.K" autocomplete="off">
+      </div>
+      <div class="auth-field">
+        <label>Password <span style="color:var(--danger)">*</span></label>
+        <input type="password" id="setupPass" placeholder="Choose a strong password" autocomplete="new-password">
+      </div>
+      <div class="auth-field">
+        <label>Confirm Password <span style="color:var(--danger)">*</span></label>
+        <input type="password" id="setupPass2" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')createAdminAccount()">
+      </div>
+      <button class="auth-btn" onclick="createAdminAccount()">🔐 Create Admin Account</button>
+      <div class="auth-footer">RadioSport Log · R.N.K 9G5AR RadioSport</div>
+    </div>
+  </div>
+
+  <!-- Login Form -->
+  <div id="authLogin" style="display:none;width:100%;max-width:380px;">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">📡</div>
+        <div class="auth-logo-text">Radio<span>Sport</span> Log</div>
+      </div>
+      <div class="auth-title">Sign In</div>
+      <div class="auth-sub">Enter your callsign and password to access your log</div>
+      <div class="auth-error" id="loginError"></div>
+      <div class="auth-field">
+        <label>Callsign</label>
+        <input class="callsign-inp" type="text" id="loginCall" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.9rem;">
+        <input type="checkbox" id="rememberMe" style="accent-color:var(--primary);">
+        <label for="rememberMe" style="font-size:.78rem;color:var(--text-muted);cursor:pointer;">Keep me signed in</label>
+      </div>
+      <button class="auth-btn" id="loginBtn" onclick="doLogin()">Sign In →</button>
+      <div class="auth-footer" style="margin-top:1rem;">
+        RadioSport Log · © 2026 R.N.K 9G5AR RadioSport
+      </div>
+    </div>
+  </div>
+
+</div><!-- #authOverlay -->
+
 <div id="app">
 
 <!-- ── TOP BAR ── -->
@@ -676,6 +846,9 @@ td.actions-cell{display:flex;gap:.3rem;}
     <button class="nav-btn" onclick="showScreen('syncScreen',this)" data-screen="syncScreen">
       ☁ Cloud Sync
     </button>
+    <button class="nav-btn" id="adminNavBtn" onclick="showScreen('adminScreen',this)" data-screen="adminScreen" style="display:none;">
+      🛡 Admin
+    </button>
     <button class="nav-btn" onclick="showScreen('settingsScreen',this)" data-screen="settingsScreen">
       ⚙ Settings
     </button>
@@ -687,13 +860,17 @@ td.actions-cell{display:flex;gap:.3rem;}
       <div class="sync-dot" id="syncDot"></div>
       <span id="syncLabel">☁ Sync</span>
     </div>
-    <div class="user-chip" onclick="openUserModal()">
+    <div class="user-chip" onclick="isAdmin()?openUserModal():null" id="navChip" style="cursor:default;">
       <div class="user-avatar" id="navAvatar">?</div>
       <div>
-        <div class="user-chip-call" id="navCallsign">—</div>
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <div class="user-chip-call" id="navCallsign">—</div>
+          <span class="auth-badge" id="navRoleBadge" style="display:none;"></span>
+        </div>
         <div class="user-chip-name" id="navOperator">No station</div>
       </div>
     </div>
+    <button class="logout-btn" onclick="doLogout()" title="Sign out">⏏ Sign Out</button>
   </div>
 </header>
 
@@ -1203,7 +1380,7 @@ td.actions-cell{display:flex;gap:.3rem;}
           <input type="number" id="sDefPower" placeholder="100">
         </div>
       </div>
-      <div class="btn-row"><button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button></div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button><button class="btn btn-outline" onclick="openChangePassModal(null)">🔑 Change Password</button></div>
     </div>
 
     <div style="display:flex;flex-direction:column;gap:1.25rem;">
@@ -1217,10 +1394,10 @@ td.actions-cell{display:flex;gap:.3rem;}
         <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="saveSettings()">Save Equipment</button></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">👥 Multi-User Accounts</div>
+      <div class="card" id="multiUserCard">
+        <div class="card-title">👥 Operators <span style="font-size:.65rem;color:var(--text-muted);font-weight:400;">(Admin only)</span></div>
         <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:.9rem;">
-          Each callsign maintains a separate, isolated log. Switch between operators or share this device between club members.
+          Each callsign maintains a separate, isolated log. Manage operators from here or the Admin Panel.
         </p>
         <div class="user-switcher" id="userSwitcher"></div>
         <div class="btn-row">
@@ -1456,6 +1633,64 @@ td.actions-cell{display:flex;gap:.3rem;}
   </div>
 </div>
 
+<!-- ════════════════════════════════════════════
+  ADMIN PANEL
+═════════════════════════════════════════════ -->
+<div class="screen" id="adminScreen">
+  <div class="page-header">
+    <div>
+      <div class="page-title">🛡 Admin Panel</div>
+      <div class="page-subtitle">Full system access — manage all operators, logs, and permissions</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary btn-sm" onclick="openAddOperatorModal()">+ Add Operator</button>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- User Management -->
+    <div class="card">
+      <div class="card-title">👥 Operators <span class="card-badge" id="adminUserCount">0</span></div>
+      <div id="adminUserList"></div>
+    </div>
+
+    <!-- System Stats -->
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+      <div class="card">
+        <div class="card-title">📊 System Overview</div>
+        <div class="stat-grid" style="grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:0;" id="adminStats"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔍 View Operator Log</div>
+        <p style="font-size:.8rem;color:var(--text-secondary);margin-bottom:.9rem;line-height:1.5;">
+          As admin, you can view and manage any operator's log directly.
+        </p>
+        <div class="form-grid">
+          <div class="field form-full">
+            <label>Select Operator</label>
+            <select id="adminViewUser" class="filter-sel" style="width:100%;padding:.55rem .75rem;">
+              <option value="">— Choose operator —</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" onclick="adminSwitchToUser()">👁 View Their Log</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="color:var(--danger);">⚠ Danger Zone</div>
+        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:.9rem;line-height:1.5;">These actions are irreversible. Admin access required.</p>
+        <div class="btn-row">
+          <button class="btn btn-danger btn-sm" onclick="adminResetAllDemo()">↺ Reload Demo Data</button>
+          <button class="btn btn-danger btn-sm" onclick="adminNukeAll()">💣 Wipe All Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div><!-- #app -->
 
 <!-- ── TOAST CONTAINER ── -->
@@ -1595,7 +1830,19 @@ td.actions-cell{display:flex;gap:.3rem;}
         <label>QTH</label>
         <input type="text" id="nuQth" placeholder="City, Country">
       </div>
+      <div class="field">
+        <label>Password <span class="required">*</span></label>
+        <input type="password" id="nuPass" placeholder="Set a password" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Role</label>
+        <select id="nuRole">
+          <option value="user">Operator (User)</option>
+          <option value="admin">Administrator</option>
+        </select>
+      </div>
     </div>
+    <div id="nuError" class="auth-error" style="margin-top:.5rem;"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('newUserModal')">Cancel</button>
       <button class="btn btn-primary" onclick="createUser()">Create Operator</button>
@@ -1603,7 +1850,342 @@ td.actions-cell{display:flex;gap:.3rem;}
   </div>
 </div>
 
+<!-- Change Password Modal -->
+<div class="modal-overlay" id="changePassModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">🔑 Change Password</div>
+      <div class="modal-subtitle" id="changePassFor">Changing password for current user</div>
+    </div>
+    <div class="auth-error" id="changePassError" style="margin-bottom:.75rem;"></div>
+    <div class="form-grid">
+      <div class="field form-full" id="oldPassRow">
+        <label>Current Password</label>
+        <input type="password" id="oldPass" placeholder="Current password" autocomplete="current-password">
+      </div>
+      <div class="field form-full">
+        <label>New Password <span class="required">*</span></label>
+        <input type="password" id="newPass" placeholder="New password" autocomplete="new-password">
+      </div>
+      <div class="field form-full">
+        <label>Confirm New Password <span class="required">*</span></label>
+        <input type="password" id="newPass2" placeholder="Repeat new password" autocomplete="new-password">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('changePassModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="doChangePassword()">🔑 Update Password</button>
+    </div>
+  </div>
+</div>
+
 <script>
+<script>
+// ══════════════════════════════════════════════
+//  AUTH SYSTEM
+// ══════════════════════════════════════════════
+const AUTH_STORE  = 'rsl_auth_accounts';   // {callsign: {hash, role, name}}
+const SESSION_KEY = 'rsl_session';         // sessionStorage key
+let SESSION = null; // {call, role}
+
+// SHA-256 hash (async)
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function authAccounts(){
+  try{ return JSON.parse(localStorage.getItem(AUTH_STORE)||'{}'); }catch(e){ return {}; }
+}
+function saveAuthAccounts(accs){ localStorage.setItem(AUTH_STORE, JSON.stringify(accs)); }
+
+function getSession(){
+  try{
+    const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY+'_persist');
+    if(!raw) return null;
+    const s = JSON.parse(raw);
+    if(!s || !s.call) return null;
+    return s;
+  }catch(e){ return null; }
+}
+function setSession(call, role, persist){
+  const s = {call, role};
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
+  if(persist) localStorage.setItem(SESSION_KEY+'_persist', JSON.stringify(s));
+  SESSION = s;
+}
+function clearSession(){
+  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY+'_persist');
+  SESSION = null;
+}
+
+function isAdmin(){ return SESSION && SESSION.role === 'admin'; }
+function isLoggedIn(){ return !!SESSION; }
+
+// ── First run: is admin account set up? ──
+function hasAnyAccount(){
+  return Object.keys(authAccounts()).length > 0;
+}
+
+// ── Create admin on first run ──
+async function createAdminAccount(){
+  const call  = (document.getElementById('setupCall').value||'').trim().toUpperCase();
+  const name  = (document.getElementById('setupName').value||'').trim();
+  const pass  = document.getElementById('setupPass').value;
+  const pass2 = document.getElementById('setupPass2').value;
+  const errEl = document.getElementById('setupError');
+  errEl.classList.remove('show');
+  if(!call){ errEl.textContent='Callsign is required.'; errEl.classList.add('show'); return; }
+  if(pass.length < 6){ errEl.textContent='Password must be at least 6 characters.'; errEl.classList.add('show'); return; }
+  if(pass !== pass2){ errEl.textContent='Passwords do not match.'; errEl.classList.add('show'); return; }
+  const hash = await sha256(call + ':' + pass);
+  const accs = authAccounts();
+  accs[call] = {hash, role:'admin', name: name||call, createdAt: Date.now()};
+  saveAuthAccounts(accs);
+  // Also register in hamlog users
+  const users = JSON.parse(localStorage.getItem('hamlog_users')||'[]');
+  if(!users.includes(call)) users.push(call);
+  localStorage.setItem('hamlog_users', JSON.stringify(users));
+  localStorage.setItem(`hamlog_${call}_settings`, JSON.stringify({myCall:call,myName:name||call,myQth:'',myGrid:'',defPower:'100'}));
+  toast(`Admin account ${call} created — welcome!`,'ok');
+  setSession(call,'admin',true);
+  bootApp(call);
+}
+
+// ── Login ──
+async function doLogin(){
+  const call = (document.getElementById('loginCall').value||'').trim().toUpperCase();
+  const pass = document.getElementById('loginPass').value;
+  const remember = document.getElementById('rememberMe').checked;
+  const errEl = document.getElementById('loginError');
+  const btn   = document.getElementById('loginBtn');
+  errEl.classList.remove('show');
+  if(!call || !pass){ errEl.textContent='Enter callsign and password.'; errEl.classList.add('show'); return; }
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  const accs = authAccounts();
+  const acc  = accs[call];
+  if(!acc){ errEl.textContent='Callsign not found. Contact the admin.'; errEl.classList.add('show'); btn.disabled=false; btn.textContent='Sign In →'; return; }
+  const hash = await sha256(call + ':' + pass);
+  if(hash !== acc.hash){ errEl.textContent='Incorrect password.'; errEl.classList.add('show'); btn.disabled=false; btn.textContent='Sign In →'; return; }
+  setSession(call, acc.role, remember);
+  btn.textContent = '✓ Signed in';
+  bootApp(call);
+}
+
+// ── Logout ──
+function doLogout(){
+  openConfirm('Sign Out', `Sign out of ${SESSION?SESSION.call:''}?`, ()=>{
+    clearSession();
+    SESSION = null;
+    // Hide app, show login
+    document.getElementById('authOverlay').classList.remove('hidden');
+    document.getElementById('authLogin').style.display='';
+    document.getElementById('authSetup').style.display='none';
+    document.getElementById('loginCall').value='';
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginError').classList.remove('show');
+    document.getElementById('loginBtn').disabled=false;
+    document.getElementById('loginBtn').textContent='Sign In →';
+  });
+}
+
+// ── Change Password ──
+let _changePassTarget = null; // null = self, else callsign (admin reset)
+function openChangePassModal(targetCall){
+  _changePassTarget = targetCall; // null = own password
+  const forSelf = !targetCall || targetCall === SESSION.call;
+  document.getElementById('changePassFor').textContent = forSelf
+    ? `Changing password for ${SESSION.call}`
+    : `Admin reset for ${targetCall}`;
+  document.getElementById('oldPassRow').style.display = forSelf ? '' : 'none';
+  document.getElementById('oldPass').value='';
+  document.getElementById('newPass').value='';
+  document.getElementById('newPass2').value='';
+  document.getElementById('changePassError').classList.remove('show');
+  openModal('changePassModal');
+}
+
+async function doChangePassword(){
+  const target = _changePassTarget || SESSION.call;
+  const forSelf = !_changePassTarget || _changePassTarget === SESSION.call;
+  const oldPass = document.getElementById('oldPass').value;
+  const newPass = document.getElementById('newPass').value;
+  const newPass2= document.getElementById('newPass2').value;
+  const errEl   = document.getElementById('changePassError');
+  errEl.classList.remove('show');
+  if(newPass.length < 6){ errEl.textContent='New password must be at least 6 characters.'; errEl.classList.add('show'); return; }
+  if(newPass !== newPass2){ errEl.textContent='Passwords do not match.'; errEl.classList.add('show'); return; }
+  const accs = authAccounts();
+  const acc  = accs[target];
+  if(!acc){ errEl.textContent='Account not found.'; errEl.classList.add('show'); return; }
+  // Verify old password for self (skip for admin resetting another)
+  if(forSelf){
+    const oldHash = await sha256(target + ':' + oldPass);
+    if(oldHash !== acc.hash){ errEl.textContent='Current password is incorrect.'; errEl.classList.add('show'); return; }
+  }
+  const newHash = await sha256(target + ':' + newPass);
+  accs[target].hash = newHash;
+  saveAuthAccounts(accs);
+  closeModal('changePassModal');
+  toast(`Password updated for ${target}`,'ok');
+}
+
+// ── Boot app after login ──
+async function bootApp(call){
+  document.getElementById('authOverlay').classList.add('hidden');
+  init();
+  // Post-init async: auto-pull cloud + patch logQso
+  if(localStorage.getItem('hamlog_sync_pull_'+CURRENT_USER)==='1'){
+    await cloudPull();
+  } else {
+    updateSyncStats();
+  }
+  const _origLQ = logQso;
+  window.logQso = async function(){
+    _origLQ();
+    await autoSyncIfEnabled();
+  };
+}
+
+// ── Check auth on load ──
+function authInit(){
+  SESSION = getSession();
+  if(!hasAnyAccount()){
+    // First run: show setup
+    document.getElementById('authSetup').style.display='';
+    document.getElementById('authLogin').style.display='none';
+    return;
+  }
+  if(SESSION && SESSION.call){
+    // Valid session — boot directly
+    bootApp(SESSION.call);
+    return;
+  }
+  // Show login
+  document.getElementById('authLogin').style.display='';
+  document.getElementById('authSetup').style.display='none';
+}
+
+// ══════════════════════════════════════════════
+//  ADMIN PANEL FUNCTIONS
+// ══════════════════════════════════════════════
+function renderAdminPanel(){
+  if(!isAdmin()) return;
+  const accs  = authAccounts();
+  const calls = Object.keys(accs);
+  el('adminUserCount').textContent = calls.length;
+
+  // User list
+  const listEl = el('adminUserList');
+  listEl.innerHTML = calls.map(call=>{
+    const acc = accs[call];
+    const s   = loadSettings(call);
+    const log = loadLog(call);
+    const isCurrentAdmin = call === SESSION.call;
+    return `<div class="admin-user-row">
+      <div class="admin-user-avatar">${call.substr(0,2)}</div>
+      <div class="admin-user-info">
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <div class="admin-user-call">${call}</div>
+          <span class="auth-badge ${acc.role==='admin'?'auth-badge-admin':'auth-badge-user'}">${acc.role==='admin'?'👑 ADMIN':'📻 USER'}</span>
+          ${isCurrentAdmin?'<span style="font-size:.65rem;color:var(--text-muted);">(you)</span>':''}
+        </div>
+        <div class="admin-user-meta">${s.myName||'—'} · ${s.myQth||'No QTH'} · ${log.length} QSOs</div>
+      </div>
+      <div class="admin-user-actions">
+        <button class="btn btn-ghost btn-sm" onclick="adminViewLog('${call}')" title="View log">👁</button>
+        <button class="btn btn-ghost btn-sm" onclick="openChangePassModal('${call}')" title="Reset password">🔑</button>
+        <button class="btn btn-ghost btn-sm" onclick="adminToggleRole('${call}')" title="Toggle role">${acc.role==='admin'?'⬇ Demote':'⬆ Promote'}</button>
+        ${isCurrentAdmin?'':`<button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${call}')" title="Delete">🗑</button>`}
+      </div>
+    </div>`;
+  }).join('') || '<div class="no-data" style="padding:1rem;">No operators yet.</div>';
+
+  // System stats
+  const totalQsos = calls.reduce((n,c)=>n+loadLog(c).length,0);
+  el('adminStats').innerHTML = `
+    <div class="qsl-stat"><div class="qsl-stat-val">${calls.length}</div><div class="qsl-stat-label">Operators</div></div>
+    <div class="qsl-stat"><div class="qsl-stat-val">${totalQsos}</div><div class="qsl-stat-label">Total QSOs</div></div>
+    <div class="qsl-stat"><div class="qsl-stat-val">${calls.filter(c=>accs[c].role==='admin').length}</div><div class="qsl-stat-label">Admins</div></div>
+    <div class="qsl-stat"><div class="qsl-stat-val">${calls.filter(c=>accs[c].role==='user').length}</div><div class="qsl-stat-label">Users</div></div>
+  `;
+
+  // View-as dropdown
+  const sel = el('adminViewUser');
+  sel.innerHTML = '<option value="">— Choose operator —</option>' +
+    calls.map(c=>`<option value="${c}">${c} (${loadLog(c).length} QSOs)</option>`).join('');
+}
+
+function adminViewLog(call){
+  if(!isAdmin()){ toast('Admin only','warn'); return; }
+  CURRENT_USER = call;
+  LOG = loadLog(call);
+  applySettings(loadSettings(call));
+  updateNavChip(); updateCounter(); renderLog(); renderRecent(); updateLotwStats();
+  showScreen('logScreen', document.querySelector('[data-screen="logScreen"]'));
+  toast(`Viewing log for ${call}`,'ok');
+}
+
+function adminSwitchToUser(){
+  const call = (el('adminViewUser')||{}).value;
+  if(!call) return toast('Select an operator','warn');
+  adminViewLog(call);
+}
+
+function adminToggleRole(call){
+  if(!isAdmin()) return;
+  const accs = authAccounts();
+  if(!accs[call]) return;
+  // Prevent removing last admin
+  const admins = Object.keys(accs).filter(c=>accs[c].role==='admin');
+  if(accs[call].role==='admin' && admins.length<=1){ toast('Cannot demote the only admin','warn'); return; }
+  accs[call].role = accs[call].role==='admin'?'user':'admin';
+  saveAuthAccounts(accs);
+  renderAdminPanel();
+  toast(`${call} is now ${accs[call].role}`,'ok');
+}
+
+function adminDeleteUser(call){
+  if(!isAdmin()) return;
+  if(call===SESSION.call){ toast('Cannot delete yourself','warn'); return; }
+  openConfirm(`Delete ${call}`,`Permanently remove operator ${call} and all their QSOs?`,()=>{
+    const accs=authAccounts(); delete accs[call]; saveAuthAccounts(accs);
+    delete USERS[call]; saveUsers();
+    localStorage.removeItem(`hamlog_${call}_log`);
+    localStorage.removeItem(`hamlog_${call}_settings`);
+    renderAdminPanel();
+    toast(`${call} deleted`,'warn');
+  });
+}
+
+function openAddOperatorModal(){
+  if(!isAdmin()){ toast('Admin only','warn'); return; }
+  openNewUserModal();
+}
+
+function adminResetAllDemo(){
+  if(!isAdmin()) return;
+  openConfirm('Reload Demo Data','Reset YOUR log to the demo QSOs? Other users are unaffected.',()=>{
+    localStorage.removeItem('hamlog_demo_'+CURRENT_USER);
+    LOG=[];saveLog();init();
+  });
+}
+function adminNukeAll(){
+  if(!isAdmin()) return;
+  openConfirm('⚠ WIPE ALL DATA','Delete ALL operators, QSOs, settings, and accounts for ALL users? This cannot be undone.',()=>{
+    const accs = authAccounts();
+    Object.keys(accs).forEach(c=>{
+      localStorage.removeItem(`hamlog_${c}_log`);
+      localStorage.removeItem(`hamlog_${c}_settings`);
+    });
+    localStorage.removeItem('hamlog_users');
+    localStorage.removeItem(AUTH_STORE);
+    clearSession();
+    location.reload();
+  });
+}
+
 // ══════════════════════════════════════════════
 //  CONSTANTS & DATA
 // ══════════════════════════════════════════════
@@ -1857,8 +2439,10 @@ function el(id){return document.getElementById(id);}
 //  MULTI-USER
 // ══════════════════════════════════════════════
 function switchUser(call){
+  if(!isAdmin() && call !== SESSION.call){
+    toast('Permission denied — admin only','warn'); return;
+  }
   CURRENT_USER = call;
-  localStorage.setItem('hamlog_current_user', call);
   LOG = loadLog(call);
   applySettings(loadSettings(call));
   updateNavChip();
@@ -1872,55 +2456,85 @@ function switchUser(call){
 }
 
 function createUser(){
+  if(!isAdmin()){ toast('Admin only','warn'); return; }
   const call = v('nuCall').trim().toUpperCase();
-  const name = v('nuName');
-  const qth  = v('nuQth');
-  if(!call){ toast('Callsign required','error'); return; }
-  if(USERS[call]){ toast('Operator already exists','warn'); return; }
-  USERS[call] = true;
-  saveUsers();
-  const settings = {myCall:call, myName:name, myQth:qth};
-  localStorage.setItem(userKey(call,'settings'), JSON.stringify(settings));
-  closeModal('newUserModal');
-  sv('nuCall',''); sv('nuName',''); sv('nuQth','');
-  switchUser(call);
+  const name = v('nuName').trim();
+  const qth  = v('nuQth').trim();
+  const pass = v('nuPass');
+  const role = v('nuRole') || 'user';
+  const errEl = el('nuError');
+  errEl.classList.remove('show');
+  if(!call){ errEl.textContent='Callsign required.'; errEl.classList.add('show'); return; }
+  if(USERS[call]){ errEl.textContent='Operator already exists.'; errEl.classList.add('show'); return; }
+  if(pass.length < 4){ errEl.textContent='Password must be at least 4 characters.'; errEl.classList.add('show'); return; }
+  // Hash password async then create
+  sha256(call + ':' + pass).then(hash => {
+    const accs = authAccounts();
+    accs[call] = { hash, role, name: name||call, createdAt: Date.now() };
+    saveAuthAccounts(accs);
+    USERS[call] = true;
+    saveUsers();
+    const settings = {myCall:call, myName:name, myQth:qth, defPower:'100'};
+    localStorage.setItem(userKey(call,'settings'), JSON.stringify(settings));
+    closeModal('newUserModal');
+    sv('nuCall',''); sv('nuName',''); sv('nuQth',''); sv('nuPass','');
+    renderAdminPanel();
+    renderUserSwitchers();
+    toast(`Operator ${call} created (${role})`,'ok');
+  });
 }
 
 function openNewUserModal(){ openModal('newUserModal'); }
 function openUserModal(){ renderModalUsers(); openModal('userModal'); }
 
 function openDeleteUserModal(){
+  if(!isAdmin()){ toast('Admin only','warn'); return; }
   if(Object.keys(USERS).length <= 1){ toast('Cannot delete the only operator','warn'); return; }
   openConfirm('Remove Operator', `Remove ${CURRENT_USER} and all their QSOs? This cannot be undone.`, ()=>{
+    const accs = authAccounts();
+    delete accs[CURRENT_USER];
+    saveAuthAccounts(accs);
     delete USERS[CURRENT_USER];
     localStorage.removeItem(userKey(CURRENT_USER,'log'));
     localStorage.removeItem(userKey(CURRENT_USER,'settings'));
     saveUsers();
     const remaining = Object.keys(USERS);
-    if(remaining.length) switchUser(remaining[0]);
+    if(remaining.length) adminViewLog(remaining[0]);
     else{ CURRENT_USER=''; LOG=[]; updateNavChip(); }
+    renderAdminPanel();
   });
 }
 
 function renderUserSwitchers(){
-  const calls = Object.keys(USERS);
+  // Admin sees all users; regular users only see themselves
+  const allCalls = Object.keys(USERS);
+  const visibleCalls = isAdmin() ? allCalls : allCalls.filter(c => c === (SESSION?SESSION.call:''));
   ['userSwitcher','modalUserSwitcher'].forEach(id=>{
     const c = el(id); if(!c) return;
-    c.innerHTML = calls.map(call=>{
+    c.innerHTML = visibleCalls.map(call=>{
       const s = loadSettings(call);
       const log = loadLog(call);
+      const accs = authAccounts();
+      const role = (accs[call]||{}).role||'user';
       const initials = (call||'?').substr(0,2);
       const isActive = call === CURRENT_USER;
-      return `<div class="user-entry${isActive?' active-user':''}" onclick="switchUser('${call}')">
+      const clickable = isAdmin() ? `onclick="switchUser('${call}')"` : '';
+      return `<div class="user-entry${isActive?' active-user':''}" ${clickable} style="${!isAdmin()?'cursor:default;':''}">
         <div class="user-entry-avatar">${initials}</div>
         <div class="user-entry-info">
-          <div class="user-entry-call">${call}</div>
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            <div class="user-entry-call">${call}</div>
+            <span class="auth-badge ${role==='admin'?'auth-badge-admin':'auth-badge-user'}" style="font-size:.58rem;padding:.1rem .35rem;">${role==='admin'?'👑':'📻'}</span>
+          </div>
           <div class="user-entry-name">${s.myName||'Unknown Operator'} — ${s.myQth||'No QTH'}</div>
         </div>
         <div class="user-entry-count">${log.length} QSOs</div>
       </div>`;
-    }).join('') || '<div class="text-muted" style="padding:.75rem;font-size:.8rem;">No operators added yet</div>';
+    }).join('') || '<div style="padding:.75rem;font-size:.8rem;color:var(--text-muted);">No operators found</div>';
   });
+  // Hide admin-only UI elements for regular users
+  const multiCard = el('multiUserCard');
+  if(multiCard) multiCard.style.display = isAdmin() ? '' : 'none';
 }
 
 function updateNavChip(){
@@ -1931,12 +2545,29 @@ function updateNavChip(){
   el('logSubtitle').textContent = s.myCall
     ? `${s.myCall} — ${s.myQth||'No QTH'} ${s.myGrid?'('+s.myGrid+')':''}`
     : 'No station configured';
+  // Role badge
+  const badge = el('navRoleBadge');
+  if(SESSION){
+    badge.style.display='';
+    badge.className = `auth-badge ${SESSION.role==='admin'?'auth-badge-admin':'auth-badge-user'}`;
+    badge.textContent = SESSION.role==='admin' ? '👑 ADMIN' : '📻 USER';
+  }
+  // Admin nav button
+  const adminBtn = el('adminNavBtn');
+  if(adminBtn) adminBtn.style.display = isAdmin() ? '' : 'none';
+  // User chip pointer for admin only
+  const chip = el('navChip');
+  if(chip) chip.style.cursor = isAdmin() ? 'pointer' : 'default';
 }
 
 // ══════════════════════════════════════════════
 //  NAVIGATION & CLOCK
 // ══════════════════════════════════════════════
 function showScreen(id, btn){
+  // Guard admin-only screens
+  if(id === 'adminScreen' && !isAdmin()){
+    toast('Admin access required','warn'); return;
+  }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   el(id).classList.add('active');
@@ -1946,7 +2577,8 @@ function showScreen(id, btn){
   if(id==='dxccScreen') renderDxcc();
   if(id==='awardsScreen') renderAwards();
   if(id==='lotwScreen') updateLotwStats();
-  if(id==='settingsScreen') renderUserSwitchers();
+  if(id==='settingsScreen'){ renderUserSwitchers(); }
+  if(id==='adminScreen'){ renderAdminPanel(); }
 }
 
 function updateClock(){
@@ -2693,23 +3325,20 @@ document.addEventListener('keydown',e=>{
 //  INIT
 // ══════════════════════════════════════════════
 function init(){
-  const users = loadUsers();
-  let current = localStorage.getItem('hamlog_current_user');
+  // Auth: use session, not localStorage auto-login
+  if(!SESSION) SESSION = getSession();
+  const sessionCall = SESSION ? SESSION.call : null;
 
-  if(users.length && users.includes(current)){
-    CURRENT_USER = current;
+  const users = loadUsers();
+  if(sessionCall && (users.includes(sessionCall) || Object.keys(authAccounts()).includes(sessionCall))){
+    // Ensure user is in USERS map
+    if(!USERS[sessionCall]){ USERS[sessionCall]=true; saveUsers(); }
+    CURRENT_USER = sessionCall;
   } else if(users.length){
     CURRENT_USER = users[0];
-    localStorage.setItem('hamlog_current_user', CURRENT_USER);
   } else {
-    // First-time setup — create default user
-    const defaultCall = 'W1AW';
-    USERS[defaultCall]=true;
-    saveUsers();
-    CURRENT_USER = defaultCall;
-    localStorage.setItem('hamlog_current_user', CURRENT_USER);
-    const defSettings = {myCall:defaultCall, myName:'New Operator', myQth:'', myGrid:'', defPower:'100'};
-    localStorage.setItem(userKey(defaultCall,'settings'), JSON.stringify(defSettings));
+    CURRENT_USER = sessionCall || 'UNKNOWN';
+    USERS[CURRENT_USER]=true; saveUsers();
   }
 
   LOG = loadLog(CURRENT_USER);
@@ -3321,26 +3950,8 @@ window.showScreen = function(id, btn){
   if(id==='syncScreen') { updateSyncStats(); el('syncAutoOn').checked = localStorage.getItem('hamlog_sync_auto_'+CURRENT_USER)==='1'; el('syncPullOn').checked = localStorage.getItem('hamlog_sync_pull_'+CURRENT_USER)==='1'; }
 };
 
-init();
-
-// ══════════════════════════════════════════════
-//  POST-INIT PATCHES
-// ══════════════════════════════════════════════
-(async ()=>{
-  // Auto-pull on startup if enabled
-  if(localStorage.getItem('hamlog_sync_pull_'+CURRENT_USER)==='1'){
-    await cloudPull();
-  } else {
-    updateSyncStats();
-  }
-
-  // Patch logQso to call autoSync after logging
-  const _origLQ = logQso;
-  window.logQso = async function(){
-    _origLQ();
-    await autoSyncIfEnabled();
-  };
-})();
+// ── BOOT: auth gate ──
+authInit();
 </script>
 <!-- ── COPYRIGHT FOOTER ── -->
 <footer style="
