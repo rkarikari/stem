@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RadioSport Log — Amateur Radio Station Logger</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%233b82f6'/><text x='16' y='22' font-size='18' text-anchor='middle' fill='white'>📡</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -756,24 +757,26 @@ td.actions-cell{display:flex;gap:.3rem;}
       </div>
       <div class="auth-title">Welcome — First-Time Setup</div>
       <div class="auth-sub">Create your admin account to get started. The admin has full access and manages all operators.</div>
+      <form autocomplete="on" onsubmit="createAdminAccount();return false;">
       <div class="auth-error" id="setupError"></div>
       <div class="auth-field">
         <label>Admin Callsign <span style="color:var(--danger)">*</span></label>
-        <input class="callsign-inp" type="text" id="setupCall" placeholder="9G5AR" oninput="this.value=this.value.toUpperCase()" autocomplete="off">
+        <input class="callsign-inp" type="text" id="setupCall" name="username" placeholder="9G5AR" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
       </div>
       <div class="auth-field">
         <label>Operator Name</label>
-        <input type="text" id="setupName" placeholder="R.N.K" autocomplete="off">
+        <input type="text" id="setupName" name="name" placeholder="R.N.K" autocomplete="name">
       </div>
       <div class="auth-field">
         <label>Password <span style="color:var(--danger)">*</span></label>
-        <input type="password" id="setupPass" placeholder="Choose a strong password" autocomplete="new-password">
+        <input type="password" id="setupPass" name="new-password" placeholder="Choose a strong password" autocomplete="new-password">
       </div>
       <div class="auth-field">
         <label>Confirm Password <span style="color:var(--danger)">*</span></label>
-        <input type="password" id="setupPass2" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')createAdminAccount()">
+        <input type="password" id="setupPass2" name="confirm-password" placeholder="Repeat password" autocomplete="new-password">
       </div>
-      <button class="auth-btn" onclick="createAdminAccount()">🔐 Create Admin Account</button>
+      <button type="submit" class="auth-btn">🔐 Create Admin Account</button>
+      </form>
       <div class="auth-footer">RadioSport Log · R.N.K 9G5AR RadioSport</div>
     </div>
   </div>
@@ -787,20 +790,22 @@ td.actions-cell{display:flex;gap:.3rem;}
       </div>
       <div class="auth-title">Sign In</div>
       <div class="auth-sub">Enter your callsign and password to access your log</div>
+      <form autocomplete="on" onsubmit="doLogin();return false;">
       <div class="auth-error" id="loginError"></div>
       <div class="auth-field">
         <label>Callsign</label>
-        <input class="callsign-inp" type="text" id="loginCall" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
+        <input class="callsign-inp" type="text" id="loginCall" name="username" placeholder="W1AW" oninput="this.value=this.value.toUpperCase()" autocomplete="username">
       </div>
       <div class="auth-field">
         <label>Password</label>
-        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <input type="password" id="loginPass" name="password" placeholder="••••••••" autocomplete="current-password">
       </div>
       <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.9rem;">
         <input type="checkbox" id="rememberMe" style="accent-color:var(--primary);">
         <label for="rememberMe" style="font-size:.78rem;color:var(--text-muted);cursor:pointer;">Keep me signed in</label>
       </div>
-      <button class="auth-btn" id="loginBtn" onclick="doLogin()">Sign In →</button>
+      <button type="submit" class="auth-btn" id="loginBtn">Sign In →</button>
+      </form>
       <div class="auth-footer" style="margin-top:1rem;">
         RadioSport Log · © 2026 R.N.K 9G5AR RadioSport
       </div>
@@ -1858,28 +1863,29 @@ td.actions-cell{display:flex;gap:.3rem;}
       <div class="modal-subtitle" id="changePassFor">Changing password for current user</div>
     </div>
     <div class="auth-error" id="changePassError" style="margin-bottom:.75rem;"></div>
+    <form autocomplete="on" onsubmit="doChangePassword();return false;">
     <div class="form-grid">
       <div class="field form-full" id="oldPassRow">
         <label>Current Password</label>
-        <input type="password" id="oldPass" placeholder="Current password" autocomplete="current-password">
+        <input type="password" id="oldPass" name="current-password" placeholder="Current password" autocomplete="current-password">
       </div>
       <div class="field form-full">
         <label>New Password <span class="required">*</span></label>
-        <input type="password" id="newPass" placeholder="New password" autocomplete="new-password">
+        <input type="password" id="newPass" name="new-password" placeholder="New password" autocomplete="new-password">
       </div>
       <div class="field form-full">
         <label>Confirm New Password <span class="required">*</span></label>
-        <input type="password" id="newPass2" placeholder="Repeat new password" autocomplete="new-password">
+        <input type="password" id="newPass2" name="confirm-password" placeholder="Repeat new password" autocomplete="new-password">
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('changePassModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="doChangePassword()">🔑 Update Password</button>
+      <button type="button" class="btn btn-ghost" onclick="closeModal('changePassModal')">Cancel</button>
+      <button type="submit" class="btn btn-primary">🔑 Update Password</button>
     </div>
+    </form>
   </div>
 </div>
 
-<script>
 <script>
 // ══════════════════════════════════════════════
 //  AUTH SYSTEM
