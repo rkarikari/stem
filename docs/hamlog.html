@@ -861,8 +861,39 @@ td.actions-cell{display:flex;gap:.3rem;}
         </button>
         <div class="auth-divider-or">or</div>
       </div>
-      <div id="googleClientIdNotice" class="auth-notice warn" style="display:none;">
-        ⚠ Google Sign-In not configured. <a href="#" onclick="showGoogleSetupHint()" style="color:inherit;text-decoration:underline;">Set up Client ID</a> in Admin → Settings.
+
+      <!-- Google not configured: inline setup panel (no login required) -->
+      <div id="googleClientIdNotice" style="display:none; margin-bottom:.85rem;">
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+          <button type="button"
+            onclick="document.getElementById('googleSetupPanel').style.display=document.getElementById('googleSetupPanel').style.display==='none'?'':'none';this.textContent=document.getElementById('googleSetupPanel').style.display===''?'▲ Google Sign-In — hide setup':'⚙ Configure Google Sign-In (optional)'"
+            style="width:100%;padding:.6rem .9rem;background:none;border:none;color:var(--text-secondary);font-size:.78rem;font-weight:500;cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:.5rem;">
+            ⚙ Configure Google Sign-In (optional)
+          </button>
+          <div id="googleSetupPanel" style="display:none;padding:.75rem 1rem 1rem;border-top:1px solid var(--border);">
+            <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:.75rem;line-height:1.6;">
+              Paste your Google OAuth 2.0 Client ID to enable "Continue with Google" for all operators.
+              Get one free at <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--primary);">console.cloud.google.com</a>
+              → Create Credentials → OAuth Client ID → Web application.
+              Add this page's URL to <em>Authorized JavaScript origins</em>.
+            </p>
+            <div style="display:flex;gap:.5rem;align-items:flex-end;">
+              <div style="flex:1;">
+                <label style="font-size:.72rem;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:.3rem;">Google OAuth Client ID</label>
+                <input type="text" id="loginPageClientId"
+                  placeholder="123456789-abcdef.apps.googleusercontent.com"
+                  style="width:100%;background:var(--bg-input);border:1px solid var(--border);color:var(--text-bright);font-size:.8rem;padding:.5rem .7rem;border-radius:var(--radius-sm);outline:none;font-family:'DM Sans',sans-serif;"
+                  onfocus="this.style.borderColor='var(--primary)'"
+                  onblur="this.style.borderColor='var(--border)'">
+              </div>
+              <button type="button" onclick="saveLoginPageClientId()"
+                style="padding:.5rem .9rem;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);font-size:.78rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;">
+                Save &amp; Enable
+              </button>
+            </div>
+            <div id="loginClientIdMsg" style="font-size:.72rem;margin-top:.4rem;display:none;"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Tabs -->
@@ -1010,8 +1041,15 @@ td.actions-cell{display:flex;gap:.3rem;}
       <div class="sync-dot" id="syncDot"></div>
       <span id="syncLabel">☁ Sync</span>
     </div>
+    <!-- Pending registrations bell (admin only) -->
+    <div id="pendingBell" style="display:none;cursor:pointer;position:relative;" onclick="showScreen('adminScreen',null)" title="Pending registrations awaiting approval">
+      <span style="font-size:1.1rem;">🔔</span>
+      <span id="pendingBellCount" style="position:absolute;top:-4px;right:-6px;background:var(--danger);color:#fff;font-size:.55rem;font-weight:700;padding:.1rem .3rem;border-radius:10px;line-height:1.2;"></span>
+    </div>
     <div class="user-chip" onclick="isAdmin()?openUserModal():null" id="navChip" style="cursor:default;">
-      <div class="user-avatar" id="navAvatar">?</div>
+      <div id="navAvatarWrap" style="flex-shrink:0;">
+        <div class="user-avatar" id="navAvatar">?</div>
+      </div>
       <div>
         <div style="display:flex;align-items:center;gap:.4rem;">
           <div class="user-chip-call" id="navCallsign">—</div>
@@ -1555,6 +1593,34 @@ td.actions-cell{display:flex;gap:.3rem;}
           <button class="btn btn-ghost btn-sm" onclick="openDeleteUserModal()">Remove Operator</button>
         </div>
       </div>
+
+      <!-- Google Sign-In config — admin only -->
+      <div class="card" id="googleConfigCard" style="display:none;">
+        <div class="card-title">🔵 Google Sign-In</div>
+        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:.9rem;line-height:1.6;">
+          Enable "Continue with Google" on the login page for all operators.
+          Get a free Client ID at
+          <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--primary);">console.cloud.google.com</a>
+          → Create Credentials → OAuth 2.0 Client ID → Web application.
+          Add this page's full URL to <strong>Authorized JavaScript origins</strong>.
+        </p>
+        <div class="form-grid">
+          <div class="field form-full">
+            <label>Google OAuth Client ID</label>
+            <input type="text" id="sGoogleClientId"
+              placeholder="123456789-abcdef.apps.googleusercontent.com"
+              oninput="document.getElementById('googleClientIdStatus').style.display='none'">
+            <span style="font-size:.7rem;color:var(--text-muted);margin-top:.2rem;display:block;">
+              Paste your Client ID here. Leave blank to disable Google Sign-In.
+            </span>
+          </div>
+        </div>
+        <div id="googleClientIdStatus" style="display:none;font-size:.78rem;padding:.4rem .7rem;border-radius:var(--radius-sm);margin-bottom:.5rem;"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" onclick="saveGoogleClientIdSetting()">🔵 Save & Enable Google Sign-In</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearGoogleClientId()">✕ Disable Google Sign-In</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1623,16 +1689,11 @@ td.actions-cell{display:flex;gap:.3rem;}
   <!-- Gmail Settings Panel -->
   <div class="two-col">
     <div class="card">
-      <div class="card-title">✉ Gmail & Google Sign-In Settings</div>
+      <div class="card-title">✉ Gmail Settings</div>
       <p style="font-size:.8rem;color:var(--text-secondary);margin-bottom:1rem;line-height:1.6;">
-        Configure your Gmail account for QSL emails and enable Google Sign-In for operators. Get a Client ID free at <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="link" style="color:var(--primary);">console.cloud.google.com</a>.
+        Configure your Gmail account for sending QSL confirmation emails. RadioSport Log uses your connected Gmail account to send personalised QSL emails with an embedded QSL card.
       </p>
       <div class="form-grid">
-        <div class="field form-full">
-          <label>Google OAuth Client ID</label>
-          <input type="text" id="sGoogleClientId" placeholder="123456789-abc.apps.googleusercontent.com">
-          <span style="font-size:.7rem;color:var(--text-muted);margin-top:.2rem;display:block;">Required for "Continue with Google" sign-in. Leave blank to disable.</span>
-        </div>
         <div class="field">
           <label>Your Gmail Address</label>
           <input type="email" id="sGmailFrom" placeholder="you@gmail.com">
@@ -1651,7 +1712,7 @@ td.actions-cell{display:flex;gap:.3rem;}
         </div>
       </div>
       <div class="btn-row">
-        <button class="btn btn-primary btn-sm" onclick="saveGmailSettings()">💾 Save Gmail & Google Settings</button>
+        <button class="btn btn-primary btn-sm" onclick="saveGmailSettings()">💾 Save Gmail Settings</button>
         <button class="btn btn-outline btn-sm" onclick="resetGmailTemplate()">↺ Reset Template</button>
       </div>
     </div>
@@ -2102,8 +2163,13 @@ function showAuthPanel(panel){
   document.getElementById('authLogin').style.display         = panel==='login'    ? '' : 'none';
   document.getElementById('authGoogleComplete').style.display= panel==='gcomplete'? '' : 'none';
 }
-function showGoogleSetupHint(){
-  alert('To enable Google Sign-In:\n1. Go to https://console.cloud.google.com/apis/credentials\n2. Create an OAuth 2.0 Client ID (Web application)\n3. Add your site URL to Authorized JavaScript origins\n4. Copy the Client ID into Admin → Settings → Google OAuth Client ID\n5. Save and reload.');
+function refreshPendingBell(){
+  const bell = el('pendingBell');
+  if(!bell || !isAdmin()) return;
+  const count = Object.keys(pendingAccounts()).length;
+  bell.style.display = count > 0 ? '' : 'none';
+  const countEl = el('pendingBellCount');
+  if(countEl) countEl.textContent = count > 0 ? count : '';
 }
 
 // ── Self-Register ──
@@ -2127,6 +2193,7 @@ async function doSelfRegister(){
   const hash = await sha256(call + ':' + pass);
   pend[call] = { hash, name: name||call, qth, role:'user', requestedAt: Date.now() };
   savePendingAccounts(pend);
+  refreshPendingBell();
   btn.disabled=false; btn.textContent='📋 Register Operator';
   errEl.style.background='var(--success-muted)'; errEl.style.borderColor='var(--success-border)'; errEl.style.color='var(--success)';
   errEl.textContent='✅ Registration submitted! An admin will review and approve your account.';
@@ -2194,6 +2261,10 @@ async function doLogin(){
 // ── Logout ──
 function doLogout(){
   openConfirm('Sign Out', `Sign out of ${SESSION?SESSION.call:''}?`, ()=>{
+    // Revoke Google One Tap if active
+    if(window.google && window.google.accounts && SESSION && SESSION.googleEmail){
+      try{ google.accounts.id.revoke(SESSION.googleEmail, ()=>{}); }catch(e){}
+    }
     clearSession();
     SESSION = null;
     showAuthPanel('login');
@@ -2204,7 +2275,7 @@ function doLogout(){
     const btn = document.getElementById('loginBtn');
     if(btn){ btn.disabled=false; btn.textContent='Sign In →'; }
     authShowTab('signin');
-    initGoogleSignIn(); // re-init GIS
+    initGoogleSignIn();
   });
 }
 
@@ -2254,21 +2325,42 @@ let _pendingGoogleCredential = null; // JWT credential while awaiting callsign e
 
 function getGoogleClientId(){
   // Check settings first, then localStorage fallback
-  const cfg = loadGmailSettings ? loadGmailSettings() : {};
+  const cfg = typeof loadGmailSettings === 'function' ? loadGmailSettings() : {};
   return cfg.googleClientId || localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || '';
+}
+
+// Save Client ID directly from the login page (no login required)
+function saveLoginPageClientId(){
+  const inp = document.getElementById('loginPageClientId');
+  const msgEl = document.getElementById('loginClientIdMsg');
+  const val = (inp ? inp.value : '').trim();
+  if(!val){
+    msgEl.style.color='var(--danger)'; msgEl.textContent='Paste a Client ID first.'; msgEl.style.display='';
+    return;
+  }
+  if(!val.includes('.apps.googleusercontent.com')){
+    msgEl.style.color='var(--danger)'; msgEl.textContent='That doesn\'t look like a valid Google Client ID.'; msgEl.style.display='';
+    return;
+  }
+  localStorage.setItem(GOOGLE_CLIENT_ID_KEY, val);
+  msgEl.style.color='var(--success)'; msgEl.textContent='✓ Saved! Enabling Google Sign-In…'; msgEl.style.display='';
+  setTimeout(()=>{ initGoogleSignIn(); msgEl.style.display='none'; }, 1200);
 }
 
 function initGoogleSignIn(){
   const clientId = getGoogleClientId();
-  const wrapEl = document.getElementById('googleSignInWrap');
+  const wrapEl   = document.getElementById('googleSignInWrap');
   const noticeEl = document.getElementById('googleClientIdNotice');
+  // Pre-fill login page field if it exists
+  const lpInput  = document.getElementById('loginPageClientId');
+  if(lpInput && !lpInput.value && clientId) lpInput.value = clientId;
   if(!wrapEl) return;
   if(!clientId){
-    wrapEl.style.display = 'none';
-    noticeEl.style.display = '';
+    wrapEl.style.display  = 'none';
+    if(noticeEl) noticeEl.style.display = '';
     return;
   }
-  noticeEl.style.display = 'none';
+  if(noticeEl) noticeEl.style.display = 'none';
   wrapEl.style.display = '';
   // Load GIS library if not loaded
   if(!window.google || !window.google.accounts){
@@ -2343,7 +2435,7 @@ function handleGoogleCredential(response){
   const existingCall = Object.keys(accs).find(k=>accs[k].googleSub===googleSub);
 
   if(existing && existingCall){
-    // Auto-login
+    // Auto-login — restore Google email into session for logout revoke
     setSession(existingCall, existing.role, true, {name:existing.name, pic:googlePic, googleEmail});
     toast(`Welcome back, ${existingCall}!`, 'ok');
     bootApp(existingCall);
@@ -2416,6 +2508,7 @@ async function doGoogleComplete(){
     requestedAt: Date.now()
   };
   savePendingAccounts(pend);
+  refreshPendingBell();
   _pendingGoogleCredential = null;
 
   errEl.style.background='var(--success-muted)'; errEl.style.borderColor='var(--success-border)'; errEl.style.color='var(--success)';
@@ -2428,6 +2521,9 @@ async function doGoogleComplete(){
 async function bootApp(call){
   document.getElementById('authOverlay').classList.add('hidden');
   init();
+  // Update nav chip with session data (pic, role badge, pending bell)
+  updateNavChip();
+  refreshPendingBell();
   if(localStorage.getItem('hamlog_sync_pull_'+CURRENT_USER)==='1'){
     await cloudPull();
   } else {
@@ -2557,7 +2653,7 @@ function adminApprove(call){
   }
   USERS[call]=true; saveUsers();
   delete pend[call]; savePendingAccounts(pend);
-  renderAdminPanel(); renderUserSwitchers();
+  renderAdminPanel(); renderUserSwitchers(); refreshPendingBell();
   toast(`${call} approved and activated`,'ok');
 }
 
@@ -2565,7 +2661,7 @@ function adminRejectPending(call){
   openConfirm(`Reject ${call}`,`Permanently reject and delete the registration request for ${call}?`,()=>{
     const pend = pendingAccounts();
     delete pend[call]; savePendingAccounts(pend);
-    renderAdminPanel();
+    renderAdminPanel(); refreshPendingBell();
     toast(`${call} registration rejected`,'warn');
   });
 }
@@ -2988,29 +3084,60 @@ function renderUserSwitchers(){
   // Hide admin-only UI elements for regular users
   const multiCard = el('multiUserCard');
   if(multiCard) multiCard.style.display = isAdmin() ? '' : 'none';
+  const gcCard = el('googleConfigCard');
+  if(gcCard) gcCard.style.display = isAdmin() ? '' : 'none';
 }
 
 function updateNavChip(){
   const s = SETTINGS;
   el('navCallsign').textContent = s.myCall || '—';
   el('navOperator').textContent = s.myName || 'Unknown';
-  el('navAvatar').textContent = (s.myCall||'?').substr(0,2);
   el('logSubtitle').textContent = s.myCall
     ? `${s.myCall} — ${s.myQth||'No QTH'} ${s.myGrid?'('+s.myGrid+')':''}`
     : 'No station configured';
+
+  // Avatar: Google pic or initials
+  const avatarWrap = el('navAvatarWrap');
+  if(avatarWrap && SESSION){
+    const pic = SESSION.pic;
+    if(pic){
+      avatarWrap.innerHTML = `<img src="${pic}" referrerpolicy="no-referrer"
+        style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;"
+        onerror="this.style.display='none';document.getElementById('navAvatar').style.display=''">
+        <div class="user-avatar" id="navAvatar" style="display:none;">${(s.myCall||'?').substr(0,2)}</div>`;
+    } else {
+      avatarWrap.innerHTML = `<div class="user-avatar" id="navAvatar">${(s.myCall||'?').substr(0,2)}</div>`;
+    }
+  }
+
   // Role badge
   const badge = el('navRoleBadge');
-  if(SESSION){
+  if(badge && SESSION){
     badge.style.display='';
     badge.className = `auth-badge ${SESSION.role==='admin'?'auth-badge-admin':'auth-badge-user'}`;
     badge.textContent = SESSION.role==='admin' ? '👑 ADMIN' : '📻 USER';
   }
+
   // Admin nav button
   const adminBtn = el('adminNavBtn');
   if(adminBtn) adminBtn.style.display = isAdmin() ? '' : 'none';
+
   // User chip pointer for admin only
   const chip = el('navChip');
   if(chip) chip.style.cursor = isAdmin() ? 'pointer' : 'default';
+
+  // Pending registrations bell (admin only)
+  const bell = el('pendingBell');
+  if(bell){
+    if(isAdmin()){
+      const count = Object.keys(pendingAccounts()).length;
+      bell.style.display = count > 0 ? '' : 'none';
+      const countEl = el('pendingBellCount');
+      if(countEl) countEl.textContent = count > 0 ? count : '';
+    } else {
+      bell.style.display = 'none';
+    }
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -3030,7 +3157,7 @@ function showScreen(id, btn){
   if(id==='dxccScreen') renderDxcc();
   if(id==='awardsScreen') renderAwards();
   if(id==='lotwScreen') updateLotwStats();
-  if(id==='settingsScreen'){ renderUserSwitchers(); }
+  if(id==='settingsScreen'){ renderUserSwitchers(); applyGmailSettings(); }
   if(id==='adminScreen'){ renderAdminPanel(); }
 }
 
@@ -4082,20 +4209,51 @@ Please confirm receipt via your preferred bureau or direct QSL.
 function loadGmailSettings(){
   try{ return JSON.parse(localStorage.getItem(userKey(CURRENT_USER,'gmail'))||'{}'); }catch(e){ return {}; }
 }
+// ── Google Client ID helpers (post-login, Settings screen) ──
+function saveGoogleClientIdSetting(){
+  const inp = el('sGoogleClientId');
+  const statusEl = el('googleClientIdStatus');
+  if(!inp) return;
+  const val = inp.value.trim();
+  if(!val){
+    if(statusEl){ statusEl.style.cssText='display:block;background:var(--danger-muted);color:var(--danger);border:1px solid rgba(239,68,68,.3);padding:.4rem .7rem;border-radius:4px;'; statusEl.textContent='Paste a Client ID first.'; }
+    return;
+  }
+  if(!val.includes('.apps.googleusercontent.com')){
+    if(statusEl){ statusEl.style.cssText='display:block;background:var(--danger-muted);color:var(--danger);border:1px solid rgba(239,68,68,.3);padding:.4rem .7rem;border-radius:4px;'; statusEl.textContent="Doesn't look like a valid Google Client ID — should end with .apps.googleusercontent.com"; }
+    return;
+  }
+  localStorage.setItem(GOOGLE_CLIENT_ID_KEY, val);
+  const cfg = loadGmailSettings(); cfg.googleClientId = val;
+  localStorage.setItem(userKey(CURRENT_USER,'gmail'), JSON.stringify(cfg));
+  if(statusEl){ statusEl.style.cssText='display:block;background:var(--success-muted);color:var(--success);border:1px solid var(--success-border);padding:.4rem .7rem;border-radius:4px;'; statusEl.textContent='✓ Saved! Google Sign-In is now enabled on the login page.'; }
+  initGoogleSignIn();
+  toast('Google Sign-In enabled','ok');
+}
+
+function clearGoogleClientId(){
+  openConfirm('Disable Google Sign-In','Remove the Google Client ID and disable Google Sign-In on the login page?', ()=>{
+    localStorage.removeItem(GOOGLE_CLIENT_ID_KEY);
+    const cfg = loadGmailSettings(); delete cfg.googleClientId;
+    localStorage.setItem(userKey(CURRENT_USER,'gmail'), JSON.stringify(cfg));
+    const inp = el('sGoogleClientId'); if(inp) inp.value='';
+    const statusEl = el('googleClientIdStatus');
+    if(statusEl){ statusEl.style.cssText='display:block;background:var(--warning-muted);color:var(--warning);border:1px solid rgba(245,158,11,.3);padding:.4rem .7rem;border-radius:4px;'; statusEl.textContent='Google Sign-In disabled.'; }
+    initGoogleSignIn();
+    toast('Google Sign-In disabled','warn');
+  });
+}
+
 function saveGmailSettings(){
   const cfg = {
-    from:    el('sGmailFrom').value.trim(),
-    name:    el('sGmailName').value.trim(),
-    subject: el('sGmailSubject').value.trim() || DEFAULT_SUBJECT,
-    body:    el('sGmailBody').value || DEFAULT_BODY,
-    googleClientId: el('sGoogleClientId') ? el('sGoogleClientId').value.trim() : ''
+    from:    el('sGmailFrom') ? el('sGmailFrom').value.trim() : '',
+    name:    el('sGmailName') ? el('sGmailName').value.trim() : '',
+    subject: el('sGmailSubject') ? (el('sGmailSubject').value.trim() || DEFAULT_SUBJECT) : DEFAULT_SUBJECT,
+    body:    el('sGmailBody') ? (el('sGmailBody').value || DEFAULT_BODY) : DEFAULT_BODY,
+    googleClientId: localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || ''
   };
   localStorage.setItem(userKey(CURRENT_USER,'gmail'), JSON.stringify(cfg));
-  // Also store client ID globally (needed before login)
-  if(cfg.googleClientId) localStorage.setItem(GOOGLE_CLIENT_ID_KEY, cfg.googleClientId);
-  toast('Gmail & Google settings saved','ok');
-  // Re-init Google Sign-In with new client ID
-  initGoogleSignIn();
+  toast('Gmail settings saved','ok');
 }
 function resetGmailTemplate(){
   sv('sGmailSubject', DEFAULT_SUBJECT);
@@ -4104,11 +4262,16 @@ function resetGmailTemplate(){
 }
 function applyGmailSettings(){
   const cfg = loadGmailSettings();
-  if(el('sGmailFrom'))     el('sGmailFrom').value     = cfg.from||'';
-  if(el('sGmailName'))     el('sGmailName').value     = cfg.name||SETTINGS.myName||'';
-  if(el('sGmailSubject'))  el('sGmailSubject').value  = cfg.subject||DEFAULT_SUBJECT;
-  if(el('sGmailBody'))     el('sGmailBody').value     = cfg.body||DEFAULT_BODY;
-  if(el('sGoogleClientId')) el('sGoogleClientId').value = cfg.googleClientId || localStorage.getItem(GOOGLE_CLIENT_ID_KEY)||'';
+  if(el('sGmailFrom'))    el('sGmailFrom').value    = cfg.from||'';
+  if(el('sGmailName'))    el('sGmailName').value    = cfg.name||SETTINGS.myName||'';
+  if(el('sGmailSubject')) el('sGmailSubject').value = cfg.subject||DEFAULT_SUBJECT;
+  if(el('sGmailBody'))    el('sGmailBody').value    = cfg.body||DEFAULT_BODY;
+  // Settings screen Google field
+  const gcInp = el('sGoogleClientId');
+  if(gcInp) gcInp.value = cfg.googleClientId || localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || '';
+  // Show Google config card only for admin
+  const gcCard = el('googleConfigCard');
+  if(gcCard) gcCard.style.display = isAdmin() ? '' : 'none';
 }
 
 function fillTemplate(tpl, q){
