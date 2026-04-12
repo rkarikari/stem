@@ -2434,22 +2434,12 @@ function _initGIS(clientId){
     } catch(e){ btnEl.style.display = ''; } // fallback to custom button
   }
 
-  // Attempt One Tap / FedCM auto prompt for returning users
-  // Errors are non-fatal (ad blockers block the log endpoint — that is expected)
-  try{
-    google.accounts.id.prompt((notification) => {
-      // FedCM-compatible status check — getMomentType() only (deprecated boolean methods removed)
-      const type = typeof notification.getMomentType === 'function' ? notification.getMomentType() : 'skipped';
-      // Any type other than 'display' means the prompt was not shown; ensure button is visible
-      if(type !== 'display'){
-        const rendered = document.getElementById('googleBtnRendered');
-        if(rendered) rendered.style.display = '';
-        if(btnEl)    btnEl.style.display    = '';
-      }
-    });
-  } catch(e){
-    // Silently ignore — ad blockers block gsi/log endpoint, which throws ERR_BLOCKED_BY_CLIENT
-  }
+  // With use_fedcm_for_prompt:true, the browser handles prompting natively via FedCM.
+  // Calling google.accounts.id.prompt() is not needed and triggers a deprecation warning —
+  // so we just ensure the rendered sign-in button is visible as the fallback UI.
+  const rendered = document.getElementById('googleBtnRendered');
+  if(rendered) rendered.style.display = '';
+  if(btnEl)    btnEl.style.display    = '';
 }
 
 function startGoogleSignIn(){
