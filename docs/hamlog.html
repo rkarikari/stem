@@ -2286,8 +2286,8 @@ async function doLogin(){
 // ── Logout ──
 function doLogout(){
   openConfirm('Sign Out', `Sign out of ${SESSION?SESSION.call:''}?`, ()=>{
-    // Revoke Google One Tap if active
-    if(window.google && window.google.accounts && SESSION && SESSION.googleEmail){
+    // Revoke Google session only when the user actually signed in via Google (has a googleSub)
+    if(window.google && window.google.accounts && SESSION && SESSION.googleEmail && SESSION.googleSub){
       try{ google.accounts.id.revoke(SESSION.googleEmail, ()=>{}); }catch(e){}
     }
     clearSession();
@@ -2404,24 +2404,34 @@ function initGoogleSignIn(){
   }
 }
 
+let _gisInitialised = false;
 function _initGIS(clientId){
   if(!window.google || !window.google.accounts) return;
+
+  // Guard: GIS must only be initialised once per page load.
+  // On logout → re-login the library is already loaded; just show the existing button.
+  if(_gisInitialised){
+    const existing = document.getElementById('googleBtnRendered');
+    if(existing) existing.style.display = '';
+    return;
+  }
+  _gisInitialised = true;
+
   google.accounts.id.initialize({
     client_id:            clientId,
     callback:             handleGoogleCredential,
     auto_select:          true,
     cancel_on_tap_outside:false,
     context:              'signin',
-    use_fedcm_for_prompt: true        // FedCM opt-in — stops the deprecation warning
+    use_fedcm_for_prompt: true
   });
 
-  // Render the official Google button into the button wrapper (FedCM-compatible)
+  // Render the official GIS button once, hide the original custom button.
   const btnEl = document.getElementById('googleSignInBtn');
   if(btnEl && btnEl.parentNode){
-    // Replace raw button with GIS-rendered button to avoid manual prompt calls
     const wrapper = document.createElement('div');
     wrapper.id = 'googleBtnRendered';
-    btnEl.style.display = 'none';   // hide our custom button
+    btnEl.style.display = 'none';
     btnEl.parentNode.insertBefore(wrapper, btnEl);
     try{
       google.accounts.id.renderButton(wrapper, {
@@ -2431,12 +2441,9 @@ function _initGIS(clientId){
         shape: 'rectangular',
         width: 340
       });
-    } catch(e){ btnEl.style.display = ''; } // fallback to custom button
+    } catch(e){ btnEl.style.display = ''; }
   }
 
-  // With use_fedcm_for_prompt:true, the browser handles prompting natively via FedCM.
-  // Calling google.accounts.id.prompt() is not needed and triggers a deprecation warning —
-  // so we just ensure the GIS-rendered button is visible; the original custom button stays hidden.
   const rendered = document.getElementById('googleBtnRendered');
   if(rendered) rendered.style.display = '';
 }
