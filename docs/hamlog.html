@@ -2436,10 +2436,9 @@ function _initGIS(clientId){
 
   // With use_fedcm_for_prompt:true, the browser handles prompting natively via FedCM.
   // Calling google.accounts.id.prompt() is not needed and triggers a deprecation warning —
-  // so we just ensure the rendered sign-in button is visible as the fallback UI.
+  // so we just ensure the GIS-rendered button is visible; the original custom button stays hidden.
   const rendered = document.getElementById('googleBtnRendered');
   if(rendered) rendered.style.display = '';
-  if(btnEl)    btnEl.style.display    = '';
 }
 
 function startGoogleSignIn(){
