@@ -3333,9 +3333,20 @@ let certData = {};
 const ADMIN_PASSWORD = 'radiosport2025';
 const JSONBIN_BASE   = 'https://api.jsonbin.io/v3';
 
+// ── Default server config (used when no manual config has been saved) ─────────
+const DEFAULT_SERVER_CFG = {
+  binId:  '69d89c5aaaba882197e268aa',
+  apiKey: '$2a$10$rEe4LMAYCnPCF6XR5wfIG.iuF5g/LmEzPHsth4j73CM1jek9S5zOS'
+};
+
 // ── Server config helpers ─────────────────────────────
 function getServerCfg() {
-  try { return JSON.parse(localStorage.getItem('rs_server_cfg') || 'null'); } catch(e) { return null; }
+  try {
+    const stored = JSON.parse(localStorage.getItem('rs_server_cfg') || 'null');
+    // If a manual config with both fields exists, honour it; otherwise fall back to defaults
+    if (stored && stored.apiKey && stored.binId) return stored;
+    return DEFAULT_SERVER_CFG;
+  } catch(e) { return DEFAULT_SERVER_CFG; }
 }
 function saveServerCfg(cfg) {
   localStorage.setItem('rs_server_cfg', JSON.stringify(cfg));
