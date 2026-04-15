@@ -616,7 +616,7 @@ body{
 <div id="app">
   <!-- TOP BAR -->
   <div class="top-bar">
-    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM</div>
+    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.01</span></div>
     <div class="top-right">
       <div id="licBadge" class="license-badge"></div>
       <div id="streakDisplay" class="streak-indicator" style="display:none">
@@ -3737,7 +3737,12 @@ function selectAnswer(idx) {
     }
   }
 
-  // Track topic stats
+  // Track per-session topic stats (all modes — used for results screen breakdown)
+  if (!state.topicStats[q.sub]) state.topicStats[q.sub] = {name: q.topic, correct: 0, total: 0};
+  state.topicStats[q.sub].total++;
+  if (correct) state.topicStats[q.sub].correct++;
+
+  // Track persistent weak-spot stats — all modes contribute
   const subKey = `${state.license}_${q.sub}`;
   if (!globalStats[subKey]) globalStats[subKey] = {correct:0,total:0};
   globalStats[subKey].total++;
@@ -3915,12 +3920,26 @@ function showResults() {
   document.getElementById('rWrong').textContent = state.wrong;
   document.getElementById('rTime').textContent = `${em}:${es.toString().padStart(2,'0')}`;
 
-  // Build weak areas
-  const subScores = {};
-  state.questions.forEach((q, i) => {
-    if (!subScores[q.sub]) subScores[q.sub] = {name:q.topic, correct:0, total:0};
-    subScores[q.sub].total++;
+  // Render sub-element breakdown using per-session topicStats (correct counts properly tracked)
+  const weakEl = document.getElementById('weakAreasSection');
+  const subEntries = Object.entries(state.topicStats).sort((a, b) => {
+    const ra = a[1].total ? a[1].correct / a[1].total : 0;
+    const rb = b[1].total ? b[1].correct / b[1].total : 0;
+    return ra - rb;
   });
+  if (subEntries.length) {
+    weakEl.innerHTML = '<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--text-dim);letter-spacing:.08em;margin-bottom:.6rem;">Sub-element Breakdown</div>' +
+      subEntries.map(([sub, s]) => {
+        const p = s.total ? Math.round(s.correct / s.total * 100) : 0;
+        const col = p >= 74 ? 'var(--green)' : p >= 50 ? 'var(--amber)' : 'var(--red)';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid var(--border);font-size:.82rem;">` +
+          `<span style="color:var(--text-muted)">${sub} — ${s.name}</span>` +
+          `<span style="font-weight:700;color:${col}">${s.correct}/${s.total} (${p}%)</span>` +
+          `</div>`;
+      }).join('');
+  } else {
+    weakEl.innerHTML = '';
+  }
 
   showScreen('resultsScreen');
   const certWrap = document.getElementById('certBtnWrap');
