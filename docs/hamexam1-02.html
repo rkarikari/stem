@@ -616,7 +616,7 @@ body{
 <div id="app">
   <!-- TOP BAR -->
   <div class="top-bar">
-    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM</div>
+    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.02</span></div>
     <div class="top-right">
       <div id="licBadge" class="license-badge"></div>
       <div id="streakDisplay" class="streak-indicator" style="display:none">
@@ -3737,7 +3737,12 @@ function selectAnswer(idx) {
     }
   }
 
-  // Track topic stats
+  // Track per-session topic stats (all modes — used for results screen breakdown)
+  if (!state.topicStats[q.sub]) state.topicStats[q.sub] = {name: q.topic, correct: 0, total: 0};
+  state.topicStats[q.sub].total++;
+  if (correct) state.topicStats[q.sub].correct++;
+
+  // Track persistent weak-spot stats — all modes contribute
   const subKey = `${state.license}_${q.sub}`;
   if (!globalStats[subKey]) globalStats[subKey] = {correct:0,total:0};
   globalStats[subKey].total++;
@@ -3908,27 +3913,40 @@ function showResults() {
   }
 
   document.getElementById('resultSub').textContent = pass
-    ? `Outstanding! You scored ${score}/${pool.examQ} (${pct}%), well above the ${pool.passQ} question passing threshold. You're ready for the real exam!`
+    ? `Outstanding! You scored ${score}/${pool.examQ} (${pct}%), well above the ${pool.passQ} question passing threshold.`
     : `You scored ${score}/${pool.examQ} (${pct}%). You need ${pool.passQ} correct (74%) to pass. Review the topics below and try again!`;
 
   document.getElementById('rCorrect').textContent = state.correct;
   document.getElementById('rWrong').textContent = state.wrong;
   document.getElementById('rTime').textContent = `${em}:${es.toString().padStart(2,'0')}`;
 
-  // Build weak areas
-  const subScores = {};
-  state.questions.forEach((q, i) => {
-    if (!subScores[q.sub]) subScores[q.sub] = {name:q.topic, correct:0, total:0};
-    subScores[q.sub].total++;
+  // Render sub-element breakdown using per-session topicStats (correct counts properly tracked)
+  const weakEl = document.getElementById('weakAreasSection');
+  const subEntries = Object.entries(state.topicStats).sort((a, b) => {
+    const ra = a[1].total ? a[1].correct / a[1].total : 0;
+    const rb = b[1].total ? b[1].correct / b[1].total : 0;
+    return ra - rb;
   });
+  if (subEntries.length) {
+    weakEl.innerHTML = '<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--text-dim);letter-spacing:.08em;margin-bottom:.6rem;">Sub-element Breakdown</div>' +
+      subEntries.map(([sub, s]) => {
+        const p = s.total ? Math.round(s.correct / s.total * 100) : 0;
+        const col = p >= 74 ? 'var(--green)' : p >= 50 ? 'var(--amber)' : 'var(--red)';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid var(--border);font-size:.82rem;">` +
+          `<span style="color:var(--text-muted)">${sub} — ${s.name}</span>` +
+          `<span style="font-weight:700;color:${col}">${s.correct}/${s.total} (${p}%)</span>` +
+          `</div>`;
+      }).join('');
+  } else {
+    weakEl.innerHTML = '';
+  }
 
   showScreen('resultsScreen');
   const certWrap = document.getElementById('certBtnWrap');
   const certNotice = document.getElementById('certAINotice');
   const tgNotice = document.getElementById('telegramNotice');
-  // In actual exam mode AI was never available — no penalty, cert always eligible on pass
-  const aiBlocked = (state.mode === 'actualExam');
-  if (pass && (!state.aiUsedDuringExam || aiBlocked)) {
+  // Certificates are only issued for actual Exam Mode attempts
+  if (pass && state.mode === 'actualExam') {
     const sessionId = generateSessionId();
     const unlockCode = generateUnlockCode();
     state.currentSession = { sessionId, unlockCode };
@@ -3939,10 +3957,6 @@ function showResults() {
     document.getElementById('certUnlockError').style.display = 'none';
     if (certNotice) certNotice.style.display = 'none';
     if (tgNotice) tgNotice.style.display = 'block';
-  } else if (pass && state.aiUsedDuringExam) {
-    certWrap.style.display = 'none';
-    if (certNotice) certNotice.style.display = 'block';
-    if (tgNotice) tgNotice.style.display = 'none';
   } else {
     certWrap.style.display = 'none';
     if (certNotice) certNotice.style.display = 'none';
@@ -4903,11 +4917,11 @@ function generateCertificate() {
         <!-- LICENSE CLASS BADGE -->
         <div style="display:inline-block;border:2px solid ${licAccent};padding:.55rem 2.2rem;margin:.4rem auto 1rem;border-radius:3px;background:rgba(0,0,0,0.03);">
           <div style="font-family:Arial,sans-serif;font-size:1.15rem;font-weight:900;color:${licAccent};letter-spacing:.2em;">${licBadge}</div>
-          <div style="font-family:Arial,sans-serif;font-size:.55rem;color:#888;letter-spacing:.25em;margin-top:.2rem;">FCC AMATEUR RADIO EXAM PREPARATION</div>
+          <div style="font-family:Arial,sans-serif;font-size:.55rem;color:#888;letter-spacing:.25em;margin-top:.2rem;">AMATEUR RADIO EXAM</div>
         </div>
 
         <div style="font-family:Arial,sans-serif;font-size:.7rem;color:#444;margin:.5rem 0 1.4rem;line-height:1.7;">
-          by completing the full <strong>${pool.name}</strong> practice examination<br>
+          by completing the full <strong>${pool.name}</strong> examination<br>
           with a score of <strong>${score} out of ${total} questions correct (${pct}%)</strong>,<br>
           exceeding the minimum passing threshold of ${pool.passQ} correct answers (74%).
         </div>
@@ -4952,9 +4966,9 @@ function generateCertificate() {
 
         <!-- DISCLAIMER FOOTER -->
         <div style="background:#f8f8f8;border-top:1px solid #e0e0e0;margin:0 -3rem;padding:.7rem 3rem;font-family:Arial,sans-serif;font-size:.5rem;color:#999;line-height:1.6;text-align:center;">
-          This certificate confirms successful completion of a practice exam administered by RadioSport Exam System and is intended for educational demonstration purposes.
-          It is suitable for inclusion with FCC Amateur Radio license applications (Form 605), club membership requests, employment portfolios, and educational records.
-          It does not replace an official FCC license grant. · radioSport.ai · Cert No. ${certNo} · Session: ${sessionId}
+          This certificate confirms successful completion of an exam administered by RadioSport Exam System and is intended for educational demonstration purposes.
+          It is suitable for inclusion with Amateur Radio license applications, club membership requests, employment portfolios, and educational records.
+          It does not replace an official license grant. · https://radiozport.github.io/stem/hamexam.html · Cert No. ${certNo} · Session: ${sessionId}
           <br><span style="letter-spacing:.12em;">© R.N.K 9G5AR &nbsp;·&nbsp; RADIOSPORT</span>
         </div>
       </div><!-- /body -->
