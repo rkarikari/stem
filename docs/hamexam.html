@@ -616,7 +616,7 @@ body{
 <div id="app">
   <!-- TOP BAR -->
   <div class="top-bar">
-    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.01</span></div>
+    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.02</span></div>
     <div class="top-right">
       <div id="licBadge" class="license-badge"></div>
       <div id="streakDisplay" class="streak-indicator" style="display:none">
@@ -3945,9 +3945,8 @@ function showResults() {
   const certWrap = document.getElementById('certBtnWrap');
   const certNotice = document.getElementById('certAINotice');
   const tgNotice = document.getElementById('telegramNotice');
-  // In actual exam mode AI was never available — no penalty, cert always eligible on pass
-  const aiBlocked = (state.mode === 'actualExam');
-  if (pass && (!state.aiUsedDuringExam || aiBlocked)) {
+  // Certificates are only issued for actual Exam Mode attempts
+  if (pass && state.mode === 'actualExam') {
     const sessionId = generateSessionId();
     const unlockCode = generateUnlockCode();
     state.currentSession = { sessionId, unlockCode };
@@ -3958,10 +3957,6 @@ function showResults() {
     document.getElementById('certUnlockError').style.display = 'none';
     if (certNotice) certNotice.style.display = 'none';
     if (tgNotice) tgNotice.style.display = 'block';
-  } else if (pass && state.aiUsedDuringExam) {
-    certWrap.style.display = 'none';
-    if (certNotice) certNotice.style.display = 'block';
-    if (tgNotice) tgNotice.style.display = 'none';
   } else {
     certWrap.style.display = 'none';
     if (certNotice) certNotice.style.display = 'none';
@@ -4922,11 +4917,11 @@ function generateCertificate() {
         <!-- LICENSE CLASS BADGE -->
         <div style="display:inline-block;border:2px solid ${licAccent};padding:.55rem 2.2rem;margin:.4rem auto 1rem;border-radius:3px;background:rgba(0,0,0,0.03);">
           <div style="font-family:Arial,sans-serif;font-size:1.15rem;font-weight:900;color:${licAccent};letter-spacing:.2em;">${licBadge}</div>
-          <div style="font-family:Arial,sans-serif;font-size:.55rem;color:#888;letter-spacing:.25em;margin-top:.2rem;">FCC AMATEUR RADIO EXAM PREPARATION</div>
+          <div style="font-family:Arial,sans-serif;font-size:.55rem;color:#888;letter-spacing:.25em;margin-top:.2rem;">AMATEUR RADIO EXAM</div>
         </div>
 
         <div style="font-family:Arial,sans-serif;font-size:.7rem;color:#444;margin:.5rem 0 1.4rem;line-height:1.7;">
-          by completing the full <strong>${pool.name}</strong> practice examination<br>
+          by completing the full <strong>${pool.name}</strong> examination<br>
           with a score of <strong>${score} out of ${total} questions correct (${pct}%)</strong>,<br>
           exceeding the minimum passing threshold of ${pool.passQ} correct answers (74%).
         </div>
@@ -4971,9 +4966,9 @@ function generateCertificate() {
 
         <!-- DISCLAIMER FOOTER -->
         <div style="background:#f8f8f8;border-top:1px solid #e0e0e0;margin:0 -3rem;padding:.7rem 3rem;font-family:Arial,sans-serif;font-size:.5rem;color:#999;line-height:1.6;text-align:center;">
-          This certificate confirms successful completion of a practice exam administered by RadioSport Exam System and is intended for educational demonstration purposes.
-          It is suitable for inclusion with FCC Amateur Radio license applications (Form 605), club membership requests, employment portfolios, and educational records.
-          It does not replace an official FCC license grant. · radioSport.ai · Cert No. ${certNo} · Session: ${sessionId}
+          This certificate confirms successful completion of an exam administered by RadioSport Exam System and is intended for educational demonstration purposes.
+          It is suitable for inclusion with Amateur Radio license applications, club membership requests, employment portfolios, and educational records.
+          It does not replace an official license grant. · https://radiozport.github.io/stem/hamexam.html · Cert No. ${certNo} · Session: ${sessionId}
           <br><span style="letter-spacing:.12em;">© R.N.K 9G5AR &nbsp;·&nbsp; RADIOSPORT</span>
         </div>
       </div><!-- /body -->
