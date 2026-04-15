@@ -3908,7 +3908,7 @@ function showResults() {
   }
 
   document.getElementById('resultSub').textContent = pass
-    ? `Outstanding! You scored ${score}/${pool.examQ} (${pct}%), well above the ${pool.passQ} question passing threshold. You're ready for the real exam!`
+    ? `Outstanding! You scored ${score}/${pool.examQ} (${pct}%), well above the ${pool.passQ} question passing threshold.`
     : `You scored ${score}/${pool.examQ} (${pct}%). You need ${pool.passQ} correct (74%) to pass. Review the topics below and try again!`;
 
   document.getElementById('rCorrect').textContent = state.correct;
