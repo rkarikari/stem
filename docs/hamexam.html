@@ -500,6 +500,59 @@ body{
 }
 .glow-text{font-weight:700;}
 
+/* ─── EXAM LOCKOUT ─── */
+.mode-card.locked {
+  opacity: .5;
+  cursor: not-allowed;
+  pointer-events: none;
+  position: relative;
+}
+.mode-card.locked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 6px,
+    rgba(0,0,0,0.03) 6px,
+    rgba(0,0,0,0.03) 12px
+  );
+}
+.lockout-notice {
+  display: none;
+  align-items: flex-start;
+  gap: .6rem;
+  margin-bottom: 1rem;
+  padding: .75rem 1rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  font-size: .72rem;
+  color: #92400e;
+  line-height: 1.6;
+}
+.lockout-notice.show { display: flex; }
+.lockout-countdown {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--red);
+  font-size: .78rem;
+}
+.locked-badge {
+  display: inline-block;
+  font-size: .55rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  padding: .15rem .45rem;
+  border-radius: 4px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: var(--red);
+  margin-top: .35rem;
+}
+
 .exam-mode-active .question-text {
   border-left-color: var(--red) !important;
 }
@@ -673,21 +726,35 @@ body{
         </div>
 
         <div class="section-head">SELECT MODE</div>
+
+        <!-- Lockout notice (shown when exam is locked) -->
+        <div class="lockout-notice" id="lockoutNotice">
+          <div style="font-size:1.1rem;flex-shrink:0;">🔒</div>
+          <div>
+            <strong style="font-family:'Outfit',sans-serif;font-weight:700;">Exam access locked.</strong>
+            An exam attempt was recently completed. Exam Simulation and Exam Mode are unavailable for
+            <span class="lockout-countdown" id="lockoutCountdown">—</span>.<br>
+            <span style="font-size:.65rem;color:var(--text-dim);">An administrator can unlock access early via the Admin panel.</span>
+          </div>
+        </div>
+
         <div class="mode-cards">
           <div class="mode-card" onclick="startMode('tutorial')">
             <div class="mode-icon">📖</div>
             <div class="mode-name">TUTORIAL</div>
             <div class="mode-desc">Work through questions with instant feedback and detailed AI explanations. Best for learning.</div>
           </div>
-          <div class="mode-card" onclick="startMode('exam')">
+          <div class="mode-card" id="examSimCard" onclick="startMode('exam')">
             <div class="mode-icon">⏱️</div>
             <div class="mode-name">EXAM SIMULATION</div>
             <div class="mode-desc">Timed mock exam drawn from the full question pool. Mirrors the real FCC test experience.</div>
+            <div class="locked-badge" id="examSimLockedBadge" style="display:none;">🔒 LOCKED</div>
           </div>
-          <div class="mode-card" onclick="startMode('actualExam')" style="border-color:#fee2e2;">
+          <div class="mode-card" id="examModeCard" onclick="startMode('actualExam')" style="border-color:#fee2e2;">
             <div class="mode-icon">🎓</div>
             <div class="mode-name" style="color:var(--red);">EXAM MODE</div>
             <div class="mode-desc">Official exam session. AI locked out, no early exit. Answers committed — no going back. For serious attempts only.</div>
+            <div class="locked-badge" id="examModeLockedBadge" style="display:none;">🔒 LOCKED</div>
           </div>
           <div class="mode-card" onclick="startMode('weak')">
             <div class="mode-icon">🎯</div>
@@ -774,9 +841,12 @@ body{
             <div class="stat-box"><div class="stat-val" id="rTime">0:00</div><div class="stat-lbl">TIME</div></div>
           </div>
           <div class="result-actions">
-            <button class="ctrl-btn btn-primary" onclick="retryExam()">RETRY EXAM</button>
+            <button class="ctrl-btn btn-primary" id="retryExamBtn" onclick="retryExam()">RETRY EXAM</button>
             <button class="ctrl-btn btn-ai" onclick="aiResultsAnalysis()">🤖 AI ANALYSIS</button>
             <button class="ctrl-btn btn-secondary" onclick="showHome()">HOME</button>
+          </div>
+          <div id="retryLockoutNotice" style="display:none;margin-top:.6rem;font-size:.7rem;color:var(--amber);text-align:center;">
+            🔒 Retry available in <span id="retryCountdown" class="lockout-countdown"></span>
           </div>
           <div id="certAINotice" style="display:none;margin-top:1.2rem;padding:.8rem 1.2rem;border-radius:5px;border:1px solid rgba(255,68,102,0.4);background:rgba(255,68,102,0.06);font-size:.65rem;color:#ff8899;line-height:1.6;text-align:center;">
             <strong style="font-family:'Orbitron',monospace;letter-spacing:.1em;display:block;margin-bottom:.3rem;">⚠ CERTIFICATE UNAVAILABLE</strong>
@@ -2575,6 +2645,7 @@ function selectLicense(lic) {
   document.getElementById('topicSection').style.display = 'none';
   showScreen('modeScreen');
   buildTopicGrid();
+  applyExamLockout();
   addAIMsg("system", `Switched to ${pool.name} license class. Pool contains ${pool.questions.length} questions covering ${pool.subelements.length} subelements. Ready to help! 73`);
 }
 
@@ -2607,6 +2678,11 @@ function showTopics() {
 // STUDY MODES
 // ══════════════════════════════════════════════════════
 function startMode(mode) {
+  // Enforce lockout for exam modes
+  if ((mode === 'exam' || mode === 'actualExam') && isExamLocked()) {
+    showToast('🔒 Exam locked. ' + formatCountdown(getExamLockoutRemaining()) + ' remaining.');
+    return;
+  }
   state.mode = mode;
   const pool = POOLS[state.license];
   let qs = [...pool.questions];
@@ -3724,6 +3800,7 @@ function exitStudy() {
   stopTimer();
   restoreAIPanel();
   showScreen('modeScreen');
+  applyExamLockout();
 }
 
 function restoreAIPanel() {
@@ -3791,6 +3868,10 @@ function stopTimer() {
 function showResults() {
   stopTimer();
   restoreAIPanel();
+  // Set lockout when any exam mode ends
+  if (state.mode === 'exam' || state.mode === 'actualExam') {
+    setExamLockout();
+  }
   const pool = POOLS[state.license];
   const total = state.correct + state.wrong + state.skipped;
   const pct = total > 0 ? Math.round(state.correct / pool.examQ * 100) : 0;
@@ -3868,11 +3949,56 @@ function showResults() {
     if (tgNotice) tgNotice.style.display = 'none';
   }
   addAIMsg("system", `Exam complete! Score: ${score}/${pool.examQ} (${pct}%). ${pass ? 'Congratulations — you passed! 🎉' : 'Keep studying! Ask me to explain any topics you found difficult.'}`);
+
+  // Apply retry lockout state
+  applyRetryLockout();
 }
 
 function retryExam() {
+  if (isExamLocked()) {
+    showToast('🔒 Exam locked. ' + formatCountdown(getExamLockoutRemaining()) + ' remaining.');
+    return;
+  }
   restoreAIPanel();
   startMode(state.mode === 'actualExam' ? 'actualExam' : 'exam');
+}
+
+function applyRetryLockout() {
+  const retryBtn    = document.getElementById('retryExamBtn');
+  const retryNotice = document.getElementById('retryLockoutNotice');
+  const retryCD     = document.getElementById('retryCountdown');
+  if (!retryBtn) return;
+
+  const remaining = getExamLockoutRemaining();
+  const locked = remaining > 0;
+  const isExamResult = (state.mode === 'exam' || state.mode === 'actualExam');
+
+  // Hide retry entirely for non-exam modes
+  retryBtn.style.display = isExamResult ? '' : 'none';
+  if (retryNotice) retryNotice.style.display = 'none';
+
+  if (isExamResult && locked) {
+    retryBtn.disabled = true;
+    retryBtn.style.opacity = '.4';
+    retryBtn.style.cursor = 'not-allowed';
+    if (retryNotice) retryNotice.style.display = 'block';
+    if (retryCD) retryCD.textContent = formatCountdown(remaining);
+    // Live countdown on results screen
+    const retryInterval = setInterval(() => {
+      const rem = getExamLockoutRemaining();
+      if (rem <= 0) {
+        clearInterval(retryInterval);
+        applyRetryLockout();
+      } else {
+        const cd = document.getElementById('retryCountdown');
+        if (cd) cd.textContent = formatCountdown(rem);
+      }
+    }, 1000);
+  } else if (isExamResult) {
+    retryBtn.disabled = false;
+    retryBtn.style.opacity = '';
+    retryBtn.style.cursor = '';
+  }
 }
 
 function aiResultsAnalysis() {
@@ -4014,6 +4140,93 @@ function shuffle(arr) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+// ══════════════════════════════════════════════════════
+// EXAM LOCKOUT SYSTEM
+// Prevents repeat exam attempts for 3 hours.
+// Admins can reset early via the admin panel.
+// ══════════════════════════════════════════════════════
+const EXAM_LOCKOUT_MS = 3 * 60 * 60 * 1000; // 3 hours
+let lockoutIntervalId = null;
+
+function setExamLockout() {
+  localStorage.setItem('rs_exam_lockout', Date.now().toString());
+}
+
+function clearExamLockout() {
+  localStorage.removeItem('rs_exam_lockout');
+}
+
+function getExamLockoutRemaining() {
+  const raw = localStorage.getItem('rs_exam_lockout');
+  if (!raw) return 0;
+  const elapsed = Date.now() - parseInt(raw, 10);
+  const remaining = EXAM_LOCKOUT_MS - elapsed;
+  return remaining > 0 ? remaining : 0;
+}
+
+function isExamLocked() {
+  return getExamLockoutRemaining() > 0;
+}
+
+function formatCountdown(ms) {
+  const totalSec = Math.ceil(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}h ${m.toString().padStart(2,'0')}m ${s.toString().padStart(2,'0')}s`;
+  if (m > 0) return `${m}m ${s.toString().padStart(2,'0')}s`;
+  return `${s}s`;
+}
+
+function applyExamLockout() {
+  const remaining = getExamLockoutRemaining();
+  const locked = remaining > 0;
+
+  const notice       = document.getElementById('lockoutNotice');
+  const countdown    = document.getElementById('lockoutCountdown');
+  const simCard      = document.getElementById('examSimCard');
+  const modeCard     = document.getElementById('examModeCard');
+  const simBadge     = document.getElementById('examSimLockedBadge');
+  const modeBadge    = document.getElementById('examModeLockedBadge');
+
+  if (!notice) return; // not on mode screen yet
+
+  if (locked) {
+    notice.classList.add('show');
+    if (countdown) countdown.textContent = formatCountdown(remaining);
+    if (simCard)  { simCard.classList.add('locked');  simCard.style.pointerEvents = 'none'; }
+    if (modeCard) { modeCard.classList.add('locked'); modeCard.style.pointerEvents = 'none'; }
+    if (simBadge)  simBadge.style.display = 'inline-block';
+    if (modeBadge) modeBadge.style.display = 'inline-block';
+
+    // Start/keep running countdown
+    if (!lockoutIntervalId) {
+      lockoutIntervalId = setInterval(() => {
+        const rem = getExamLockoutRemaining();
+        if (rem <= 0) {
+          clearInterval(lockoutIntervalId);
+          lockoutIntervalId = null;
+          applyExamLockout(); // refresh UI once unlocked
+        } else {
+          const cd = document.getElementById('lockoutCountdown');
+          if (cd) cd.textContent = formatCountdown(rem);
+        }
+      }, 1000);
+    }
+  } else {
+    notice.classList.remove('show');
+    if (simCard)  { simCard.classList.remove('locked');  simCard.style.pointerEvents = ''; }
+    if (modeCard) { modeCard.classList.remove('locked'); modeCard.style.pointerEvents = ''; }
+    if (simBadge)  simBadge.style.display = 'none';
+    if (modeBadge) modeBadge.style.display = 'none';
+    if (lockoutIntervalId) { clearInterval(lockoutIntervalId); lockoutIntervalId = null; }
+  }
+}
+
+function stopLockoutInterval() {
+  if (lockoutIntervalId) { clearInterval(lockoutIntervalId); lockoutIntervalId = null; }
 }
 
 function showToast(msg) {
@@ -4330,6 +4543,30 @@ function closeAdminPanel() {
   adminAuthed = false;
 }
 
+function adminResetLockout() {
+  clearExamLockout();
+  stopLockoutInterval();
+  // Refresh UI if on mode screen
+  applyExamLockout();
+  // Update button state in admin panel
+  const btn = document.getElementById('adminLockoutBtn');
+  if (btn) {
+    btn.textContent = '✓ UNLOCKED';
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'rgba(0,255,136,0.35)';
+    btn.style.background = 'rgba(0,255,136,0.07)';
+    setTimeout(() => {
+      if (btn) {
+        btn.textContent = '🔓 RESET LOCKOUT';
+        btn.style.color = 'var(--amber)';
+        btn.style.borderColor = 'rgba(255,170,0,0.35)';
+        btn.style.background = 'rgba(255,170,0,0.07)';
+      }
+    }, 2000);
+  }
+  showToast('✓ Exam lockout cleared. Exam modes are now available.');
+}
+
 async function adminRefresh() {
   const indicator = document.getElementById('syncIndicator');
   if (indicator) { indicator.textContent = '⟳ Syncing…'; indicator.style.color = 'var(--amber)'; }
@@ -4371,6 +4608,7 @@ function renderAdminPanel(source='server') {
       </div>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
         <button onclick="adminRefresh()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.28rem .6rem;border-radius:3px;cursor:pointer;background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.3);color:var(--green);">⟳ REFRESH</button>
+        <button onclick="adminResetLockout()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.28rem .6rem;border-radius:3px;cursor:pointer;background:rgba(255,170,0,0.07);border:1px solid rgba(255,170,0,0.35);color:var(--amber);" id="adminLockoutBtn">🔓 RESET LOCKOUT</button>
         <button onclick="clearAllSessions()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.28rem .6rem;border-radius:3px;cursor:pointer;background:rgba(255,68,102,0.07);border:1px solid rgba(255,68,102,0.3);color:var(--red);">🗑 CLEAR ALL</button>
         <button onclick="toggleAdminSettings()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.28rem .6rem;border-radius:3px;cursor:pointer;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.25);color:var(--cyan);">⚙ SETTINGS</button>
         <button onclick="closeAdminPanel()" style="font-family:'Orbitron',monospace;font-size:.48rem;font-weight:700;letter-spacing:.1em;padding:.28rem .6rem;border-radius:3px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--text-dim);">✕ CLOSE</button>
@@ -4380,6 +4618,13 @@ function renderAdminPanel(source='server') {
     <!-- WORKFLOW HINT -->
     <div style="font-size:.6rem;color:var(--text-dim);margin-bottom:.8rem;padding:.55rem .9rem;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.15);border-radius:4px;line-height:1.6;">
       <strong style="color:var(--cyan)">Workflow:</strong> Candidate passes → receives <strong style="color:var(--text)">Session ID</strong> → presents it to you → click <strong style="color:gold">REVEAL</strong> → <strong style="color:var(--cyan)">COPY</strong> code → send to candidate → they enter it to generate their certificate.
+    </div>
+    <!-- LOCKOUT STATUS -->
+    <div id="adminLockoutStatus" style="font-size:.6rem;margin-bottom:.8rem;padding:.5rem .9rem;border-radius:4px;line-height:1.6;${isExamLocked() ? 'background:rgba(255,170,0,0.06);border:1px solid rgba(255,170,0,0.25);color:var(--amber);' : 'background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.18);color:var(--green);'}">
+      ${isExamLocked()
+        ? `🔒 <strong>Exam locked</strong> — ${formatCountdown(getExamLockoutRemaining())} remaining until auto-unlock. Click <strong>RESET LOCKOUT</strong> to unlock immediately.`
+        : `✓ <strong>Exam access open</strong> — no active lockout.`
+      }
     </div>
 
     <!-- SETTINGS PANEL (collapsed by default) -->

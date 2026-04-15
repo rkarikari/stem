@@ -500,7 +500,55 @@ body{
 }
 .glow-text{font-weight:700;}
 
-/* ─── NOTIFICATIONS ─── */
+.exam-mode-active .question-text {
+  border-left-color: var(--red) !important;
+}
+.exam-mode-active .answer-btn:hover:not(:disabled) {
+  border-color: #fca5a5;
+  background: #fff5f5;
+  box-shadow: 0 2px 8px rgba(220,38,38,0.08);
+}
+
+.exam-mode-banner {
+  display: none;
+  align-items: center;
+  gap: .5rem;
+  padding: .28rem .75rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-family: 'Outfit', sans-serif;
+  font-size: .62rem;
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.exam-mode-banner.active { display: flex; }
+.exam-mode-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--red);
+  animation: pulse 1.2s infinite;
+}
+
+/* Submit confirmation modal */
+#examSubmitModal {
+  position: fixed; inset: 0; z-index: 2500;
+  background: rgba(15,23,42,.75);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center; justify-content: center;
+}
+.exam-submit-box {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 2rem 1.75rem;
+  max-width: 400px; width: 90%;
+  text-align: center;
+  box-shadow: var(--shadow-elevated);
+}
+
 .toast{
   position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);
   background:#1e293b;color:#ffffff;
@@ -636,6 +684,11 @@ body{
             <div class="mode-name">EXAM SIMULATION</div>
             <div class="mode-desc">Timed mock exam drawn from the full question pool. Mirrors the real FCC test experience.</div>
           </div>
+          <div class="mode-card" onclick="startMode('actualExam')" style="border-color:#fee2e2;">
+            <div class="mode-icon">🎓</div>
+            <div class="mode-name" style="color:var(--red);">EXAM MODE</div>
+            <div class="mode-desc">Official exam session. AI locked out, no early exit. Answers committed — no going back. For serious attempts only.</div>
+          </div>
           <div class="mode-card" onclick="startMode('weak')">
             <div class="mode-icon">🎯</div>
             <div class="mode-name">WEAK SPOTS</div>
@@ -661,6 +714,10 @@ body{
           <div class="study-info">
             <div id="studyModeLabel">TUTORIAL</div>
             <div id="studyLicLabel">TECHNICIAN</div>
+          </div>
+          <div class="exam-mode-banner" id="examModeBanner">
+            <div class="exam-mode-dot"></div>
+            EXAM IN PROGRESS
           </div>
           <div class="progress-wrap">
             <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
@@ -2560,6 +2617,9 @@ function startMode(mode) {
   } else if (mode === 'exam') {
     state.questions = buildExam(qs, pool);
     startStudy(true);
+  } else if (mode === 'actualExam') {
+    state.questions = buildExam(qs, pool);
+    startStudy(true, true);
   } else if (mode === 'weak') {
     state.questions = buildWeakSet(qs);
     startStudy();
@@ -2593,7 +2653,7 @@ function buildWeakSet(qs) {
   }).slice(0, 30);
 }
 
-function startStudy(isExam=false) {
+function startStudy(isExam=false, isActualExam=false) {
   state.qIndex = 0;
   state.correct = 0;
   state.wrong = 0;
@@ -2607,25 +2667,59 @@ function startStudy(isExam=false) {
   state.currentSession = null;
 
   const pool = POOLS[state.license];
-  document.getElementById('studyModeLabel').textContent = 
-    isExam ? '⏱ EXAM SIMULATION' : state.mode==='weak' ? '🎯 WEAK SPOTS' : '📖 TUTORIAL';
+
+  if (isActualExam) {
+    document.getElementById('studyModeLabel').textContent = '🎓 EXAM MODE';
+    // Lock out the AI panel entirely
+    document.getElementById('aiPanel').style.display = 'none';
+    document.getElementById('aiPanel').classList.remove('open');
+    const aiToggle = document.querySelector('.ai-toggle');
+    if (aiToggle) aiToggle.style.display = 'none';
+    // Hide AI explain button on question screen
+    document.querySelectorAll('.btn-ai').forEach(b => b.style.display = 'none');
+  } else {
+    document.getElementById('studyModeLabel').textContent =
+      isExam ? '⏱ EXAM SIMULATION' : state.mode==='weak' ? '🎯 WEAK SPOTS' : '📖 TUTORIAL';
+    // Restore AI panel if it was hidden
+    document.getElementById('aiPanel').style.display = '';
+    const aiToggle = document.querySelector('.ai-toggle');
+    if (aiToggle) aiToggle.style.display = '';
+    document.querySelectorAll('.btn-ai').forEach(b => b.style.display = '');
+  }
+
   document.getElementById('studyLicLabel').textContent = pool.name.toUpperCase();
 
-  if (isExam) {
+  if (isExam || isActualExam) {
     document.getElementById('timerWrap').style.display = 'flex';
     state.examTime = pool.time * 60;
     startTimer();
     document.getElementById('skipBtn').style.display = 'none';
-    document.getElementById('flagBtn').style.display = 'flex';
+    document.getElementById('flagBtn').style.display = isActualExam ? 'none' : 'flex';
   } else {
     document.getElementById('timerWrap').style.display = 'none';
     document.getElementById('skipBtn').style.display = 'flex';
     document.getElementById('flagBtn').style.display = 'flex';
   }
 
+  // Update exit button label/behaviour
+  const exitBtn = document.querySelector('.back-btn[onclick="exitStudy()"]');
+  if (exitBtn) {
+    if (isActualExam) {
+      exitBtn.textContent = '⚠ SUBMIT';
+      exitBtn.setAttribute('onclick', 'confirmSubmitExam()');
+    } else {
+      exitBtn.textContent = '✕ EXIT';
+      exitBtn.setAttribute('onclick', 'exitStudy()');
+    }
+  }
+
   showScreen('studyScreen');
+  // Banner + body class for styling
+  const banner = document.getElementById('examModeBanner');
+  if (banner) banner.classList.toggle('active', isActualExam);
+  document.getElementById('studyScreen').classList.toggle('exam-mode-active', isActualExam);
   renderQuestion();
-  addAIMsg("system", `Starting ${pool.name} ${isExam?'exam simulation':'study session'}. ${state.questions.length} questions. Good luck! 📡`);
+  addAIMsg("system", `Starting ${pool.name} ${isActualExam ? 'official exam session' : isExam ? 'exam simulation' : 'study session'}. ${state.questions.length} questions. Good luck! 📡`);
 }
 
 // ══════════════════════════════════════════════════════
@@ -3556,13 +3650,13 @@ function selectAnswer(idx) {
     state.correct++;
     state.streak++;
     if (state.streak > state.bestStreak) state.bestStreak = state.streak;
-    if (state.mode !== 'exam') {
+    if (state.mode !== 'exam' && state.mode !== 'actualExam') {
       showFeedback(true, q);
     }
   } else {
     state.wrong++;
     state.streak = 0;
-    if (state.mode !== 'exam') {
+    if (state.mode !== 'exam' && state.mode !== 'actualExam') {
       showFeedback(false, q);
     }
   }
@@ -3584,6 +3678,14 @@ function selectAnswer(idx) {
   saveStats();
 
   document.getElementById('nextBtn').style.display = 'inline-flex';
+  // In actual exam mode — auto-advance after a brief pause (no lingering on the question)
+  if (state.mode === 'actualExam') {
+    document.getElementById('nextBtn').style.display = 'none';
+    setTimeout(() => {
+      state.qIndex++;
+      renderQuestion();
+    }, 600);
+  }
   if (state.streak >= 3) {
     document.getElementById('studyStreak').style.display = 'flex';
     document.getElementById('studyStreakNum').textContent = state.streak;
@@ -3620,7 +3722,45 @@ function flagQuestion() {
 
 function exitStudy() {
   stopTimer();
+  restoreAIPanel();
   showScreen('modeScreen');
+}
+
+function restoreAIPanel() {
+  document.getElementById('aiPanel').style.display = '';
+  const aiToggle = document.querySelector('.ai-toggle');
+  if (aiToggle) aiToggle.style.display = '';
+  document.querySelectorAll('.btn-ai').forEach(b => b.style.display = '');
+  document.getElementById('studyScreen').classList.remove('exam-mode-active');
+  const banner = document.getElementById('examModeBanner');
+  if (banner) banner.classList.remove('active');
+  // Restore exit button label if it was changed to SUBMIT
+  const exitBtn = document.querySelector('.back-btn[onclick="confirmSubmitExam()"]');
+  if (exitBtn) {
+    exitBtn.textContent = '✕ EXIT';
+    exitBtn.setAttribute('onclick', 'exitStudy()');
+  }
+}
+
+function confirmSubmitExam() {
+  const pool = POOLS[state.license];
+  const answered = state.correct + state.wrong;
+  const remaining = state.questions.length - state.qIndex - (state.answered ? 1 : 0);
+  document.getElementById('examSubmitAnswered').textContent = answered;
+  document.getElementById('examSubmitTotal').textContent = pool.examQ;
+  document.getElementById('examSubmitUnanswered').textContent = remaining;
+  document.getElementById('examSubmitModal').style.display = 'flex';
+}
+
+function closeExamSubmitModal() {
+  document.getElementById('examSubmitModal').style.display = 'none';
+}
+
+function doSubmitExam() {
+  document.getElementById('examSubmitModal').style.display = 'none';
+  stopTimer();
+  restoreAIPanel();
+  showResults();
 }
 
 // ══════════════════════════════════════════════════════
@@ -3650,6 +3790,7 @@ function stopTimer() {
 // ══════════════════════════════════════════════════════
 function showResults() {
   stopTimer();
+  restoreAIPanel();
   const pool = POOLS[state.license];
   const total = state.correct + state.wrong + state.skipped;
   const pct = total > 0 ? Math.round(state.correct / pool.examQ * 100) : 0;
@@ -3672,6 +3813,19 @@ function showResults() {
   title.className = `result-title ${pass?'pass':'fail'}`;
   title.textContent = pass ? `${pool.name.toUpperCase()} PASSED!` : 'NOT YET — KEEP STUDYING';
 
+  // Show exam mode indicator on results if this was an actual exam
+  let modeNotice = document.getElementById('resultModeNotice');
+  if (!modeNotice) {
+    modeNotice = document.createElement('div');
+    modeNotice.id = 'resultModeNotice';
+    title.parentNode.insertBefore(modeNotice, title.nextSibling);
+  }
+  if (state.mode === 'actualExam') {
+    modeNotice.innerHTML = `<div style="display:inline-flex;align-items:center;gap:.4rem;font-size:.65rem;font-weight:700;color:var(--red);letter-spacing:.08em;text-transform:uppercase;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:.2rem .6rem;margin-bottom:.5rem;"><span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;"></span>OFFICIAL EXAM ATTEMPT</div>`;
+  } else {
+    modeNotice.innerHTML = '';
+  }
+
   document.getElementById('resultSub').textContent = pass
     ? `Outstanding! You scored ${score}/${pool.examQ} (${pct}%), well above the ${pool.passQ} question passing threshold. You're ready for the real exam!`
     : `You scored ${score}/${pool.examQ} (${pct}%). You need ${pool.passQ} correct (74%) to pass. Review the topics below and try again!`;
@@ -3691,11 +3845,13 @@ function showResults() {
   const certWrap = document.getElementById('certBtnWrap');
   const certNotice = document.getElementById('certAINotice');
   const tgNotice = document.getElementById('telegramNotice');
-  if (pass && !state.aiUsedDuringExam) {
+  // In actual exam mode AI was never available — no penalty, cert always eligible on pass
+  const aiBlocked = (state.mode === 'actualExam');
+  if (pass && (!state.aiUsedDuringExam || aiBlocked)) {
     const sessionId = generateSessionId();
     const unlockCode = generateUnlockCode();
     state.currentSession = { sessionId, unlockCode };
-    storeSession({ sessionId, unlockCode, license: state.license, score, total: pool.examQ, pct, date: new Date().toISOString() }); // fire-and-forget async (local write is sync inside)
+    storeSession({ sessionId, unlockCode, license: state.license, score, total: pool.examQ, pct, date: new Date().toISOString() });
     document.getElementById('sessionIdDisplay').textContent = sessionId;
     certWrap.style.display = 'block';
     document.getElementById('certUnlockInput').value = '';
@@ -3714,7 +3870,10 @@ function showResults() {
   addAIMsg("system", `Exam complete! Score: ${score}/${pool.examQ} (${pct}%). ${pass ? 'Congratulations — you passed! 🎉' : 'Keep studying! Ask me to explain any topics you found difficult.'}`);
 }
 
-function retryExam() { startMode('exam'); }
+function retryExam() {
+  restoreAIPanel();
+  startMode(state.mode === 'actualExam' ? 'actualExam' : 'exam');
+}
 
 function aiResultsAnalysis() {
   const pool = POOLS[state.license];
@@ -3787,7 +3946,9 @@ function stripReasoning(text) {
 
 async function sendAIMessage(text) {
   if (!text.trim() || isAILoading) return;
-  // Flag if AI is consulted during a live exam
+  // Completely block AI during actual exam mode
+  if (state.mode === 'actualExam') return;
+  // Flag if AI is consulted during a live exam simulation
   if (state.mode === 'exam') {
     state.aiUsedDuringExam = true;
   }
@@ -4627,7 +4788,32 @@ if ((globalStats.bestStreak || 0) >= 3) {
     </div>
   </div>
 </div>
-<!-- ADMIN LOGIN MODAL -->
+<!-- EXAM SUBMIT CONFIRMATION MODAL -->
+<div id="examSubmitModal">
+  <div class="exam-submit-box">
+    <div style="font-size:2rem;margin-bottom:.6rem;">📋</div>
+    <div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;color:var(--navy);margin-bottom:.4rem;">Submit Exam?</div>
+    <div style="font-size:.78rem;color:var(--text-dim);line-height:1.7;margin-bottom:1.4rem;">
+      You have answered <strong id="examSubmitAnswered" style="color:var(--text)">0</strong> of
+      <strong id="examSubmitTotal" style="color:var(--text)">0</strong> questions.<br>
+      <span id="examSubmitUnanswered" style="color:var(--red);font-weight:700;">0</span> question(s) will be marked incorrect if unanswered.<br><br>
+      <span style="font-size:.7rem;color:#94a3b8;">This action cannot be undone.</span>
+    </div>
+    <div style="display:flex;gap:.8rem;justify-content:center;">
+      <button onclick="closeExamSubmitModal()"
+        style="font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:600;padding:.5rem 1.1rem;border-radius:7px;cursor:pointer;background:#ffffff;border:1.5px solid #e2e8f0;color:#64748b;transition:all .2s;"
+        onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#e2e8f0'">
+        ← Keep Going
+      </button>
+      <button onclick="doSubmitExam()"
+        style="font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:700;padding:.5rem 1.3rem;border-radius:7px;cursor:pointer;background:var(--red);border:none;color:#ffffff;box-shadow:0 2px 8px rgba(220,38,38,0.3);transition:all .2s;"
+        onmouseover="this.style.background='var(--red2)'" onmouseout="this.style.background='var(--red)'">
+        Submit Exam ✓
+      </button>
+    </div>
+  </div>
+</div>
+
 <div id="adminLoginModal" class="admin-modal-overlay" style="align-items:center;">
   <div class="admin-login-box">
     <div style="font-size:1.6rem;margin-bottom:.5rem;">⚙</div>
