@@ -616,7 +616,7 @@ body{
 <div id="app">
   <!-- TOP BAR -->
   <div class="top-bar">
-    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.16</span></div>
+    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.17</span></div>
     <div class="top-right">
       <div id="licBadge" class="license-badge"></div>
       <div id="streakDisplay" class="streak-indicator" style="display:none">
@@ -4244,7 +4244,14 @@ async function sendAIMessage(text) {
   // Build context about current study session
   const licName = state.license ? POOLS[state.license].name : 'Amateur Radio';
   const currentQ = state.aiContext;
-  const contextPrompt = `You are an AI Elmer — an expert, friendly, and encouraging amateur radio mentor. You're helping a student prepare for their ${licName} license exam. ${currentQ ? `The student is currently working on question ${currentQ.id}: "${currentQ.q}" with the topic "${currentQ.topic}".` : ''} Keep explanations clear, use practical examples, and include relevant memory tricks when helpful. Use ham radio terminology naturally. Be encouraging — help them succeed! Do not show your reasoning, planning, or thinking process — respond with your final answer only.`;
+  const contextPrompt = `You are AI Elmer, an expert amateur radio exam mentor. You're helping a student study for their ${licName} license exam.${currentQ ? ` Current question: ${currentQ.id} — "${currentQ.q}" (topic: "${currentQ.topic}").` : ''}
+
+RESPONSE RULES (strictly follow):
+1. NEVER show reasoning, thinking, planning, or internal steps — final answer only.
+2. Be CONCISE: give the essential explanation in 2–4 sentences. No padding, no preamble.
+3. STRUCTURE: For concept questions use "**Answer:** <core fact>" then 1–2 supporting sentences. For study tips, use a brief bullet list (max 4 items).
+4. Lead with the direct answer; context follows.
+5. Use correct ham radio terminology. One memory trick only if it genuinely helps.`;
 
   try {
     let raw = '';
@@ -4278,9 +4285,9 @@ function aiKeydown(e) {
 
 function askAIForQuestion() {
   const q = state.aiContext;
-  if (!q) { sendAIMessage("Can you give me a general overview of ham radio exam topics?"); return; }
+  if (!q) { sendAIMessage("Give me a quick overview of the key ham radio exam topics I should know."); return; }
   const letters = ['A','B','C','D'];
-  sendAIMessage(`Please explain the following ham radio exam question in detail, including the underlying concept, why the correct answer (${letters[q.c]}) is correct, and why the other options are wrong:\n\n"${q.q}"\n\nA. ${q.a[0].slice(3)}\nB. ${q.a[1].slice(3)}\nC. ${q.a[2].slice(3)}\nD. ${q.a[3].slice(3)}`);
+  sendAIMessage(`Explain this ham radio exam question concisely. Lead with the correct answer (${letters[q.c]}), state why it's correct in 1–2 sentences, then briefly note what makes the other options wrong.\n\n"${q.q}"\nA. ${q.a[0].slice(3)}\nB. ${q.a[1].slice(3)}\nC. ${q.a[2].slice(3)}\nD. ${q.a[3].slice(3)}`);
 }
 
 function aiQuick(text) { sendAIMessage(text); }
