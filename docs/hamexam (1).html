@@ -618,7 +618,7 @@ body{
 <div id="app">
   <!-- TOP BAR -->
   <div class="top-bar">
-    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.11</span></div>
+    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.10</span></div>
     <div class="top-right">
       <div id="licBadge" class="license-badge"></div>
       <div id="streakDisplay" class="streak-indicator" style="display:none">
@@ -4188,15 +4188,6 @@ async function callPollinations(contextPrompt, text) {
       return '';
     }
     if (typeof json.text === 'string') return json.text;
-    // Some reasoning models (e.g. Pollinations with openai-reasoning) return
-    // reasoning_content instead of content when the answer text is empty.
-    // Prefer an explicit empty content field over reasoning only; fall back to
-    // reasoning_content so we at least show something useful.
-    if (typeof json.reasoning_content === 'string' && json.reasoning_content.trim()) {
-      return json.reasoning_content.trim();
-    }
-    // Parsed JSON but no usable text field — don't leak raw JSON into the chat.
-    return '';
   } catch {}
   // Raw is plain text (non-JSON) — return as-is; formatAIText will normalise newlines
   return raw;
