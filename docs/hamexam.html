@@ -616,7 +616,7 @@ body{
 <div id="app">
   <!-- TOP BAR -->
   <div class="top-bar">
-    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.17</span></div>
+    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.18</span></div>
     <div class="top-right">
       <div id="licBadge" class="license-badge"></div>
       <div id="streakDisplay" class="streak-indicator" style="display:none">
@@ -4227,7 +4227,8 @@ async function callGemini(contextPrompt, text) {
 }
 
 
-async function sendAIMessage(text) {
+async function sendAIMessage(text, opts) {
+  opts = opts || {};
   if (!text.trim() || isAILoading) return;
   // Completely block AI during actual exam mode
   if (state.mode === 'actualExam') return;
@@ -4235,7 +4236,11 @@ async function sendAIMessage(text) {
   if (state.mode === 'exam') {
     state.aiUsedDuringExam = true;
   }
-  addAIMsg('user', text);
+  // Clear existing messages before showing new response (used by Explain with AI)
+  if (opts.clearFirst) {
+    document.getElementById('aiMessages').innerHTML = '';
+  }
+  if (!opts.silent) addAIMsg('user', text);
 
   const typing = document.getElementById('aiTyping');
   typing.classList.add('show');
@@ -4287,7 +4292,7 @@ function askAIForQuestion() {
   const q = state.aiContext;
   if (!q) { sendAIMessage("Give me a quick overview of the key ham radio exam topics I should know."); return; }
   const letters = ['A','B','C','D'];
-  sendAIMessage(`Explain this ham radio exam question concisely. Lead with the correct answer (${letters[q.c]}), state why it's correct in 1–2 sentences, then briefly note what makes the other options wrong.\n\n"${q.q}"\nA. ${q.a[0].slice(3)}\nB. ${q.a[1].slice(3)}\nC. ${q.a[2].slice(3)}\nD. ${q.a[3].slice(3)}`);
+  sendAIMessage(`Explain this ham radio exam question concisely. Lead with the correct answer (${letters[q.c]}), state why it's correct in 1–2 sentences, then briefly note what makes the other options wrong.\n\n"${q.q}"\nA. ${q.a[0].slice(3)}\nB. ${q.a[1].slice(3)}\nC. ${q.a[2].slice(3)}\nD. ${q.a[3].slice(3)}`, {clearFirst: true, silent: true});
 }
 
 function aiQuick(text) { sendAIMessage(text); }
