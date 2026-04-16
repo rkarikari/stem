@@ -616,7 +616,7 @@ body{
 <div id="app">
   <!-- TOP BAR -->
   <div class="top-bar">
-    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.13</span></div>
+    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.15</span></div>
     <div class="top-right">
       <div id="licBadge" class="license-badge"></div>
       <div id="streakDisplay" class="streak-indicator" style="display:none">
@@ -4124,6 +4124,10 @@ function stripReasoning(text) {
 }
 
 // ── AI Service selection ─────────────────────────────────────────────────────
+// Reset any legacy 'llama' preference (Mistral removed in v1.13)
+if (localStorage.getItem('rs_ai_service') === 'llama') {
+  localStorage.removeItem('rs_ai_service');
+}
 let currentAIService = localStorage.getItem('rs_ai_service') || 'pollinations';
 
 function saveGeminiKey(val) {
@@ -4165,6 +4169,9 @@ async function callPollinations(contextPrompt, text) {
       seed: Math.floor(Math.random() * 99999)
     })
   });
+  if (!response.ok) {
+    throw new Error(`AI service temporarily unavailable (${response.status}). Please try again in a moment.`);
+  }
   const raw = await response.text();
   try {
     const json = JSON.parse(raw);
