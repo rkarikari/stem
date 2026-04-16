@@ -616,7 +616,7 @@ body{
 <div id="app">
   <!-- TOP BAR -->
   <div class="top-bar">
-    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.04</span></div>
+    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.05</span></div>
     <div class="top-right">
       <div id="licBadge" class="license-badge"></div>
       <div id="streakDisplay" class="streak-indicator" style="display:none">
@@ -4096,7 +4096,26 @@ async function sendAIMessage(text) {
         seed: Math.floor(Math.random() * 99999)
       })
     });
-    const reply = stripReasoning(await response.text()) || 'Sorry, I could not get a response. Please try again.';
+    const raw = await response.text();
+    let reply = '';
+    try {
+      const json = JSON.parse(raw);
+      if (typeof json === 'string') {
+        reply = json;
+      } else if (json.content && Array.isArray(json.content)) {
+        reply = json.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+      } else if (json.choices && json.choices[0]) {
+        reply = json.choices[0].message?.content || json.choices[0].text || '';
+      } else if (json.message) {
+        reply = typeof json.message === 'string' ? json.message : json.message.content || '';
+      } else if (json.text) {
+        reply = json.text;
+      }
+      reply = stripReasoning(reply);
+    } catch {
+      reply = stripReasoning(raw);
+    }
+    reply = reply || 'Sorry, I could not get a response. Please try again.';
     addAIMsg('ai', reply);
   } catch(e) {
     addAIMsg('ai', 'Unable to connect to AI. Please check your connection and try again. In the meantime, check the question\'s explanation for details!');
