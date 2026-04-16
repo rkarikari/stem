@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RadioSport — Amateur Radio License Exam System</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<!-- Puter.js: free AI (no developer API key needed — user-pays via free Puter account) -->
-<script src="https://js.puter.com/v2/"></script>
 <style>
 /* ═══════════════════════════════════════════════
    RADIOSPORT — PROFESSIONAL THEME
@@ -618,7 +616,7 @@ body{
 <div id="app">
   <!-- TOP BAR -->
   <div class="top-bar">
-    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.11</span></div>
+    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.12</span></div>
     <div class="top-right">
       <div id="licBadge" class="license-badge"></div>
       <div id="streakDisplay" class="streak-indicator" style="display:none">
@@ -898,9 +896,9 @@ body{
           <select id="aiServiceSelect" onchange="setAIService(this.value)"
             title="Select AI service"
             style="font-family:'Orbitron',monospace;font-size:.42rem;font-weight:700;letter-spacing:.06em;padding:.25rem .4rem;border-radius:4px;cursor:pointer;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.35);color:var(--cyan);outline:none;">
-            <option value="pollinations">Pollinations</option>
+            <option value="pollinations">Pollinations · GPT-4o</option>
+            <option value="llama">Llama 3 · Free No-Key</option>
             <option value="gemini">Gemini</option>
-            <option value="puter">Puter.js · Free No-Key</option>
           </select>
           <button class="back-btn" onclick="clearAIMessages()" title="Clear chat" style="font-size:.5rem;">🗑 CLR</button>
           <button class="back-btn" onclick="toggleAI()" style="font-size:.5rem;">✕</button>
@@ -4137,9 +4135,9 @@ function setAIService(val) {
   currentAIService = val;
   localStorage.setItem('rs_ai_service', val);
   const labels = {
-    pollinations: 'Pollinations · Ready',
-    gemini:       'Gemini · Ready',
-    puter:        'Puter.js · Free No-Key'
+    pollinations: 'Pollinations · GPT-4o',
+    llama:        'Llama 3 · Free No-Key',
+    gemini:       'Gemini · Ready'
   };
   const el = document.getElementById('aiServiceLabel');
   if (el) el.textContent = labels[val] || 'AI Elmer · Ready to help';
@@ -4223,34 +4221,39 @@ async function callGemini(contextPrompt, text) {
   return reply;
 }
 
-// ── Puter.js: 100% free, no developer API key required ───────────────────────
-// Uses GPT-4.1 nano via Puter's "user-pays" model.
-// First use triggers a one-time free Puter account sign-in popup for the user.
-async function callPuter(contextPrompt, text) {
-  if (typeof puter === 'undefined') {
-    throw new Error('Puter.js failed to load. Please check your internet connection and reload.');
-  }
-  const messages = [
-    { role: 'system', content: contextPrompt },
-    { role: 'user',   content: text }
-  ];
-  // puter.ai.chat returns response.message.content (string) when given a messages array
-  const response = await puter.ai.chat(messages, { model: 'gpt-4.1-nano' });
-  let reply = '';
-  if (response && typeof response === 'string') {
-    reply = response;
-  } else {
-    const content = response?.message?.content;
-    if (typeof content === 'string') {
-      reply = content;
-    } else if (Array.isArray(content)) {
-      reply = content.filter(b => b.type === 'text').map(b => b.text).join('\n');
-    } else {
-      reply = content?.[0]?.text ?? '';
+// ── Llama 3 via Pollinations: 100% free, no API key, no registration ─────────
+async function callLlama(contextPrompt, text) {
+  const response = await fetch("https://text.pollinations.ai/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "llama",
+      system: contextPrompt,
+      messages: [{ role: "user", content: text }],
+      seed: Math.floor(Math.random() * 99999)
+    })
+  });
+  const raw = await response.text();
+  try {
+    const json = JSON.parse(raw);
+    if (typeof json === 'string') return json;
+    if (json.content && Array.isArray(json.content)) return json.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+    if (json.choices && json.choices[0]) {
+      const c = json.choices[0].message?.content;
+      if (typeof c === 'string') return c;
+      if (Array.isArray(c)) return c.filter(b => b.type === 'text').map(b => b.text).join('\n');
+      return json.choices[0].text || '';
     }
-  }
-  if (!reply) throw new Error('Puter.js returned an empty response. Please try again.');
-  return reply;
+    if (json.message) {
+      const c = typeof json.message === 'string' ? json.message : json.message.content;
+      if (typeof c === 'string') return c;
+      if (Array.isArray(c)) return c.filter(b => b.type === 'text').map(b => b.text).join('\n');
+    }
+    if (typeof json.text === 'string') return json.text;
+    if (typeof json.reasoning_content === 'string' && json.reasoning_content.trim()) return json.reasoning_content.trim();
+    return '';
+  } catch {}
+  return raw;
 }
 
 async function sendAIMessage(text) {
@@ -4276,8 +4279,8 @@ async function sendAIMessage(text) {
     let raw = '';
     if (currentAIService === 'gemini') {
       raw = await callGemini(contextPrompt, text);
-    } else if (currentAIService === 'puter') {
-      raw = await callPuter(contextPrompt, text);
+    } else if (currentAIService === 'llama') {
+      raw = await callLlama(contextPrompt, text);
     } else {
       raw = await callPollinations(contextPrompt, text);
     }
