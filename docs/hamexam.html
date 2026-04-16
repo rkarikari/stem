@@ -616,7 +616,7 @@ body{
 <div id="app">
   <!-- TOP BAR -->
   <div class="top-bar">
-    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.15</span></div>
+    <div class="logo">Radio<span>Sport</span> · EXAM SYSTEM <span style="font-size:.55rem;font-weight:500;color:#94a3b8;letter-spacing:.08em;vertical-align:middle;">v1.16</span></div>
     <div class="top-right">
       <div id="licBadge" class="license-badge"></div>
       <div id="streakDisplay" class="streak-indicator" style="display:none">
@@ -4244,7 +4244,7 @@ async function sendAIMessage(text) {
   // Build context about current study session
   const licName = state.license ? POOLS[state.license].name : 'Amateur Radio';
   const currentQ = state.aiContext;
-  const contextPrompt = `You are an AI Elmer — an expert, friendly, and encouraging amateur radio mentor. You're helping a student prepare for their ${licName} license exam. ${currentQ ? `The student is currently working on question ${currentQ.id}: "${currentQ.q}" with the topic "${currentQ.topic}".` : ''} Keep explanations clear, use practical examples, and include relevant memory tricks when helpful. Use ham radio terminology naturally. Be encouraging — help them succeed!`;
+  const contextPrompt = `You are an AI Elmer — an expert, friendly, and encouraging amateur radio mentor. You're helping a student prepare for their ${licName} license exam. ${currentQ ? `The student is currently working on question ${currentQ.id}: "${currentQ.q}" with the topic "${currentQ.topic}".` : ''} Keep explanations clear, use practical examples, and include relevant memory tricks when helpful. Use ham radio terminology naturally. Be encouraging — help them succeed! Do not show your reasoning, planning, or thinking process — respond with your final answer only.`;
 
   try {
     let raw = '';
