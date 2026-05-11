@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WAEC eBook – Business Strategy Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ink:    #0f1117;
+    --paper:  #faf8f4;
+    --gold:   #c8973a;
+    --gold2:  #e8b85a;
+    --green:  #1a5c2a;
+    --green2: #2d7a3e;
+    --red:    #8b1a1a;
+    --muted:  #5a5a5a;
+    --rule:   #d4cfc6;
+    --accent: #1a3a6b;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ── MASTHEAD ── */
+  .masthead {
+    background: var(--ink);
+    color: #fff;
+    padding: 3rem 2rem 2.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .masthead::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      -55deg,
+      transparent 0px, transparent 18px,
+      rgba(200,151,58,.06) 18px, rgba(200,151,58,.06) 19px
+    );
+    pointer-events: none;
+  }
+  .masthead-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .22em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: .8rem;
+  }
+  .masthead h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1.15;
+    margin-bottom: .5rem;
+  }
+  .masthead h1 em {
+    color: var(--gold2);
+    font-style: italic;
+  }
+  .masthead-sub {
+    color: #b0aaa0;
+    font-size: .9rem;
+    margin-top: .6rem;
+    font-weight: 300;
+  }
+  .masthead-meta {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1.6rem;
+    flex-wrap: wrap;
+  }
+  .masthead-meta span {
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    color: #888;
+    letter-spacing: .08em;
+  }
+  .masthead-meta strong { color: var(--gold2); }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 880px; margin: 0 auto; padding: 0 1.5rem; }
+  .section { padding: 2.8rem 0 2rem; border-bottom: 1px solid var(--rule); }
+  .section:last-child { border-bottom: none; }
+
+  /* ── SECTION HEADERS ── */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: .4rem;
+  }
+  .section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.3rem, 3vw, 1.85rem);
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 1.2rem;
+    border-left: 4px solid var(--gold);
+    padding-left: .8rem;
+  }
+
+  /* ── MARKET BANNER ── */
+  .market-banner {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+  }
+  .market-stat {
+    background: #fff;
+    padding: 1.2rem 1rem;
+    text-align: center;
+  }
+  .market-stat .num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--green);
+    line-height: 1;
+  }
+  .market-stat .num.gold { color: var(--gold); }
+  .market-stat .num.accent { color: var(--accent); }
+  .market-stat .label {
+    font-size: .75rem;
+    color: var(--muted);
+    margin-top: .3rem;
+    line-height: 1.4;
+  }
+
+  /* ── COST TABLE ── */
+  .cost-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: .88rem; }
+  .cost-table th {
+    background: var(--ink);
+    color: #fff;
+    padding: .55rem .8rem;
+    text-align: left;
+    font-weight: 500;
+    font-size: .8rem;
+    letter-spacing: .04em;
+  }
+  .cost-table td { padding: .5rem .8rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .cost-table tr:nth-child(even) td { background: rgba(0,0,0,.02); }
+  .cost-table .zero { color: var(--green); font-family: 'DM Mono', monospace; font-weight: 600; }
+  .cost-table .cost { font-family: 'DM Mono', monospace; color: var(--accent); font-weight: 600; }
+  .cost-table .total-row td { background: var(--ink)!important; color: #fff; font-weight: 600; }
+  .cost-table .total-row .cost { color: var(--gold2); }
+
+  /* ── PRICING SCENARIOS ── */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1.2rem 0;
+  }
+  .scenario {
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .scenario-head {
+    padding: .7rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: .75rem;
+    font-weight: 500;
+    letter-spacing: .06em;
+  }
+  .scenario-head.local  { background: var(--green); color: #fff; }
+  .scenario-head.intl   { background: var(--accent); color: #fff; }
+  .scenario-head.bundle { background: var(--gold); color: var(--ink); }
+  .scenario-body { padding: .9rem 1rem; background: #fff; }
+  .scenario-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.9rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: .3rem;
+  }
+  .scenario-royalty {
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem;
+    color: var(--green2);
+    font-weight: 600;
+    margin-bottom: .5rem;
+  }
+  .scenario-body p { font-size: .82rem; color: var(--muted); line-height: 1.5; }
+
+  /* ── REVENUE PROJECTIONS ── */
+  .projection-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: .86rem; }
+  .projection-table th {
+    background: var(--green);
+    color: #fff;
+    padding: .5rem .8rem;
+    text-align: left;
+    font-size: .78rem;
+  }
+  .projection-table td { padding: .5rem .8rem; border-bottom: 1px solid var(--rule); }
+  .projection-table tr:nth-child(even) td { background: rgba(26,92,42,.04); }
+  .projection-table .rev { font-family: 'DM Mono', monospace; font-weight: 600; color: var(--green); }
+  .projection-table .highlight td { background: rgba(200,151,58,.1)!important; font-weight: 600; }
+
+  /* ── STRATEGY CARDS ── */
+  .strategy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin: 1.2rem 0;
+  }
+  .strat-card {
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1.1rem 1.1rem 1rem;
+    border-top: 3px solid var(--gold);
+  }
+  .strat-card.green-top { border-top-color: var(--green); }
+  .strat-card.blue-top  { border-top-color: var(--accent); }
+  .strat-card.red-top   { border-top-color: var(--red); }
+  .strat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--rule);
+    line-height: 1;
+    float: right;
+  }
+  .strat-card h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: .92rem;
+    font-weight: 600;
+    margin-bottom: .5rem;
+    color: var(--ink);
+  }
+  .strat-card p { font-size: .82rem; color: var(--muted); line-height: 1.55; }
+  .strat-card ul { padding-left: 1rem; margin-top: .4rem; }
+  .strat-card li { font-size: .82rem; color: var(--muted); margin: .2rem 0; line-height: 1.5; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    background: var(--ink);
+    color: #fff;
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    margin: 1.4rem 0;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .callout-icon { font-size: 1.6rem; line-height: 1; flex-shrink: 0; margin-top: .1rem; }
+  .callout p { font-size: .88rem; line-height: 1.6; }
+  .callout strong { color: var(--gold2); }
+  .callout.green-call { background: var(--green); }
+  .callout.gold-call  { background: #7a5a1a; }
+  .callout.blue-call  { background: var(--accent); }
+
+  /* ── TIMELINE ── */
+  .timeline { margin: 1.2rem 0; }
+  .tl-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: .8rem;
+    margin-bottom: .8rem;
+    align-items: start;
+  }
+  .tl-phase {
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    font-weight: 500;
+    padding: .3rem .5rem;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .tl-phase.now   { background: var(--gold);   color: var(--ink); }
+  .tl-phase.month3 { background: var(--green);  color: #fff; }
+  .tl-phase.month6 { background: var(--accent); color: #fff; }
+  .tl-phase.year1  { background: var(--ink);    color: var(--gold2); }
+  .tl-content h4 { font-size: .88rem; font-weight: 600; margin-bottom: .2rem; }
+  .tl-content p  { font-size: .81rem; color: var(--muted); line-height: 1.5; }
+
+  /* ── DISTRIBUTION TABLE ── */
+  .dist-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: .83rem; }
+  .dist-table th {
+    background: var(--accent);
+    color: #fff;
+    padding: .5rem .7rem;
+    text-align: left;
+    font-size: .77rem;
+  }
+  .dist-table td { padding: .5rem .7rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .dist-table tr:nth-child(even) td { background: rgba(26,58,107,.03); }
+  .pill {
+    display: inline-block;
+    padding: .15rem .5rem;
+    border-radius: 20px;
+    font-size: .7rem;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+  }
+  .pill.primary   { background: rgba(26,92,42,.12); color: var(--green); }
+  .pill.secondary { background: rgba(26,58,107,.12); color: var(--accent); }
+  .pill.tertiary  { background: rgba(200,151,58,.15); color: #7a5a10; }
+
+  /* ── RISK TABLE ── */
+  .risk-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: .83rem; }
+  .risk-table th { background: var(--red); color: #fff; padding: .5rem .7rem; text-align: left; font-size: .77rem; }
+  .risk-table td { padding: .5rem .7rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .risk-table tr:nth-child(even) td { background: rgba(139,26,26,.03); }
+  .risk-hi  { color: var(--red); font-weight: 600; font-family: 'DM Mono', monospace; font-size: .78rem; }
+  .risk-med { color: #c07000; font-weight: 600; font-family: 'DM Mono', monospace; font-size: .78rem; }
+  .risk-lo  { color: var(--green); font-weight: 600; font-family: 'DM Mono', monospace; font-size: .78rem; }
+
+  /* ── BOTTOM VERDICT ── */
+  .verdict {
+    background: linear-gradient(135deg, var(--ink) 0%, #1a2a0a 100%);
+    color: #fff;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    margin-top: 2rem;
+  }
+  .verdict h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: var(--gold2);
+    margin-bottom: 1rem;
+    border: none;
+    padding: 0;
+  }
+  .verdict-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: rgba(255,255,255,.1);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1.2rem auto;
+    max-width: 700px;
+  }
+  .verdict-item {
+    background: rgba(255,255,255,.05);
+    padding: 1rem;
+  }
+  .verdict-item .v-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--gold2);
+    line-height: 1;
+  }
+  .verdict-item .v-label { font-size: .75rem; color: #888; margin-top: .2rem; line-height: 1.4; }
+  .verdict p { font-size: .88rem; color: #b0aaa0; max-width: 580px; margin: 0 auto; line-height: 1.7; }
+
+  /* ── FOOTNOTE ── */
+  .footnote {
+    font-size: .75rem;
+    color: var(--muted);
+    border-top: 1px solid var(--rule);
+    padding: 1.2rem 0;
+    line-height: 1.6;
+  }
+  .footnote a { color: var(--accent); text-decoration: none; }
+
+  p { margin-bottom: .7rem; }
+  p:last-child { margin-bottom: 0; }
+  strong { font-weight: 600; }
+
+  @media (max-width: 600px) {
+    .masthead { padding: 2rem 1rem 1.8rem; }
+    .tl-row { grid-template-columns: 70px 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ MASTHEAD ══════════════════════════════════════════════════════════ -->
+<div class="masthead">
+  <div class="masthead-eyebrow">RadioSport CRRC — Strategic Business Research</div>
+  <h1>WAEC JHS eBooks<br/><em>Self-Sustainability Report</em></h1>
+  <p class="masthead-sub">Minimum Production Cost · Optimal Pricing · Best Distribution &amp; Marketing Strategy</p>
+  <div class="masthead-meta">
+    <span>Compiled <strong>May 2026</strong></span>
+    <span>Market: <strong>Ghana JHS (BECE)</strong></span>
+    <span>Subjects: <strong>All 9 Core BECE Subjects</strong></span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ══ 1. MARKET OPPORTUNITY ════════════════════════════════════════════ -->
+<section class="section">
+  <p class="section-label">Section 01</p>
+  <h2>The Market Opportunity</h2>
+
+  <p>The BECE examination is a compulsory national exit from Junior High School in Ghana. It is sat by every JHS 3 student in the country, making the BECE prep market one of the largest and most predictable education markets in West Africa. Crucially, the market grows reliably every year.</p>
+
+  <div class="market-banner">
+    <div class="market-stat">
+      <div class="num">620K</div>
+      <div class="label">BECE candidates<br/>2026 (WAEC official)</div>
+    </div>
+    <div class="market-stat">
+      <div class="num gold">+16.7K</div>
+      <div class="label">Year-on-year<br/>candidate growth</div>
+    </div>
+    <div class="market-stat">
+      <div class="num accent">~1.86M</div>
+      <div class="label">Total JHS students<br/>(Forms 1–3, all years)</div>
+    </div>
+    <div class="market-stat">
+      <div class="num">20,390</div>
+      <div class="label">Public &amp; private<br/>schools nationwide</div>
+    </div>
+    <div class="market-stat">
+      <div class="num gold">9</div>
+      <div class="label">Subjects covered<br/>in these eBooks</div>
+    </div>
+  </div>
+
+  <p>The 620,000 JHS 3 candidates represent the <strong>immediate addressable market</strong> for revision resources. The broader market includes ~1.24 million JHS 1 and 2 students who will face the same exam in coming years — and parents and teachers who buy resources on students' behalf. This catalogue covers <strong>all nine BECE examination subjects</strong>: English Language, Mathematics, Integrated Science, Social Studies, Religious &amp; Moral Education (RME), French, Career Technology, Computing, and Creative Arts — giving every student a single source for complete BECE preparation.</p>
+
+  <div class="callout green-call">
+    <div class="callout-icon">📊</div>
+    <p>If just <strong>1% of 2026 BECE candidates</strong> purchase each title at GHS 30, that is 6,200 copies per book, generating <strong>GHS 186,000 (~USD 12,400)</strong> in gross revenue per title — <strong>GHS 1.67 million across all 9 titles</strong>. At 2%, revenue doubles. Families purchasing the full catalogue (all 9 subjects) at the bundle price represent an average order value of GHS 200+, the highest in the Ghanaian BECE prep market.</p>
+  </div>
+</section>
+
+<!-- ══ 2. PRODUCTION COST ════════════════════════════════════════════════ -->
+<section class="section">
+  <p class="section-label">Section 02</p>
+  <h2>Minimum Production Cost</h2>
+
+  <p>Because these eBooks were authored and formatted entirely in-house (no external editors, typesetters or designers were required), the production cost structure is exceptionally lean. The table below distinguishes between <strong>already-incurred costs</strong> (sunk) and the <strong>remaining costs to reach market</strong>.</p>
+
+  <table class="cost-table">
+    <thead>
+      <tr><th>Cost Item</th><th>Notes</th><th>Min Cost</th><th>Recommended</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Content creation &amp; formatting</strong></td>
+        <td>Completed — all 9 subject books authored, formatted, booster sections added, new chapters integrated, epub packaged and validated: English Language, Mathematics, Integrated Science, Social Studies, RME, French, Career Technology, Computing, Creative Arts</td>
+        <td class="zero">GHS 0 ✓ Done</td>
+        <td class="zero">GHS 0</td>
+      </tr>
+      <tr>
+        <td><strong>Cover design — per title × 9</strong></td>
+        <td>DIY with Canva (free tier) using Ghana flag colours, WAEC/GES branding cues. Professional Canva Pro = GHS 120/mo (cancel after one month — covers all 9 designs). Fiverr freelancer (Ghana/Africa) = GHS 60–180 per cover.</td>
+        <td class="cost">GHS 0 (DIY)</td>
+        <td class="cost">GHS 120</td>
+      </tr>
+      <tr>
+        <td><strong>ISBN registration</strong></td>
+        <td>Amazon KDP provides a free ISBN for Kindle books. Not required for Selar or direct WhatsApp sales. Optional for print-on-demand editions.</td>
+        <td class="zero">GHS 0</td>
+        <td class="zero">GHS 0</td>
+      </tr>
+      <tr>
+        <td><strong>Distribution platform setup</strong></td>
+        <td>Amazon KDP: free. Selar (Africa's leading digital product platform): free listing, 10% fee per sale. Gumroad: free, 10% fee. Paystack storefront: free, 1.95% fee only.</td>
+        <td class="zero">GHS 0</td>
+        <td class="zero">GHS 0</td>
+      </tr>
+      <tr>
+        <td><strong>Website / landing page</strong></td>
+        <td>Minimal: a free Carrd.co or WordPress.com page. Recommended: a simple domain (radiosporthq.com or similar) + budget hosting = ~GHS 220/yr. Not required to start.</td>
+        <td class="cost">GHS 0</td>
+        <td class="cost">GHS 220/yr</td>
+      </tr>
+      <tr>
+        <td><strong>Business registration (Ghana)</strong></td>
+        <td>Required to activate Paystack or Flutterwave merchant accounts. Sole proprietor business name registration at Registrar General = GHS 60. TIN from GRA is free.</td>
+        <td class="cost">GHS 60</td>
+        <td class="cost">GHS 60</td>
+      </tr>
+      <tr>
+        <td><strong>Launch marketing (Month 1)</strong></td>
+        <td>WhatsApp broadcast to schools and teachers: free. 5 Facebook/Instagram targeted posts to JHS students and parents in Ghana: ~GHS 50 each = GHS 250. 1 influencer (popular JHS/SHS blogger or teacher): GHS 0–200 (barter with free copies).</td>
+        <td class="cost">GHS 0 (organic)</td>
+        <td class="cost">GHS 300</td>
+      </tr>
+      <tr>
+        <td><strong>Review copies (to teachers / schools)</strong></td>
+        <td>Send 10–20 PDF/epub copies free to influential JHS teachers and school WhatsApp groups to generate word-of-mouth. Zero marginal cost for digital.</td>
+        <td class="zero">GHS 0</td>
+        <td class="zero">GHS 0</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td><strong>TOTAL TO MARKET</strong></td>
+        <td>Bare minimum (organic-only launch, 9 titles)</td>
+        <td class="cost">GHS 60</td>
+        <td class="cost">GHS 700</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="callout blue-call">
+    <div class="callout-icon">💡</div>
+    <p><strong>Key structural advantage:</strong> Unlike a print book (which requires GHS 15–50 per copy in printing and warehousing costs before a single sale), the eBook has a <strong>zero marginal cost per copy sold</strong>. The 1,000th sale costs nothing more than the 1st. This means the business reaches self-sustainability after just a handful of sales, and every additional copy sold is nearly 100% profit.</p>
+  </div>
+</section>
+
+<!-- ══ 3. PRICING STRATEGY ════════════════════════════════════════════════ -->
+<section class="section">
+  <p class="section-label">Section 03</p>
+  <h2>Optimal Pricing Strategy</h2>
+
+  <p>Pricing must balance two competing forces: <strong>affordability for Ghanaian JHS families</strong> (many earning below GHS 2,000/month) and <strong>perceived value as a serious exam tool</strong>. Underpricing signals low quality; overpricing cuts off the mass market. Research on comparable Ghanaian educational resources and BECE prep materials points to a clear sweet spot.</p>
+
+  <div class="scenario-grid">
+    <div class="scenario">
+      <div class="scenario-head local">🇬🇭 Ghana Direct (Selar / WhatsApp / Paystack)</div>
+      <div class="scenario-body">
+        <div class="scenario-price">GHS 30</div>
+        <div class="scenario-royalty">≈ GHS 27 net (after 10% Selar fee)</div>
+        <p>Equivalent to ~USD 2.00. Accessible to most JHS families. Positions the book as a <em>serious prep resource</em> — not a giveaway, but clearly affordable. Comparable to one transport fare or one meal. Teachers can recommend confidently.</p>
+      </div>
+    </div>
+    <div class="scenario">
+      <div class="scenario-head intl">🌍 International (Amazon KDP / Diaspora)</div>
+      <div class="scenario-body">
+        <div class="scenario-price">USD 4.99</div>
+        <div class="scenario-royalty">≈ USD 1.40 net (35% royalty, no delivery fee)*</div>
+        <p>Targets Ghanaian diaspora families (UK, USA, Canada, Germany) supporting children at home. Also reaches West African curriculum schools in Togo, Benin and Nigerian/Sierra Leonean WAEC students. <em>*Ghana is a 35% territory on Amazon KDP unless enrolled in KDP Select.</em></p>
+      </div>
+    </div>
+    <div class="scenario">
+      <div class="scenario-head bundle">📦 Core 5 Bundle (Compulsory Subjects)</div>
+      <div class="scenario-body">
+        <div class="scenario-price">GHS 120</div>
+        <div class="scenario-royalty">≈ GHS 108 net — saves buyer GHS 30</div>
+        <p>English, Mathematics, Integrated Science, Social Studies &amp; RME — the five compulsory BECE subjects — bundled at a GHS 30 saving vs. buying separately. Ideal for families wanting complete compulsory coverage in one purchase.</p>
+      </div>
+    </div>
+    <div class="scenario">
+      <div class="scenario-head bundle" style="background:#5a3a8a;">📚 Full 9-Subject Mega Bundle</div>
+      <div class="scenario-body">
+        <div class="scenario-price">GHS 200</div>
+        <div class="scenario-royalty">≈ GHS 180 net — saves buyer GHS 70</div>
+        <p>All 9 subjects — the complete BECE prep library. Targets parents and schools making a single decisive purchase. One sale delivers GHS 180 net vs. GHS 27 per individual sale. School licensing version: GHS 800–1,200 for institution-wide access.</p>
+      </div>
+    </div>
+  </div>
+
+  <p style="margin-top:1rem;">A <strong>tiered pricing structure</strong> is recommended: full price (GHS 30/title) year-round, with a <strong>BECE Season Promo</strong> (April–June) at GHS 22 per title to capture last-minute buyers and generate organic word-of-mouth ahead of the exam. Bundle promotions (Core 5 at GHS 100 or Full 9 at GHS 180) during exam season can significantly lift average order value and total revenue. This mirrors how physical revision books are discounted at shops near exam season — but with the additional advantage that bundles cost nothing extra to fulfil.</p>
+</section>
+
+<!-- ══ 4. REVENUE PROJECTIONS ════════════════════════════════════════════ -->
+<section class="section">
+  <p class="section-label">Section 04</p>
+  <h2>Revenue Projections &amp; Break-Even</h2>
+
+  <p>Based on the 2026 BECE candidate base of 620,000, plus JHS 1–2 cohorts and international buyers, the projections below model revenue at different penetration rates. All figures assume a single-title sale price of <strong>GHS 30 with GHS 27 net</strong>. The "All 9 Titles" column compounds across the full catalogue.</p>
+
+  <table class="projection-table">
+    <thead>
+      <tr>
+        <th>Scenario</th>
+        <th>Sales (units/title)</th>
+        <th>% of 2026 BECE cohort</th>
+        <th>Gross Revenue</th>
+        <th>Net Revenue (after fees)</th>
+        <th>Annual (all 9 titles)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Minimum Viable</strong></td>
+        <td>100</td>
+        <td>0.016%</td>
+        <td>GHS 3,000</td>
+        <td class="rev">GHS 2,700</td>
+        <td class="rev">GHS 24,300</td>
+      </tr>
+      <tr>
+        <td><strong>Break-Even</strong></td>
+        <td>26 per title</td>
+        <td>—</td>
+        <td>GHS 780</td>
+        <td class="rev">GHS 702</td>
+        <td>234 total sales covers GHS 700 startup</td>
+      </tr>
+      <tr class="highlight">
+        <td><strong>Conservative Target (Yr 1)</strong></td>
+        <td>1,500</td>
+        <td>0.24%</td>
+        <td>GHS 45,000</td>
+        <td class="rev">GHS 40,500</td>
+        <td class="rev">GHS 364,500</td>
+      </tr>
+      <tr>
+        <td><strong>Realistic Target (Yr 2)</strong></td>
+        <td>4,000</td>
+        <td>0.65%</td>
+        <td>GHS 120,000</td>
+        <td class="rev">GHS 108,000</td>
+        <td class="rev">GHS 972,000</td>
+      </tr>
+      <tr>
+        <td><strong>Growth Scenario (Yr 3)</strong></td>
+        <td>10,000</td>
+        <td>1.6%</td>
+        <td>GHS 300,000</td>
+        <td class="rev">GHS 270,000</td>
+        <td class="rev">GHS 2.43M</td>
+      </tr>
+      <tr>
+        <td><strong>Scale Scenario (Yr 4+)</strong></td>
+        <td>25,000</td>
+        <td>4%</td>
+        <td>GHS 750,000</td>
+        <td class="rev">GHS 675,000</td>
+        <td class="rev">GHS 6.08M+</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout gold-call">
+    <div class="callout-icon">🎯</div>
+    <p><strong>Break-even requires only 26 sales per title — 234 total across all 9 books.</strong> Given that a single JHS teacher recommending to their class of 35 students would likely generate 5–15 sales, this threshold is achievable within the first week of a proper launch. With 9 titles, a parent purchasing the Full 9-Subject Bundle generates GHS 180 net in one transaction — equivalent to 6.7 individual title sales. The business is structurally self-sustaining from the very first month.</p>
+  </div>
+</section>
+
+<!-- ══ 5. DISTRIBUTION CHANNELS ══════════════════════════════════════════ -->
+<section class="section">
+  <p class="section-label">Section 05</p>
+  <h2>Distribution Channels — Ranked by Priority</h2>
+
+  <table class="dist-table">
+    <thead>
+      <tr>
+        <th>Channel</th>
+        <th>Platform</th>
+        <th>Fee</th>
+        <th>Payment Methods</th>
+        <th>Priority</th>
+        <th>Why</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Direct WhatsApp Sales</strong></td>
+        <td>WhatsApp Business + Paystack payment link</td>
+        <td>1.95% (Paystack)</td>
+        <td>MTN MoMo, Telecel Cash, AirtelTigo, Visa/MC</td>
+        <td><span class="pill primary">Primary</span></td>
+        <td>Over 95% of Ghanaian JHS students and parents are on WhatsApp. Zero platform dependency. Payment links sent instantly. Build a subscriber list. Fastest to launch.</td>
+      </tr>
+      <tr>
+        <td><strong>Selar Storefront</strong></td>
+        <td>Selar.co</td>
+        <td>10% per sale</td>
+        <td>MoMo, cards, GHS, USD, GBP</td>
+        <td><span class="pill primary">Primary</span></td>
+        <td>Africa's leading digital product marketplace. Auto-delivers epub file on payment. Has a built-in affiliate network (5–15% commission for promoters). Supports GHS pricing. No setup cost.</td>
+      </tr>
+      <tr>
+        <td><strong>Amazon KDP (Kindle)</strong></td>
+        <td>kdp.amazon.com</td>
+        <td>35% royalty (Ghana territory)</td>
+        <td>Card (international)</td>
+        <td><span class="pill secondary">Secondary</span></td>
+        <td>Targets diaspora Ghanaians (UK, USA, Canada, EU). Global discoverability. Free listing. Consider KDP Select (90-day exclusive) to unlock 70% royalty and Kindle Unlimited page-read income.</td>
+      </tr>
+      <tr>
+        <td><strong>School Direct Sales</strong></td>
+        <td>Email/WhatsApp to head teachers</td>
+        <td>0% (direct)</td>
+        <td>MoMo, bank transfer</td>
+        <td><span class="pill secondary">Secondary</span></td>
+        <td>Pitch to individual schools for bulk licensing: GHS 500–1,000 for a school-wide epub licence for all JHS 3 students. One sale = 300–600 students covered. Approach via GES District Education Offices.</td>
+      </tr>
+      <tr>
+        <td><strong>Gumroad</strong></td>
+        <td>Gumroad.com</td>
+        <td>10% per sale</td>
+        <td>Card (international)</td>
+        <td><span class="pill tertiary">Tertiary</span></td>
+        <td>Good for diaspora and international WAEC students (Nigeria, Sierra Leone, Liberia, Gambia all use WAEC). Simple discovery. Auto-delivery included.</td>
+      </tr>
+      <tr>
+        <td><strong>Own Website Store</strong></td>
+        <td>WordPress + Paystack plugin</td>
+        <td>1.95% (Paystack)</td>
+        <td>MoMo, cards</td>
+        <td><span class="pill tertiary">Tertiary</span></td>
+        <td>Lowest fee structure long-term. Build brand authority. Add free sample chapters to capture email leads. Invest in Year 2 once cash flow established.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="callout-icon">📱</div>
+    <p><strong>Mobile-first is non-negotiable.</strong> In 2024, Ghana processed <strong>8.1 billion mobile money transactions</strong> — a figure that jumped 18.9% year-on-year. By October 2025, monthly MoMo transaction volumes reached GHS 436 billion. Ghana's <strong>E-Levy abolition in 2025</strong> removed the 1.5% transaction tax that had suppressed digital payments — this is a structural tailwind. Any distribution channel that does not accept MTN MoMo will lose the majority of the target market.</p>
+  </div>
+</section>
+
+<!-- ══ 6. MARKETING STRATEGY ══════════════════════════════════════════════ -->
+<section class="section">
+  <p class="section-label">Section 06</p>
+  <h2>Marketing Strategy</h2>
+
+  <p>The BECE prep market is driven by three buyer personas: <strong>(A) the student</strong> (self-directed, social media native), <strong>(B) the parent</strong> (decision-maker, WhatsApp and Facebook user), and <strong>(C) the teacher</strong> (influencer and recommender — the single highest-leverage channel). Marketing must speak to all three.</p>
+
+  <div class="strategy-grid">
+    <div class="strat-card green-top">
+      <div class="strat-num">01</div>
+      <h3>Teacher Seeding (Highest ROI)</h3>
+      <p>Identify 50 influential JHS teachers across all 16 regions via GES school directories and Facebook teacher groups — targeting at least 5 per subject area. Send the relevant free title with a personalised note. Offer a 15% referral commission on every copy their students purchase via a unique Selar affiliate link.</p>
+      <ul>
+        <li>One teacher with 35 students can generate 10–20 sales</li>
+        <li>Cost: 50 free copies (GHS 0) + ~GHS 200 commission</li>
+        <li>Potential return: GHS 10,000–30,000 per cohort</li>
+      </ul>
+    </div>
+    <div class="strat-card">
+      <div class="strat-num">02</div>
+      <h3>WhatsApp Broadcast Network</h3>
+      <p>Build and maintain 3–5 WhatsApp broadcast lists: (1) JHS teachers, (2) JHS 3 students, (3) Parents of JHS students, (4) SHS students (for WASSCE expansion). Share exam tips, free mini-quizzes, and BECE reminders weekly — then convert with a purchase link.</p>
+      <ul>
+        <li>Build lists via Instagram bio links and Facebook posts</li>
+        <li>Send free "Grade A Tip of the Week" to build trust first</li>
+        <li>Link each tip back to the full eBook at checkout</li>
+      </ul>
+    </div>
+    <div class="strat-card blue-top">
+      <div class="strat-num">03</div>
+      <h3>Facebook &amp; Instagram Ads (Targeted)</h3>
+      <p>Run Facebook Ads targeting: Ghana + Nigeria, age 13–18 + parents of school-age children, interest in WAEC/BECE/GES/education. Budget GHS 50/day for 2 weeks before peak revision season (March–May). Use student testimonials and Grade C vs Grade A comparison screenshots as creatives — these are highly shareable.</p>
+      <ul>
+        <li>Expected CPM: GHS 3–8 (Ghanaian education audience)</li>
+        <li>Target cost per sale: GHS 8–15 (leaves GHS 12–22 net margin)</li>
+      </ul>
+    </div>
+    <div class="strat-card red-top">
+      <div class="strat-num">04</div>
+      <h3>TikTok &amp; YouTube Shorts</h3>
+      <p>Create 30–60 second short videos: "The WAEC trick examiners never tell you," "Grade A vs Grade C answer — spot the difference," "1 minute Social Studies revision." These formats drive massive organic reach among JHS students. Link in bio to Selar store. Each viral video can generate hundreds of organic sales.</p>
+      <ul>
+        <li>Cost: GHS 0 (organic) to GHS 300 (boosted)</li>
+        <li>Content ideas: exam mistakes, mnemonic reveals, mark schemes</li>
+      </ul>
+    </div>
+    <div class="strat-card green-top">
+      <div class="strat-num">05</div>
+      <h3>School Bulk Licensing</h3>
+      <p>Approach private JHS schools directly for institutional licences. Offer: GHS 1,500 for the complete 9-subject library for all JHS 3 students at a school for one academic year, or GHS 800 for the Core 5 compulsory subjects only. 100 schools = GHS 150,000 — achievable via one targeted school email campaign to GES-registered private schools.</p>
+      <ul>
+        <li>Start with private schools (faster decision-making)</li>
+        <li>Provide a school "resource pack" with usage guide for teachers</li>
+        <li>Offer free trial for one class to demonstrate value</li>
+      </ul>
+    </div>
+    <div class="strat-card">
+      <div class="strat-num">06</div>
+      <h3>West African WAEC Expansion</h3>
+      <p>The same WAEC curriculum structure applies in Nigeria (with minor variations), Sierra Leone, Liberia and The Gambia. Combined, these nations produce over 1.5 million WAEC candidates annually. A lightly adapted edition (or the existing one with a note on syllabus alignment) opens a market 3× the size of Ghana's.</p>
+      <ul>
+        <li>Nigeria: list on Selar (dominant in Nigeria too) and Flutterwave store</li>
+        <li>Price in USD ($3.99) for international West African buyers</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:1rem;font-weight:600;">Launch Timeline</h3>
+
+  <div class="timeline">
+    <div class="tl-row">
+      <div class="tl-phase now">NOW<br/>Week 1</div>
+      <div class="tl-content">
+        <h4>Foundation</h4>
+        <p>Register Selar account. Create Paystack merchant account (GHS 60 business reg). Set up WhatsApp Business profile. Upload all 9 titles to Selar at GHS 30 each. Create Core 5 Bundle (GHS 120) and Full 9-Subject Mega Bundle (GHS 200). Set up Amazon KDP listings at USD 4.99 per title.</p>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-phase month3">Month<br/>1–2</div>
+      <div class="tl-content">
+        <h4>Seeding &amp; Validation</h4>
+        <p>Send 50 free copies (across all 9 titles, matched to each teacher's subject) to influential JHS teachers. Launch WhatsApp broadcast network. Post 3× per week on Facebook and Instagram (exam tips, free subject-specific quizzes). Record first 5 TikTok/Shorts videos. Target first 200 sales per title.</p>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-phase month6">Month<br/>3–5 (Exam Season)</div>
+      <div class="tl-content">
+        <h4>BECE Season Push</h4>
+        <p>Run Facebook Ads at GHS 50/day. Launch BECE Season Promo at GHS 22/title and Core 5 Bundle at GHS 100 for 3 weeks. Activate Selar affiliate programme — recruit 20+ teacher affiliates (one per subject area). Email all schools directly about school-wide bulk licensing. This period should account for 50–60% of annual revenue.</p>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-phase year1">Year 2<br/>Onward</div>
+      <div class="tl-content">
+        <h4>Scale &amp; Expand</h4>
+        <p>Launch updated annual editions across all 9 titles (new WAEC past questions added). Build own website with Paystack to reduce platform fees. Pursue school district licensing deals — approach GES District Education Offices directly. Expand into Nigerian and Sierra Leonean WAEC markets via Selar and Flutterwave. Consider SHS (WASSCE) editions as the natural next catalogue.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 7. RISKS ════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <p class="section-label">Section 07</p>
+  <h2>Key Risks &amp; Mitigations</h2>
+
+  <table class="risk-table">
+    <thead>
+      <tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Piracy / Unauthorized sharing</strong></td>
+        <td class="risk-hi">HIGH</td>
+        <td class="risk-hi">HIGH</td>
+        <td>Keep price low (GHS 30 is below piracy motivation threshold). Add personalization (buyer's name embedded). Focus on volume over DRM. Offer annual editions with new content so old copies become outdated.</td>
+      </tr>
+      <tr>
+        <td><strong>WAEC curriculum change</strong></td>
+        <td class="risk-med">MEDIUM</td>
+        <td class="risk-hi">HIGH</td>
+        <td>The 2025–26 curriculum transition is already reflected in the books' content. Monitor GES syllabus updates annually. Low-cost annual epub revisions keep content current.</td>
+      </tr>
+      <tr>
+        <td><strong>Low digital literacy / no ebook reader</strong></td>
+        <td class="risk-med">MEDIUM</td>
+        <td class="risk-med">MEDIUM</td>
+        <td>Epub files open in free apps (Moon+ Reader, Google Play Books) on any Android phone. Offer a PDF version as a free alternative format. Most JHS students have smartphones or access to family devices.</td>
+      </tr>
+      <tr>
+        <td><strong>Competition from free resources (Passco.com.gh etc.)</strong></td>
+        <td class="risk-hi">HIGH</td>
+        <td class="risk-med">MEDIUM</td>
+        <td>The upgraded eBooks offer intelligence competitors cannot match: Examiner's Mind boxes, Grade A vs C comparisons, mnemonics, topic-specific drills. Free resources offer past questions only — not exam strategy and understanding. Position accordingly.</td>
+      </tr>
+      <tr>
+        <td><strong>Slow initial sales / cash flow</strong></td>
+        <td class="risk-med">MEDIUM</td>
+        <td class="risk-lo">LOW</td>
+        <td>Break-even requires only 26 sales. Startup cost is under GHS 700. Risk exposure is minimal. Focus first 30 days on organic (free) channels — WhatsApp, teacher seeding — before spending on ads.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══ VERDICT ════════════════════════════════════════════════════════════ -->
+<div class="verdict">
+  <h2>Strategic Verdict</h2>
+  <div class="verdict-grid">
+    <div class="verdict-item">
+      <div class="v-num">GHS 700</div>
+      <div class="v-label">Max startup cost<br/>to reach market</div>
+    </div>
+    <div class="verdict-item">
+      <div class="v-num">234</div>
+      <div class="v-label">Total sales needed<br/>to break even (9 titles)</div>
+    </div>
+    <div class="verdict-item">
+      <div class="v-num">GHS 30</div>
+      <div class="v-label">Optimal local<br/>price per title</div>
+    </div>
+    <div class="verdict-item">
+      <div class="v-num">GHS 365K</div>
+      <div class="v-label">Conservative<br/>Year 1 revenue</div>
+    </div>
+    <div class="verdict-item">
+      <div class="v-num">9</div>
+      <div class="v-label">BECE subjects<br/>fully covered</div>
+    </div>
+    <div class="verdict-item">
+      <div class="v-num">620K+</div>
+      <div class="v-label">Annual BECE<br/>candidates (growing)</div>
+    </div>
+  </div>
+  <p>This nine-title catalogue is positioned to be the most complete and intelligent BECE prep resource suite on the Ghanaian market. Covering every examinable subject — from Mathematics and Integrated Science to Creative Arts and French — it addresses every student's need in a single publisher. The combination of an enormous, growing, exam-driven captive market; near-zero marginal cost per copy; powerful bundle economics (GHS 200 for the full set vs GHS 270 separately); and a GHS 700 maximum startup investment makes this one of the most capital-efficient education publishing opportunities in West Africa. <strong>The primary success factor is not production cost — it is distribution speed, teacher adoption, and bundle marketing</strong>. Launching within the academic term, seeding subject teachers first, and offering the Full 9-Subject Bundle as an anchor product are the three decisions that will determine Year 1 outcomes.</p>
+</div>
+
+<div class="footnote container">
+  <p><strong>Data sources:</strong> <a href="https://sikamantimes.com/over-620000-jhs-candidates-begin-2026-bece-nationwide/">Sikaman Times — 2026 BECE candidature (620,141)</a> · <a href="https://kdp.amazon.com">Amazon KDP royalty structure (May 2026)</a> · <a href="https://selar.com/blog/paystack-vs-selar/">Selar GHS fee structure</a> · <a href="https://blog.faciotech.com/mobile-money-payment-integration-ghana">Paystack/Flutterwave Ghana fees (2026)</a> · <a href="https://websysgh.com">Ghana Mobile Money transaction data (Bank of Ghana, 2024–2025)</a>. Exchange rate used: 1 USD = 15 GHS (approximate, May 2026).</p>
+</div>
+
+</div><!-- /container -->
+</body>
+</html>
