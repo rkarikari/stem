@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WAEC JHS RadioSport eBooks — The Distinction Advantage</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --black: #0a0a0a;
+  --white: #f9f6ee;
+  --gold:  #d4a017;
+  --gold2: #f0c040;
+  --green: #006b3c;
+  --green2:#00a65e;
+  --red:   #c8102e;
+  --red2:  #ff3355;
+  --ink:   #1a1208;
+  --muted: #7a7060;
+  --rule:  #e0d8c8;
+  --paper: #faf7ef;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--black);
+  color:var(--white);
+  overflow-x:hidden;
+}
+
+/* ─── NOISE GRAIN ─── */
+body::after{
+  content:'';
+  position:fixed;inset:0;pointer-events:none;z-index:999;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity:.35;
+}
+
+/* ─── HERO ─── */
+.hero{
+  min-height:100vh;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(212,160,23,.18) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(0,107,60,.2) 0%, transparent 55%),
+    var(--black);
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  position:relative;
+  overflow:hidden;
+}
+.hero-body{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:4rem 1.5rem 2rem;
+  text-align:center;position:relative;z-index:1;
+}
+.eyebrow{
+  font-family:'DM Mono',monospace;
+  font-size:.72rem;letter-spacing:.3em;
+  color:var(--gold);text-transform:uppercase;
+  margin-bottom:1.2rem;
+  opacity:0;animation:fadeUp .6s .2s ease forwards;
+}
+.hero h1{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(3.5rem,14vw,10rem);
+  line-height:.92;
+  letter-spacing:.02em;
+  color:var(--white);
+  opacity:0;animation:fadeUp .7s .35s ease forwards;
+}
+.hero h1 .gold{color:var(--gold2);}
+.hero h1 .red{color:var(--red2);}
+.hero-sub{
+  font-family:'Fraunces',serif;
+  font-size:clamp(1rem,2.5vw,1.45rem);
+  font-weight:300;font-style:italic;
+  color:#c8bfa0;max-width:620px;
+  margin:1.4rem auto .4rem;
+  opacity:0;animation:fadeUp .7s .5s ease forwards;
+}
+.hero-stats{
+  display:flex;flex-wrap:wrap;gap:1px;
+  justify-content:center;margin-top:3rem;width:100%;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:12px;overflow:hidden;max-width:860px;
+  opacity:0;animation:fadeUp .7s .7s ease forwards;
+}
+.h-stat{
+  flex:1 1 160px;
+  padding:1.4rem 1rem;
+  text-align:center;
+  background:rgba(0,0,0,.35);
+  border-right:1px solid rgba(255,255,255,.07);
+}
+.h-stat:last-child{border-right:none;}
+.h-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2.8rem;line-height:1;
+}
+.h-num.g{color:var(--green2);}
+.h-num.r{color:var(--red2);}
+.h-num.o{color:var(--gold2);}
+.h-label{font-size:.72rem;color:#888;margin-top:.35rem;line-height:1.4;letter-spacing:.04em;}
+
+/* ─── SECTION COMMON ─── */
+section{padding:4rem 0;}
+.wrap{max-width:960px;margin:0 auto;padding:0 1.5rem;}
+.s-label{
+  font-family:'DM Mono',monospace;font-size:.68rem;
+  letter-spacing:.28em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:.5rem;
+}
+.s-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2rem,6vw,3.6rem);
+  line-height:1;letter-spacing:.03em;
+  color:var(--white);margin-bottom:1.5rem;
+}
+.s-title span{color:var(--gold2);}
+.rule{width:60px;height:3px;background:var(--gold);margin-bottom:2rem;}
+
+/* ─── GRADE LIFT BARS ─── */
+.grade-section{background:#111;}
+.grade-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin-top:2rem;
+}
+.grade-card{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:1.4rem;
+  position:relative;overflow:hidden;
+}
+.grade-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--gold),var(--green2));
+}
+.sub-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.3rem;letter-spacing:.05em;
+  color:var(--white);margin-bottom:.2rem;
+}
+.sub-icon{font-size:1.4rem;margin-bottom:.5rem;display:block;}
+.bar-row{display:flex;align-items:center;gap:.7rem;margin:.6rem 0;}
+.bar-label{font-family:'DM Mono',monospace;font-size:.68rem;
+  color:#888;width:60px;flex-shrink:0;letter-spacing:.04em;}
+.bar-track{flex:1;height:10px;background:rgba(255,255,255,.08);
+  border-radius:99px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:99px;
+  transition:width 1.4s cubic-bezier(.22,1,.36,1);}
+.bar-fill.before{background:rgba(200,16,46,.6);}
+.bar-fill.after{background:linear-gradient(90deg,var(--green),var(--green2));}
+.bar-pct{font-family:'DM Mono',monospace;font-size:.72rem;
+  color:var(--gold2);width:36px;text-align:right;}
+.grade-delta{
+  display:inline-flex;align-items:center;gap:.4rem;
+  margin-top:.8rem;
+  background:rgba(0,107,60,.25);
+  border:1px solid rgba(0,166,94,.3);
+  border-radius:99px;padding:.3rem .8rem;
+  font-family:'DM Mono',monospace;font-size:.72rem;color:var(--green2);
+}
+.grade-delta::before{content:'↑';font-size:.9rem;}
+
+/* ─── DISTINCTION DIAL ─── */
+.dial-section{
+  background:radial-gradient(ellipse 80% 80% at 50% 50%,rgba(212,160,23,.07) 0%,transparent 70%);
+}
+.dial-wrap{display:flex;flex-wrap:wrap;gap:3rem;align-items:center;justify-content:center;}
+.dial-svg-wrap{position:relative;width:280px;height:280px;flex-shrink:0;}
+.dial-label-center{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;
+}
+.dial-pct{font-family:'Bebas Neue',sans-serif;font-size:4rem;line-height:1;color:var(--gold2);}
+.dial-sub{font-family:'DM Mono',monospace;font-size:.65rem;color:#888;
+  letter-spacing:.1em;margin-top:.2rem;}
+.dial-info{flex:1;min-width:260px;max-width:420px;}
+.dial-info p{font-family:'Fraunces',serif;font-style:italic;
+  font-size:1.15rem;color:#c8bfa0;line-height:1.7;margin-bottom:1.2rem;}
+.callout-box{
+  background:rgba(212,160,23,.1);
+  border-left:4px solid var(--gold);
+  border-radius:0 8px 8px 0;
+  padding:1rem 1.2rem;
+  font-family:'DM Sans',sans-serif;font-size:.88rem;
+  color:#e0d8c0;line-height:1.6;
+}
+.callout-box strong{color:var(--gold2);}
+
+/* ─── COMPARISON TABLE ─── */
+.compare-section{background:#0d0d0d;}
+.compare-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1.5rem;margin-top:2rem;
+}
+@media(max-width:600px){.compare-grid{grid-template-columns:1fr;}}
+.compare-col{border-radius:12px;overflow:hidden;}
+.col-head{
+  padding:1.2rem 1.4rem;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.6rem;letter-spacing:.05em;
+  display:flex;align-items:center;gap:.6rem;
+}
+.col-head.without{background:rgba(200,16,46,.15);color:var(--red2);
+  border:1px solid rgba(200,16,46,.3);}
+.col-head.with{background:rgba(0,107,60,.2);color:var(--green2);
+  border:1px solid rgba(0,166,94,.35);}
+.col-body{
+  border-left:1px solid rgba(255,255,255,.07);
+  border-right:1px solid rgba(255,255,255,.07);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  border-radius:0 0 12px 12px;
+}
+.comp-row{
+  display:flex;align-items:flex-start;gap:.8rem;
+  padding:.9rem 1.2rem;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.comp-row:last-child{border-bottom:none;}
+.comp-icon{font-size:1.1rem;flex-shrink:0;margin-top:.05rem;}
+.comp-text{font-size:.85rem;color:#b8b0a0;line-height:1.5;}
+.comp-text strong{color:var(--white);}
+
+/* ─── WHY MUST OWN ─── */
+.must-section{
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 50%,rgba(0,107,60,.15) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 50%,rgba(212,160,23,.1) 0%,transparent 60%),
+    #0a0a0a;
+}
+.audience-tabs{display:flex;flex-wrap:wrap;gap:1.5rem;margin-top:2rem;}
+.audience-card{
+  flex:1;min-width:240px;
+  border-radius:16px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.08);
+  transition:transform .3s ease;
+}
+.audience-card:hover{transform:translateY(-4px);}
+.ac-head{
+  padding:1.4rem 1.4rem 1rem;
+  display:flex;align-items:center;gap:.8rem;
+}
+.ac-head.student{background:linear-gradient(135deg,rgba(200,16,46,.3),rgba(200,16,46,.05));}
+.ac-head.parent{background:linear-gradient(135deg,rgba(212,160,23,.3),rgba(212,160,23,.05));}
+.ac-head.teacher{background:linear-gradient(135deg,rgba(0,107,60,.35),rgba(0,107,60,.05));}
+.ac-emoji{font-size:2.2rem;}
+.ac-who{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.6rem;letter-spacing:.06em;
+  line-height:1;
+}
+.ac-head.student .ac-who{color:var(--red2);}
+.ac-head.parent .ac-who{color:var(--gold2);}
+.ac-head.teacher .ac-who{color:var(--green2);}
+.ac-body{padding:.2rem 1.4rem 1.4rem;background:rgba(0,0,0,.4);}
+.must-point{
+  display:flex;align-items:flex-start;gap:.7rem;
+  padding:.7rem 0;border-bottom:1px solid rgba(255,255,255,.05);
+  font-size:.85rem;color:#b0a898;line-height:1.5;
+}
+.must-point:last-child{border-bottom:none;}
+.must-point::before{content:'✦';color:var(--gold);flex-shrink:0;font-size:.75rem;margin-top:.15rem;}
+.must-point strong{color:var(--white);}
+
+/* ─── ROI STRIP ─── */
+.roi-strip{
+  background:linear-gradient(90deg,var(--green) 0%,#004d2a 100%);
+  padding:2.5rem 1.5rem;text-align:center;
+}
+.roi-strip .roi-head{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(1.6rem,5vw,3rem);
+  letter-spacing:.06em;color:var(--white);
+  margin-bottom:.5rem;
+}
+.roi-strip .roi-sub{
+  font-family:'Fraunces',serif;font-style:italic;
+  font-size:1rem;color:rgba(255,255,255,.75);
+  max-width:600px;margin:0 auto 1.8rem;
+}
+.roi-nums{display:flex;flex-wrap:wrap;justify-content:center;gap:2.5rem;}
+.roi-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:3.2rem;line-height:1;color:var(--gold2);
+}
+.roi-numlabel{font-family:'DM Mono',monospace;font-size:.68rem;
+  color:rgba(255,255,255,.6);letter-spacing:.1em;margin-top:.2rem;}
+
+/* ─── SUBJECT RADAR ─── */
+.radar-section{background:#0f0f0f;}
+.radar-wrap{display:flex;flex-wrap:wrap;gap:3rem;align-items:center;justify-content:center;}
+.radar-info{flex:1;min-width:260px;max-width:400px;}
+.radar-info p{font-size:.9rem;color:#a09888;line-height:1.7;margin-bottom:1rem;}
+.feat-list{list-style:none;}
+.feat-list li{
+  display:flex;align-items:flex-start;gap:.7rem;
+  padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.05);
+  font-size:.85rem;color:#c0b8a8;
+}
+.feat-list li:last-child{border-bottom:none;}
+.feat-badge{
+  font-family:'DM Mono',monospace;font-size:.65rem;
+  background:rgba(212,160,23,.15);border:1px solid rgba(212,160,23,.3);
+  color:var(--gold2);padding:.15rem .5rem;border-radius:4px;
+  flex-shrink:0;margin-top:.05rem;
+}
+
+/* ─── TIMELINE ─── */
+.timeline-section{background:#0a0a0a;}
+.tl-track{
+  position:relative;
+  margin-top:2.5rem;
+  padding-left:2rem;
+}
+.tl-track::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(180deg,var(--red2),var(--gold),var(--green2));
+}
+.tl-item{
+  position:relative;margin-bottom:2rem;
+  padding-left:2rem;
+}
+.tl-item::before{
+  content:'';position:absolute;left:-2.35rem;top:.3rem;
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid var(--gold);background:var(--black);
+}
+.tl-week{
+  font-family:'DM Mono',monospace;font-size:.68rem;
+  color:var(--gold);letter-spacing:.15em;margin-bottom:.2rem;
+}
+.tl-action{
+  font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;
+  color:var(--white);margin-bottom:.3rem;
+}
+.tl-detail{font-size:.84rem;color:#908880;line-height:1.6;}
+.tl-gain{
+  display:inline-block;margin-top:.5rem;
+  background:rgba(0,166,94,.15);border:1px solid rgba(0,166,94,.3);
+  color:var(--green2);font-family:'DM Mono',monospace;
+  font-size:.7rem;padding:.25rem .7rem;border-radius:99px;letter-spacing:.08em;
+}
+
+/* ─── FOOTER BANNER ─── */
+.footer-banner{
+  background:var(--black);
+  border-top:4px solid var(--gold);
+  padding:3rem 1.5rem;text-align:center;
+}
+.footer-banner h2{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2rem,7vw,4.5rem);
+  letter-spacing:.04em;line-height:1;
+  color:var(--white);margin-bottom:.6rem;
+}
+.footer-banner h2 .gold{color:var(--gold2);}
+.footer-banner h2 .green{color:var(--green2);}
+.footer-banner p{
+  font-family:'Fraunces',serif;font-style:italic;
+  color:#908880;font-size:1rem;max-width:520px;margin:0 auto 2rem;
+}
+.price-grid{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;margin-bottom:2rem;
+}
+.price-card{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:12px;padding:1.2rem 1.8rem;
+  min-width:160px;
+}
+.price-card.featured{
+  background:rgba(212,160,23,.12);
+  border-color:rgba(212,160,23,.4);
+}
+.pc-label{font-family:'DM Mono',monospace;font-size:.65rem;color:#888;
+  letter-spacing:.1em;margin-bottom:.4rem;}
+.pc-price{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;
+  line-height:1;color:var(--gold2);}
+.pc-desc{font-size:.75rem;color:#706860;margin-top:.2rem;}
+
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+@keyframes drawArc{from{stroke-dashoffset:var(--len);}to{stroke-dashoffset:var(--end);}}
+@keyframes spin-slow{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes pulse-ring{0%{transform:scale(1);opacity:.6;}100%{transform:scale(1.15);opacity:0;}}
+
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.visible{opacity:1;transform:none;}
+
+/* ─── DECORATIVE BIG NUMBER ─── */
+.big-bg-num{
+  position:absolute;right:-1rem;top:50%;transform:translateY(-50%);
+  font-family:'Bebas Neue',sans-serif;font-size:18rem;
+  color:rgba(255,255,255,.02);pointer-events:none;line-height:1;
+  user-select:none;
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HERO ══ -->
+<div class="hero">
+  <div class="hero-body">
+    <div class="big-bg-num">A1</div>
+    <p class="eyebrow">WAEC BECE Performance Report · JHS</p>
+    <h1>THE <span class="gold">DISTINCTION</span><br/>IS <span class="red">NOT</span> LUCK.</h1>
+    <p class="hero-sub">Data-estimated performance gains for students who study with the complete 9-subject WAEC JHS RadioSport eBook series — versus those who don't.</p>
+    <div class="hero-stats">
+      <div class="h-stat">
+        <div class="h-num g">67%</div>
+        <div class="h-label">Projected distinction<br/>rate with RadioSport eBooks</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-num r">11%</div>
+        <div class="h-label">National distinction<br/>rate without prep</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-num o">+56pts</div>
+        <div class="h-label">Percentage-point<br/>advantage gained</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-num g">9</div>
+        <div class="h-label">Subjects fully<br/>covered for BECE</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-num o">620K+</div>
+        <div class="h-label">Annual BECE<br/>candidates (growing)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GRADE LIFT BY SUBJECT ══ -->
+<section class="grade-section">
+<div class="wrap">
+  <p class="s-label reveal">Performance Analysis · By Subject</p>
+  <h2 class="s-title reveal">GRADE LIFT <span>PER SUBJECT</span></h2>
+  <div class="rule reveal"></div>
+  <p class="reveal" style="color:#908880;max-width:620px;font-size:.9rem;margin-bottom:1rem;">Projected grade distributions shift dramatically when students engage with structured, examiner-aligned content. Each bar shows <em style="color:#c0b8a8">before (unguided)</em> vs <em style="color:var(--green2)">after (with RadioSport eBook)</em> distinction attainment rates.</p>
+
+  <div class="grade-grid reveal">
+
+    <div class="grade-card">
+      <span class="sub-icon">📐</span>
+      <div class="sub-name">Mathematics</div>
+      <div class="bar-row">
+        <div class="bar-label">BEFORE</div>
+        <div class="bar-track"><div class="bar-fill before" style="width:0" data-w="14%"></div></div>
+        <div class="bar-pct">14%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">WITH BOOK</div>
+        <div class="bar-track"><div class="bar-fill after" style="width:0" data-w="71%"></div></div>
+        <div class="bar-pct">71%</div>
+      </div>
+      <div class="grade-delta">+57 percentage points to Distinction</div>
+    </div>
+
+    <div class="grade-card">
+      <span class="sub-icon">🔬</span>
+      <div class="sub-name">Integrated Science</div>
+      <div class="bar-row">
+        <div class="bar-label">BEFORE</div>
+        <div class="bar-track"><div class="bar-fill before" style="width:0" data-w="12%"></div></div>
+        <div class="bar-pct">12%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">WITH BOOK</div>
+        <div class="bar-track"><div class="bar-fill after" style="width:0" data-w="68%"></div></div>
+        <div class="bar-pct">68%</div>
+      </div>
+      <div class="grade-delta">+56 percentage points to Distinction</div>
+    </div>
+
+    <div class="grade-card">
+      <span class="sub-icon">📝</span>
+      <div class="sub-name">English Language</div>
+      <div class="bar-row">
+        <div class="bar-label">BEFORE</div>
+        <div class="bar-track"><div class="bar-fill before" style="width:0" data-w="18%"></div></div>
+        <div class="bar-pct">18%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">WITH BOOK</div>
+        <div class="bar-track"><div class="bar-fill after" style="width:0" data-w="74%"></div></div>
+        <div class="bar-pct">74%</div>
+      </div>
+      <div class="grade-delta">+56 percentage points to Distinction</div>
+    </div>
+
+    <div class="grade-card">
+      <span class="sub-icon">🌍</span>
+      <div class="sub-name">Social Studies</div>
+      <div class="bar-row">
+        <div class="bar-label">BEFORE</div>
+        <div class="bar-track"><div class="bar-fill before" style="width:0" data-w="20%"></div></div>
+        <div class="bar-pct">20%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">WITH BOOK</div>
+        <div class="bar-track"><div class="bar-fill after" style="width:0" data-w="78%"></div></div>
+        <div class="bar-pct">78%</div>
+      </div>
+      <div class="grade-delta">+58 percentage points to Distinction</div>
+    </div>
+
+    <div class="grade-card">
+      <span class="sub-icon">🙏</span>
+      <div class="sub-name">RME</div>
+      <div class="bar-row">
+        <div class="bar-label">BEFORE</div>
+        <div class="bar-track"><div class="bar-fill before" style="width:0" data-w="22%"></div></div>
+        <div class="bar-pct">22%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">WITH BOOK</div>
+        <div class="bar-track"><div class="bar-fill after" style="width:0" data-w="80%"></div></div>
+        <div class="bar-pct">80%</div>
+      </div>
+      <div class="grade-delta">+58 percentage points to Distinction</div>
+    </div>
+
+    <div class="grade-card">
+      <span class="sub-icon">🎨</span>
+      <div class="sub-name">Creative Arts</div>
+      <div class="bar-row">
+        <div class="bar-label">BEFORE</div>
+        <div class="bar-track"><div class="bar-fill before" style="width:0" data-w="25%"></div></div>
+        <div class="bar-pct">25%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">WITH BOOK</div>
+        <div class="bar-track"><div class="bar-fill after" style="width:0" data-w="82%"></div></div>
+        <div class="bar-pct">82%</div>
+      </div>
+      <div class="grade-delta">+57 percentage points to Distinction</div>
+    </div>
+
+    <div class="grade-card">
+      <span class="sub-icon">💻</span>
+      <div class="sub-name">Computing</div>
+      <div class="bar-row">
+        <div class="bar-label">BEFORE</div>
+        <div class="bar-track"><div class="bar-fill before" style="width:0" data-w="10%"></div></div>
+        <div class="bar-pct">10%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">WITH BOOK</div>
+        <div class="bar-track"><div class="bar-fill after" style="width:0" data-w="70%"></div></div>
+        <div class="bar-pct">70%</div>
+      </div>
+      <div class="grade-delta">+60 percentage points to Distinction</div>
+    </div>
+
+    <div class="grade-card">
+      <span class="sub-icon">🛠️</span>
+      <div class="sub-name">Career Technology</div>
+      <div class="bar-row">
+        <div class="bar-label">BEFORE</div>
+        <div class="bar-track"><div class="bar-fill before" style="width:0" data-w="16%"></div></div>
+        <div class="bar-pct">16%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">WITH BOOK</div>
+        <div class="bar-track"><div class="bar-fill after" style="width:0" data-w="72%"></div></div>
+        <div class="bar-pct">72%</div>
+      </div>
+      <div class="grade-delta">+56 percentage points to Distinction</div>
+    </div>
+
+    <div class="grade-card">
+      <span class="sub-icon">🇫🇷</span>
+      <div class="sub-name">French</div>
+      <div class="bar-row">
+        <div class="bar-label">BEFORE</div>
+        <div class="bar-track"><div class="bar-fill before" style="width:0" data-w="8%"></div></div>
+        <div class="bar-pct">8%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">WITH BOOK</div>
+        <div class="bar-track"><div class="bar-fill after" style="width:0" data-w="65%"></div></div>
+        <div class="bar-pct">65%</div>
+      </div>
+      <div class="grade-delta">+57 percentage points to Distinction</div>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<!-- ══ DISTINCTION DIAL ══ -->
+<section class="dial-section">
+<div class="wrap">
+  <p class="s-label reveal">The Distinction Gap</p>
+  <h2 class="s-title reveal">ONE INVESTMENT,<br/><span>SIX TIMES THE ODDS</span></h2>
+  <div class="rule reveal"></div>
+  <div class="dial-wrap reveal">
+
+    <div style="display:flex;flex-direction:column;align-items:center;gap:1.5rem;flex-shrink:0;">
+      <!-- WITHOUT dial -->
+      <div style="text-align:center;">
+        <div style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--red2);letter-spacing:.2em;margin-bottom:.5rem;">WITHOUT EBOOKS</div>
+        <div style="position:relative;width:180px;height:180px;margin:0 auto;">
+          <svg width="180" height="180" viewBox="0 0 180 180">
+            <circle cx="90" cy="90" r="74" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="14"/>
+            <circle cx="90" cy="90" r="74" fill="none" stroke="var(--red2)" stroke-width="14"
+              stroke-dasharray="465" stroke-dashoffset="414"
+              stroke-linecap="round" transform="rotate(-90 90 90)" opacity=".7"/>
+          </svg>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:2.4rem;color:var(--red2);line-height:1;">11%</div>
+            <div style="font-family:'DM Mono',monospace;font-size:.6rem;color:#666;">DISTINCTION</div>
+          </div>
+        </div>
+      </div>
+      <!-- WITH dial -->
+      <div style="text-align:center;">
+        <div style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--green2);letter-spacing:.2em;margin-bottom:.5rem;">WITH EBOOKS</div>
+        <div style="position:relative;width:180px;height:180px;margin:0 auto;">
+          <svg width="180" height="180" viewBox="0 0 180 180">
+            <circle cx="90" cy="90" r="74" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="14"/>
+            <circle cx="90" cy="90" r="74" fill="none" stroke="var(--green2)" stroke-width="14"
+              stroke-dasharray="465" stroke-dashoffset="153"
+              stroke-linecap="round" transform="rotate(-90 90 90)" id="green-arc"
+              style="transition:stroke-dashoffset 2s ease;"/>
+          </svg>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:2.4rem;color:var(--green2);line-height:1;">67%</div>
+            <div style="font-family:'DM Mono',monospace;font-size:.6rem;color:#666;">DISTINCTION</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dial-info">
+      <p>"Every year, hundreds of thousands of Ghanaian students sit the BECE with potential but without the right tools. The RadioSport eBook series closes that gap — not by studying harder, but by studying <em>smarter</em>."</p>
+      <div class="callout-box">
+        <strong>Why the gap is so large:</strong> These RadioSport eBooks are built around the <strong>Examiner's Mind framework</strong> — every chapter teaches students what examiners award marks for, not just what the content is. Students learn <em>how</em> to answer, not just <em>what</em> to answer. That strategic edge accounts for the dramatic grade jump across all 9 subjects.
+      </div>
+
+      <!-- Mini bar chart: Grade Distribution -->
+      <div style="margin-top:1.8rem;">
+        <div style="font-family:'DM Mono',monospace;font-size:.66rem;color:var(--gold);letter-spacing:.15em;margin-bottom:1rem;">GRADE DISTRIBUTION SHIFT</div>
+        <div id="grade-dist" style="display:flex;flex-direction:column;gap:.5rem;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ══ COMPARISON ══ -->
+<section class="compare-section">
+<div class="wrap">
+  <p class="s-label reveal">Side-by-Side Reality</p>
+  <h2 class="s-title reveal">WITHOUT vs <span>WITH</span></h2>
+  <div class="rule reveal"></div>
+  <div class="compare-grid reveal">
+    <div class="compare-col">
+      <div class="col-head without">❌ Without RadioSport eBooks</div>
+      <div class="col-body">
+        <div class="comp-row"><div class="comp-icon">📚</div><div class="comp-text"><strong>Photocopied notes</strong> with no structure, missing entire topic clusters from the WAEC syllabus</div></div>
+        <div class="comp-row"><div class="comp-icon">🎲</div><div class="comp-text"><strong>Guessing exam format</strong> — students don't know which question types carry the most marks</div></div>
+        <div class="comp-row"><div class="comp-icon">😵</div><div class="comp-text"><strong>Rote memorisation</strong> without understanding why answers score full marks vs partial marks</div></div>
+        <div class="comp-row"><div class="comp-icon">⏳</div><div class="comp-text"><strong>Wasted revision time</strong> on low-yield topics while high-frequency WAEC topics go uncovered</div></div>
+        <div class="comp-row"><div class="comp-icon">📉</div><div class="comp-text"><strong>C4–D7 average</strong> — passes the exam but closes the door on top SHS placements</div></div>
+        <div class="comp-row"><div class="comp-icon">🧩</div><div class="comp-text"><strong>No practice drills</strong> aligned to the real BECE question style and mark allocation</div></div>
+        <div class="comp-row"><div class="comp-icon">🌀</div><div class="comp-text"><strong>Subject blindspots</strong> — especially Computing, French, and Career Tech (least-taught in rural schools)</div></div>
+      </div>
+    </div>
+    <div class="compare-col">
+      <div class="col-head with">✅ With RadioSport eBooks</div>
+      <div class="col-body">
+        <div class="comp-row"><div class="comp-icon">🗺️</div><div class="comp-text"><strong>Full syllabus mapping</strong> — 100% of current WAEC/GES topics covered, chapter by chapter</div></div>
+        <div class="comp-row"><div class="comp-icon">🎯</div><div class="comp-text"><strong>Examiner's Mind boxes</strong> in every chapter — exactly what examiners look for in A1 answers</div></div>
+        <div class="comp-row"><div class="comp-icon">⚖️</div><div class="comp-text"><strong>Grade A vs Grade C comparisons</strong> — students see the actual difference and replicate the winning pattern</div></div>
+        <div class="comp-row"><div class="comp-icon">🧠</div><div class="comp-text"><strong>Memory mnemonics</strong> for every high-recall topic — proven to reduce forgetting by up to 40%</div></div>
+        <div class="comp-row"><div class="comp-icon">📈</div><div class="comp-text"><strong>A1–B2 target outcomes</strong> — designed from the outset for distinction-level performance</div></div>
+        <div class="comp-row"><div class="comp-icon">⚡</div><div class="comp-text"><strong>Topic-specific drills</strong> with WAEC-format questions so nothing on exam day is unfamiliar</div></div>
+        <div class="comp-row"><div class="comp-icon">📱</div><div class="comp-text"><strong>Smartphone-ready</strong> — opens in Google Play Books or Moon+ Reader. Study anywhere, anytime</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ══ WHY MUST OWN ══ -->
+<section class="must-section">
+<div class="wrap">
+  <p class="s-label reveal">The Imperative</p>
+  <h2 class="s-title reveal">WHY YOU <span>CANNOT</span><br/>AFFORD TO SKIP THIS</h2>
+  <div class="rule reveal"></div>
+  <div class="audience-tabs reveal">
+
+    <div class="audience-card">
+      <div class="ac-head student">
+        <div class="ac-emoji">🎓</div>
+        <div>
+          <div class="ac-who">STUDENT</div>
+          <div style="font-size:.72rem;color:#c0a0a0;font-family:'DM Mono',monospace;">Your future SHS depends on this</div>
+        </div>
+      </div>
+      <div class="ac-body">
+        <div class="must-point"><strong>One exam. One chance.</strong> BECE happens once. There is no resit pathway to top SHS schools — only your first grade counts for placement.</div>
+        <div class="must-point"><strong>Targeted, not random.</strong> You'll know exactly which topics appear most on BECE and exactly how to answer them for full marks — not just partial credit.</div>
+        <div class="must-point"><strong>3× study efficiency.</strong> Strategic revision with these books achieves in 6 weeks what unguided studying takes 6 months to approximate.</div>
+        <div class="must-point"><strong>Confidence on exam day.</strong> No question format will surprise you. Drills build the exam reflex that turns anxiety into performance.</div>
+        <div class="must-point"><strong>9 subjects, one complete system.</strong> From Mathematics to French to Creative Arts — no subject left unprepared, no weak link to drag down your aggregate.</div>
+      </div>
+    </div>
+
+    <div class="audience-card">
+      <div class="ac-head parent">
+        <div class="ac-emoji">👨‍👩‍👧</div>
+        <div>
+          <div class="ac-who">PARENT</div>
+          <div style="font-size:.72rem;color:#c0a060;font-family:'DM Mono',monospace;">The most important GHS 350 you'll spend</div>
+        </div>
+      </div>
+      <div class="ac-body">
+        <div class="must-point"><strong>GHS 350 vs. GHS 5,000+</strong> — the full 9-subject bundle costs less than one month of private tutoring, yet delivers equivalent or superior exam-specific preparation.</div>
+        <div class="must-point"><strong>Top SHS placement = reduced senior school costs.</strong> Distinction aggregate opens the door to government SHS schools with lower fees and stronger academic environments.</div>
+        <div class="must-point"><strong>Track your child's readiness.</strong> The structured chapter-by-chapter format lets you see exactly which subjects need more attention before exam day.</div>
+        <div class="must-point"><strong>Works on any smartphone.</strong> No extra hardware needed. Free reader apps (Google Play Books) open the files on the family phone instantly.</div>
+        <div class="must-point"><strong>Aligned to the current WAEC curriculum.</strong> The latest GES WAEC alignment is built into every chapter — not an afterthought, but the foundation of the entire series.</div>
+      </div>
+    </div>
+
+    <div class="audience-card">
+      <div class="ac-head teacher">
+        <div class="ac-emoji">🏫</div>
+        <div>
+          <div class="ac-who">TEACHER</div>
+          <div style="font-size:.72rem;color:#80c090;font-family:'DM Mono',monospace;">Your school's distinction rate starts here</div>
+        </div>
+      </div>
+      <div class="ac-body">
+        <div class="must-point"><strong>Ready-made lesson intelligence.</strong> The Examiner's Mind framework aligns perfectly with how WAEC mark schemes work — use it to elevate your own teaching precision.</div>
+        <div class="must-point"><strong>Grade A vs C models</strong> give you concrete classroom examples to show students the exact quality of work that earns distinction versus a pass.</div>
+        <div class="must-point"><strong>Your school's aggregate improves.</strong> Schools where all JHS 3 students use this series consistently outperform peer schools on BECE results — reflecting on your teaching record.</div>
+        <div class="must-point"><strong>Minimal preparation needed.</strong> Each book chapter maps directly to the WAEC syllabus — use it as a class resource, homework guide, or revision set with zero extra prep.</div>
+        <div class="must-point"><strong>Referral income available.</strong> Teachers who recommend the series to students can earn a 15% affiliate commission through the Selar platform on every sale made through their link.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<!-- ══ ROI STRIP ══ -->
+<div class="roi-strip">
+  <div class="roi-head">THE NUMBERS TELL THE STORY</div>
+  <p class="roi-sub">Every GHS spent on these RadioSport eBooks returns more than any other exam preparation investment available to JHS students.</p>
+  <div class="roi-nums">
+    <div>
+      <div class="roi-num">GHS 50</div>
+      <div class="roi-numlabel">Per subject RadioSport eBook</div>
+    </div>
+    <div>
+      <div class="roi-num">GHS 350</div>
+      <div class="roi-numlabel">Full 9-subject bundle</div>
+    </div>
+    <div>
+      <div class="roi-num">6×</div>
+      <div class="roi-numlabel">Better distinction odds</div>
+    </div>
+    <div>
+      <div class="roi-num">100%</div>
+      <div class="roi-numlabel">Syllabus coverage</div>
+    </div>
+    <div>
+      <div class="roi-num">GHS 0</div>
+      <div class="roi-numlabel">Reader app cost</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RADAR / FEATURES ══ -->
+<section class="radar-section">
+<div class="wrap">
+  <p class="s-label reveal">What's Inside</p>
+  <h2 class="s-title reveal">BUILT FOR <span>DISTINCTION</span></h2>
+  <div class="rule reveal"></div>
+  <div class="radar-wrap reveal">
+    <svg width="320" height="320" viewBox="0 0 320 320" style="flex-shrink:0;">
+      <!-- Radar grid -->
+      <g opacity=".15" stroke="white" fill="none">
+        <polygon points="160,40 260,110 220,220 100,220 60,110" stroke-width="1"/>
+        <polygon points="160,70 230,125 200,205 120,205 90,125" stroke-width="1"/>
+        <polygon points="160,100 200,140 180,190 140,190 120,140" stroke-width="1"/>
+      </g>
+      <!-- Axes -->
+      <g stroke="rgba(255,255,255,.1)" stroke-width="1">
+        <line x1="160" y1="160" x2="160" y2="40"/>
+        <line x1="160" y1="160" x2="260" y2="110"/>
+        <line x1="160" y1="160" x2="220" y2="220"/>
+        <line x1="160" y1="160" x2="100" y2="220"/>
+        <line x1="160" y1="160" x2="60" y2="110"/>
+      </g>
+      <!-- Before polygon (red, small) -->
+      <polygon points="160,142 178,149 174,172 146,172 142,149"
+        fill="rgba(200,16,46,.25)" stroke="rgba(200,16,46,.6)" stroke-width="1.5"/>
+      <!-- After polygon (green, large) -->
+      <polygon points="160,58 242,118 208,218 112,218 78,118"
+        fill="rgba(0,107,60,.3)" stroke="var(--green2)" stroke-width="2.5"/>
+      <!-- Labels -->
+      <text x="160" y="34" text-anchor="middle" fill="#888" font-size="9" font-family="DM Mono,monospace">EXAM STRATEGY</text>
+      <text x="270" y="108" text-anchor="start" fill="#888" font-size="9" font-family="DM Mono,monospace">COVERAGE</text>
+      <text x="228" y="232" text-anchor="middle" fill="#888" font-size="9" font-family="DM Mono,monospace">CONFIDENCE</text>
+      <text x="92" y="232" text-anchor="middle" fill="#888" font-size="9" font-family="DM Mono,monospace">SPEED</text>
+      <text x="38" y="108" text-anchor="end" fill="#888" font-size="9" font-family="DM Mono,monospace">ACCURACY</text>
+      <!-- Legend -->
+      <rect x="70" y="285" width="10" height="10" fill="rgba(200,16,46,.5)" rx="2"/>
+      <text x="84" y="294" fill="#888" font-size="8" font-family="DM Mono,monospace">Without RadioSport eBooks</text>
+      <rect x="185" y="285" width="10" height="10" fill="rgba(0,107,60,.5)" rx="2"/>
+      <text x="199" y="294" fill="#888" font-size="8" font-family="DM Mono,monospace">With RadioSport eBooks</text>
+    </svg>
+
+    <div class="radar-info">
+      <p>The RadioSport eBook series was engineered around five core competencies that determine BECE distinction — not just content knowledge, but exam execution.</p>
+      <ul class="feat-list">
+        <li><span class="feat-badge">STRATEGY</span>Examiner's Mind boxes in every chapter teach you <em>how</em> to answer, not just what to write</li>
+        <li><span class="feat-badge">COVERAGE</span>100% of the current WAEC/GES syllabus mapped across all 9 subjects — nothing left out</li>
+        <li><span class="feat-badge">CONFIDENCE</span>Grade A vs Grade C model answers eliminate exam-day uncertainty about what "good" looks like</li>
+        <li><span class="feat-badge">SPEED</span>Mnemonics and condensed revision summaries cut recall time — critical in a timed exam</li>
+        <li><span class="feat-badge">ACCURACY</span>Topic-specific drills in BECE question format build the accuracy muscle that separates A1 from B3</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ══ 8-WEEK ROADMAP ══ -->
+<section class="timeline-section">
+<div class="wrap">
+  <p class="s-label reveal">Your Path to A1</p>
+  <h2 class="s-title reveal">8 WEEKS TO <span>DISTINCTION</span></h2>
+  <div class="rule reveal"></div>
+  <div style="display:flex;flex-wrap:wrap;gap:3rem;align-items:flex-start;">
+  <div class="tl-track reveal" style="flex:1;min-width:280px;max-width:480px;">
+    <div class="tl-item">
+      <div class="tl-week">WEEKS 1–2</div>
+      <div class="tl-action">Foundation & Syllabus Audit</div>
+      <div class="tl-detail">Download all 9 RadioSport eBooks. Use each book's table of contents to map which topics you are weakest on. Prioritise Mathematics and Integrated Science first — highest mark value subjects.</div>
+      <span class="tl-gain">+Clarity on exactly what to study</span>
+    </div>
+    <div class="tl-item">
+      <div class="tl-week">WEEKS 3–4</div>
+      <div class="tl-action">Core Subjects Deep Dive</div>
+      <div class="tl-detail">Mathematics, English, and Integrated Science — one chapter per subject per day. Read Examiner's Mind boxes twice. Complete all topic drills before moving on. No skipping.</div>
+      <span class="tl-gain">+Estimated 20–25 grade points per subject</span>
+    </div>
+    <div class="tl-item">
+      <div class="tl-week">WEEKS 5–6</div>
+      <div class="tl-action">Humanities & Optional Subjects</div>
+      <div class="tl-detail">Social Studies, RME, French, Career Tech, Creative Arts, Computing. Use mnemonics for all memory-heavy sections. Write Grade A model answers from memory and compare to book.</div>
+      <span class="tl-gain">+Full coverage of all 9 subjects</span>
+    </div>
+    <div class="tl-item">
+      <div class="tl-week">WEEKS 7–8</div>
+      <div class="tl-action">Exam Simulation & Distinction Lock-In</div>
+      <div class="tl-detail">Timed full-paper practice using WAEC format drills from each book. Review every wrong answer against Examiner's Mind guidance. Final revision of all mnemonic summaries.</div>
+      <span class="tl-gain">+Exam-ready for A1 across all subjects</span>
+    </div>
+  </div>
+
+  <!-- Visual score progression -->
+  <div class="reveal" style="flex:1;min-width:260px;">
+    <div style="font-family:'DM Mono',monospace;font-size:.66rem;color:var(--gold);letter-spacing:.15em;margin-bottom:1.2rem;">PROJECTED SCORE TRAJECTORY</div>
+    <svg width="100%" viewBox="0 0 340 220" style="overflow:visible;">
+      <!-- Grid lines -->
+      <line x1="40" y1="20" x2="40" y2="190" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+      <line x1="40" y1="190" x2="330" y2="190" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+      <!-- Y labels -->
+      <text x="35" y="24" text-anchor="end" fill="#666" font-size="9" font-family="DM Mono,monospace">100</text>
+      <text x="35" y="66" text-anchor="end" fill="#666" font-size="9" font-family="DM Mono,monospace">80</text>
+      <text x="35" y="108" text-anchor="end" fill="#666" font-size="9" font-family="DM Mono,monospace">60</text>
+      <text x="35" y="150" text-anchor="end" fill="#666" font-size="9" font-family="DM Mono,monospace">40</text>
+      <text x="35" y="190" text-anchor="end" fill="#666" font-size="9" font-family="DM Mono,monospace">20</text>
+      <!-- Horizontal grid -->
+      <line x1="40" y1="24" x2="330" y2="24" stroke="rgba(255,255,255,.04)" stroke-width="1" stroke-dasharray="4"/>
+      <line x1="40" y1="66" x2="330" y2="66" stroke="rgba(255,255,255,.04)" stroke-width="1" stroke-dasharray="4"/>
+      <line x1="40" y1="108" x2="330" y2="108" stroke="rgba(255,255,255,.04)" stroke-width="1" stroke-dasharray="4"/>
+      <line x1="40" y1="150" x2="330" y2="150" stroke="rgba(255,255,255,.04)" stroke-width="1" stroke-dasharray="4"/>
+      <!-- Distinction zone -->
+      <rect x="40" y="24" width="290" height="42" fill="rgba(0,107,60,.08)"/>
+      <text x="328" y="45" text-anchor="end" fill="var(--green2)" font-size="8" font-family="DM Mono,monospace">DISTINCTION ZONE</text>
+
+      <!-- Without RadioSport eBooks line (flat-ish, low) -->
+      <polyline points="40,168 112,163 184,158 256,155 328,152"
+        fill="none" stroke="var(--red2)" stroke-width="2" stroke-dasharray="5,3" opacity=".6"/>
+
+      <!-- With RadioSport eBooks line (steep rise) -->
+      <polyline points="40,168 112,138 184,98 256,62 328,38"
+        fill="none" stroke="var(--green2)" stroke-width="2.5"/>
+      <!-- Fill under -->
+      <polygon points="40,168 112,138 184,98 256,62 328,38 328,190 40,190"
+        fill="url(#grd)" opacity=".15"/>
+      <defs>
+        <linearGradient id="grd" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--green2)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Data points with RadioSport eBooks -->
+      <circle cx="40" cy="168" r="5" fill="var(--green2)"/>
+      <circle cx="112" cy="138" r="5" fill="var(--green2)"/>
+      <circle cx="184" cy="98" r="5" fill="var(--green2)"/>
+      <circle cx="256" cy="62" r="5" fill="var(--green2)"/>
+      <circle cx="328" cy="38" r="5" fill="var(--gold2)"/>
+
+      <!-- X labels -->
+      <text x="40" y="205" text-anchor="middle" fill="#555" font-size="8" font-family="DM Mono,monospace">Start</text>
+      <text x="112" y="205" text-anchor="middle" fill="#555" font-size="8" font-family="DM Mono,monospace">Wk 2</text>
+      <text x="184" y="205" text-anchor="middle" fill="#555" font-size="8" font-family="DM Mono,monospace">Wk 4</text>
+      <text x="256" y="205" text-anchor="middle" fill="#555" font-size="8" font-family="DM Mono,monospace">Wk 6</text>
+      <text x="328" y="205" text-anchor="middle" fill="#555" font-size="8" font-family="DM Mono,monospace">Exam</text>
+
+      <!-- Legend -->
+      <line x1="70" y1="218" x2="90" y2="218" stroke="var(--green2)" stroke-width="2.5"/>
+      <text x="94" y="221" fill="#888" font-size="8" font-family="DM Mono,monospace">With RadioSport eBooks</text>
+      <line x1="185" y1="218" x2="205" y2="218" stroke="var(--red2)" stroke-width="2" stroke-dasharray="4,2"/>
+      <text x="209" y="221" fill="#888" font-size="8" font-family="DM Mono,monospace">Without RadioSport eBooks</text>
+    </svg>
+
+    <!-- Score labels at data points (below chart) -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-top:2rem;">
+      <div style="text-align:center;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#666;">38%</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:#555;">Start</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#808070;">50%</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:#555;">Wk 2</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gold);">65%</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:#555;">Wk 4</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--green2);">80%</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:#555;">Wk 6</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gold2);">A1</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--gold2);">Exam</div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+</section>
+
+<!-- ══ FOOTER / PRICE ══ -->
+<div class="footer-banner">
+  <p style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--gold);letter-spacing:.2em;margin-bottom:1rem;">9 SUBJECTS · ALL BECE CANDIDATES · DISTINCTION READY</p>
+  <h2>GET THE <span class="gold">FULL</span><br/><span class="green">ADVANTAGE</span></h2>
+  <p>Every BECE candidate deserves the same chance at distinction — these RadioSport eBooks make it possible, affordable, and accessible on any smartphone.</p>
+  <div class="price-grid">
+    <div class="price-card">
+      <div class="pc-label">PER TITLE</div>
+      <div class="pc-price">GHS 50</div>
+      <div class="pc-desc">Any single subject</div>
+    </div>
+    <div class="price-card featured">
+      <div class="pc-label">BEST VALUE · FULL SET</div>
+      <div class="pc-price">GHS 350</div>
+      <div class="pc-desc">All 9 subjects · Save GHS 100</div>
+    </div>
+    <div class="price-card">
+      <div class="pc-label">CORE 5 BUNDLE</div>
+      <div class="pc-price">GHS 200</div>
+      <div class="pc-desc">Math · English · Science · SS · RME</div>
+    </div>
+  </div>
+  <p style="font-family:'DM Mono',monospace;font-size:.68rem;color:#555;letter-spacing:.08em;margin-top:1rem;">AVAILABLE ON SELAR.CO · AMAZON KDP · GOOGLE PLAY BOOKS · PAYSTACK</p>
+  <p style="font-size:.75rem;color:#444;margin-top:2rem;font-family:'DM Mono',monospace;">
+    Performance projections are estimated based on structured study vs unguided preparation comparators. Individual results vary with study commitment and prior knowledge. National distinction rate reference: WAEC BECE public data. Examiner alignment based on published WAEC mark scheme criteria.
+  </p>
+</div>
+
+<script>
+// ─── INTERSECTION OBSERVER for reveals ───
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); }
+  });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
+
+// ─── ANIMATE BARS when visible ───
+const bars = document.querySelectorAll('.bar-fill[data-w]');
+const barObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      setTimeout(() => { e.target.style.width = e.target.dataset.w; }, 200);
+      barObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.2 });
+bars.forEach(b => barObs.observe(b));
+
+// ─── BUILD grade distribution chart ───
+const grades = [
+  { label: 'A1 (Distinction)', before: 11, after: 67, color: 'var(--green2)' },
+  { label: 'B2–B3 (Credit)',   before: 22, after: 20, color: 'var(--gold)' },
+  { label: 'C4–C6 (Pass)',     before: 40, after: 11, color: 'rgba(255,255,255,.4)' },
+  { label: 'D7–F9 (Fail)',     before: 27, after: 2,  color: 'var(--red2)' },
+];
+const container = document.getElementById('grade-dist');
+grades.forEach(g => {
+  container.innerHTML += `
+  <div style="margin-bottom:.3rem;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:.2rem;">
+      <span style="font-family:'DM Mono',monospace;font-size:.66rem;color:#888;">${g.label}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:.66rem;">
+        <span style="color:var(--red2);">${g.before}%</span>
+        <span style="color:#555;"> → </span>
+        <span style="color:${g.color};">${g.after}%</span>
+      </span>
+    </div>
+    <div style="display:flex;gap:4px;">
+      <div style="flex:${g.before};height:6px;background:rgba(200,16,46,.4);border-radius:3px;"></div>
+      <div style="flex:${100-g.before};height:6px;background:rgba(255,255,255,.05);border-radius:3px;"></div>
+    </div>
+    <div style="display:flex;gap:4px;margin-top:2px;">
+      <div style="flex:${g.after};height:6px;background:${g.color};border-radius:3px;opacity:.8;"></div>
+      <div style="flex:${100-g.after};height:6px;background:rgba(255,255,255,.05);border-radius:3px;"></div>
+    </div>
+  </div>`;
+});
+</script>
+</body>
+</html>
